@@ -4,6 +4,12 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4]
+### Correções
+- O portátil `ControlFS-Portable-x64.exe` da 0.1.0-alpha.3 fechava ao abrir: procurava o arquivo de recursos pelo nome do executável. Agora o arquivo se chama `resources.pri` e é encontrado com qualquer nome. (#4)
+- Os testes da CI passam a abrir o portátil com o nome exato publicado (antes ele era renomeado, o que escondeu o erro). (#4)
+
+
 ## [0.1.0-alpha.3]
 ### Correções
 - O app fechava logo ao abrir (instalado e portátil) nas versões 0.1.0-alpha.1 e 0.1.0-alpha.2: faltava o arquivo de recursos do app (`ControlFS.pri`) e o WinUI não encontrava seus estilos. Corrigido.

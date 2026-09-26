@@ -4,6 +4,12 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4]
+### Fixes
+- The 0.1.0-alpha.3 portable `ControlFS-Portable-x64.exe` closed on startup: it looked for its resource file by the executable's name. The file is now `resources.pri` and is found under any name. (#4)
+- CI now opens the portable under its exact published name (it used to be renamed, which hid the bug). (#4)
+
+
 ## [0.1.0-alpha.3]
 ### Fixes
 - The app closed right after opening (installed and portable) in 0.1.0-alpha.1 and 0.1.0-alpha.2: the app resource file (`ControlFS.pri`) was missing and WinUI couldn't find its styles. Fixed.
