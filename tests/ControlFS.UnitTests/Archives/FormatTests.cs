@@ -120,6 +120,7 @@ public class FormatTests : IDisposable
         Assert.Equal("raiz", File.ReadAllText(Path.Join(result.Destination!, "raiz.txt")));
         Assert.Contains(result.Items, i => i.Name == "link" && i.Error == OperationErrorKind.LinkOrSpecialBlocked);
         Assert.Contains(result.Items, i => i.Error == OperationErrorKind.PathRejected);
+        Assert.DoesNotContain(Directory.EnumerateFileSystemEntries(result.Destination!, "*", SearchOption.AllDirectories), p => p.Contains("PaxHeader", StringComparison.Ordinal));
         Assert.False(File.Exists(Path.Join(Path.GetDirectoryName(result.Destination!)!, "fora.txt")));
     }
 

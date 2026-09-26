@@ -10,8 +10,8 @@ using SharpCompress.Readers;
 namespace ControlFS.Infrastructure.Archives.Engines;
 
 /// <summary>
-/// ZIP, 7z, RAR, TAR e GZ por acesso aleatório (API Archive do SharpCompress) e TAR.GZ por leitura sequencial (API
-/// Reader) — a API Archive trata .tar.gz como um GZ com um único .tar dentro. Cada formato é validado por fixtures.
+/// ZIP, 7z, RAR e GZ por acesso aleatório (API Archive do SharpCompress). TAR e TAR.GZ ficam com <see cref="BclTarEngine"/>:
+/// o leitor de TAR do SharpCompress não interpreta cabeçalhos PAX. Cada formato é validado por fixtures.
 /// </summary>
 public sealed class SharpCompressEngine : IArchiveEngine
 {
@@ -27,16 +27,14 @@ public sealed class SharpCompressEngine : IArchiveEngine
     public string Version { get; } = typeof(ArchiveFactory).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? typeof(ArchiveFactory).Assembly.GetName().Version?.ToString() ?? "?";
 
-    public bool Supports(ArchiveFormat format) => ArchiveFormats.CanExtract(format);
+    public bool Supports(ArchiveFormat format) => format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar or ArchiveFormat.GZip;
 
     public IArchiveReadSession Open(string archivePath, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken cancellationToken)
     {
         if (!Supports(format)) throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, "Formato não suportado por este motor.");
         try
         {
-            return format == ArchiveFormat.TarGZip
-                ? SequentialSession.Open(archivePath, format, password, limits, cancellationToken)
-                : RandomAccessSession.Open(archivePath, format, password, limits, cancellationToken);
+            return RandomAccessSession.Open(archivePath, format, password, limits, cancellationToken);
         }
         catch (Exception ex) when (ex is not ArchiveAccessException and not OperationCanceledException)
         {
@@ -107,13 +105,12 @@ public sealed class SharpCompressEngine : IArchiveEngine
                 || (format == ArchiveFormat.Rar && e.IsEncrypted) ? null : (uint)crc.Value);
     }
 
-    private static ArchiveInfo BuildInfo(string path, ArchiveFormat format, List<ArchiveEntry> entries, bool solid)
+    internal static ArchiveInfo BuildInfo(string path, ArchiveFormat format, List<ArchiveEntry> entries, bool solid)
     {
         var encrypted = entries.Any(e => e.IsEncrypted);
         var limitations = new List<string> { "Arquivos divididos em volumes ainda não são suportados." };
         if (solid) limitations.Add("Arquivo sólido: cada entrada depende das anteriores; extrair uma seleção pode ser lento.");
-        if (format == ArchiveFormat.TarGZip) limitations.Add("TAR.GZ é lido em sequência: listar exige descomprimir o arquivo inteiro.");
-        if (format is ArchiveFormat.Tar or ArchiveFormat.TarGZip or ArchiveFormat.GZip) limitations.Add("Este formato não guarda CRC por entrada; a integridade não é verificada.");
+        if (format == ArchiveFormat.GZip) limitations.Add("GZ não guarda CRC acessível por entrada; a integridade não é verificada.");
         var caps = new ArchiveCapabilities(
             CanList: true,
             CanExtractAll: true,
@@ -135,10 +132,10 @@ public sealed class SharpCompressEngine : IArchiveEngine
         ArchiveFormat.SevenZip => ArchiveType.SevenZip,
         ArchiveFormat.Rar => ArchiveType.Rar,
         ArchiveFormat.GZip => ArchiveType.GZip,
-        _ => ArchiveType.Tar,
+        _ => throw new ArgumentOutOfRangeException(nameof(format)),
     };
 
-    private static void CheckCount(int count, ExtractionLimits limits)
+    internal static void CheckCount(int count, ExtractionLimits limits)
     {
         if (count >= limits.MaxEntries)
             throw new ArchiveAccessException(OperationErrorKind.LimitExceeded, $"O arquivo tem mais de {limits.MaxEntries} entradas (limite configurado).");
@@ -185,47 +182,5 @@ public sealed class SharpCompressEngine : IArchiveEngine
         }
 
         public void Dispose() => archive.Dispose();
-    }
-
-    private sealed class SequentialSession(string path, string? password, ArchiveInfo info) : IArchiveReadSession
-    {
-        public ArchiveInfo Info { get; } = info;
-
-        public static SequentialSession Open(string path, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken ct)
-        {
-            var entries = new List<ArchiveEntry>();
-            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (var reader = ReaderFactory.Open(stream, new ReaderOptions { Password = password }))
-            {
-                if (reader.ArchiveType != ArchiveType.Tar)
-                    throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, "O conteúdo comprimido não é um TAR.");
-                while (reader.MoveToNextEntry())
-                {
-                    ct.ThrowIfCancellationRequested();
-                    CheckCount(entries.Count, limits);
-                    entries.Add(Map(entries.Count, reader.Entry, format, path));
-                }
-            }
-            return new SequentialSession(path, password, BuildInfo(path, format, entries, solid: true));
-        }
-
-        public IEnumerable<(ArchiveEntry Entry, Func<Stream> Open)> ReadFiles(IReadOnlySet<int> wanted, CancellationToken cancellationToken)
-        {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            using var reader = ReaderFactory.Open(stream, new ReaderOptions { Password = password });
-            var index = 0;
-            while (reader.MoveToNextEntry())
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (index >= Info.Entries.Count || !string.Equals(reader.Entry.Key ?? string.Empty, Info.Entries[index].RawKey, StringComparison.Ordinal))
-                    throw new ArchiveAccessException(OperationErrorKind.Corrupt, "O conteúdo do arquivo mudou desde a listagem.");
-                if (wanted.Contains(index)) yield return (Info.Entries[index], () => reader.OpenEntryStream());
-                index++;
-            }
-        }
-
-        public void Dispose()
-        {
-        }
     }
 }

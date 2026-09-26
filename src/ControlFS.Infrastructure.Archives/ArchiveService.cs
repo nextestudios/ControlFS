@@ -12,7 +12,7 @@ public sealed class ArchiveService : IArchiveService
 {
     private readonly IReadOnlyList<IArchiveEngine> _engines;
 
-    public ArchiveService() : this([new SharpCompressEngine()])
+    public ArchiveService() : this([new BclTarEngine(), new SharpCompressEngine()])
     {
     }
 
