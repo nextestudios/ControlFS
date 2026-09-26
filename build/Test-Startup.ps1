@@ -56,3 +56,4 @@ Get-Content (Join-Path $OutDir "events.txt") | Select-Object -First 80
 Get-ChildItem $OutDir -Filter *.log | ForEach-Object { Write-Host "---- $($_.Name) ----"; Get-Content $_.FullName | Select-Object -First 120 }
 if (-not $alive -or $report.mainWindowHandle -eq 0) { Write-Host "::error::ControlFS não ficou aberto com janela"; exit 1 }
 Write-Host "ControlFS abriu e manteve a janela por $Seconds s"
+exit 0

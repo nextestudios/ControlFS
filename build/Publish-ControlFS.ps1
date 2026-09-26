@@ -27,9 +27,9 @@ $numeric = ($Version -split '-')[0]
 function Invoke-Publish([string]$OutDir, [bool]$SingleFile) {
     # O RID vem do próprio ControlFS.App.csproj: passar -r aqui propagaria o RID às bibliotecas e quebraria o restore travado.
     # PublishSingleFile acrescenta implicitamente Microsoft.NET.ILLink.Tasks (do próprio SDK), que os lock files não
-    # listam. Só nesta publicação o restore não é travado nem reescreve os lock files; as versões continuam fixadas
-    # em Directory.Packages.props e o build da CI segue em modo travado.
-    $lockArgs = if ($SingleFile) { @("-p:RestoreLockedMode=false", "-p:RestorePackagesWithLockFile=false") } else { @() }
+    # listam. Só nesta publicação (feita por último) o restore não é travado; as versões continuam fixadas em
+    # Directory.Packages.props, o instalador é publicado antes em modo travado e o build da CI segue travado.
+    $lockArgs = if ($SingleFile) { @("-p:RestoreLockedMode=false") } else { @() }
     dotnet publish $project -c Release --self-contained true `
         -p:Platform=$Runtime "-p:PublishSingleFile=$($SingleFile.ToString().ToLowerInvariant())" `
         -p:Version=$Version -p:AssemblyVersion="$numeric.0" -p:FileVersion="$numeric.0" `
