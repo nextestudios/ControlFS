@@ -18,7 +18,7 @@ public sealed partial class WindowsShellService : IShellService
 
     public void Open(string path)
     {
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
         Ensure(path);
         try
         {
@@ -36,7 +36,7 @@ public sealed partial class WindowsShellService : IShellService
 
     public void OpenWith(string path)
     {
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
         Ensure(path);
         var file = Marshal.StringToCoTaskMemUni(path);
         try
@@ -54,7 +54,7 @@ public sealed partial class WindowsShellService : IShellService
 
     public void RevealInExplorer(string path)
     {
-        EnsureWindows();
+        if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
         Ensure(path);
         var pidl = ILCreateFromPathW(path);
         if (pidl == IntPtr.Zero) throw new ShellException("O Windows não reconheceu este caminho.");
@@ -67,11 +67,6 @@ public sealed partial class WindowsShellService : IShellService
         {
             ILFree(pidl);
         }
-    }
-
-    private static void EnsureWindows()
-    {
-        if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
     }
 
     private static void Ensure(string path)
