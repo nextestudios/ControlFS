@@ -43,13 +43,13 @@ public class ArchiveCreatorTests : IDisposable
             Format = format,
         }, null, CancellationToken.None);
 
-        Assert.Equal(OperationState.Completed, created.FinalState);
+        Assert.True(created.FinalState == OperationState.Completed, $"{created.FinalState} {created.Error} {created.Message}");
         Assert.Equal(3, created.Count(ItemOutcome.Succeeded));
         Assert.Equal(detected, _service.Detect(destination));
         Assert.DoesNotContain(Directory.EnumerateFiles(_tmp.Sub("origem")), f => Path.GetFileName(f).StartsWith(".controlfs-", StringComparison.Ordinal));
 
         var extracted = await _service.ExtractAsync(new ExtractionRequest { ArchivePath = destination, DestinationDirectory = _tmp.MakeDir("volta") }, new NoConflicts(), null, CancellationToken.None);
-        Assert.Equal(OperationState.Completed, extracted.FinalState);
+        Assert.True(extracted.FinalState == OperationState.Completed, $"{extracted.FinalState} {extracted.Error} {extracted.Message} :: {string.Join(" | ", extracted.Items.Where(i => i.Outcome != ItemOutcome.Succeeded).Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
         var root = extracted.Destination!;
         Assert.Equal("primeiro", File.ReadAllText(Path.Join(root, "Relatórios", "ação.txt")));
         Assert.Equal(File.ReadAllBytes(Path.Join(folder, "sub", "dados.bin")), File.ReadAllBytes(Path.Join(root, "Relatórios", "sub", "dados.bin")));

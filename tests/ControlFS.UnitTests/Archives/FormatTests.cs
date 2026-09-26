@@ -19,7 +19,9 @@ public class FormatTests : IDisposable
     [
         "8557928804f57ecc340b3bb38b095a3607474ec8deb0076f316fcfe02b562106", // exe/test.exe
         "b251c7501fb0f55dd4a92feabe0a6f5733bc40a02679498155fae9b30138fc53", // jpg/test.jpg
-        "1a3de4e51eb2f58672e42443b0e8ea618ba464931166539498ff2ab77eec3838", // тест.txt
+        // тест.txt: os compactados guardam a versão com CRLF; no repositório do SharpCompress o original está com LF
+        // (1a3de4e5…), então comparamos com o hash da versão CRLF, que é o conteúdo exato arquivado.
+        "4d581d93d369f6e1c9b295ff38d82dabd577f927dfaf0c35818c015c85e322d9", // тест.txt (CRLF)
     ];
 
     private readonly TempDir _tmp = new();
@@ -72,7 +74,7 @@ public class FormatTests : IDisposable
         Assert.Contains(wrong.Error, new[] { OperationErrorKind.WrongPassword, OperationErrorKind.WrongPasswordOrCorrupt });
         Assert.NotEqual(OperationState.Completed, wrong.FinalState);
         var ok = await Extract(path, "test");
-        Assert.Equal(OperationState.Completed, ok.FinalState);
+        Assert.True(ok.FinalState == OperationState.Completed, $"{ok.FinalState} :: {string.Join(" | ", ok.Items.Where(i => i.Outcome != ItemOutcome.Succeeded).Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
         Assert.All(HashesUnder(ok.Destination!), h => Assert.Contains(h, OriginalHashes));
     }
 
@@ -110,7 +112,8 @@ public class FormatTests : IDisposable
 
         var result = await Extract(path);
 
-        Assert.Equal(OperationState.CompletedWithWarnings, result.FinalState); // link e ../ bloqueados
+        Assert.True(result.FinalState == OperationState.CompletedWithWarnings, // link e ../ bloqueados
+            $"{result.FinalState} {result.Error} {result.Message} :: {string.Join(" | ", result.Items.Select(i => $"{i.Name}={i.Outcome}/{i.Error}"))}");
         Assert.Equal("pacote", Path.GetFileName(result.Destination));
         Assert.Equal("alfa", File.ReadAllText(Path.Join(result.Destination!, "docs", "a.txt")));
         Assert.Equal("beta", File.ReadAllText(Path.Join(result.Destination!, "docs", "sub", "ação.txt")));
@@ -130,7 +133,7 @@ public class FormatTests : IDisposable
 
         var result = await Extract(path, selected: ["docs/sub"]);
 
-        Assert.Equal(OperationState.Completed, result.FinalState);
+        Assert.True(result.FinalState == OperationState.Completed, $"{result.FinalState} {result.Error} {result.Message} :: {string.Join(" | ", result.Items.Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
         var files = Directory.EnumerateFiles(result.Destination!, "*", SearchOption.AllDirectories).ToList();
         Assert.Equal(["ação.txt"], files.Select(Path.GetFileName));
     }
@@ -146,7 +149,7 @@ public class FormatTests : IDisposable
 
         var result = await Extract(path);
 
-        Assert.Equal(OperationState.Completed, result.FinalState);
+        Assert.True(result.FinalState == OperationState.Completed, $"{result.FinalState} {result.Error} {result.Message} :: {string.Join(" | ", result.Items.Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
         var single = Assert.Single(Directory.EnumerateFiles(result.Destination!, "*", SearchOption.AllDirectories));
         Assert.Equal("notas.txt", Path.GetFileName(single));
         Assert.Equal("conteúdo comprimido", File.ReadAllText(single));

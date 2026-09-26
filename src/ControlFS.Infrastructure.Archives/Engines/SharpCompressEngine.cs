@@ -75,9 +75,22 @@ public sealed class SharpCompressEngine : IArchiveEngine
         return (a & WindowsReparsePoint) != 0; // atributos Windows (sem bits de tipo Unix)
     }
 
+    /// <summary>Algumas propriedades não existem em certos formatos (ex.: Attrib em TAR/GZ lança NotImplementedException).</summary>
+    private static T? Optional<T>(Func<T> read) where T : struct
+    {
+        try { return read(); }
+        catch (NotImplementedException) { return null; }
+        catch (NotSupportedException) { return null; }
+    }
+
     private static ArchiveEntry Map(int index, IEntry e, ArchiveFormat format, string archivePath)
     {
         var key = e.Key;
+        var attrib = Optional(() => e.Attrib ?? -1) is int a && a != -1 ? a : (int?)null;
+        var crc = Optional(() => e.Crc);
+        var compressed = Optional(() => e.CompressedSize);
+        var modified = Optional(() => e.LastModifiedTime ?? DateTime.MinValue) is DateTime t && t != DateTime.MinValue ? t : (DateTime?)null;
+        var linkTarget = e.LinkTarget;
         if (string.IsNullOrEmpty(key) && format == ArchiveFormat.GZip) key = ArchiveFormats.StemOf(archivePath); // GZ sem nome no cabeçalho
         return new ArchiveEntry(
             Index: index,
@@ -85,11 +98,13 @@ public sealed class SharpCompressEngine : IArchiveEngine
             IsDirectory: e.IsDirectory,
             // GZ guarda o tamanho módulo 2^32 no rodapé: não serve para verificação, então fica desconhecido.
             Size: format == ArchiveFormat.GZip || e.Size < 0 ? null : e.Size,
-            CompressedSize: e.CompressedSize > 0 ? e.CompressedSize : null,
-            Modified: e.LastModifiedTime is DateTime m ? new DateTimeOffset(DateTime.SpecifyKind(m, DateTimeKind.Local)) : null,
+            CompressedSize: compressed is > 0 ? compressed : null,
+            Modified: modified is DateTime m ? new DateTimeOffset(DateTime.SpecifyKind(m, DateTimeKind.Local)) : null,
             IsEncrypted: e.IsEncrypted,
-            IsLinkOrSpecial: IsLinkOrSpecial(format, e.Attrib, e.LinkTarget),
-            Crc32: e.IsDirectory || format is ArchiveFormat.Tar or ArchiveFormat.TarGZip or ArchiveFormat.GZip ? null : (uint)e.Crc);
+            IsLinkOrSpecial: IsLinkOrSpecial(format, attrib, linkTarget),
+            // TAR/GZ não têm CRC por entrada; RAR5 criptografado guarda o CRC transformado pela chave (não comparável).
+            Crc32: e.IsDirectory || crc is null || format is ArchiveFormat.Tar or ArchiveFormat.TarGZip or ArchiveFormat.GZip
+                || (format == ArchiveFormat.Rar && e.IsEncrypted) ? null : (uint)crc.Value);
     }
 
     private static ArchiveInfo BuildInfo(string path, ArchiveFormat format, List<ArchiveEntry> entries, bool solid)
