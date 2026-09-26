@@ -33,5 +33,6 @@ Copy-Item -LiteralPath (Join-Path $root "LICENSE"), (Join-Path $root "THIRD_PART
 $zip = Join-Path $dist "ControlFS-Portable-$Runtime.zip"
 Compress-Archive -Path (Join-Path $out "*") -DestinationPath $zip
 $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-"$hash  ControlFS-Portable-$Runtime.zip" | Set-Content -LiteralPath (Join-Path $dist "SHA256SUMS.txt") -Encoding ascii
+# LF explícito: "sha256sum -c" / "shasum -c" falham com CRLF no nome do arquivo.
+[IO.File]::WriteAllText((Join-Path $dist "SHA256SUMS.txt"), "$hash  ControlFS-Portable-$Runtime.zip`n", [Text.Encoding]::ASCII)
 Write-Host "Gerado: $zip ($hash)"
