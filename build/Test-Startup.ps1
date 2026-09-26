@@ -45,6 +45,9 @@ if (Test-Path $appData) {
 }
 if ($alive) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
 
+Get-ChildItem (Split-Path -Parent $Exe) -File | Where-Object { $_.Extension -in '.pri', '.json' -or $_.Name -like 'Microsoft.UI.Xaml*' -or $_.Name -like 'Microsoft.WindowsAppRuntime*' } |
+    Select-Object Name, Length | Out-String -Width 200 | Set-Content (Join-Path $OutDir "package-files.txt")
+Write-Host "---- arquivos relevantes do pacote ----"; Get-Content (Join-Path $OutDir "package-files.txt")
 $report | ConvertTo-Json | Set-Content (Join-Path $OutDir "report.json")
 Write-Host ($report | ConvertTo-Json)
 Write-Host "---- eventos ----"

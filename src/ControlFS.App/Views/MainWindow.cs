@@ -48,8 +48,10 @@ public sealed class MainWindow : Window
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates);
         _input = new InputHost(_app, DispatcherQueue);
 
+        AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
         _root.Content = BuildLayout();
+        AppLog.Info("MainWindow: layout montado");
         _root.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Windows.System.VirtualKey.F11) { ToggleFullScreen(); e.Handled = true; return; }
@@ -75,6 +77,7 @@ public sealed class MainWindow : Window
         _app.ExitRequested += Close;
         _input.StatusChanged += Render;
         _app.Start();
+        AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
     }
 
     private Grid BuildLayout()
