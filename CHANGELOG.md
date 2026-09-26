@@ -4,6 +4,16 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 
+## [0.2.0-alpha.1]
+### Novidades
+- Extrair **7z, RAR (RAR4 e RAR5, inclusive sólidos), TAR, TAR.GZ e GZ**, além de ZIP, com as mesmas proteções (caminhos contidos, links bloqueados, conflitos, limites). Compactados com senha nos arquivos ou na lista (RAR/7z) pedem a senha no teclado virtual. (#5)
+- **Compactar** itens marcados (ou o item focado) em **ZIP ou TAR.GZ**: nome pelo teclado virtual, compressão rápida/normal/máxima, progresso na central de operações. Links e junctions não são seguidos e nada é sobrescrito. (#5)
+- **Abrir com o Windows:** Confirmar num arquivo que não é compactado abre no programa padrão; no menu de ações há "Abrir com…" e "Mostrar no Explorador de Arquivos". Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) pedem confirmação, que começa em "Cancelar". (#5)
+
+### Limitações
+- RAR não pode ser **criado** (formato proprietário); criar 7z ainda não está disponível. Volumes divididos ainda não são suportados.
+
+
 ## [0.1.0-alpha.4]
 ### Correções
 - O portátil `ControlFS-Portable-x64.exe` da 0.1.0-alpha.3 fechava ao abrir: procurava o arquivo de recursos pelo nome do executável. Agora o arquivo se chama `resources.pri` e é encontrado com qualquer nome. (#4)

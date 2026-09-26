@@ -35,6 +35,16 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
 - A checagem de espaço usa o total declarado (metadado não confiável) como sinal inicial; a contagem real continua durante a gravação.
 - "Extraiu sem erro" não significa conteúdo seguro. Não há verificação antivírus.
 
+## Compactar e abrir com o Windows
+
+- **Compactar** não segue links nem junctions da origem (listados como ignorados), grava num temporário na pasta de
+  destino e só renomeia para o nome final ao concluir, sem sobrescrever; recusa criar o compactado dentro de uma pasta que
+  está sendo compactada; cancelamento remove o temporário (`ArchiveCreatorTests`).
+- **Abrir com o Windows** usa APIs do Shell com o caminho como parâmetro próprio (sem montar linha de comando). Tipos que
+  executam código (`ExecutableFiles`: .exe, .msi, .bat, .ps1, .lnk, .url, .hta, .reg…) exigem confirmação que começa em
+  "Cancelar"; SmartScreen/Mark of the Web do Windows continuam valendo. Nada é aberto automaticamente após extrair.
+  Testado de verdade no runner Windows (`ShellIntegrationTests`: abre o Bloco de Notas, mostra no Explorador).
+
 ## Atualizações automáticas
 
 Manifesto de release assinado (ECDSA P-256/SHA-256) com chave que existe só no secret `UPDATE_SIGNING_KEY` do GitHub;

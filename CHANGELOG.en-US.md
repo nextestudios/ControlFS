@@ -4,6 +4,16 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 
+## [0.2.0-alpha.1]
+### What's new
+- Extract **7z, RAR (RAR4 and RAR5, including solid), TAR, TAR.GZ and GZ**, besides ZIP, with the same protections (contained paths, blocked links, conflicts, limits). Archives with protected files or file lists (RAR/7z) ask for the password on the on-screen keyboard. (#5)
+- **Compress** marked items (or the focused one) to **ZIP or TAR.GZ**: name typed on the on-screen keyboard, fast/normal/maximum compression, progress in the operations center. Links and junctions are not followed and nothing is overwritten. (#5)
+- **Open with Windows:** Confirm on a non-archive file opens it in the default program; the actions menu has "Open with…" and "Show in File Explorer". Programs and scripts (.exe, .msi, .bat, .ps1, .lnk…) ask for confirmation, starting on "Cancel". (#5)
+
+### Limitations
+- RAR can't be **created** (proprietary format); creating 7z isn't available yet. Split volumes aren't supported yet.
+
+
 ## [0.1.0-alpha.4]
 ### Fixes
 - The 0.1.0-alpha.3 portable `ControlFS-Portable-x64.exe` closed on startup: it looked for its resource file by the executable's name. The file is now `resources.pri` and is found under any name. (#4)

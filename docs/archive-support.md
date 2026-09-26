@@ -1,29 +1,36 @@
 # Suporte a compactados — matriz real
 
-Motor: SharpCompress **1.0.0** (commit `b6cc95af`). "Validado" = coberto por teste automatizado que passou nesta sessão
-(macOS arm64 e CI `windows-latest`/Linux, .NET 10.0.401). Validação com o app aberto em Windows de usuário ainda está pendente.
+"Validado" = teste automatizado que passou na CI (`windows-latest` e Linux). Motores: SharpCompress **1.0.0**
+(`b6cc95af`) para ZIP, 7z, RAR e GZ; `System.Formats.Tar` (.NET 10) para TAR e TAR.GZ — o leitor de TAR do
+SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 
-| Formato | Método | Criptografia | Volumes | Fixture | Resultado | Limitação conhecida |
-|---|---|---|---|---|---|---|
-| ZIP | Stored, Deflate | — | único | gerada no teste (BCL) | **validado**: listar, extrair tudo, extrair seleção, pasta dedicada, conflitos | — |
-| ZIP | Deflate | ZipCrypto (PKWARE) | único | `tests/Fixtures/zip/zipcrypto-senha-certa.zip` | **validado**: sem senha → `PasswordRequired`; errada → `WrongPassword`; certa → conteúdo correto | ZipCrypto pode aceitar senha errada em ~1/256 dos casos; aí o CRC falha e o erro é "senha incorreta **ou** dados corrompidos". |
-| ZIP | — | WinZip AES | único | **nenhuma** | não testado | Obrigatório na 1.0. Entradas AES (AE-2) declaram CRC 0; nossa verificação CRC não se aplica a elas. |
-| ZIP64 | — | — | único | **nenhuma** | não testado | Obrigatório na 1.0. |
-| ZIP | — | — | multivolume | nenhuma | não suportado | `CanReadMultiVolume = false`. |
-| ZIP | integridade | — | — | payload com byte alterado | **validado**: CRC32 próprio detecta; nenhum arquivo parcial fica no destino | O motor não detectou a alteração sozinho. |
-| ZIP | truncado | — | — | gerada no teste | **validado**: `Corrupt` | — |
-| 7z | LZMA/LZMA2, sólido | — | — | nenhuma | detectado pelo conteúdo, **não suportado** (mensagem explícita) | Etapa 2. Motor: somente Archive API. |
-| RAR 4 / RAR 5 | — | — | — | nenhuma | detectado, **não suportado** | Etapa 2. RAR sólido só via `RarReader` (sequencial). |
-| TAR, TAR.GZ/TGZ | — | — | — | nenhuma | TAR detectado por `ustar`; **não suportado** | Etapa 2. |
-| GZ | — | — | — | nenhuma | detectado, **não suportado** | Etapa 2; não será exibido como pasta. |
+## Extrair
 
-## Capacidades expostas por arquivo (ZIP, após inspeção)
+| Formato | Variante | Senha | Fixture | Resultado | Limitação conhecida |
+|---|---|---|---|---|---|
+| ZIP | Stored, Deflate | — | gerada no teste | **validado** (tudo, seleção, conflitos, CRC, truncado, maliciosos) | — |
+| ZIP | Deflate | ZipCrypto | `zip/zipcrypto-senha-certa.zip` | **validado** (sem/errada/certa) | ZipCrypto aceita senha errada ~1/256; aí o CRC acusa "senha ou dados". |
+| ZIP | AES (AE-2), ZIP64 | — | nenhuma | não testado | Obrigatório na 1.0. |
+| 7z | LZMA2 | — | `7z/7Zip.LZMA2.7z` | **validado** (SHA-256 de cada arquivo) | — |
+| 7z | sólido | — | `7z/7Zip.solid.7z` | **validado** | Extrair seleção de um sólido pode ser lento. |
+| 7z | LZMA2 + AES | `testpassword` | `7z/7Zip.LZMA2.Aes.7z` | **validado** (sem senha → pede; com senha → conteúdo correto) | — |
+| RAR | RAR4, RAR5 | — | `rar/Rar4.rar`, `rar/Rar5.rar` | **validado** | — |
+| RAR | sólido (RAR4 e RAR5) | — | `rar/Rar.solid.rar`, `rar/Rar5.solid.rar` | **validado** | — |
+| RAR | RAR5, arquivos criptografados | `test` | `rar/Rar5.encrypted_filesOnly.rar` | **validado** (sem → pede; errada → recusa; certa → conteúdo correto) | RAR5 criptografado guarda o CRC transformado pela chave: a verificação CRC própria não se aplica. |
+| RAR/7z | lista protegida (cabeçalhos criptografados) | — | nenhuma | implementado (o app pede a senha para listar), **não validado por fixture** | — |
+| TAR | ustar/PAX/GNU | — | gerada no teste | **validado** (links bloqueados pelo tipo, `../` recusado, nomes acentuados) | Sem CRC por entrada. |
+| TAR.GZ | PAX | — | gerada no teste | **validado** (inclui extração de seleção em uma passada) | Leitura sequencial: listar descomprime o arquivo inteiro. |
+| GZ | arquivo único | — | gerada no teste | **validado** (vira um arquivo, não uma pasta) | Tamanho declarado não é usado (módulo 2³²). |
+| Volumes divididos (.001, .part1.rar, .z01) | — | — | — | **não suportado** | — |
 
-`CanList`, `CanExtractAll`, `CanExtractSelection`, `CanReadEncryptedPayload`, `CanVerifyIntegrity` (CRC durante a
-extração), `CanCancelCooperatively` = verdadeiro. `CanReadEncryptedHeaders`, `CanReadMultiVolume`, `CanPauseInSession`,
-`CanResumeAfterRestart`, `CanCreate` = falso. "Pausar" não é oferecido na UI.
+## Criar
 
-## Ainda não implementado
+| Formato | Resultado | Observações |
+|---|---|---|
+| ZIP (Deflate, nomes UTF-8) | **validado** (ida e volta, byte a byte) | Rápida/normal/máxima. |
+| TAR.GZ (PAX) | **validado** (ida e volta) | — |
+| 7z | não disponível | Exigiria embutir o 7-Zip; decisão futura. |
+| RAR | **nunca** | Formato proprietário: só o WinRAR pode criar. |
 
-"Verificar integridade" como ação separada, extrair para o outro painel (depende do modo de dois painéis), vários
-compactados de uma vez (uma pasta por arquivo), worker de extração em processo separado.
+Links e junctions na origem não são seguidos (listados como ignorados); o compactado é gravado num temporário e só
+recebe o nome final ao concluir; um arquivo existente nunca é sobrescrito; cancelar não deixa nada.

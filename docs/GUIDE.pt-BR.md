@@ -35,6 +35,14 @@ Antes de começar você vê origem, destino, entradas e política de conflitos. 
 
 Entradas bloqueadas (nomes inseguros como `../`, links, nomes reservados do Windows) aparecem com ⚠ e o motivo.
 
+## Compactando
+
+Marque itens com Oeste (ou foque um) → Norte → **Compactar…**. Escolha o nome (teclado virtual), ZIP ou TAR.GZ e o nível de compressão, e depois **Compactar**. O arquivo é gravado num temporário e só aparece quando termina; um arquivo existente nunca é sobrescrito (o nome ganha "(2)"). Links e junctions dentro das pastas são ignorados e listados no resultado. RAR não pode ser criado (formato proprietário).
+
+## Abrindo arquivos com o Windows
+
+**Sul** num arquivo que não é compactado abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.
+
 ## Atualizações
 
 A versão **instalada** se atualiza sozinha:
