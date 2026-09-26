@@ -124,7 +124,7 @@ public class FormatTests : IDisposable
     public async Task Tar_gz_selection_is_extracted_in_a_single_sequential_pass()
     {
         var path = MakeTar(_tmp.Sub("sel.tgz"), gzip: true);
-        var info = await _service.InspectAsync(path, null, Core.Policies.ExtractionLimits.Default, CancellationToken.None);
+        var info = await _service.InspectAsync(path, null, ControlFS.Core.Policies.ExtractionLimits.Default, CancellationToken.None);
         Assert.Equal(ArchiveFormat.TarGZip, info.Format);
         Assert.Contains(info.Entries, e => e.RawKey == "docs/sub/ação.txt");
 

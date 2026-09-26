@@ -90,7 +90,7 @@ public class ArchiveCreatorTests : IDisposable
 
         Assert.Equal(OperationState.CompletedWithWarnings, result.FinalState);
         Assert.Contains(result.Items, i => i.Error == OperationErrorKind.LinkOrSpecialBlocked);
-        var info = await _service.InspectAsync(destination, null, Core.Policies.ExtractionLimits.Default, CancellationToken.None);
+        var info = await _service.InspectAsync(destination, null, ControlFS.Core.Policies.ExtractionLimits.Default, CancellationToken.None);
         Assert.DoesNotContain(info.Entries, e => e.RawKey.Contains("segredo", StringComparison.Ordinal));
     }
 
