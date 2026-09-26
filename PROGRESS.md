@@ -37,7 +37,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
   ao sair, nunca durante operações; manifesto assinado (ECDSA P-256) + SHA-256 + tamanho + hosts fixos
   (`src/ControlFS.Infrastructure.Updates`, ADR 0005). Portátil só avisa.
 - Testes: 34 novos (versões, verificação, servidor falso com ataques, fluxo no controlador).
-- **Ainda não validado:** o ciclo real "versão anterior instalada → atualiza → reabre" numa máquina Windows.
+- Release 0.1.0-alpha.2 publicada pela CI: instalador compilado, **instalação e desinstalação silenciosas sem admin
+  aprovadas no runner Windows**, manifesto assinado e conferido contra a chave pública do app.
+- Teste ponta a ponta contra o GitHub real (2026-09-26), com o código de produção do atualizador e a chave oficial:
+  simulando 0.1.0-alpha.1 → encontrou 0.1.0-alpha.2, assinatura válida, instalador baixado (64.416.800 bytes) com
+  SHA-256 conferido; simulando 0.1.0-alpha.2 → "atualizado". `shasum -c SHA256SUMS.txt` → OK.
+- **Ainda não validado:** execução do instalador pelo app numa sessão Windows interativa (Restart Manager fechando o
+  app, reabertura com `/RELAUNCH=1`, SmartScreen). Checklist em `docs/TESTING.md`.
 
 ## Executado nesta sessão (resultados observados)
 
