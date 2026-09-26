@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $dir = Join-Path $env:RUNNER_TEMP "controlfs-install"
 $p = Start-Process -Wait -PassThru -FilePath $Setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$dir"
 if ($p.ExitCode -ne 0) { throw "Instalação falhou (código $($p.ExitCode))" }
-foreach ($f in "ControlFS.exe", "ControlFS.pri", "ControlFS.installed", "SDL3.dll", "SharpCompress.dll", "unins000.exe") {
+foreach ($f in "ControlFS.exe", "resources.pri", "ControlFS.installed", "SDL3.dll", "SharpCompress.dll", "unins000.exe") {
     if (-not (Test-Path -LiteralPath (Join-Path $dir $f))) { throw "Instalação incompleta: falta $f" }
 }
 & (Join-Path $PSScriptRoot "Test-Startup.ps1") -Exe (Join-Path $dir "ControlFS.exe") -OutDir $OutDir

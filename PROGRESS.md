@@ -30,6 +30,12 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Portátil com o nome publicado (0.1.0-alpha.4)
+
+- O smoke da release 0.1.0-alpha.3 **com os arquivos baixados da página** mostrou: instalador OK, mas o portátil falhava
+  sob o nome `ControlFS-Portable-x64.exe` (procurava `ControlFS-Portable-x64.pri`). Os testes renomeavam o arquivo e
+  esconderam o erro. Corrigido com `resources.pri`; os testes agora usam o nome publicado (#4).
+
 ## Correção de inicialização (0.1.0-alpha.3)
 
 - **As releases 0.1.0-alpha.1 e 0.1.0-alpha.2 não abriam** (instalado e portátil): o processo terminava em ~1 s com

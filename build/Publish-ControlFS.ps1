@@ -44,7 +44,7 @@ $files = @()
 if ($Target -in "All", "Installer") {
     Write-Host "Publicando versão para o instalador (pasta)..."
     Invoke-Publish $appDir $false
-    foreach ($required in "ControlFS.exe", "ControlFS.pri", "SDL3.dll", "SharpCompress.dll") {
+    foreach ($required in "ControlFS.exe", "resources.pri", "SDL3.dll", "SharpCompress.dll") {
         if (-not (Test-Path -LiteralPath (Join-Path $appDir $required))) { throw "Pacote incompleto: falta $required" }
     }
     Copy-Item -LiteralPath (Join-Path $root "LICENSE"), (Join-Path $root "THIRD_PARTY_NOTICES.md") -Destination $appDir
