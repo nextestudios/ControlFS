@@ -27,7 +27,7 @@ $manifest = [ordered]@{
     version = $Version
     releasedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     installer = Get-Asset "ControlFS-Setup-x64.exe"
-    portable = Get-Asset "ControlFS-Portable-x64.zip"
+    portable = Get-Asset "ControlFS-Portable-x64.exe"
 }
 $json = $manifest | ConvertTo-Json -Compress -Depth 4
 $bytes = [Text.UTF8Encoding]::new($false).GetBytes($json)

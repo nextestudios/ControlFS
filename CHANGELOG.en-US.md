@@ -4,6 +4,19 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3]
+### Fixes
+- The app closed right after opening (installed and portable) in 0.1.0-alpha.1 and 0.1.0-alpha.2: the app resource file (`ControlFS.pri`) was missing and WinUI couldn't find its styles. Fixed.
+
+### What's new
+- Single-file portable version, `ControlFS-Portable-x64.exe`: keeps settings and logs in the `ControlFS_Data` folder next to it (if that folder isn't writable, it uses `%LOCALAPPDATA%\ControlFS` and tells you).
+- Local startup and crash log in `logs` inside the data folder, to diagnose problems (no passwords or file contents).
+- Every release is now published only after CI actually opens the portable and the installed app on Windows and confirms the window shows up.
+
+### Updating
+- From 0.1.0-alpha.1 or 0.1.0-alpha.2: those versions didn't open, so they can't update themselves. Download and run `ControlFS-Setup-x64.exe` once.
+
+
 ## [0.1.0-alpha.2]
 ### What's new
 - Windows installer (`ControlFS-Setup-x64.exe`): per-user install, no admin, Start menu shortcut and an optional desktop shortcut.

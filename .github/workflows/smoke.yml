@@ -41,9 +41,9 @@ jobs:
           path: smoke-released
 
   source:
-    name: Portable from source
+    name: Launch portable exe and installed app
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_NOLOGO: "1"
@@ -52,16 +52,28 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - name: Build portable
-        shell: pwsh
-        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target Portable -Version 0.0.0-smoke
-      - name: Launch and collect evidence
+      - name: Install Inno Setup (if missing)
         shell: pwsh
         run: |
-          Expand-Archive dist\ControlFS-Portable-x64.zip -DestinationPath (Join-Path $env:RUNNER_TEMP portable)
-          .\build\Test-Startup.ps1 -Exe (Join-Path $env:RUNNER_TEMP "portable\ControlFS.exe") -OutDir smoke-source
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Build portable exe and installer
+        shell: pwsh
+        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version 0.0.0-smoke
+      - name: Launch portable exe
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "portable"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item dist\ControlFS-Portable-x64.exe (Join-Path $dir "ControlFS.exe")
+          .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS.exe") -OutDir smoke-portable -Seconds 40
+      - name: Install, launch and uninstall
+        if: always()
+        shell: pwsh
+        run: .\build\Test-Installed.ps1 -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-installed
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-source
-          path: smoke-source
+          name: smoke-evidence
+          path: |
+            smoke-portable
+            smoke-installed

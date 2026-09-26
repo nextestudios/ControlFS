@@ -48,10 +48,11 @@ A versão **portátil** só avisa que existe versão nova; baixe-a na página da
 
 ## Privacidade
 
-Tudo fica no seu PC. As preferências ficam em `%LOCALAPPDATA%\ControlFS\settings.json`. Senhas nunca são gravadas nem registradas. As funções centrais nunca usam a rede. O único acesso à rede é a verificação de atualizações, que envia ao GitHub apenas o User-Agent `ControlFS/<versão>` e pode ser desligada.
+Tudo fica no seu PC. Preferências e logs ficam em `%LOCALAPPDATA%\ControlFS` (instalado) ou em `ControlFS_Data` ao lado do `ControlFS-Portable-x64.exe` (portátil). Senhas nunca são gravadas nem registradas. As funções centrais nunca usam a rede. O único acesso à rede é a verificação de atualizações, que envia ao GitHub apenas o User-Agent `ControlFS/<versão>` e pode ser desligada.
 
 ## Solução de problemas
 
+- **O app não abre:** envie `logs\startup.log` e `logs\crash.log` da pasta de dados acima (não contêm senhas nem conteúdo de arquivos).
 - **Controle não detectado:** conecte e aperte um botão; o cabeçalho mostra o controle ativo. Teclado e mouse sempre funcionam.
 - **Aviso do SmartScreen:** o build ainda não tem assinatura de código ([política](CODE_SIGNING.md)).
 - **"Formato reconhecido, mas não suportado":** por enquanto só ZIP.
@@ -66,5 +67,5 @@ dotnet build ControlFS.slnx
 dotnet test ControlFS.slnx
 ```
 
-O app roda só no Windows 11 x64. Instalador + portátil (requer Inno Setup 6): `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.2`.
+O app roda só no Windows 11 x64. Instalador + portátil (requer Inno Setup 6): `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.3`.
 Mais em [build-and-release.md](build-and-release.md).

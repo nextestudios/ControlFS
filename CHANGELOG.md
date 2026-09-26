@@ -4,6 +4,19 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3]
+### Correções
+- O app fechava logo ao abrir (instalado e portátil) nas versões 0.1.0-alpha.1 e 0.1.0-alpha.2: faltava o arquivo de recursos do app (`ControlFS.pri`) e o WinUI não encontrava seus estilos. Corrigido.
+
+### Novidades
+- Versão portátil em um único arquivo, `ControlFS-Portable-x64.exe`: guarda preferências e logs na pasta `ControlFS_Data` ao lado dele (se a pasta não aceitar gravação, usa `%LOCALAPPDATA%\ControlFS` e avisa).
+- Log local de inicialização e falhas em `logs` dentro da pasta de dados, para diagnosticar problemas (sem senhas nem conteúdo de arquivos).
+- Cada release agora só é publicada depois que a CI abre de verdade o portátil e a versão instalada num Windows e confirma que a janela aparece.
+
+### Atualizando
+- Da 0.1.0-alpha.1 ou 0.1.0-alpha.2: essas versões não abriam, então não conseguem se atualizar sozinhas. Baixe e rode o `ControlFS-Setup-x64.exe` uma vez.
+
+
 ## [0.1.0-alpha.2]
 ### Novidades
 - Instalador para Windows (`ControlFS-Setup-x64.exe`): instala por usuário, sem administrador, com atalho no menu Iniciar e opção de atalho na Área de Trabalho.

@@ -30,6 +30,18 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Correção de inicialização (0.1.0-alpha.3)
+
+- **As releases 0.1.0-alpha.1 e 0.1.0-alpha.2 não abriam** (instalado e portátil): o processo terminava em ~1 s com
+  `0xC000027B` em `Microsoft.UI.Xaml.dll`. Reproduzido pelo novo workflow `smoke.yml` num Windows do GitHub; o log
+  novo mostrou `Cannot locate resource from 'ms-appx:///Microsoft.UI.Xaml/Themes/themeresources.xaml'`. Causa: app sem
+  pacote MSIX precisa de `EnableMsixTooling=true` para gerar `ControlFS.pri`. Os testes anteriores cobriam a lógica,
+  mas nunca abriam o app — lacuna fechada: CI e release agora abrem o portátil e o instalado antes de publicar.
+- Evidência pós-correção (runner `windows-latest`, Windows Server 2025 26100): portátil `.exe` único e app instalado
+  abrem, mantêm a janela "ControlFS" (40 s e 25 s), log até "Janela ativada", SDL 3.5.0 carregado; print mostra a
+  interface desenhada e o aviso de nova versão vindo do GitHub real. Instalar → abrir → desinstalar: OK.
+- Portátil agora é `ControlFS-Portable-x64.exe` (arquivo único) com dados em `ControlFS_Data` ao lado.
+
 ## Instalador e atualizações (0.1.0-alpha.2)
 
 - Instalador Inno Setup por usuário, sem administrador (`build/ControlFS.iss`), com marcador que habilita atualização.

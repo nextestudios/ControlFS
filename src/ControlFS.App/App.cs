@@ -15,11 +15,29 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
     private readonly XamlControlsXamlMetaDataProvider _provider = new();
     private MainWindow? _window;
 
+    public App()
+    {
+        UnhandledException += (_, e) => AppLog.Crash(e.Exception, "Application.UnhandledException: " + e.Message);
+        AppLog.Info("App criado");
+    }
+
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        Resources.MergedDictionaries.Add(new XamlControlsResources());
-        _window = new MainWindow();
-        _window.Activate();
+        try
+        {
+            AppLog.Info("OnLaunched: carregando XamlControlsResources");
+            Resources.MergedDictionaries.Add(new XamlControlsResources());
+            AppLog.Info("OnLaunched: criando janela");
+            _window = new MainWindow();
+            AppLog.Info("OnLaunched: ativando janela");
+            _window.Activate();
+            AppLog.Info("Janela ativada");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Crash(ex, "App.OnLaunched");
+            throw;
+        }
     }
 
     public IXamlType GetXamlType(Type type) => _provider.GetXamlType(type);

@@ -11,6 +11,7 @@ param(
 $ErrorActionPreference = "Continue"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $started = Get-Date
+Remove-Item (Join-Path $env:LOCALAPPDATA "ControlFS\logs"), (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data\logs") -Recurse -Force -ErrorAction SilentlyContinue
 $p = Start-Process -FilePath $Exe -WorkingDirectory (Split-Path -Parent $Exe) -PassThru
 Start-Sleep -Seconds $Seconds
 $p.Refresh()
@@ -38,13 +39,16 @@ $events = Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = 
     Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting', 'SideBySide', 'Application Hang' }
 $events | Format-List TimeCreated, ProviderName, Id, Message | Out-String -Width 400 | Set-Content (Join-Path $OutDir "events.txt")
 
-$appData = Join-Path $env:LOCALAPPDATA "ControlFS"
-if (Test-Path $appData) {
-    Get-ChildItem $appData -Recurse | Select-Object FullName, Length | Out-String -Width 400 | Set-Content (Join-Path $OutDir "appdata.txt")
-    Get-ChildItem (Join-Path $appData "logs") -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName $OutDir }
+foreach ($data in (Join-Path $env:LOCALAPPDATA "ControlFS"), (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data")) {
+    if (-not (Test-Path $data)) { continue }
+    Get-ChildItem $data -Recurse | Select-Object FullName, Length | Out-String -Width 400 | Add-Content (Join-Path $OutDir "appdata.txt")
+    Get-ChildItem (Join-Path $data "logs") -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName $OutDir -Force }
 }
 if ($alive) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
 
+Get-ChildItem (Split-Path -Parent $Exe) -File | Where-Object { $_.Extension -in '.pri', '.json' -or $_.Name -like 'Microsoft.UI.Xaml*' -or $_.Name -like 'Microsoft.WindowsAppRuntime*' } |
+    Select-Object Name, Length | Out-String -Width 200 | Set-Content (Join-Path $OutDir "package-files.txt")
+Write-Host "---- arquivos relevantes do pacote ----"; Get-Content (Join-Path $OutDir "package-files.txt")
 $report | ConvertTo-Json | Set-Content (Join-Path $OutDir "report.json")
 Write-Host ($report | ConvertTo-Json)
 Write-Host "---- eventos ----"
@@ -52,3 +56,4 @@ Get-Content (Join-Path $OutDir "events.txt") | Select-Object -First 80
 Get-ChildItem $OutDir -Filter *.log | ForEach-Object { Write-Host "---- $($_.Name) ----"; Get-Content $_.FullName | Select-Object -First 120 }
 if (-not $alive -or $report.mainWindowHandle -eq 0) { Write-Host "::error::ControlFS não ficou aberto com janela"; exit 1 }
 Write-Host "ControlFS abriu e manteve a janela por $Seconds s"
+exit 0

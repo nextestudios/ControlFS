@@ -13,12 +13,12 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.1.0-alpha.2](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.2)** (pré-lançamento):
+Baixe a **[0.1.0-alpha.3](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.3)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
-- **`ControlFS-Portable-x64.zip`**: descompacte em qualquer pasta e rode o `ControlFS.exe`; ele avisa de novas versões, a troca é manual.
+- **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
 
-Windows 11 x64. Ainda sem assinatura de código, então o SmartScreen pode avisar ([política](docs/CODE_SIGNING.md)). Está na 0.1.0-alpha.1? Rode o instalador uma vez; daí em diante as atualizações são automáticas.
+Windows 11 x64. Ainda sem assinatura de código, então o SmartScreen pode avisar ([política](docs/CODE_SIGNING.md)). Está na 0.1.0-alpha.1 ou alpha.2? Elas não abriam: rode o instalador uma vez; daí em diante as atualizações são automáticas.
 
 ## Como funciona
 

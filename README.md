@@ -13,12 +13,12 @@ A **file manager for Windows made for the controller**, with a **built-in extrac
 
 ## Download
 
-Get **[0.1.0-alpha.2](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.2)** (pre-release):
+Get **[0.1.0-alpha.3](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.3)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
-- **`ControlFS-Portable-x64.zip`**: unzip anywhere and run `ControlFS.exe`; it tells you about new versions, replacing it is manual.
+- **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.
 
-Windows 11 x64. Not code-signed yet, so SmartScreen may warn ([policy](docs/CODE_SIGNING.md)). On 0.1.0-alpha.1? Run the installer once; updates are automatic from then on.
+Windows 11 x64. Not code-signed yet, so SmartScreen may warn ([policy](docs/CODE_SIGNING.md)). On 0.1.0-alpha.1 or alpha.2? Those didn't open: run the installer once; updates are automatic from then on.
 
 ## How it works
 
