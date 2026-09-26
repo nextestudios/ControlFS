@@ -3,6 +3,7 @@ namespace ControlFS.Core.Models;
 public enum OperationKind
 {
     Extract,
+    Compress,
     CreateFolder,
     Copy,
     Move,

@@ -34,6 +34,31 @@ public sealed class ExtractionRequest
     public override string ToString() => $"Extract '{Path.GetFileName(ArchivePath)}' ({Mode})";
 }
 
+public enum CompressionFormat
+{
+    Zip,
+    TarGZip,
+}
+
+public enum CompressionStrength
+{
+    Fast,
+    Normal,
+    Maximum,
+}
+
+/// <summary>Pedido de compactação de arquivos e pastas físicos (todos na mesma pasta de origem).</summary>
+public sealed class CompressionRequest
+{
+    public required IReadOnlyList<string> SourcePaths { get; init; }
+    /// <summary>Caminho final do compactado. Nunca é sobrescrito: se existir, a operação falha sem tocar nele.</summary>
+    public required string DestinationPath { get; init; }
+    public CompressionFormat Format { get; init; } = CompressionFormat.Zip;
+    public CompressionStrength Strength { get; init; } = CompressionStrength.Normal;
+
+    public static string Extension(CompressionFormat format) => format == CompressionFormat.TarGZip ? ".tar.gz" : ".zip";
+}
+
 public interface IExtractionInteraction
 {
     /// <summary>Chamado para cada conflito sem decisão "aplicar aos demais". A escolha inicial deve preservar o existente.</summary>
@@ -49,6 +74,9 @@ public interface IArchiveService
     Task<ArchiveInfo> InspectAsync(string archivePath, string? password, ExtractionLimits limits, CancellationToken cancellationToken);
 
     Task<OperationResult> ExtractAsync(ExtractionRequest request, IExtractionInteraction interaction, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);
+
+    /// <summary>Cria um compactado. Escreve num temporário na pasta de destino e só o torna visível ao concluir.</summary>
+    Task<OperationResult> CompressAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);
 }
 
 public sealed class ArchiveAccessException(OperationErrorKind kind, string message, Exception? inner = null) : Exception(message, inner)

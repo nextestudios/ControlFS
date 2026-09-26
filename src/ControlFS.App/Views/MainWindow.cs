@@ -7,6 +7,7 @@ using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Updates;
 using ControlFS.Infrastructure.Windows.FileSystem;
+using ControlFS.Infrastructure.Windows.Shell;
 using ControlFS.Infrastructure.Windows.Settings;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
@@ -45,7 +46,7 @@ public sealed class MainWindow : Window
         Title = "ControlFS";
         var settingsStore = new JsonSettingsStore(AppPaths.DataDirectory);
         _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
-        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates);
+        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService());
         _input = new InputHost(_app, DispatcherQueue);
 
         AppLog.Info("MainWindow: serviços criados; montando layout");

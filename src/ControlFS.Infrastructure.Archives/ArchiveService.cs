@@ -1,6 +1,7 @@
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
+using ControlFS.Infrastructure.Archives.Creation;
 using ControlFS.Infrastructure.Archives.Engines;
 using ControlFS.Infrastructure.Archives.Extraction;
 using ControlFS.Infrastructure.Archives.Inspection;
@@ -11,7 +12,7 @@ public sealed class ArchiveService : IArchiveService
 {
     private readonly IReadOnlyList<IArchiveEngine> _engines;
 
-    public ArchiveService() : this([new SharpCompressZipEngine()])
+    public ArchiveService() : this([new SharpCompressEngine()])
     {
     }
 
@@ -47,4 +48,7 @@ public sealed class ArchiveService : IArchiveService
         ?? throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, format == ArchiveFormat.Unknown
             ? "Formato não reconhecido pelo conteúdo."
             : $"Formato {format} reconhecido, mas ainda não suportado nesta versão.");
+
+    public Task<OperationResult> CompressAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken) =>
+        ArchiveCreator.CreateAsync(request, progress, cancellationToken);
 }
