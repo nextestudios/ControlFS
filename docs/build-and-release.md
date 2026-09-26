@@ -34,6 +34,12 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 
 ## CI
 
-`.github/workflows/ci.yml`: Windows (restore travado por lock files, build, testes unitários e de integração Windows,
-listagem de pacotes vulneráveis, publish portátil como artefato) e Linux (núcleo portátil). **A CI ainda não foi
-executada** — o repositório não tem remoto.
+- `ci.yml` (PR e `main`): Windows — restore travado por lock files, build de toda a solução (inclui o app WinUI), testes
+  unitários/jornadas, testes de integração Windows e checagem de pacotes vulneráveis; Linux — núcleo portátil.
+  Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows, 133 no Linux.
+- `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
+  `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
+  de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
+- `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
+
+Para publicar: adicione a seção da versão nos dois changelogs, faça merge na `main` e crie a tag (somente mantenedores).

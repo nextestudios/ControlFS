@@ -4,10 +4,10 @@
 
 | Camada | Projeto | Onde roda | Estado |
 |---|---|---|---|
-| Unidade (políticas, entrada, teclado, lista, estados) | `tests/ControlFS.UnitTests` | qualquer SO | 133 testes passando (macOS arm64, 2026-09-26) |
+| Unidade (políticas, entrada, teclado, lista, estados) | `tests/ControlFS.UnitTests` | qualquer SO | 133 testes passando (macOS arm64, Windows e Linux na CI, 2026-09-26) |
 | Integração do extrator com arquivos reais | idem (`Archives/`) | qualquer SO | incluídos acima |
 | Jornadas ponta a ponta por ações semânticas | idem (`Application/JourneyTests`) | qualquer SO | incluídos acima; **não** substituem UI nem hardware |
-| Integração Windows (pastas conhecidas, junction, MOTW, nomes reservados, caminhos longos) | `tests/ControlFS.WindowsIntegrationTests` | Windows | 6 testes, **pulados** fora do Windows; nunca executados |
+| Integração Windows (pastas conhecidas, junction, MOTW, nomes reservados, caminhos longos) | `tests/ControlFS.WindowsIntegrationTests` | Windows | 6 testes, **passaram** na CI `windows-latest`; pulados fora do Windows |
 | UI WinUI (foco, diálogos, teclado virtual na tela) | — | Windows | **não criado** (Etapa 2: WinAppDriver/UIA a avaliar para a versão do WinUI) |
 | Hardware real | manual | Windows | matriz em `controller-compatibility.md`, tudo "não testado" |
 
@@ -33,7 +33,7 @@ Comandos: `dotnet test ControlFS.slnx`.
 | Volumes | parte ausente | não implementado |
 | Integridade | truncado / checksum inválido | **testados** |
 | Segurança | `../`, absoluto, dispositivo | **testados** (prova por snapshot do disco) |
-| Segurança | link no compactado / junction no destino | symlink **testado**; junction só no Windows (não executado) |
+| Segurança | link no compactado / junction no destino | symlink **testado**; junction **testado** na CI Windows |
 | Segurança | colisão, ADS, reservados | **testados** |
 | Recursos | expansão e metadados enormes | limites de bytes, razão e quantidade **testados**; UI responsiva não medida |
 | Destino | remover unidade durante extração | mapeado para `DestinationUnavailable`; **sem teste** |

@@ -5,8 +5,8 @@
 ## Resumo honesto
 
 A Etapa 0 e a lógica completa da primeira jornada vertical (Etapa 1) estão implementadas e **testadas automaticamente
-sobre arquivos reais em diretórios temporários**. O aplicativo WinUI **compila** neste Mac, mas **nunca foi executado**:
-isso exige Windows. Nenhum controle físico foi testado.
+sobre arquivos reais em diretórios temporários**. O aplicativo WinUI compila no macOS e na CI Windows, e os testes de integração Windows passam na CI, mas o **app ainda
+não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi testado.
 
 ## Implementado
 
@@ -43,6 +43,8 @@ isso exige Windows. Nenhum controle físico foi testado.
 | `dotnet test ControlFS.slnx -c Release` | **133 aprovados**, 0 falhas; 6 pulados (exclusivos do Windows) |
 | Suíte executada 5× seguidas (antes das últimas correções) | 5/5 verdes (sem instabilidade observada) |
 | Testes de regressão com correção revertida | falharam (2) como esperado; com a correção, passaram |
+| CI GitHub (`windows-latest`), 2026-09-26 | build da solução ok; **133 + 6 testes Windows aprovados**; sem pacotes vulneráveis |
+| CI GitHub (Linux), 2026-09-26 | 133 aprovados |
 
 ## Falhas encontradas e corrigidas
 
@@ -53,11 +55,10 @@ isso exige Windows. Nenhum controle físico foi testado.
 
 ## Ainda não validado
 
-- **Tudo que depende do Windows:** executar o app, renderização WinUI sem XAML compilado (`XamlControlsResources`,
-  `XamlReader.Load` do modelo de linha), foco de teclado na raiz, `SHGetKnownFolderPath`, unidades, junctions, MOTW,
-  caminhos longos, PRI/self-contained, pacote em máquina limpa, DPI/4K/720p.
+- **App aberto no Windows:** renderização WinUI sem XAML compilado (`XamlControlsResources`, `XamlReader.Load` do modelo
+  de linha), foco de teclado na raiz, pacote portátil em máquina limpa, DPI/4K/720p. (Pastas conhecidas, unidades,
+  junctions, MOTW e caminhos longos já passaram nos testes de integração da CI Windows.)
 - **Hardware:** qualquer controle; conexão/desconexão/reconexão; suspensão; dispositivos virtuais duplicados.
-- **CI:** o workflow nunca rodou (sem repositório remoto).
 - **Formatos:** AES, ZIP64, 7z, RAR, TAR, GZ.
 - Núcleo em Linux (job da CI existe, não executado).
 
@@ -69,8 +70,8 @@ de controle, logs/diagnóstico, limpeza de staging entre sessões, worker isolad
 
 ## Próxima entrega concreta
 
-1. Em um Windows 11 x64: `dotnet build`, `dotnet test` (incluindo `WindowsIntegrationTests`) e executar o app; corrigir o
-   que aparecer na renderização e no foco; registrar evidências aqui.
+1. Baixar a release portátil num Windows 11 x64, abrir o app e seguir `docs/TESTING.md`; corrigir o que aparecer na
+   renderização e no foco; registrar evidências aqui.
 2. Rodar `InputProbe` e a jornada B (extração) com ao menos um controle Xbox e um DualSense; preencher
    `docs/controller-compatibility.md`.
 3. Fixtures e suporte a ZIP64 e AES (requisito 1.0) e início da Etapa 2 (renomear/excluir com Lixeira).

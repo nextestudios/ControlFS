@@ -1,7 +1,7 @@
 # Suporte a compactados — matriz real
 
 Motor: SharpCompress **1.0.0** (commit `b6cc95af`). "Validado" = coberto por teste automatizado que passou nesta sessão
-(macOS arm64, .NET 10.0.401). Validação em Windows está pendente para todos os itens.
+(macOS arm64 e CI `windows-latest`/Linux, .NET 10.0.401). Validação com o app aberto em Windows de usuário ainda está pendente.
 
 | Formato | Método | Criptografia | Volumes | Fixture | Resultado | Limitação conhecida |
 |---|---|---|---|---|---|---|
