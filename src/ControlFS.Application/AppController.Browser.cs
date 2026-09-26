@@ -334,6 +334,7 @@ public sealed partial class AppController
                 Detail: "Troca comportamento e legendas de confirmar/voltar."),
             new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 4) })),
+            new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null),
             new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null),
             new("Sair", ShowExitDialog),
         };

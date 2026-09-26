@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\src\ControlFS.Application\ControlFS.Application.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Updates\ControlFS.Infrastructure.Updates.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Fixtures\**\*.zip" LinkBase="Fixtures" CopyToOutputDirectory="PreserveNewest" />

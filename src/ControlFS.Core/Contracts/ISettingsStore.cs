@@ -13,6 +13,17 @@ public sealed record AppSettings
     public bool ReducedMotion { get; init; }
     public string? LastLocation { get; init; }
     public IReadOnlyList<string> Favorites { get; init; } = [];
+
+    /// <summary>Verifica novas versões ao abrir (no máximo uma vez por dia). Desligável no menu.</summary>
+    public bool AutoCheckUpdates { get; init; } = true;
+
+    /// <summary>Instala em silêncio, ao sair, uma atualização já baixada e verificada.</summary>
+    public bool InstallUpdatesOnExit { get; init; } = true;
+
+    /// <summary>Recebe versões de pré-lançamento. Null = automático (sim se a versão atual for pré-lançamento).</summary>
+    public bool? IncludePrereleases { get; init; }
+
+    public DateTimeOffset? LastUpdateCheck { get; init; }
 }
 
 public sealed record SettingsLoadResult(AppSettings Settings, bool RecoveredFromCorruption, string? Notice);

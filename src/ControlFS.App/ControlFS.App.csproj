@@ -35,5 +35,6 @@
     <ProjectReference Include="..\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
     <ProjectReference Include="..\ControlFS.Infrastructure.Input.Sdl3\ControlFS.Infrastructure.Input.Sdl3.csproj" />
     <ProjectReference Include="..\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
+    <ProjectReference Include="..\ControlFS.Infrastructure.Updates\ControlFS.Infrastructure.Updates.csproj" />
   </ItemGroup>
 </Project>

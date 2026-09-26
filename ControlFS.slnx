@@ -5,6 +5,7 @@
     <Project Path="src/ControlFS.Core/ControlFS.Core.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Archives/ControlFS.Infrastructure.Archives.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Input.Sdl3/ControlFS.Infrastructure.Input.Sdl3.csproj" />
+    <Project Path="src/ControlFS.Infrastructure.Updates/ControlFS.Infrastructure.Updates.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Windows/ControlFS.Infrastructure.Windows.csproj" />
   </Folder>
   <Folder Name="/tests/">

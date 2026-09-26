@@ -162,6 +162,12 @@
           "ppy.SDL3-CS": "[2026.722.0, )"
         }
       },
+      "controlfs.infrastructure.updates": {
+        "type": "Project",
+        "dependencies": {
+          "ControlFS.Core": "[0.1.0, )"
+        }
+      },
       "controlfs.infrastructure.windows": {
         "type": "Project",
         "dependencies": {

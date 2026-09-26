@@ -5,6 +5,7 @@ using ControlFS.Application;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
+using ControlFS.Infrastructure.Updates;
 using ControlFS.Infrastructure.Windows.FileSystem;
 using ControlFS.Infrastructure.Windows.Settings;
 using Microsoft.UI.Text;
@@ -19,11 +20,12 @@ namespace ControlFS.App.Views;
 /// Janela única: cabeçalho (local + estado), lista virtualizada, rodapé de comandos contextuais
 /// e camada modal. Toda interação vira InputAction no AppController.
 /// </summary>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost é descartado no evento Closed da janela.")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost e o serviço de atualização são descartados no evento Closed da janela.")]
 public sealed class MainWindow : Window
 {
     private readonly AppController _app;
     private readonly InputHost _input;
+    private readonly GitHubReleaseUpdateService _updates;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
@@ -42,7 +44,8 @@ public sealed class MainWindow : Window
     {
         Title = "ControlFS";
         var settingsStore = new JsonSettingsStore(JsonSettingsStore.DefaultDirectory());
-        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore);
+        _updates = GitHubReleaseUpdateService.CreateDefault();
+        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates);
         _input = new InputHost(_app, DispatcherQueue);
 
         Content = _root;
@@ -61,7 +64,12 @@ public sealed class MainWindow : Window
             _input.OnWindowActivated(active);
             if (active) _root.Focus(FocusState.Programmatic);
         };
-        Closed += (_, _) => _input.Dispose();
+        Closed += (_, _) =>
+        {
+            _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
+            _input.Dispose();
+            _updates.Dispose();
+        };
 
         _app.Changed += Render;
         _app.ExitRequested += Close;
@@ -152,7 +160,14 @@ public sealed class MainWindow : Window
                 ? $"🎮 {device.Name}" + (_input.Devices.Count > 1 ? $" (+{_input.Devices.Count - 1})" : string.Empty)
                 : _input.Devices.Count > 0 ? $"🎮 {_input.Devices.Count} controle(s) — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
         var op = _app.Operations.Current;
-        _operation.Text = op is null ? string.Empty
+        _operation.Text = op is null
+            ? _app.UpdateState switch
+            {
+                UpdateState.Ready => $"⬆ Atualização {_app.ReadyUpdate!.Manifest.Version} pronta (Menu → Atualizações)",
+                UpdateState.Downloading => "⬆ Baixando atualização…",
+                UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
+                _ => string.Empty,
+            }
             : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State == OperationState.WaitingForUser ? "aguardando você" : "em andamento")})";
 
         // Lista (a identidade dos itens decide se o ItemsSource muda)

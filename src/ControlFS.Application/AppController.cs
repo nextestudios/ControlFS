@@ -31,11 +31,12 @@ public sealed partial class AppController
     private Action<string>? _pickerCallback;
     private Action? _pickerCancel;
 
-    public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null)
+    public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null)
     {
         _fs = fileSystem;
         _archives = archives;
         _settingsStore = settingsStore;
+        _updates = updates;
         _ui = SynchronizationContext.Current ?? throw new InvalidOperationException("AppController precisa de um SynchronizationContext de UI.");
         Operations.Completed += OnOperationCompleted;
         Operations.Changed += RaiseChanged;
@@ -75,6 +76,7 @@ public sealed partial class AppController
         Screen = Screen.Home;
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
+        StartAutomaticUpdateCheck();
     }
 
     /// <summary>Aguarda tarefas assíncronas iniciadas pela UI (usado em testes e no encerramento).</summary>
@@ -341,7 +343,7 @@ public sealed partial class AppController
         {
             CloseModal(dialog);
             foreach (var op in Operations.Items.Where(o => o.IsActive).ToList()) Operations.Cancel(op);
-            ExitRequested?.Invoke();
+            RequestExit();
         }));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;

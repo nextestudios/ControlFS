@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Atualizações: manifesto assinado (ECDSA P-256), download verificado e instalador silencioso. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Infrastructure.Updates</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlFS.UnitTests" />
+  </ItemGroup>
+</Project>
