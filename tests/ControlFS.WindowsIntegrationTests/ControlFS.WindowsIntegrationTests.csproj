@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Comportamentos que só podem ser provados no Windows. Fora dele os testes são marcados como pulados. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CA1515;CA1707;CA2000;CA1001;CA1063;CA1816;xUnit1051;CA1849</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ControlFS.Core\ControlFS.Core.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
+  </ItemGroup>
+</Project>

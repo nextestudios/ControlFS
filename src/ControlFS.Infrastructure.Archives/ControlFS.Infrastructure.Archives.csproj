@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Infrastructure.Archives</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+    <PackageReference Include="SharpCompress" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlFS.UnitTests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,482 @@
+using System.Buffers;
+using ControlFS.Core.Contracts;
+using ControlFS.Core.Models;
+using ControlFS.Core.Policies;
+using ControlFS.Infrastructure.Archives.Engines;
+using ControlFS.Infrastructure.Archives.Security;
+
+namespace ControlFS.Infrastructure.Archives.Extraction;
+
+/// <summary>
+/// Extração com contenção de caminhos, bloqueio de links, detecção de colisões, limites
+/// sobre bytes efetivamente escritos, staging privado no mesmo volume, verificação CRC,
+/// conflitos resolvidos pelo usuário (sem sobrescrita silenciosa) e cancelamento cooperativo.
+/// Nunca apaga o compactado original nem executa conteúdo extraído.
+/// </summary>
+public sealed class SafeExtractor(IArchiveEngine engine)
+{
+    public const string StagingPrefix = ".controlfs-staging-";
+    public const string ManifestName = ".controlfs-operation";
+    private const int BufferSize = 81920;
+
+    public async Task<OperationResult> ExtractAsync(ArchiveFormat format, ExtractionRequest request, IExtractionInteraction interaction,
+        IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+    {
+        request.Limits.Validate();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(request.Limits.MaxDuration);
+        try
+        {
+            return await Task.Run(() => RunAsync(format, request, interaction, progress, timeout.Token, cancellationToken), CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new OperationResult(OperationState.Failed, [], OperationErrorKind.LimitExceeded, "Tempo máximo de processamento atingido.");
+        }
+        catch (OperationCanceledException)
+        {
+            return new OperationResult(OperationState.Cancelled, [], OperationErrorKind.Cancelled, "Operação cancelada antes de gravar qualquer arquivo.");
+        }
+    }
+
+    private async Task<OperationResult> RunAsync(ArchiveFormat format, ExtractionRequest request, IExtractionInteraction interaction,
+        IProgress<OperationProgress>? progress, CancellationToken ct, CancellationToken userToken)
+    {
+        var limits = request.Limits;
+        var destinationParent = Path.GetFullPath(request.DestinationDirectory);
+        var destinationInfo = new DirectoryInfo(destinationParent);
+        if (!destinationInfo.Exists)
+            return Fail(OperationErrorKind.DestinationUnavailable, "A pasta de destino não existe ou não está acessível.");
+
+        IArchiveReadSession session;
+        try
+        {
+            session = engine.Open(request.ArchivePath, format, request.Password, limits, ct);
+        }
+        catch (ArchiveAccessException ex)
+        {
+            return Fail(ex.Kind, ex.Message);
+        }
+
+        using (session)
+        {
+            var plan = BuildPlan(session.Info, request, limits, out var planResults);
+            if (plan.Count == 0 && planResults.Count == 0)
+                return new OperationResult(OperationState.Completed, [], Message: "Nenhuma entrada selecionada.");
+
+            var needsPassword = plan.Any(p => p.Entry is { IsEncrypted: true, IsDirectory: false });
+            if (needsPassword && string.IsNullOrEmpty(request.Password))
+                return Fail(OperationErrorKind.PasswordRequired, "O arquivo está protegido por senha.");
+
+            // Espaço disponível (quando mensurável) antes de começar.
+            var declared = plan.Where(p => !p.Entry.IsDirectory).Sum(p => p.Entry.Size ?? 0);
+            if (TryGetFreeSpace(destinationParent) is long free && declared > free)
+                return Fail(OperationErrorKind.InsufficientSpace, $"Espaço insuficiente: {Format(declared)} necessários, {Format(free)} livres.");
+
+            string root;
+            var createdRoot = false;
+            try
+            {
+                if (request.Mode == DestinationMode.CreateDedicatedFolder)
+                {
+                    root = CreateDedicatedFolder(destinationParent, request.DedicatedFolderName ?? Path.GetFileNameWithoutExtension(request.ArchivePath));
+                    createdRoot = true;
+                }
+                else
+                {
+                    root = destinationParent;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                var (kind, message) = ErrorMapper.Map(ex);
+                return Fail(kind, message);
+            }
+
+            var guard = new DestinationGuard(root);
+            var staging = CreateStaging(root);
+            var zone = MarkOfTheWeb.Read(request.ArchivePath);
+            var results = new List<ItemResult>(planResults);
+            var state = new RunState();
+            var fatal = OperationErrorKind.None;
+            string? fatalMessage = null;
+            var cancelled = false;
+            var fileTotal = plan.Count(p => !p.Entry.IsDirectory);
+            var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+            try
+            {
+                foreach (var item in plan)
+                {
+                    if (ct.IsCancellationRequested) { cancelled = true; break; }
+                    try
+                    {
+                        if (item.Entry.IsDirectory)
+                        {
+                            guard.EnsureDirectories(item.Components, item.Components.Count);
+                            continue;
+                        }
+                        progress?.Report(new OperationProgress(item.RelativePath, state.FilesDone, fileTotal, state.TotalBytes, declared));
+                        var outcome = await ExtractFileAsync(session, item, guard, staging, zone, limits, interaction, state, buffer, ct).ConfigureAwait(false);
+                        results.Add(outcome);
+                        state.FilesDone++;
+                        if (state.CancelledByUser) { cancelled = true; break; }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        var (kind, message) = ErrorMapper.Map(ex, item.Entry.IsEncrypted);
+                        results.Add(new ItemResult(item.RelativePath, kind is OperationErrorKind.DestinationTraversesLink or OperationErrorKind.PathRejected ? ItemOutcome.Blocked : ItemOutcome.Failed, kind, message));
+                        if (IsFatal(kind))
+                        {
+                            fatal = kind;
+                            fatalMessage = message;
+                            break;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+                TryDeleteStaging(staging);
+            }
+
+            progress?.Report(new OperationProgress(null, state.FilesDone, fileTotal, state.TotalBytes, declared));
+
+            // Itens que não chegaram a ser processados são reportados como tal (resultado parcial verdadeiro).
+            var processed = results.Select(r => r.Name).ToHashSet(StringComparer.Ordinal);
+            foreach (var item in plan)
+                if (!item.Entry.IsDirectory && !processed.Contains(item.RelativePath))
+                    results.Add(new ItemResult(item.RelativePath, ItemOutcome.NotProcessed));
+
+            var anyWritten = results.Any(r => r.Outcome is ItemOutcome.Succeeded or ItemOutcome.Renamed or ItemOutcome.Replaced);
+            if (createdRoot && !anyWritten) TryDeleteEmptyTree(root);
+            var destination = createdRoot && !anyWritten && !Directory.Exists(root) ? null : root;
+
+            if (cancelled || userToken.IsCancellationRequested)
+                return new OperationResult(OperationState.Cancelled, results, OperationErrorKind.Cancelled,
+                    "Operação cancelada. Arquivos já concluídos foram mantidos; temporários foram removidos.", destination);
+            if (fatal != OperationErrorKind.None)
+                return new OperationResult(OperationState.Failed, results, fatal, fatalMessage, destination);
+            var warnings = results.Any(r => r.Outcome is ItemOutcome.Failed or ItemOutcome.Blocked or ItemOutcome.NotProcessed);
+            return new OperationResult(warnings ? OperationState.CompletedWithWarnings : OperationState.Completed, results, Destination: destination);
+        }
+    }
+
+    private static async Task<ItemResult> ExtractFileAsync(IArchiveReadSession session, PlannedEntry item, DestinationGuard guard, string staging, string? zone,
+        ExtractionLimits limits, IExtractionInteraction interaction, RunState state, byte[] buffer, CancellationToken ct)
+    {
+        var parentCount = item.Components.Count - 1;
+        var parent = guard.EnsureDirectories(item.Components, parentCount);
+        var name = item.Components[^1];
+
+        if (item.Entry.Size is long declaredSize && TryGetFreeSpace(parent) is long free && declaredSize > free)
+            throw new FileOperationException(OperationErrorKind.InsufficientSpace, "Espaço insuficiente no destino.");
+
+        var staged = Path.Join(staging, Guid.NewGuid().ToString("N") + ".part");
+        try
+        {
+            var crc = new Crc32();
+            long written = 0;
+            using (var source = session.OpenEntry(item.Entry.Index))
+            using (var target = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
+            {
+                int read;
+                while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    written += read;
+                    state.TotalBytes += read;
+                    if (written > limits.MaxEntryBytes)
+                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Entrada excede o tamanho máximo configurado.");
+                    if (state.TotalBytes > limits.MaxTotalBytes)
+                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Extração excede o total máximo configurado.");
+                    if (item.Entry.Size is long size && written > size)
+                        throw new FileOperationException(OperationErrorKind.Corrupt, "A entrada produziu mais dados que o declarado.");
+                    if (written > limits.RatioCheckThresholdBytes && item.Entry.CompressedSize is > 0 and var compressed && written / (double)compressed > limits.MaxCompressionRatio)
+                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Relação de expansão suspeita (possível bomba de descompressão).");
+                    crc.Append(buffer.AsSpan(0, read));
+                    target.Write(buffer, 0, read);
+                }
+                target.Flush(flushToDisk: true);
+            }
+
+            if (item.Entry.Size is long expected && written != expected)
+                throw new FileOperationException(item.Entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
+                    "Tamanho extraído difere do declarado (arquivo truncado ou corrompido).");
+            // Entradas AES (AE-2) declaram CRC 0; nesse caso a verificação CRC não se aplica.
+            if (item.Entry.Crc32 is uint expectedCrc && (expectedCrc != 0 || written == 0) && crc.Value != expectedCrc)
+                throw new FileOperationException(item.Entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
+                    item.Entry.IsEncrypted ? "Falha de integridade: senha incorreta ou dados corrompidos." : "Falha de integridade (CRC não confere).");
+
+            if (item.Entry.Modified is DateTimeOffset modified && modified.Year is > 1980 and < 2200)
+                File.SetLastWriteTimeUtc(staged, modified.UtcDateTime);
+
+            // Revalidação imediatamente antes da gravação final.
+            guard.Revalidate(item.Components, parentCount);
+            var final = Path.Join(parent, name);
+            guard.AssertContained(final);
+            return await PlaceAsync(staged, final, parent, name, item, zone, interaction, state, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (File.Exists(staged)) File.Delete(staged);
+        }
+    }
+
+    private static async Task<ItemResult> PlaceAsync(string staged, string final, string parent, string name, PlannedEntry item, string? zone,
+        IExtractionInteraction interaction, RunState state, CancellationToken ct)
+    {
+        if (!PathExists(final) && TryMoveNoOverwrite(staged, final))
+        {
+            MarkOfTheWeb.Apply(final, zone);
+            return new ItemResult(item.RelativePath, ItemOutcome.Succeeded, FinalPath: final);
+        }
+
+        var existing = new FileInfo(final);
+        var existingDir = new DirectoryInfo(final);
+        var conflict = new ConflictInfo(
+            final,
+            existing.Exists ? existing.Length : null,
+            existing.Exists ? existing.LastWriteTime : existingDir.Exists ? existingDir.LastWriteTime : null,
+            existingDir.Exists,
+            item.RelativePath,
+            item.Entry.Size,
+            item.Entry.Modified);
+
+        var decision = state.ApplyToAll ?? await interaction.ResolveConflictAsync(conflict, ct).ConfigureAwait(false);
+        if (decision.ApplyToRemaining && decision.Choice != ConflictChoice.Cancel) state.ApplyToAll = decision;
+
+        switch (decision.Choice)
+        {
+            case ConflictChoice.Skip:
+                return new ItemResult(item.RelativePath, ItemOutcome.Skipped, Message: "Existente preservado.", FinalPath: final);
+            case ConflictChoice.KeepBoth:
+                for (var attempt = 0; attempt < 5; attempt++)
+                {
+                    var alternative = Path.Join(parent, UniqueNames.Next(name, n => PathExists(Path.Join(parent, n))));
+                    if (TryMoveNoOverwrite(staged, alternative))
+                    {
+                        MarkOfTheWeb.Apply(alternative, zone);
+                        return new ItemResult(item.RelativePath, ItemOutcome.Renamed, Message: $"Salvo como \"{Path.GetFileName(alternative)}\".", FinalPath: alternative);
+                    }
+                }
+                return new ItemResult(item.RelativePath, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Não foi possível obter um nome livre.");
+            case ConflictChoice.Replace:
+                if (existingDir.Exists)
+                    return new ItemResult(item.RelativePath, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe uma pasta com esse nome; pastas não são substituídas por arquivos.");
+                if (DestinationGuard.IsLink(existing))
+                    return new ItemResult(item.RelativePath, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "O item existente é um link; não será substituído.");
+                File.Move(staged, final, overwrite: true);
+                MarkOfTheWeb.Apply(final, zone);
+                return new ItemResult(item.RelativePath, ItemOutcome.Replaced, FinalPath: final);
+            default:
+                state.CancelledByUser = true;
+                return new ItemResult(item.RelativePath, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; existente preservado.", final);
+        }
+    }
+
+    /// <summary>
+    /// Monta o plano: sanitiza caminhos, bloqueia links/especiais, aplica seleção e prefixo,
+    /// e recusa colisões (caixa/normalização, arquivo x pasta) em vez de fundi-las.
+    /// </summary>
+    internal static List<PlannedEntry> BuildPlan(ArchiveInfo info, ExtractionRequest request, ExtractionLimits limits, out List<ItemResult> rejected)
+    {
+        rejected = [];
+        var plan = new List<PlannedEntry>();
+        var baseComponents = request.BaseInnerPath.Length == 0 ? [] : request.BaseInnerPath.Split('/');
+        var selected = request.SelectedPaths?.Select(p => p.Trim('/')).Where(p => p.Length > 0).ToArray();
+        var fileKeys = new Dictionary<string, string>(StringComparer.Ordinal);
+        var dirKeys = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var entry in info.Entries)
+        {
+            var sanitized = ArchivePathPolicy.Sanitize(entry.RawKey, limits.MaxDepth, limits.MaxRelativePathLength);
+            var display = sanitized.IsAccepted ? sanitized.RelativePath : entry.RawKey;
+            if (!sanitized.IsAccepted)
+            {
+                if (IsSelected(display, selected, baseComponents, rawOnly: true))
+                    rejected.Add(new ItemResult(Printable(entry.RawKey), ItemOutcome.Blocked, OperationErrorKind.PathRejected, sanitized.Message));
+                continue;
+            }
+            if (!IsSelected(sanitized.RelativePath, selected, baseComponents, rawOnly: false)) continue;
+            if (entry.IsLinkOrSpecial)
+            {
+                rejected.Add(new ItemResult(display, ItemOutcome.Blocked, OperationErrorKind.LinkOrSpecialBlocked, "Links e tipos especiais não são extraídos."));
+                continue;
+            }
+
+            var components = sanitized.Components.Skip(baseComponents.Length).ToList();
+            if (components.Count == 0) continue;
+            var relative = string.Join('/', components);
+
+            // Colisões: ancestrais não podem ser arquivos; um arquivo não pode coincidir com pasta.
+            string? collision = null;
+            for (var i = 1; i < components.Count && collision is null; i++)
+            {
+                var ancestorKey = WindowsNameRules.CollisionKey(string.Join('/', components.Take(i)));
+                if (fileKeys.TryGetValue(ancestorKey, out var other)) collision = other;
+            }
+            var key = WindowsNameRules.CollisionKey(relative);
+            if (collision is null)
+            {
+                if (entry.IsDirectory)
+                {
+                    if (fileKeys.TryGetValue(key, out var other)) collision = other;
+                }
+                else if (fileKeys.TryGetValue(key, out var otherFile)) collision = otherFile;
+                else if (dirKeys.TryGetValue(key, out var otherDir)) collision = otherDir;
+            }
+            if (collision is not null)
+            {
+                rejected.Add(new ItemResult(relative, ItemOutcome.Blocked, OperationErrorKind.NameCollision, $"Colide com \"{collision}\" no Windows (maiúsculas/minúsculas ou normalização)."));
+                continue;
+            }
+
+            for (var i = 1; i < components.Count; i++)
+                dirKeys.TryAdd(WindowsNameRules.CollisionKey(string.Join('/', components.Take(i))), string.Join('/', components.Take(i)));
+            if (entry.IsDirectory) dirKeys.TryAdd(key, relative);
+            else fileKeys[key] = relative;
+            plan.Add(new PlannedEntry(entry, components, relative));
+        }
+        return plan;
+    }
+
+    private static bool IsSelected(string path, string[]? selected, string[] baseComponents, bool rawOnly)
+    {
+        if (rawOnly) return selected is null && baseComponents.Length == 0; // nomes rejeitados só aparecem na extração completa
+        var basePrefix = baseComponents.Length == 0 ? string.Empty : string.Join('/', baseComponents) + "/";
+        if (basePrefix.Length > 0 && !path.StartsWith(basePrefix, StringComparison.Ordinal)) return false;
+        if (selected is null) return true;
+        foreach (var s in selected)
+            if (path == s || path.StartsWith(s + "/", StringComparison.Ordinal)) return true;
+        return false;
+    }
+
+    private static string CreateDedicatedFolder(string parent, string requestedName)
+    {
+        var name = WindowsNameRules.ValidateComponent(requestedName).IsValid ? requestedName : "Extraído";
+        // Cria em nome temporário e renomeia: Directory.Move falha se o alvo já existir, o que
+        // evita reutilizar silenciosamente uma pasta criada entre a verificação e a criação.
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var candidate = UniqueNames.Next(name, n => PathExists(Path.Join(parent, n)), isDirectory: true);
+            var temp = Path.Join(parent, ".controlfs-new-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temp);
+            try
+            {
+                var final = Path.Join(parent, candidate);
+                Directory.Move(temp, final);
+                return final;
+            }
+            catch (IOException)
+            {
+                TryDeleteIfEmpty(temp);
+            }
+        }
+        throw new IOException("Não foi possível criar a pasta de destino.");
+    }
+
+    private static string CreateStaging(string root)
+    {
+        var staging = Path.Join(root, StagingPrefix + Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)).ToLowerInvariant());
+        var info = Directory.CreateDirectory(staging);
+        if (OperatingSystem.IsWindows()) info.Attributes |= FileAttributes.Hidden;
+        // Manifesto da própria operação: base para limpeza confiável após falha (nunca por padrão de nomes).
+        File.WriteAllText(Path.Join(staging, ManifestName), $"gamepad-explorer-staging v1 {DateTimeOffset.UtcNow:O}");
+        return staging;
+    }
+
+    private static void TryDeleteStaging(string staging)
+    {
+        try
+        {
+            if (Directory.Exists(staging) && File.Exists(Path.Join(staging, ManifestName)))
+                Directory.Delete(staging, recursive: true);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    /// <summary>Remove apenas diretórios vazios criados por nós (de baixo para cima). Nunca remove arquivos.</summary>
+    private static void TryDeleteEmptyTree(string dir)
+    {
+        try
+        {
+            var info = new DirectoryInfo(dir);
+            if (!info.Exists || DestinationGuard.IsLink(info)) return;
+            foreach (var sub in info.EnumerateDirectories())
+                if (!DestinationGuard.IsLink(sub)) TryDeleteEmptyTree(sub.FullName);
+            TryDeleteIfEmpty(dir);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static void TryDeleteIfEmpty(string dir)
+    {
+        try
+        {
+            if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any()) Directory.Delete(dir);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static bool TryMoveNoOverwrite(string source, string target)
+    {
+        try
+        {
+            File.Move(source, target, overwrite: false);
+            return true;
+        }
+        catch (IOException) when (PathExists(target))
+        {
+            return false;
+        }
+    }
+
+    private static bool PathExists(string path) => File.Exists(path) || Directory.Exists(path) || new FileInfo(path).LinkTarget is not null;
+
+    private static long? TryGetFreeSpace(string path)
+    {
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            return root is null ? null : new DriveInfo(root).AvailableFreeSpace;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static bool IsFatal(OperationErrorKind kind) => kind is OperationErrorKind.PasswordRequired or OperationErrorKind.WrongPassword
+        or OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable or OperationErrorKind.AccessDenied or OperationErrorKind.LimitExceeded;
+
+    private static OperationResult Fail(OperationErrorKind kind, string message) => new(OperationState.Failed, [], kind, message);
+
+    private static string Printable(string raw) => new(raw.Select(c => char.IsControl(c) ? '�' : c).ToArray());
+
+    private static string Format(long bytes) => bytes switch
+    {
+        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.0} GB",
+        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.0} MB",
+        >= 1L << 10 => $"{bytes / 1024.0:0.0} KB",
+        _ => $"{bytes} B",
+    };
+
+    internal sealed record PlannedEntry(ArchiveEntry Entry, IReadOnlyList<string> Components, string RelativePath);
+
+    private sealed class RunState
+    {
+        public long TotalBytes;
+        public int FilesDone;
+        public ConflictDecision? ApplyToAll;
+        public bool CancelledByUser;
+    }
+}

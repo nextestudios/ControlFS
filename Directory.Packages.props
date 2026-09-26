@@ -1,0 +1,12 @@
+<Project>
+  <!-- Versões fixadas. Mudanças exigem registro em docs/decisions. -->
+  <ItemGroup>
+    <PackageVersion Include="SharpCompress" Version="1.0.0" />
+    <PackageVersion Include="ppy.SDL3-CS" Version="2026.722.0" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+  </ItemGroup>
+</Project>

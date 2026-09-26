@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Aplicação WinUI 3 (Windows App SDK). A interface é construída em C# (sem marcação XAML compilada)
+    para que todo o código de UI seja verificado pelo compilador também fora do Windows.
+    Ver docs/decisions/0003-ui-em-csharp-sem-xaml-compilado.md.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>ControlFS.App</RootNamespace>
+    <AssemblyName>ControlFS</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <!-- Pacote portátil: Windows App SDK incluído (validar em máquina limpa antes de anunciar). -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+  <!-- makepri.exe e mt.exe só existem no Windows; fora dele compilamos apenas para verificação de tipos. -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+    <ProjectReference Include="..\ControlFS.Application\ControlFS.Application.csproj" />
+    <ProjectReference Include="..\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
+    <ProjectReference Include="..\ControlFS.Infrastructure.Input.Sdl3\ControlFS.Infrastructure.Input.Sdl3.csproj" />
+    <ProjectReference Include="..\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Multiplataforma no alvo de compilação (net10.0) para que a lógica de filesystem seja testável
+    fora do Windows; chamadas específicas do Windows são protegidas por OperatingSystem.IsWindows().
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Infrastructure.Windows</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks> <!-- exigido pelo gerador de LibraryImport -->
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+  </ItemGroup>
+</Project>

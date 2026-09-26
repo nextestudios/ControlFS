@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>ControlFS.UnitTests</RootNamespace>
+    <!-- Testes podem usar nomes descritivos e literais sem as regras de API pública. -->
+    <NoWarn>$(NoWarn);CA1515;CA1707;CA1812;CA2000;CA1001;CA1063;CA1816;CA5394;CA1849;CA1859;CA1822;xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ControlFS.Core\ControlFS.Core.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Application\ControlFS.Application.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Fixtures\**\*.zip" LinkBase="Fixtures" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

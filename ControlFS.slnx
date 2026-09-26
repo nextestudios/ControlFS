@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ControlFS.App/ControlFS.App.csproj" />
+    <Project Path="src/ControlFS.Application/ControlFS.Application.csproj" />
+    <Project Path="src/ControlFS.Core/ControlFS.Core.csproj" />
+    <Project Path="src/ControlFS.Infrastructure.Archives/ControlFS.Infrastructure.Archives.csproj" />
+    <Project Path="src/ControlFS.Infrastructure.Input.Sdl3/ControlFS.Infrastructure.Input.Sdl3.csproj" />
+    <Project Path="src/ControlFS.Infrastructure.Windows/ControlFS.Infrastructure.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ControlFS.UnitTests/ControlFS.UnitTests.csproj" />
+    <Project Path="tests/ControlFS.WindowsIntegrationTests/ControlFS.WindowsIntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ControlFS.InputProbe/ControlFS.InputProbe.csproj" />
+  </Folder>
+</Solution>

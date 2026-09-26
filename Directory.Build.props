@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <Company>ControlFS contributors</Company>
+    <Product>ControlFS</Product>
+    <Copyright>Copyright (c) ControlFS contributors. MIT License.</Copyright>
+    <Version>0.1.0</Version>
+    <!-- Permite restaurar/compilar alvos -windows fora do Windows (apenas compilação; nunca execução). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CI)' == 'true'">
+    <RestoreLockedMode>true</RestoreLockedMode>
+  </PropertyGroup>
+</Project>

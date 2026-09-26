@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Núcleo do produto: sem dependência de WinUI, SDL3 ou SharpCompress. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlFS.UnitTests" />
+  </ItemGroup>
+</Project>

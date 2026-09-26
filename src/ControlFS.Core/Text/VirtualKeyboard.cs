@@ -1,0 +1,332 @@
+using System.Globalization;
+using ControlFS.Core.Actions;
+using ControlFS.Core.Policies;
+
+namespace ControlFS.Core.Text;
+
+public enum TextFieldKind
+{
+    /// <summary>Um componente de nome no destino (regras do Windows).</summary>
+    FileName,
+    /// <summary>Caminho completo: separadores e ":" permitidos.</summary>
+    Path,
+    /// <summary>Mascarado, sem sugestões ou histórico, nunca persistido.</summary>
+    Password,
+    Generic,
+}
+
+public enum KeyboardOutcome
+{
+    None,
+    Submitted,
+    Cancelled,
+}
+
+public enum ShiftState
+{
+    Off,
+    Once,
+    Locked,
+}
+
+/// <summary>
+/// Teclado virtual operável apenas com direções, confirmar e voltar. Modelo puro, sem UI.
+/// Para senhas, o conteúdo vive em um buffer de caracteres zerado ao concluir/cancelar.
+/// </summary>
+public sealed class VirtualKeyboard
+{
+    private const string FileNameForbidden = "\\/:*?\"<>|";
+    private char[] _buffer;
+    private int _length;
+    private readonly Func<string, string?>? _validator;
+
+    public VirtualKeyboard(TextFieldKind kind, string title, string initialText = "", KeyboardLanguage language = KeyboardLanguage.PortugueseBrazil,
+        Func<string, string?>? validator = null, int? maxLength = null, int? initialCaret = null)
+    {
+        Kind = kind;
+        Title = title;
+        Language = language;
+        _validator = validator;
+        MaxLength = maxLength ?? kind switch
+        {
+            TextFieldKind.FileName => WindowsNameRules.MaxComponentLength,
+            TextFieldKind.Path => 4096,
+            TextFieldKind.Password => 512,
+            _ => 1024,
+        };
+        _buffer = new char[Math.Max(16, initialText.Length)];
+        initialText.AsSpan().CopyTo(_buffer);
+        _length = initialText.Length;
+        Caret = Math.Clamp(initialCaret ?? _length, 0, _length);
+        Rebuild();
+    }
+
+    public TextFieldKind Kind { get; }
+    public string Title { get; }
+    public KeyboardLanguage Language { get; private set; }
+    public KeyboardPage Page { get; private set; } = KeyboardPage.Letters;
+    public ShiftState Shift { get; private set; }
+    public int MaxLength { get; }
+    public int Caret { get; private set; }
+    public int Row { get; private set; }
+    public int Column { get; private set; }
+    public bool IsRevealed { get; private set; }
+    public string? ErrorMessage { get; private set; }
+    public KeyboardOutcome Outcome { get; private set; }
+    public IReadOnlyList<IReadOnlyList<VirtualKey>> Rows { get; private set; } = [];
+    public int Length => _length;
+
+    public VirtualKey FocusedKey => Rows[Row][Column];
+
+    /// <summary>Texto para exibição. Senhas são mascaradas, exceto durante revelação explícita.</summary>
+    public string DisplayText => Kind == TextFieldKind.Password && !IsRevealed ? new string('•', _length) : new string(_buffer, 0, _length);
+
+    /// <summary>Texto real. Para senhas, prefira <see cref="TakeSecret"/>.</summary>
+    public string Text => new(_buffer, 0, _length);
+
+    public bool IsKeyEnabled(VirtualKey key) => DisabledReason(key) is null;
+
+    public string? DisabledReason(VirtualKey key)
+    {
+        if (key.Kind != KeyKind.Character || key.Text is null) return null;
+        if (Kind == TextFieldKind.FileName && key.Text.Length == 1 && FileNameForbidden.Contains(key.Text[0], StringComparison.Ordinal))
+            return $"\"{key.Text}\" não é permitido em nomes de arquivo do Windows.";
+        return null;
+    }
+
+    public string DisplayLabel(VirtualKey key) => key.Kind == KeyKind.Character && key.Text is not null && Shift != ShiftState.Off
+        ? key.Label.ToUpper(CultureInfo.CurrentCulture)
+        : key.Label;
+
+    /// <summary>Processa uma ação semântica. Retorna true se consumida.</summary>
+    public bool Handle(InputAction action)
+    {
+        if (Outcome != KeyboardOutcome.None) return false;
+        switch (action)
+        {
+            case InputAction.NavigateUp: MoveVertical(-1); return true;
+            case InputAction.NavigateDown: MoveVertical(1); return true;
+            case InputAction.NavigateLeft: MoveHorizontal(-1); return true;
+            case InputAction.NavigateRight: MoveHorizontal(1); return true;
+            case InputAction.Confirm: Press(FocusedKey); return true;
+            case InputAction.Back: Cancel(); return true;
+            case InputAction.ToggleSelection: Backspace(); return true;
+            case InputAction.OpenContextMenu: ToggleShift(); return true;
+            case InputAction.PreviousRegion: MoveCaret(-1); return true;
+            case InputAction.NextRegion: MoveCaret(1); return true;
+            case InputAction.OpenAppMenu: Submit(); return true;
+            case InputAction.Search: SetPage(Page == KeyboardPage.Letters ? KeyboardPage.Symbols : KeyboardPage.Letters); return true;
+            default: return false;
+        }
+    }
+
+    public void Press(VirtualKey key)
+    {
+        if (Outcome != KeyboardOutcome.None) return;
+        var reason = DisabledReason(key);
+        if (reason is not null)
+        {
+            ErrorMessage = reason;
+            return;
+        }
+        switch (key.Kind)
+        {
+            case KeyKind.Character:
+            case KeyKind.Space:
+                var text = key.Text ?? string.Empty;
+                if (Shift != ShiftState.Off) text = text.ToUpper(CultureInfo.CurrentCulture);
+                InsertText(text);
+                if (Shift == ShiftState.Once) Shift = ShiftState.Off;
+                break;
+            case KeyKind.Shift: ToggleShift(); break;
+            case KeyKind.Backspace: Backspace(); break;
+            case KeyKind.Clear: Clear(); break;
+            case KeyKind.CaretLeft: MoveCaret(-1); break;
+            case KeyKind.CaretRight: MoveCaret(1); break;
+            case KeyKind.PageLetters: SetPage(KeyboardPage.Letters); break;
+            case KeyKind.PageSymbols: SetPage(KeyboardPage.Symbols); break;
+            case KeyKind.PageAccents: SetPage(KeyboardPage.Accents); break;
+            case KeyKind.SwitchLanguage:
+                Language = Language == KeyboardLanguage.PortugueseBrazil ? KeyboardLanguage.English : KeyboardLanguage.PortugueseBrazil;
+                Rebuild();
+                break;
+            case KeyKind.Reveal: IsRevealed = !IsRevealed; break;
+            case KeyKind.Done: Submit(); break;
+            case KeyKind.Cancel: Cancel(); break;
+        }
+    }
+
+    /// <summary>Entrada de texto (teclas virtuais ou teclado físico). Caracteres proibidos no tipo de campo são recusados com mensagem.</summary>
+    public void InsertText(string text)
+    {
+        if (Outcome != KeyboardOutcome.None || text.Length == 0) return;
+        foreach (var c in text)
+        {
+            if (char.IsControl(c)) continue;
+            if (Kind == TextFieldKind.FileName && FileNameForbidden.Contains(c, StringComparison.Ordinal))
+            {
+                ErrorMessage = $"\"{c}\" não é permitido em nomes de arquivo do Windows.";
+                return;
+            }
+        }
+        if (_length + text.Length > MaxLength)
+        {
+            ErrorMessage = $"Limite de {MaxLength} caracteres.";
+            return;
+        }
+        EnsureCapacity(_length + text.Length);
+        Array.Copy(_buffer, Caret, _buffer, Caret + text.Length, _length - Caret);
+        text.AsSpan().CopyTo(_buffer.AsSpan(Caret));
+        _length += text.Length;
+        Caret += text.Length;
+        ErrorMessage = null;
+        if (Kind == TextFieldKind.Password) IsRevealed = false;
+    }
+
+    public void Backspace()
+    {
+        if (Caret == 0) return;
+        // Remove um par substituto inteiro, se houver.
+        var remove = Caret >= 2 && char.IsLowSurrogate(_buffer[Caret - 1]) && char.IsHighSurrogate(_buffer[Caret - 2]) ? 2 : 1;
+        Array.Copy(_buffer, Caret, _buffer, Caret - remove, _length - Caret);
+        _length -= remove;
+        Caret -= remove;
+        Array.Clear(_buffer, _length, remove);
+        ErrorMessage = null;
+    }
+
+    public void Clear()
+    {
+        Array.Clear(_buffer);
+        _length = 0;
+        Caret = 0;
+        ErrorMessage = null;
+    }
+
+    public void MoveCaret(int delta)
+    {
+        var target = Math.Clamp(Caret + delta, 0, _length);
+        if (delta < 0 && target > 0 && char.IsLowSurrogate(_buffer[target])) target--;
+        if (delta > 0 && target < _length && char.IsLowSurrogate(_buffer[target])) target++;
+        Caret = target;
+    }
+
+    public void Submit()
+    {
+        if (Outcome != KeyboardOutcome.None) return;
+        var error = ValidateCurrent();
+        if (error is not null)
+        {
+            ErrorMessage = error;
+            return;
+        }
+        Outcome = KeyboardOutcome.Submitted;
+        IsRevealed = false;
+    }
+
+    public void Cancel()
+    {
+        Outcome = KeyboardOutcome.Cancelled;
+        IsRevealed = false;
+        if (Kind == TextFieldKind.Password) Clear();
+    }
+
+    /// <summary>Entrega a senha e zera o buffer. Após a chamada, o teclado não guarda o segredo.</summary>
+    public string TakeSecret()
+    {
+        var secret = new string(_buffer, 0, _length);
+        Clear();
+        return secret;
+    }
+
+    /// <summary>Foco direto em uma tecla (mouse/toque). O acionamento continua passando por <see cref="Handle"/>.</summary>
+    public void FocusKey(int row, int column)
+    {
+        Row = Math.Clamp(row, 0, Rows.Count - 1);
+        Column = Math.Clamp(column, 0, Rows[Row].Count - 1);
+    }
+
+    public void SetExternalError(string message) => ErrorMessage = message;
+
+    /// <summary>Permite nova tentativa após um erro externo (ex.: nome já existe).</summary>
+    public void Reopen(string? error)
+    {
+        Outcome = KeyboardOutcome.None;
+        ErrorMessage = error;
+    }
+
+    private string? ValidateCurrent()
+    {
+        var text = Text;
+        if (Kind == TextFieldKind.FileName)
+        {
+            var result = WindowsNameRules.ValidateComponent(text);
+            if (!result.IsValid) return result.Message;
+        }
+        return _validator?.Invoke(text);
+    }
+
+    private void ToggleShift() => Shift = Shift switch
+    {
+        ShiftState.Off => ShiftState.Once,
+        ShiftState.Once => ShiftState.Locked,
+        _ => ShiftState.Off,
+    };
+
+    private void SetPage(KeyboardPage page)
+    {
+        Page = page;
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        var (startColumn, _) = ColumnRange(Row, Column);
+        Rows = VirtualKeyboardLayouts.Build(Page, Language, Kind == TextFieldKind.Password);
+        Row = Math.Clamp(Row, 0, Rows.Count - 1);
+        Column = KeyAtColumn(Row, startColumn);
+    }
+
+    private void MoveHorizontal(int delta)
+    {
+        var count = Rows[Row].Count;
+        Column = ((Column + delta) % count + count) % count;
+    }
+
+    private void MoveVertical(int delta)
+    {
+        var (start, _) = ColumnRange(Row, Column);
+        var count = Rows.Count;
+        Row = ((Row + delta) % count + count) % count;
+        Column = KeyAtColumn(Row, start);
+    }
+
+    private (int Start, int End) ColumnRange(int row, int column)
+    {
+        if (Rows.Count == 0) return (0, 1);
+        var start = 0;
+        for (var i = 0; i < column; i++) start += Rows[row][i].Span;
+        return (start, start + Rows[row][column].Span);
+    }
+
+    private int KeyAtColumn(int row, int gridColumn)
+    {
+        var position = 0;
+        var keys = Rows[row];
+        for (var i = 0; i < keys.Count; i++)
+        {
+            position += keys[i].Span;
+            if (gridColumn < position) return i;
+        }
+        return keys.Count - 1;
+    }
+
+    private void EnsureCapacity(int needed)
+    {
+        if (needed <= _buffer.Length) return;
+        var bigger = new char[Math.Max(needed, _buffer.Length * 2)];
+        Array.Copy(_buffer, bigger, _length);
+        Array.Clear(_buffer);
+        _buffer = bigger;
+    }
+}

@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+artifacts/
+*.nupkg
+.DS_Store
+dist/
+release-notes.md
+*.trx
+Thumbs.db
+Desktop.ini
+*.suo
