@@ -26,22 +26,19 @@ $numeric = ($Version -split '-')[0]
 
 function Invoke-Publish([string]$OutDir, [bool]$SingleFile) {
     # O RID vem do próprio ControlFS.App.csproj: passar -r aqui propagaria o RID às bibliotecas e quebraria o restore travado.
+    # PublishSingleFile acrescenta implicitamente Microsoft.NET.ILLink.Tasks (do próprio SDK), que os lock files não
+    # listam. Só nesta publicação o restore não é travado nem reescreve os lock files; as versões continuam fixadas
+    # em Directory.Packages.props e o build da CI segue em modo travado.
+    $lockArgs = if ($SingleFile) { @("-p:RestoreLockedMode=false", "-p:RestorePackagesWithLockFile=false") } else { @() }
     dotnet publish $project -c Release --self-contained true `
         -p:Platform=$Runtime "-p:PublishSingleFile=$($SingleFile.ToString().ToLowerInvariant())" `
         -p:Version=$Version -p:AssemblyVersion="$numeric.0" -p:FileVersion="$numeric.0" `
-        -o $OutDir --nologo
+        @lockArgs -o $OutDir --nologo
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou ($OutDir)" }
     if (-not (Test-Path -LiteralPath (Join-Path $OutDir "ControlFS.exe"))) { throw "Publish não gerou ControlFS.exe em $OutDir" }
 }
 
 $files = @()
-if ($Target -in "All", "Portable") {
-    Write-Host "Publicando versão portátil (um único .exe)..."
-    Invoke-Publish $singleDir $true
-    $portable = Join-Path $dist "ControlFS-Portable-$Runtime.exe"
-    Copy-Item -LiteralPath (Join-Path $singleDir "ControlFS.exe") -Destination $portable
-    $files += $portable
-}
 if ($Target -in "All", "Installer") {
     Write-Host "Publicando versão para o instalador (pasta)..."
     Invoke-Publish $appDir $false
@@ -57,6 +54,13 @@ if ($Target -in "All", "Installer") {
     $files += Join-Path $dist "ControlFS-Setup-$Runtime.exe"
 }
 
+if ($Target -in "All", "Portable") {
+    Write-Host "Publicando versão portátil (um único .exe)..."
+    Invoke-Publish $singleDir $true
+    $portable = Join-Path $dist "ControlFS-Portable-$Runtime.exe"
+    Copy-Item -LiteralPath (Join-Path $singleDir "ControlFS.exe") -Destination $portable
+    $files += $portable
+}
 # LF explícito: "sha256sum -c" / "shasum -c" falham com CRLF no nome do arquivo.
 $lines = foreach ($f in $files) { "$((Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash.ToLowerInvariant())  $(Split-Path -Leaf $f)" }
 [IO.File]::WriteAllText((Join-Path $dist "SHA256SUMS.txt"), (($lines -join "`n") + "`n"), [Text.Encoding]::ASCII)
