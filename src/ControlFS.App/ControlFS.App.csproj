@@ -14,7 +14,7 @@
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <WindowsPackageType>None</WindowsPackageType>
-    <!-- Necessário mesmo sem MSIX: gera o ControlFS.pri que aponta para os recursos do WinUI
+    <!-- Necessário mesmo sem MSIX: gera o PRI do app que aponta para os recursos do WinUI
          (sem ele: "Cannot locate resource from ms-appx:///Microsoft.UI.Xaml/Themes/themeresources.xaml"). -->
     <EnableMsixTooling>true</EnableMsixTooling>
     <!-- "resources.pri" é encontrado qualquer que seja o nome do .exe; com o nome padrão (ControlFS.pri) o portátil
