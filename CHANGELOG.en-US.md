@@ -4,6 +4,20 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2]
+### What's new
+- Windows installer (`ControlFS-Setup-x64.exe`): per-user install, no admin, Start menu shortcut and an optional desktop shortcut.
+- Automatic updates in the installed version: the app checks once a day, downloads in the background and offers "Install and restart"; if you postpone, it installs when you quit. All of it can be turned off in Menu → Updates.
+- Verified updates: the app only accepts an installer whose manifest is signed with the project key and whose SHA-256 and size match; same or older versions are refused.
+- The portable version tells you when a new version exists (replacing it is manual).
+
+### Fixes
+- `SHA256SUMS.txt` now uses LF line endings, so `sha256sum -c` works on Linux and macOS.
+
+### Updating from 0.1.0-alpha.1
+- 0.1.0-alpha.1 had no updater: download and run `ControlFS-Setup-x64.exe` once. Updates are automatic from then on.
+
+
 ## [0.1.0-alpha.1]
 ### What's new
 - First public release (pre-alpha): a controller-first file manager with a built-in ZIP extractor.

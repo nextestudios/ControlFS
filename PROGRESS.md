@@ -30,6 +30,15 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Instalador e atualizações (0.1.0-alpha.2)
+
+- Instalador Inno Setup por usuário, sem administrador (`build/ControlFS.iss`), com marcador que habilita atualização.
+- Atualização automática: verificação diária desligável, download em segundo plano, "Instalar e reiniciar" ou instalar
+  ao sair, nunca durante operações; manifesto assinado (ECDSA P-256) + SHA-256 + tamanho + hosts fixos
+  (`src/ControlFS.Infrastructure.Updates`, ADR 0005). Portátil só avisa.
+- Testes: 34 novos (versões, verificação, servidor falso com ataques, fluxo no controlador).
+- **Ainda não validado:** o ciclo real "versão anterior instalada → atualiza → reabre" numa máquina Windows.
+
 ## Executado nesta sessão (resultados observados)
 
 | Comando | Resultado |

@@ -13,9 +13,12 @@ A **file manager for Windows made for the controller**, with a **built-in extrac
 
 ## Download
 
-Get **[0.1.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.1)** (pre-release):
+Get **[0.1.0-alpha.2](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.2)** (pre-release):
 
-- **`ControlFS-Portable-x64.zip`**: unzip anywhere and run `ControlFS.exe`. Windows 11 x64. Not code-signed yet ([policy](docs/CODE_SIGNING.md)).
+- **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
+- **`ControlFS-Portable-x64.zip`**: unzip anywhere and run `ControlFS.exe`; it tells you about new versions, replacing it is manual.
+
+Windows 11 x64. Not code-signed yet, so SmartScreen may warn ([policy](docs/CODE_SIGNING.md)). On 0.1.0-alpha.1? Run the installer once; updates are automatic from then on.
 
 ## How it works
 
@@ -42,6 +45,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, cursor, masked passwords) usable with only directions + confirm + back
 - **Create folder** with Windows naming rules
 - **ZIP:** browse without extracting; extract all or a selection; password (ZipCrypto); conflicts (skip / keep both / replace with confirmation); progress and per-item results
+- **Automatic, verified updates** (installed version): daily check, background download, "Install and restart" or install on quit; signed manifest + SHA-256; can be turned off ([how it works](docs/GUIDE.md#updates))
 - **Safe extraction:** nothing is written outside the destination, links are blocked, name collisions are refused, size limits, temporary staging, CRC check ([security model](docs/security-model.md))
 
 **Formats today: ZIP only.** AES, ZIP64, 7z, RAR, TAR and GZ are detected and reported as not supported yet ([matrix](docs/archive-support.md)).

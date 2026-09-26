@@ -35,15 +35,27 @@ Before starting you see source, destination, entries and conflict policy. Confli
 
 Blocked entries (unsafe names like `../`, links, reserved Windows names) show a ⚠ and the reason.
 
+## Updates
+
+The **installed** version updates itself:
+
+1. Once a day at most, it asks GitHub for the latest release of `nextestudios/ControlFS` (stable only, or also pre-releases if you are on one).
+2. It downloads the installer in the background and only accepts it if the **release manifest is signed with the project key** and the file's **SHA-256 and size** match. Same or older versions are refused.
+3. It offers **Install and restart**. Postpone it and it installs silently when you quit. Nothing happens while a copy or extraction is running.
+
+Menu → **Updates**: check now, automatic check on/off, install on quit on/off, pre-releases (automatic / yes / no).
+The **portable** version only tells you a new version exists; download it from the release page.
+
 ## Privacy
 
-Everything stays on your PC. Settings live in `%LOCALAPPDATA%\ControlFS\settings.json`. Passwords are never saved or logged. No network access for core features.
+Everything stays on your PC. Settings live in `%LOCALAPPDATA%\ControlFS\settings.json`. Passwords are never saved or logged. Core features never use the network. The only network access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off.
 
 ## Troubleshooting
 
 - **No controller detected:** plug it in and press a button; the header shows the active pad. Keyboard and mouse always work.
 - **Windows SmartScreen warning:** the build isn't code-signed yet ([policy](CODE_SIGNING.md)).
 - **"Format recognized but not supported":** only ZIP is supported for now.
+- **Update failed / "signature invalid":** the app refused a file it couldn't verify. Try again later or download the installer from the release page.
 
 ## Building from source
 
@@ -54,5 +66,5 @@ dotnet build ControlFS.slnx
 dotnet test ControlFS.slnx
 ```
 
-The app runs only on Windows 11 x64. Portable package: `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.1`.
+The app runs only on Windows 11 x64. Installer + portable (needs Inno Setup 6): `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.2`.
 More in [build-and-release.md](build-and-release.md) (Portuguese).

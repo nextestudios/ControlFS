@@ -32,6 +32,11 @@ Microsoft Windows App SDK 2.5.1 (e pacotes de componentes dependentes)
   Licença: MIT — Copyright (c) .NET Foundation and Contributors
   Avisos de terceiros: THIRD-PARTY-NOTICES.TXT distribuído com o runtime.
 
+Inno Setup 6 (gerador do instalador ControlFS-Setup-x64.exe)
+  Origem: https://jrsoftware.org/isinfo.php
+  Licença: Inno Setup License — Copyright (C) 1997-2026 Jordan Russell, Martijn Laan.
+  O executável do instalador contém o código de instalação do Inno Setup, distribuído sob essa licença.
+
 Componentes usados apenas no desenvolvimento (não distribuídos)
 ------------------------------------------------------------------------------
 

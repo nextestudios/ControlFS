@@ -29,4 +29,6 @@ The product spec lives outside the repo; the rules that matter are summarized he
 - **Changelog:** user-visible changes go under `## [Unreleased]` in both `CHANGELOG.md` (Portuguese) and `CHANGELOG.en-US.md`.
 - **Docs come in pairs:** `README.md` / `README.pt-BR.md`, `docs/GUIDE.md` / `docs/GUIDE.pt-BR.md`.
 - **Commits and PR titles:** Conventional Commits in English (`fix: …`, `feat: …`, `docs: …`), one topic per PR.
-- Never commit secrets, tokens, certificates, personal paths or user data.
+- Never commit secrets, tokens, certificates, personal paths or user data. The update signing key exists only in the
+  `UPDATE_SIGNING_KEY` Actions secret; the public key is in `src/ControlFS.Infrastructure.Updates/UpdateTrust.cs`.
+  Changing it breaks automatic updates for every installed copy (see `docs/decisions/0005`).

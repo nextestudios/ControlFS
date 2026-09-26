@@ -13,9 +13,12 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.1.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.1.0-alpha.2](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.2)** (pré-lançamento):
 
-- **`ControlFS-Portable-x64.zip`**: descompacte em qualquer pasta e rode o `ControlFS.exe`. Windows 11 x64. Ainda sem assinatura de código ([política](docs/CODE_SIGNING.md)).
+- **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
+- **`ControlFS-Portable-x64.zip`**: descompacte em qualquer pasta e rode o `ControlFS.exe`; ele avisa de novas versões, a troca é manual.
+
+Windows 11 x64. Ainda sem assinatura de código, então o SmartScreen pode avisar ([política](docs/CODE_SIGNING.md)). Está na 0.1.0-alpha.1? Rode o instalador uma vez; daí em diante as atualizações são automáticas.
 
 ## Como funciona
 
@@ -42,6 +45,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor, senha mascarada) usável só com direções + confirmar + voltar
 - **Criar pasta** com as regras de nomes do Windows
 - **ZIP:** navegar sem extrair; extrair tudo ou uma seleção; senha (ZipCrypto); conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
+- **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
 - **Extração segura:** nada é gravado fora do destino, links são bloqueados, colisões de nome são recusadas, limites de tamanho, staging temporário, verificação CRC ([modelo de segurança](docs/security-model.md))
 
 **Formatos hoje: só ZIP.** AES, ZIP64, 7z, RAR, TAR e GZ são detectados e o app avisa que ainda não os suporta ([matriz](docs/archive-support.md)).

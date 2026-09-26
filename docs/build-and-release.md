@@ -40,6 +40,9 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 - `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
   `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
   de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
+- Release inclui também `ControlFS-Setup-x64.exe` (Inno Setup, por usuário), testado por instalação e desinstalação
+  silenciosas no runner, e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
+  (`build/New-ReleaseManifest.ps1` confere a assinatura com a chave pública do app antes de publicar).
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
 Para publicar: adicione a seção da versão nos dois changelogs, faça merge na `main` e crie a tag (somente mantenedores).

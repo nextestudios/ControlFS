@@ -19,6 +19,16 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] 1280×720, 1280×800, 1920×1080 e 4K com escala 100–200%: nenhuma ação essencial fica inacessível.
 - [ ] Narrador lê o nome dos itens e das teclas do teclado virtual.
 
+## Instalador e atualizações
+
+- [ ] Instalar `ControlFS-Setup-x64.exe` numa conta padrão (sem pedir administrador); atalho no menu Iniciar aparece.
+- [ ] Com a versão anterior instalada e uma nova publicada: abrir o app, ver "Atualização X pronta", escolher
+      **Instalar e reiniciar** e confirmar que o app reabre na nova versão com as preferências mantidas.
+- [ ] Escolher **Depois**, sair do app e confirmar que a nova versão está instalada na próxima abertura.
+- [ ] Desligar "Verificar automaticamente" e confirmar (monitor de rede) que nenhuma requisição é feita ao abrir.
+- [ ] Sem internet: o app abre normalmente e "Verificar agora" mostra erro claro.
+- [ ] Desinstalar pelo Windows: arquivos do app e cache de atualizações removidos; `settings.json` preservado.
+
 ## Controles da matriz
 
 Xbox (USB/BT), DualShock 4, DualSense, Switch Pro, 8BitDo, um genérico. Para cada um: navegação, confirmar/voltar na

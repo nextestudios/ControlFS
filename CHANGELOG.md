@@ -4,6 +4,20 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2]
+### Novidades
+- Instalador para Windows (`ControlFS-Setup-x64.exe`): instala por usuário, sem administrador, com atalho no menu Iniciar e opção de atalho na Área de Trabalho.
+- Atualizações automáticas na versão instalada: o app verifica novas versões uma vez por dia, baixa em segundo plano e oferece "Instalar e reiniciar"; se você adiar, instala ao sair. Tudo desligável em Menu → Atualizações.
+- Atualizações verificadas: o app só aceita um instalador cujo manifesto esteja assinado pela chave do projeto e cujo SHA-256 e tamanho confiram; versões iguais ou anteriores são recusadas.
+- A versão portátil avisa quando existe uma versão nova (a troca é manual).
+
+### Correções
+- `SHA256SUMS.txt` agora usa quebra de linha LF, então `sha256sum -c` funciona no Linux e no macOS.
+
+### Atualizando da 0.1.0-alpha.1
+- A 0.1.0-alpha.1 não tinha atualizador: baixe e rode o `ControlFS-Setup-x64.exe` uma vez. A partir daí as atualizações são automáticas.
+
+
 ## [0.1.0-alpha.1]
 ### Novidades
 - Primeira versão pública (pré-alfa): gerenciador de arquivos para controle com extrator ZIP integrado.
