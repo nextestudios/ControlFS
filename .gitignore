@@ -13,3 +13,6 @@ release-notes.md
 Thumbs.db
 Desktop.ini
 *.suo
+
+# Dados da versão portátil (preferências e logs ao lado do .exe)
+ControlFS_Data/

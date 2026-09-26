@@ -365,6 +365,9 @@ public sealed partial class AppController
 
     internal void RaiseChanged() => Changed?.Invoke();
 
+    /// <summary>Aviso não modal no rodapé (ex.: pasta de dados alternativa no modo portátil).</summary>
+    public void ShowNotice(string message) => SetStatus(message);
+
     internal void SetStatus(string message)
     {
         StatusMessage = message;

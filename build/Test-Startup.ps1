@@ -11,6 +11,7 @@ param(
 $ErrorActionPreference = "Continue"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $started = Get-Date
+Remove-Item (Join-Path $env:LOCALAPPDATA "ControlFS\logs"), (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data\logs") -Recurse -Force -ErrorAction SilentlyContinue
 $p = Start-Process -FilePath $Exe -WorkingDirectory (Split-Path -Parent $Exe) -PassThru
 Start-Sleep -Seconds $Seconds
 $p.Refresh()
@@ -38,10 +39,10 @@ $events = Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = 
     Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting', 'SideBySide', 'Application Hang' }
 $events | Format-List TimeCreated, ProviderName, Id, Message | Out-String -Width 400 | Set-Content (Join-Path $OutDir "events.txt")
 
-$appData = Join-Path $env:LOCALAPPDATA "ControlFS"
-if (Test-Path $appData) {
-    Get-ChildItem $appData -Recurse | Select-Object FullName, Length | Out-String -Width 400 | Set-Content (Join-Path $OutDir "appdata.txt")
-    Get-ChildItem (Join-Path $appData "logs") -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName $OutDir }
+foreach ($data in (Join-Path $env:LOCALAPPDATA "ControlFS"), (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data")) {
+    if (-not (Test-Path $data)) { continue }
+    Get-ChildItem $data -Recurse | Select-Object FullName, Length | Out-String -Width 400 | Add-Content (Join-Path $OutDir "appdata.txt")
+    Get-ChildItem (Join-Path $data "logs") -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName $OutDir -Force }
 }
 if ($alive) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
 

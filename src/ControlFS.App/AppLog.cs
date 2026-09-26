@@ -4,7 +4,7 @@ using System.Reflection;
 namespace ControlFS.App;
 
 /// <summary>
-/// Log local mínimo de inicialização e falhas, em %LOCALAPPDATA%\ControlFS\logs (rotação simples por tamanho).
+/// Log local mínimo de inicialização e falhas, em &lt;pasta de dados&gt;\logs (rotação simples por tamanho).
 /// Nunca contém senhas nem conteúdo de arquivos; fica só no computador do usuário.
 /// </summary>
 internal static class AppLog
@@ -12,7 +12,7 @@ internal static class AppLog
     private const long MaxBytes = 512 * 1024;
     private static readonly object Gate = new();
 
-    public static string Directory { get; } = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ControlFS", "logs");
+    public static string Directory => Path.Join(AppPaths.DataDirectory, "logs");
 
     public static void Info(string message) => Write("startup.log", "INFO", message);
 
@@ -26,7 +26,7 @@ internal static class AppLog
     public static void Session()
     {
         var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "?";
-        Info($"ControlFS {version} · {Environment.OSVersion.VersionString} · {(Environment.Is64BitProcess ? "x64" : "x86")} · .NET {Environment.Version}");
+        Info($"ControlFS {version} · {(AppPaths.IsInstalled ? "instalado" : "portátil")} · {Environment.OSVersion.VersionString} · {(Environment.Is64BitProcess ? "x64" : "x86")} · .NET {Environment.Version}");
     }
 
     private static void Write(string file, string level, string message)

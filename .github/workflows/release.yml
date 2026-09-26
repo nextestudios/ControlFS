@@ -69,7 +69,7 @@ jobs:
             "### Downloads"
             ""
             '- **Installer (recommended):** `ControlFS-Setup-x64.exe` — per-user install, no admin; updates itself automatically.'
-            '- **Portable:** `ControlFS-Portable-x64.zip` — unzip anywhere and run `ControlFS.exe`; updates are manual.'
+            '- **Portable:** `ControlFS-Portable-x64.exe` — a single executable; keeps its data in the `ControlFS_Data` folder next to it; updates are manual.'
             '- **Integrity:** `SHA256SUMS.txt`; `release-manifest.json` + `.sig` are the signed update manifest the app verifies.'
             '- Windows 11 x64. Not code-signed yet: Windows SmartScreen may warn (see the code signing policy).'
             ""
@@ -94,22 +94,18 @@ jobs:
         shell: pwsh
         run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version "${{ steps.version.outputs.version }}"
 
-      # Instala e desinstala em silêncio numa pasta temporária do runner: prova que o instalador funciona
-      # sem administrador, grava o marcador de atualização e remove os arquivos ao desinstalar.
-      - name: Smoke-test installer (silent install and uninstall)
+      # Abre o app de verdade antes de publicar: o .exe portátil e a versão instalada (instalar, abrir, desinstalar).
+      - name: Smoke-test portable exe (launch)
         shell: pwsh
         run: |
-          $dir = Join-Path $env:RUNNER_TEMP "controlfs-install"
-          $p = Start-Process -Wait -PassThru -FilePath dist\ControlFS-Setup-x64.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/DIR=$dir"
-          if ($p.ExitCode -ne 0) { throw "Instalação falhou (código $($p.ExitCode))" }
-          foreach ($f in "ControlFS.exe", "ControlFS.installed", "SDL3.dll", "SharpCompress.dll", "unins000.exe") {
-            if (-not (Test-Path -LiteralPath (Join-Path $dir $f))) { throw "Instalação incompleta: falta $f" }
-          }
-          $u = Start-Process -Wait -PassThru -FilePath (Join-Path $dir "unins000.exe") -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'
-          if ($u.ExitCode -ne 0) { throw "Desinstalação falhou (código $($u.ExitCode))" }
-          Start-Sleep -Seconds 3
-          if (Test-Path -LiteralPath (Join-Path $dir "ControlFS.exe")) { throw "Desinstalação deixou o executável" }
-          Write-Host "Instalação e desinstalação silenciosas OK"
+          $dir = Join-Path $env:RUNNER_TEMP "portable"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item dist\ControlFS-Portable-x64.exe (Join-Path $dir "ControlFS.exe")
+          .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS.exe") -OutDir smoke-portable -Seconds 40
+
+      - name: Smoke-test installer (install, launch, uninstall)
+        shell: pwsh
+        run: .\build\Test-Installed.ps1 -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-installed
 
       # A chave privada existe só no secret UPDATE_SIGNING_KEY; o script confere a assinatura contra a chave
       # pública embutida no app e falha se não bater. Sem manifesto assinado, o app não aceita a atualização.
@@ -125,7 +121,7 @@ jobs:
           name: ControlFS-${{ steps.version.outputs.version }}
           path: |
             dist/ControlFS-Setup-x64.exe
-            dist/ControlFS-Portable-x64.zip
+            dist/ControlFS-Portable-x64.exe
             dist/SHA256SUMS.txt
             dist/release-manifest.json
             dist/release-manifest.json.sig
@@ -143,7 +139,7 @@ jobs:
           body_path: release-notes.md
           files: |
             dist/ControlFS-Setup-x64.exe
-            dist/ControlFS-Portable-x64.zip
+            dist/ControlFS-Portable-x64.exe
             dist/SHA256SUMS.txt
             dist/release-manifest.json
             dist/release-manifest.json.sig

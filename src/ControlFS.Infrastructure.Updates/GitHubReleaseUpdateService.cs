@@ -33,14 +33,12 @@ public sealed class GitHubReleaseUpdateService : IUpdateService, IDisposable
     public ReleaseVersion CurrentVersion { get; }
     public bool IsInstalled { get; }
 
-    /// <summary>Configuração padrão do app: versão do assembly, marcador do instalador e %LOCALAPPDATA%\ControlFS\updates.</summary>
-    public static GitHubReleaseUpdateService CreateDefault()
+    /// <summary>Configuração do app: versão do assembly; instalado/portátil e pasta de downloads decididos pelo app.</summary>
+    public static GitHubReleaseUpdateService CreateDefault(bool isInstalled, string downloadDirectory)
     {
         var informational = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         var version = ReleaseVersion.TryParse(informational, out var v) ? v : ReleaseVersion.Parse("0.0.0");
-        var installed = File.Exists(Path.Join(AppContext.BaseDirectory, InstalledMarkerName));
-        var dir = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ControlFS", "updates");
-        return new GitHubReleaseUpdateService(version, installed, dir);
+        return new GitHubReleaseUpdateService(version, isInstalled, downloadDirectory);
     }
 
     public async Task<UpdateCheckResult> CheckAsync(bool includePrereleases, CancellationToken cancellationToken)
