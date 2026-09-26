@@ -100,8 +100,8 @@ jobs:
         run: |
           $dir = Join-Path $env:RUNNER_TEMP "portable"
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          Copy-Item dist\ControlFS-Portable-x64.exe (Join-Path $dir "ControlFS.exe")
-          .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS.exe") -OutDir smoke-portable -Seconds 40
+          Copy-Item dist\ControlFS-Portable-x64.exe $dir
+          .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS-Portable-x64.exe") -OutDir smoke-portable -Seconds 40
 
       - name: Smoke-test installer (install, launch, uninstall)
         shell: pwsh
