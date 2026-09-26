@@ -1,0 +1,42 @@
+GAMEPAD EXPLORER — AVISOS DE TERCEIROS
+
+O código original deste projeto é licenciado sob MIT (arquivo LICENSE). Os componentes abaixo
+mantêm suas próprias licenças; incluí-los na distribuição NÃO os torna MIT.
+
+Componentes distribuídos com o aplicativo
+------------------------------------------------------------------------------
+
+SharpCompress 1.0.0
+  Origem: https://github.com/adamhathcock/sharpcompress (commit b6cc95af73950c914e0c6ce7ea3511528ede1121)
+  Licença: MIT — Copyright (c) 2014 Adam Hathcock
+  Texto: https://github.com/adamhathcock/sharpcompress/blob/master/LICENSE.txt
+
+ppy.SDL3-CS 2026.722.0 (binding C#)
+  Origem: https://github.com/ppy/SDL3-CS (commit 7f836c9f21dad8ee68e70432e5b7d38ceae47eaa)
+  Licença: MIT — Copyright (c) ppy Pty Ltd
+
+SDL 3.5.0 (biblioteca nativa SDL3.dll incluída no pacote acima)
+  Origem: https://github.com/libsdl-org/SDL
+  Licença: zlib — Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
+  PENDENTE: confirmar quais componentes opcionais (ex.: hidapi) estão compilados no binário
+  distribuído e reproduzir aqui os avisos correspondentes.
+
+Microsoft Windows App SDK 2.5.1 (e pacotes de componentes dependentes)
+  Origem: https://www.nuget.org/packages/Microsoft.WindowsAppSDK
+  Licença: Microsoft Software License Terms — Microsoft Windows App SDK (license.txt no pacote).
+  A seção "Distributable Code" permite redistribuir arquivos colocados junto ao aplicativo pelo pacote,
+  inclusive em implantação self-contained. Contém avisos de terceiros próprios; ver o pacote.
+
+.NET Runtime 10 (quando publicado como self-contained)
+  Origem: https://github.com/dotnet/runtime
+  Licença: MIT — Copyright (c) .NET Foundation and Contributors
+  Avisos de terceiros: THIRD-PARTY-NOTICES.TXT distribuído com o runtime.
+
+Componentes usados apenas no desenvolvimento (não distribuídos)
+------------------------------------------------------------------------------
+
+xunit.v3 3.2.2 / xunit.runner.visualstudio 3.1.5 — Apache-2.0
+Microsoft.NET.Test.Sdk 18.10.1 — MIT
+Microsoft.Windows.SDK.BuildTools 10.0.28000.2705 — Microsoft Windows SDK License
+
+O Windows e seus serviços não fazem parte deste código aberto.

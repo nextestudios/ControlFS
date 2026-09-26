@@ -1,0 +1,59 @@
+# Entrada e foco
+
+## Pipeline
+
+```text
+SDL3 (gamepad por posição física) ─► StickNormalizer (analógico) ─► PhysicalControl
+     ─► InputRouter: dispositivo ativo · ActionMap (convenção) · repetição só de navegação · trava pós-contexto
+     ─► InputAction ─► AppController (modal do topo ▸ tela) ─► comando
+Teclado físico ─► InputHost.OnKeyDown ─► InputAction (mesmo AppController)
+Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppController)
+```
+
+## Mapeamento padrão (posições físicas)
+
+| Entrada | Ação | Teclado |
+|---|---|---|
+| D-pad / analógico esquerdo | Navegar | Setas |
+| South | Confirmar / abrir | Enter |
+| East | Voltar / fechar | Esc, Backspace |
+| West | Marcar/desmarcar | Espaço |
+| North | Ações do item | F2, tecla Menu |
+| LB / RB | Região anterior/próxima (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
+| LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
+| Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
+| Select | Busca (ainda não implementada; não aparece nas legendas) | Ctrl+F |
+
+"Confirmar com botão direito" (menu do app) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
+Guide/Home não é mapeado. L3/R3 não são usados.
+
+## Regras implementadas e testadas (unitário)
+
+- Confirmar/voltar/menus disparam uma vez por transição; **nunca repetem** (`InputRouterTests`).
+- Navegação repete após 380 ms, acelerando de 130 ms até 45 ms.
+- Ao abrir/fechar modal, botões mantidos ficam travados até serem soltos — o botão que abriu o diálogo não o aceita.
+- Somente um dispositivo comanda a UI; o primeiro a pressionar assume. Com modal sensível aberto (conflito, substituir,
+  sair), outro dispositivo não assume. Desconexão do ativo libera a vaga; operações em disco continuam.
+- Janela sem foco: roteamento suspenso; ao voltar, estados limpos e só novas transições contam.
+- Analógico: zona morta 0,25, ativação 0,55, liberação 0,40 (histerese), dominância 1,25 (diagonais ambíguas ignoradas).
+
+## `Back`
+
+1. Fecha o modal do topo (em diálogos, executa a opção segura declarada).
+2. Limpa a seleção, se houver.
+3. Cancela um carregamento em andamento.
+4. Volta no histórico do painel (restaurando o foco no item de origem).
+5. Sem histórico: tela inicial. Na tela inicial: confirmação de saída com foco em "Cancelar".
+
+## Foco
+
+- Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização; item removido → vizinho.
+- Após criar pasta: foco na pasta criada. Ao sair de um compactado ou subir de nível: foco no item de origem.
+- Diálogos destrutivos iniciam na opção segura; conflito inicia em "Pular (manter existente)".
+- O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas
+  `Gamepad*` do WinUI são descartadas para evitar entrada dupla com o SDL.
+
+## Pendente
+
+Troca explícita de dispositivo ativo pela UI, recuperação após suspensão do sistema (testar), duplicidade físico+virtual
+com diagnóstico, assistente para controles sem perfil, remapeamento, rumble opcional.
