@@ -23,22 +23,31 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Download and extract the published portable zip
+      - name: Download the published files
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.inputs.release_tag }}
         run: |
-          gh release download $env:TAG -R $env:GITHUB_REPOSITORY -p ControlFS-Portable-x64.zip -D $env:RUNNER_TEMP
-          Expand-Archive (Join-Path $env:RUNNER_TEMP ControlFS-Portable-x64.zip) -DestinationPath (Join-Path $env:RUNNER_TEMP portable)
-      - name: Launch and collect evidence
+          gh release download $env:TAG -R $env:GITHUB_REPOSITORY -p ControlFS-Portable-x64.exe -p ControlFS-Setup-x64.exe -D (Join-Path $env:RUNNER_TEMP rel)
+      - name: Launch published portable exe
         shell: pwsh
-        run: .\build\Test-Startup.ps1 -Exe (Join-Path $env:RUNNER_TEMP "portable\ControlFS.exe") -OutDir smoke-released
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "portable"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item (Join-Path $env:RUNNER_TEMP "rel\ControlFS-Portable-x64.exe") $dir
+          .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS-Portable-x64.exe") -OutDir smoke-released-portable -Seconds 40
+      - name: Install, launch and uninstall the published installer
+        if: always()
+        shell: pwsh
+        run: .\build\Test-Installed.ps1 -Setup (Join-Path $env:RUNNER_TEMP "rel\ControlFS-Setup-x64.exe") -OutDir smoke-released-installed
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: smoke-released
-          path: smoke-released
+          path: |
+            smoke-released-portable
+            smoke-released-installed
 
   source:
     name: Launch portable exe and installed app
