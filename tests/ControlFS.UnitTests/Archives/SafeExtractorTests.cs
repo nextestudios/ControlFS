@@ -332,16 +332,21 @@ public class SafeExtractorTests : IDisposable
     }
 
     [Fact]
-    public async Task Recognized_but_unsupported_format_is_reported_honestly()
+    public async Task Detection_uses_content_not_extension()
     {
         var fake7z = _tmp.Sub("x.7z");
         File.WriteAllBytes(fake7z, [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C, 0, 4, 1, 2, 3]);
         var renamedZip = Create(_tmp.Sub("na-verdade-zip.dat"), Text("a.txt", "a"));
+        var notAnArchive = _tmp.Sub("foto.zip");
+        File.WriteAllText(notAnArchive, "não sou um zip");
 
         Assert.Equal(ArchiveFormat.SevenZip, _service.Detect(fake7z));
         Assert.Equal(ArchiveFormat.Zip, _service.Detect(renamedZip)); // conteúdo decide, não a extensão
-        var result = await Extract(fake7z, _tmp.MakeDir("out"));
-        Assert.Equal(OperationErrorKind.UnsupportedFormat, result.Error);
+        Assert.Equal(ArchiveFormat.Unknown, _service.Detect(notAnArchive));
+        var truncated = await Extract(fake7z, _tmp.MakeDir("out"));
+        Assert.Equal(OperationState.Failed, truncated.FinalState); // assinatura válida, conteúdo inválido: falha sem falso sucesso
+        var unknown = await Extract(notAnArchive, _tmp.MakeDir("out2"));
+        Assert.Equal(OperationErrorKind.UnsupportedFormat, unknown.Error);
     }
 
     [Fact]

@@ -10,7 +10,21 @@ public static class FormatDetector
     public static ArchiveFormat Detect(string path)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.None);
-        return Detect(stream);
+        var format = Detect(stream);
+        if (format != ArchiveFormat.GZip) return format;
+        // GZ que contém um TAR vira TAR.GZ: descomprime só o primeiro bloco de 512 bytes para conferir "ustar".
+        stream.Position = 0;
+        try
+        {
+            using var gz = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress, leaveOpen: true);
+            Span<byte> block = stackalloc byte[HeaderLength];
+            var read = gz.ReadAtLeast(block, HeaderLength, throwOnEndOfStream: false);
+            return read >= 262 && block.Slice(257, 5).SequenceEqual("ustar"u8) ? ArchiveFormat.TarGZip : ArchiveFormat.GZip;
+        }
+        catch (InvalidDataException)
+        {
+            return ArchiveFormat.GZip;
+        }
     }
 
     public static ArchiveFormat Detect(Stream stream)

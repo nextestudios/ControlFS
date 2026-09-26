@@ -13,7 +13,7 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.1.0-alpha.4](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.4)** (pré-lançamento):
+Baixe a **[0.2.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.2.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
@@ -44,15 +44,17 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação, propriedades
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor, senha mascarada) usável só com direções + confirmar + voltar
 - **Criar pasta** com as regras de nomes do Windows
-- **ZIP:** navegar sem extrair; extrair tudo ou uma seleção; senha (ZipCrypto); conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
+- **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
+- **Compactar** em ZIP ou TAR.GZ a partir dos itens marcados, com o nome digitado no teclado virtual
+- **Abrir com o Windows:** programa padrão, "Abrir com…", "Mostrar no Explorador de Arquivos"; programas e scripts pedem confirmação
 - **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
 - **Extração segura:** nada é gravado fora do destino, links são bloqueados, colisões de nome são recusadas, limites de tamanho, staging temporário, verificação CRC ([modelo de segurança](docs/security-model.md))
 
-**Formatos hoje: só ZIP.** AES, ZIP64, 7z, RAR, TAR e GZ são detectados e o app avisa que ainda não os suporta ([matriz](docs/archive-support.md)).
+**Extrair:** ZIP, 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. RAR não pode ser criado (formato proprietário); criar 7z, volumes divididos, ZIP AES e ZIP64 ainda precisam de validação ([matriz](docs/archive-support.md)).
 
 ## Roadmap
 
-**Próximos:** rodar no Windows com controles reais, ZIP64 e AES, renomear/excluir (Lixeira), copiar/mover · **Depois:** dois painéis, busca, favoritos, 7z/RAR/TAR/GZ, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** renomear/excluir (Lixeira), copiar/mover, ZIP64 e AES, criar 7z · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Mais
 

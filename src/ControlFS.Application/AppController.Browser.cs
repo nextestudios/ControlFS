@@ -2,6 +2,7 @@ using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Policies;
 using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
@@ -71,22 +72,11 @@ public sealed partial class AppController
     private async Task OpenFileAsync(PaneState pane, FileEntry entry, string path)
     {
         var format = await Task.Run(() => _archives.Detect(path));
-        switch (format)
-        {
-            case ArchiveFormat.Zip:
-                await OpenArchiveAsync(pane, path);
-                break;
-            case ArchiveFormat.Unknown:
-                ShowProperties(entry);
-                break;
-            default:
-                ShowMessage("Formato ainda não suportado", [("Arquivo", entry.Name), ("Formato detectado", format.ToString())],
-                    "O formato foi reconhecido pelo conteúdo, mas a extração dele ainda não está implementada nesta versão.");
-                break;
-        }
+        if (ArchiveFormats.CanExtract(format)) await OpenArchiveAsync(pane, path);
+        else OpenExternally(entry, path);
     }
 
-    internal async Task OpenArchiveAsync(PaneState pane, string archivePath)
+    internal async Task OpenArchiveAsync(PaneState pane, string archivePath, string? password = null)
     {
         var generation = ++pane.Generation;
         pane.LoadCts?.Cancel();
@@ -95,14 +85,20 @@ public sealed partial class AppController
         RaiseChanged();
         try
         {
-            var info = await _archives.InspectAsync(archivePath, null, Limits, cts.Token);
+            var info = await _archives.InspectAsync(archivePath, password, Limits, cts.Token);
             if (generation != pane.Generation) return;
             var tree = new ArchiveTree(info, Limits);
             if (pane.Location is { } current) PushHistory(pane, current);
             pane.Archive = tree;
+            pane.ArchivePassword = password;
             pane.Location = new ArchiveLocation(archivePath, string.Empty);
             pane.List.SetItems(tree.Children(string.Empty));
             if (tree.BlockedCount > 0) StatusMessage = $"{tree.BlockedCount} entrada(s) com nome inseguro foram bloqueadas.";
+        }
+        catch (ArchiveAccessException ex) when (generation == pane.Generation && ex.Kind is OperationErrorKind.PasswordRequired or OperationErrorKind.WrongPassword)
+        {
+            // Cabeçalhos protegidos: sem a senha nem a lista de arquivos pode ser lida.
+            AskArchivePassword(pane, archivePath, ex.Kind == OperationErrorKind.WrongPassword ? "Senha incorreta. Tente novamente." : null);
         }
         catch (ArchiveAccessException ex) when (generation == pane.Generation)
         {
@@ -149,6 +145,7 @@ public sealed partial class AppController
             if (generation != pane.Generation) return;
             if (pushHistory && pane.Location is { } previous) PushHistory(pane, previous);
             pane.Archive = tree;
+            if (tree is null) pane.ArchivePassword = null;
             pane.Location = target;
             pane.InaccessibleCount = inaccessible;
             pane.List.SetItems(entries, focusId);
@@ -255,6 +252,16 @@ public sealed partial class AppController
             ShowArchiveMenu(pane, archive);
             return;
         }
+        var marked = pane.List.SelectedEntries.Where(e => e.FullPath is not null).ToList();
+        if (marked.Count > 0 && pane.Location is PhysicalLocation)
+        {
+            PushModal(new MenuModal($"{marked.Count} item(ns) marcado(s)",
+            [
+                new MenuItem($"Compactar {marked.Count} item(ns)…", () => BeginCompress(pane, marked)),
+                new MenuItem("Limpar marcação", () => pane.List.ClearSelection()),
+            ]));
+            return;
+        }
         var entry = pane.List.Focused;
         if (entry is { Kind: EntryKind.File, FullPath: { } file })
         {
@@ -263,6 +270,10 @@ public sealed partial class AppController
         }
         var items = new List<MenuItem>();
         if (entry is { IsContainer: true }) items.Add(new MenuItem("Abrir", () => OpenEntry(pane, entry)));
+        if (entry is { IsContainer: true, FullPath: { } folderPath })
+            items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(folderPath), external: true), ShellUnavailable));
+        if (entry is { Kind: EntryKind.Directory, FullPath: not null } && pane.Location is PhysicalLocation)
+            items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco."));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items));
@@ -272,19 +283,21 @@ public sealed partial class AppController
     {
         var format = await Task.Run(() => _archives.Detect(file));
         var items = new List<MenuItem>();
-        if (format == ArchiveFormat.Zip)
+        if (ArchiveFormats.CanExtract(format))
         {
             var folder = Path.GetDirectoryName(file)!;
-            var stem = Path.GetFileNameWithoutExtension(file);
-            items.Add(new MenuItem("Abrir compactado", () => Track(OpenArchiveAsync(pane, file))));
+            var stem = ArchiveFormats.StemOf(file);
+            items.Add(new MenuItem($"Abrir compactado ({ArchiveFormats.DisplayName(format)})", () => Track(OpenArchiveAsync(pane, file))));
             items.Add(new MenuItem($"Extrair para \"{stem}\"", () => BeginExtraction(file, folder, dedicated: true, null, string.Empty)));
             items.Add(new MenuItem("Extrair aqui", () => BeginExtraction(file, folder, dedicated: false, null, string.Empty)));
             items.Add(new MenuItem("Extrair para…", () => PickDestinationThenExtract(file, folder, null, string.Empty)));
         }
-        else if (format != ArchiveFormat.Unknown)
-        {
-            items.Add(new MenuItem($"Extrair ({format})", null, $"Formato {format} reconhecido, mas ainda não suportado nesta versão."));
-        }
+        items.Add(new MenuItem(ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
+            () => OpenExternally(entry, file), ShellUnavailable));
+        items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,
+            Detail: "Escolher o programa na caixa do Windows."));
+        items.Add(new MenuItem("Mostrar no Explorador de Arquivos", () => RunShell(s => s.RevealInExplorer(file), external: true), ShellUnavailable));
+        items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         PushModal(new MenuModal(entry.Name, items));
@@ -294,7 +307,7 @@ public sealed partial class AppController
     {
         var path = archive.ArchivePath;
         var folder = Path.GetDirectoryName(path)!;
-        var stem = Path.GetFileNameWithoutExtension(path);
+        var stem = ArchiveFormats.StemOf(path);
         var selected = pane.List.SelectedIds.Select(ArchiveTree.PathFromId).Where(p => p.Length > 0).ToList();
         var items = new List<MenuItem>
         {
@@ -473,9 +486,7 @@ public sealed partial class AppController
         if (entry.IsReparsePoint) attributes.Add("link/ponto de nova análise");
         if (attributes.Count > 0) lines.Add(("Atributos", string.Join(", ", attributes)));
         if (entry.Detail is { } detail) lines.Add(("Detalhes", detail));
-        ShowMessage("Propriedades", lines, entry.Kind == EntryKind.File
-            ? "Visualização interna e abertura externa ainda não estão implementadas nesta versão."
-            : null);
+        ShowMessage("Propriedades", lines);
     }
 
     private void ShowArchiveEntryInfo(FileEntry entry)

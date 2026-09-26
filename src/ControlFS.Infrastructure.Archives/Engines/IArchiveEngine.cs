@@ -23,6 +23,9 @@ public interface IArchiveReadSession : IDisposable
 {
     ArchiveInfo Info { get; }
 
-    /// <summary>Abre o fluxo descompactado da entrada pelo índice de <see cref="ArchiveInfo.Entries"/>.</summary>
-    Stream OpenEntry(int index);
+    /// <summary>
+    /// Entrega, na ordem do compactado, as entradas de arquivo pedidas (índices de <see cref="ArchiveInfo.Entries"/>).
+    /// O fluxo de cada entrada deve ser aberto e lido antes de avançar para a próxima (formatos sequenciais).
+    /// </summary>
+    IEnumerable<(ArchiveEntry Entry, Func<Stream> Open)> ReadFiles(IReadOnlySet<int> wanted, CancellationToken cancellationToken);
 }

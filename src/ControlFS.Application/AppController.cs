@@ -23,6 +23,7 @@ public sealed partial class AppController
 {
     private const int PageSize = 10;
     private readonly IFileSystemProvider _fs;
+    private readonly IShellService? _shell;
     private readonly IArchiveService _archives;
     private readonly ISettingsStore? _settingsStore;
     private readonly SynchronizationContext _ui;
@@ -31,8 +32,10 @@ public sealed partial class AppController
     private Action<string>? _pickerCallback;
     private Action? _pickerCancel;
 
-    public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null)
+    public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
+        IShellService? shell = null)
     {
+        _shell = shell;
         _fs = fileSystem;
         _archives = archives;
         _settingsStore = settingsStore;

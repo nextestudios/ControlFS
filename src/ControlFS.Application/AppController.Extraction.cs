@@ -26,7 +26,7 @@ public sealed partial class AppController
         var dialog = new DialogModal("Extrair", []);
         void Refill()
         {
-            var stem = Path.GetFileNameWithoutExtension(plan.ArchivePath);
+            var stem = ArchiveFormats.StemOf(plan.ArchivePath);
             dialog.Lines =
             [
                 ("Origem", plan.ArchivePath),
@@ -63,7 +63,13 @@ public sealed partial class AppController
 
     private async Task StartExtractionAsync(ExtractionPlan plan)
     {
-        // Senha só é pedida quando alguma entrada relevante é protegida.
+        // Senha já informada ao abrir o compactado (cabeçalhos protegidos) é reaproveitada, só em memória.
+        if (Browser.Archive?.Info.ArchivePath == plan.ArchivePath && Browser.ArchivePassword is { } known)
+        {
+            Enqueue(plan, known);
+            return;
+        }
+        // Senha só é pedida quando alguma entrada relevante é protegida (ou quando nem a lista abre sem ela).
         bool needsPassword;
         try
         {
@@ -71,6 +77,10 @@ public sealed partial class AppController
                 ? Browser.Archive.Info
                 : await _archives.InspectAsync(plan.ArchivePath, null, Limits, CancellationToken.None);
             needsPassword = info.HasEncryptedEntries;
+        }
+        catch (ArchiveAccessException ex) when (ex.Kind is OperationErrorKind.PasswordRequired or OperationErrorKind.WrongPassword)
+        {
+            needsPassword = true;
         }
         catch (ArchiveAccessException ex)
         {
@@ -108,7 +118,7 @@ public sealed partial class AppController
             ArchivePath = plan.ArchivePath,
             DestinationDirectory = plan.Destination,
             Mode = plan.Dedicated ? DestinationMode.CreateDedicatedFolder : DestinationMode.IntoExistingFolder,
-            DedicatedFolderName = Path.GetFileNameWithoutExtension(plan.ArchivePath),
+            DedicatedFolderName = ArchiveFormats.StemOf(plan.ArchivePath),
             SelectedPaths = plan.Selected,
             BaseInnerPath = plan.BasePath,
             Password = password,
@@ -127,6 +137,11 @@ public sealed partial class AppController
 
     private void OnOperationCompleted(OperationItem item)
     {
+        if (item.Result is { } compressed && _compressions.Remove(item.Id, out var compressPlan))
+        {
+            OnCompressionCompleted(item, compressPlan, compressed);
+            return;
+        }
         if (!_extractions.Remove(item.Id, out var plan) || item.Result is not { } result) return;
         if (result.Error is OperationErrorKind.WrongPassword or OperationErrorKind.PasswordRequired)
         {

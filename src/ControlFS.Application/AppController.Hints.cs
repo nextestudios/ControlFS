@@ -43,7 +43,7 @@ public sealed partial class AppController
         var pane = ActivePane;
         var focused = pane.List.Focused;
         if (focused is { IsContainer: true }) hints.Add(new(InputAction.Confirm, "Abrir"));
-        else if (focused is { Kind: EntryKind.File } && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Abrir/detalhes"));
+        else if (focused is { Kind: EntryKind.File } && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Abrir"));
         else if (focused is { Kind: EntryKind.ArchiveFile }) hints.Add(new(InputAction.Confirm, "Detalhes"));
 
         if (pane.Mode == PaneMode.PickFolder)

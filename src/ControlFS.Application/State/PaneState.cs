@@ -24,6 +24,9 @@ public sealed class PaneState(PaneMode mode)
     public ArchiveTree? Archive { get; internal set; }
     public PhysicalLocation? LastValidPhysical { get; internal set; }
 
+    /// <summary>Senha do compactado aberto (cabeçalhos protegidos). Só na memória, só enquanto o compactado está aberto.</summary>
+    internal string? ArchivePassword { get; set; }
+
     /// <summary>Incrementada a cada navegação; respostas atrasadas de outra geração são descartadas.</summary>
     public int Generation { get; internal set; }
 

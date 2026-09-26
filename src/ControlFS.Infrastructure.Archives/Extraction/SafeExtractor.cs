@@ -79,7 +79,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             {
                 if (request.Mode == DestinationMode.CreateDedicatedFolder)
                 {
-                    root = CreateDedicatedFolder(destinationParent, request.DedicatedFolderName ?? Path.GetFileNameWithoutExtension(request.ArchivePath));
+                    root = CreateDedicatedFolder(destinationParent, request.DedicatedFolderName ?? ArchiveFormats.StemOf(request.ArchivePath));
                     createdRoot = true;
                 }
                 else
@@ -105,26 +105,53 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
             try
             {
-                foreach (var item in plan)
+                // Diretórios primeiro (baratos); depois os arquivos na ordem do compactado, entregues pela sessão
+                // por acesso aleatório ou em sequência (formatos sólidos/stream como TAR.GZ).
+                foreach (var item in plan.Where(p => p.Entry.IsDirectory))
+                {
+                    try { guard.EnsureDirectories(item.Components, item.Components.Count); }
+                    catch (Exception ex) when (ex is FileOperationException or IOException or UnauthorizedAccessException)
+                    {
+                        var (kind, message) = ErrorMapper.Map(ex);
+                        results.Add(new ItemResult(item.RelativePath, ItemOutcome.Blocked, kind, message));
+                    }
+                }
+                var files = plan.Where(p => !p.Entry.IsDirectory).ToDictionary(p => p.Entry.Index);
+                using var entries = session.ReadFiles(files.Keys.ToHashSet(), ct).GetEnumerator();
+                while (!cancelled && fatal == OperationErrorKind.None)
                 {
                     if (ct.IsCancellationRequested) { cancelled = true; break; }
+                    bool hasNext;
                     try
                     {
-                        if (item.Entry.IsDirectory)
-                        {
-                            guard.EnsureDirectories(item.Components, item.Components.Count);
-                            continue;
-                        }
-                        progress?.Report(new OperationProgress(item.RelativePath, state.FilesDone, fileTotal, state.TotalBytes, declared));
-                        var outcome = await ExtractFileAsync(session, item, guard, staging, zone, limits, interaction, state, buffer, ct).ConfigureAwait(false);
-                        results.Add(outcome);
-                        state.FilesDone++;
-                        if (state.CancelledByUser) { cancelled = true; break; }
+                        hasNext = entries.MoveNext();
                     }
                     catch (OperationCanceledException)
                     {
                         cancelled = true;
                         break;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Falha ao avançar no fluxo: nada depois deste ponto pode ser lido com segurança.
+                        (fatal, fatalMessage) = ErrorMapper.Map(ex, plan.Any(p => p.Entry.IsEncrypted));
+                        if (fatal is OperationErrorKind.Unknown) fatal = OperationErrorKind.Corrupt;
+                        break;
+                    }
+                    if (!hasNext) break;
+                    var (entry, open) = entries.Current;
+                    if (!files.TryGetValue(entry.Index, out var item)) continue;
+                    try
+                    {
+                        progress?.Report(new OperationProgress(item.RelativePath, state.FilesDone, fileTotal, state.TotalBytes, declared));
+                        var outcome = await ExtractFileAsync(open, item, guard, staging, zone, limits, interaction, state, buffer, ct).ConfigureAwait(false);
+                        results.Add(outcome);
+                        state.FilesDone++;
+                        if (state.CancelledByUser) cancelled = true;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
                     }
                     catch (Exception ex)
                     {
@@ -134,7 +161,6 @@ public sealed class SafeExtractor(IArchiveEngine engine)
                         {
                             fatal = kind;
                             fatalMessage = message;
-                            break;
                         }
                     }
                 }
@@ -167,7 +193,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         }
     }
 
-    private static async Task<ItemResult> ExtractFileAsync(IArchiveReadSession session, PlannedEntry item, DestinationGuard guard, string staging, string? zone,
+    private static async Task<ItemResult> ExtractFileAsync(Func<Stream> openEntry, PlannedEntry item, DestinationGuard guard, string staging, string? zone,
         ExtractionLimits limits, IExtractionInteraction interaction, RunState state, byte[] buffer, CancellationToken ct)
     {
         var parentCount = item.Components.Count - 1;
@@ -182,7 +208,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         {
             var crc = new Crc32();
             long written = 0;
-            using (var source = session.OpenEntry(item.Entry.Index))
+            using (var source = openEntry())
             using (var target = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
             {
                 int read;

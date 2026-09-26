@@ -40,7 +40,7 @@ public static class EntryRowTemplate
         {
             EntryKind.Drive => "🖴",
             EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory => "📁",
-            _ when entry.Extension.Equals(".zip", StringComparison.OrdinalIgnoreCase) => "📦",
+            _ when IsArchiveName(entry.Name) => "📦",
             _ => "📄",
         };
         title.Text = entry.Name;
@@ -52,6 +52,9 @@ public static class EntryRowTemplate
         var state = selected ? ", marcado" : string.Empty;
         AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{state}");
     }
+
+    private static bool IsArchiveName(string name) =>
+        new[] { ".zip", ".7z", ".rar", ".tar", ".tgz", ".gz" }.Any(ext => name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
 
     private static string Describe(FileEntry entry)
     {

@@ -13,7 +13,7 @@ A **file manager for Windows made for the controller**, with a **built-in extrac
 
 ## Download
 
-Get **[0.1.0-alpha.4](https://github.com/nextestudios/ControlFS/releases/tag/v0.1.0-alpha.4)** (pre-release):
+Get **[0.2.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.2.0-alpha.1)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
 - **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.
@@ -44,15 +44,17 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - Real folders and drives, history, sorting, hidden items, marking, properties
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, cursor, masked passwords) usable with only directions + confirm + back
 - **Create folder** with Windows naming rules
-- **ZIP:** browse without extracting; extract all or a selection; password (ZipCrypto); conflicts (skip / keep both / replace with confirmation); progress and per-item results
+- **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
+- **Compress** to ZIP or TAR.GZ from marked items, name typed on the on-screen keyboard
+- **Open with Windows:** default program, "Open with…", "Show in File Explorer"; programs and scripts ask for confirmation
 - **Automatic, verified updates** (installed version): daily check, background download, "Install and restart" or install on quit; signed manifest + SHA-256; can be turned off ([how it works](docs/GUIDE.md#updates))
 - **Safe extraction:** nothing is written outside the destination, links are blocked, name collisions are refused, size limits, temporary staging, CRC check ([security model](docs/security-model.md))
 
-**Formats today: ZIP only.** AES, ZIP64, 7z, RAR, TAR and GZ are detected and reported as not supported yet ([matrix](docs/archive-support.md)).
+**Extract:** ZIP, 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Create:** ZIP, TAR.GZ. RAR can't be created (proprietary); 7z creation, split volumes, ZIP AES and ZIP64 still need validation ([matrix](docs/archive-support.md)).
 
 ## Roadmap
 
-**Next:** run on Windows with real controllers, ZIP64 and AES, rename/delete (Recycle Bin), copy/move · **Later:** two panes, search, favorites, 7z/RAR/TAR/GZ, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** rename/delete (Recycle Bin), copy/move, ZIP64 and AES, create 7z · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## More
 

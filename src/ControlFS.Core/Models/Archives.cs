@@ -7,7 +7,38 @@ public enum ArchiveFormat
     SevenZip,
     Rar,
     Tar,
+    /// <summary>TAR comprimido com GZip (.tar.gz/.tgz): lido em sequência.</summary>
+    TarGZip,
+    /// <summary>Um único arquivo comprimido com GZip (não é pasta).</summary>
     GZip,
+}
+
+public static class ArchiveFormats
+{
+    /// <summary>Formatos que o extrator abre e extrai nesta versão (cada um coberto por testes com fixtures).</summary>
+    public static bool CanExtract(ArchiveFormat format) => format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or
+        ArchiveFormat.Rar or ArchiveFormat.Tar or ArchiveFormat.TarGZip or ArchiveFormat.GZip;
+
+    public static string DisplayName(ArchiveFormat format) => format switch
+    {
+        ArchiveFormat.Zip => "ZIP",
+        ArchiveFormat.SevenZip => "7z",
+        ArchiveFormat.Rar => "RAR",
+        ArchiveFormat.Tar => "TAR",
+        ArchiveFormat.TarGZip => "TAR.GZ",
+        ArchiveFormat.GZip => "GZ",
+        _ => "desconhecido",
+    };
+
+    /// <summary>Nome sem as extensões de compactado: "fotos.tar.gz" → "fotos", "dados.tgz" → "dados".</summary>
+    public static string StemOf(string path)
+    {
+        var name = Path.GetFileName(path);
+        foreach (var ext in new[] { ".tar.gz", ".tar.bz2", ".tar.xz", ".tgz", ".zip", ".7z", ".rar", ".tar", ".gz" })
+            if (name.Length > ext.Length && name.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                return name[..^ext.Length];
+        return Path.GetFileNameWithoutExtension(name);
+    }
 }
 
 /// <summary>

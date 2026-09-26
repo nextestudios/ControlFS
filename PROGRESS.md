@@ -30,6 +30,16 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Formatos, compactar e abrir com o Windows (0.2.0-alpha.1)
+
+- Extrair 7z, RAR4/RAR5 (inclusive sólidos), TAR, TAR.GZ, GZ; compactar em ZIP e TAR.GZ; abrir com o programa padrão,
+  "Abrir com…" e "Mostrar no Explorador" (#5). Detalhes: `docs/archive-support.md`.
+- Achados na CI durante o desenvolvimento: `Entry.Attrib` do SharpCompress lança `NotImplementedException` em TAR/GZ;
+  o leitor TAR do SharpCompress não entende PAX (trocado por `System.Formats.Tar`); RAR5 criptografado guarda CRC
+  transformado; o `тест.txt` das fixtures está em CRLF (hash conferido pela versão arquivada).
+- Evidência (CI 2026-09-26): 214 testes (Windows e Linux) + 9 de integração Windows, incluindo abrir o Bloco de Notas
+  pelo serviço de shell; smoke: portátil e instalado abrem.
+
 ## Portátil com o nome publicado (0.1.0-alpha.4)
 
 - O smoke da release 0.1.0-alpha.3 **com os arquivos baixados da página** mostrou: instalador OK, mas o portátil falhava

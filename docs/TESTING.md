@@ -19,6 +19,14 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] 1280×720, 1280×800, 1920×1080 e 4K com escala 100–200%: nenhuma ação essencial fica inacessível.
 - [ ] Narrador lê o nome dos itens e das teclas do teclado virtual.
 
+## Formatos, compactar e abrir com o Windows
+
+- [ ] Abrir e extrair um RAR e um 7z reais baixados da internet (conferir a marca de origem nos extraídos).
+- [ ] Compactar uma pasta com fotos em ZIP e abrir o ZIP no Explorador do Windows.
+- [ ] Sul num .pdf/.jpg abre no programa padrão; voltar ao ControlFS com Alt+Tab.
+- [ ] "Abrir com…" mostra a caixa do Windows e usa o programa escolhido.
+- [ ] Sul num .exe pede confirmação começando em "Cancelar".
+
 ## Instalador e atualizações
 
 - [ ] Instalar `ControlFS-Setup-x64.exe` numa conta padrão (sem pedir administrador); atalho no menu Iniciar aparece.
