@@ -1,0 +1,39 @@
+name: Feedback
+description: Sugestões, bugs e ideias para o ControlFS / Suggestions, bugs and ideas for ControlFS
+title: "[Feedback] "
+labels: [feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por ajudar a melhorar o ControlFS! Escreva em português ou em inglês. Não anexe arquivos com dados pessoais.
+        Thanks for helping improve ControlFS! Write in Portuguese or English. Don't attach files with personal data.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo / Type
+      options:
+        - Sugestão / Suggestion
+        - Bug
+        - Controle / Controller
+        - Compactado / Archive
+        - Outro / Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: O que aconteceu ou o que você gostaria? / What happened, or what would you like?
+      description: |
+        Para bugs, conte o que você fez, o que esperava e o que aconteceu. Prints ajudam.
+        For bugs, tell us what you did, what you expected and what happened. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente / Environment
+      description: Versão do ControlFS, Windows, modelo do controle e conexão (USB/Bluetooth). / ControlFS version, Windows, controller model and connection.
+      render: text
+    validations:
+      required: false

@@ -1,0 +1,113 @@
+name: Release
+
+# Push a tag like v0.2.0 (stable) or v0.2.0-alpha.1 (pre-release) to publish a release.
+# The notes come from CHANGELOG.en-US.md (pasted) and CHANGELOG.md (linked); both need the section.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build without publishing (e.g. 0.2.0-alpha.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          $v = if ($env:EVENT_NAME -eq "push") { $env:REF_NAME } else { $env:INPUT_VERSION }
+          $v = $v.TrimStart("v")
+          if ($v -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.\-]+)?$') { throw "Versão inválida: $v" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "prerelease=$($v.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare release notes (English, with a link to the Portuguese changelog)
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          function Get-Notes([string]$file) {
+            $changelog = Get-Content -LiteralPath $file -Raw -Encoding utf8
+            $pattern = "(?ms)^## \[$([regex]::Escape($env:VERSION))\]\r?\n(?<notes>.*?)(?=^## \[|\z)"
+            $match = [regex]::Match($changelog, $pattern)
+            if (-not $match.Success) { throw "$file precisa conter a seção ## [$($env:VERSION)]." }
+            $notes = $match.Groups["notes"].Value.Trim()
+            if ([string]::IsNullOrWhiteSpace($notes)) { throw "A seção $($env:VERSION) de $file está vazia." }
+            return $notes
+          }
+          $null = Get-Notes "CHANGELOG.md"
+          $en = Get-Notes "CHANGELOG.en-US.md"
+          $tag = "v$($env:VERSION)"
+          $releaseNotes = @(
+            $en
+            ""
+            "### Downloads"
+            ""
+            '- **Portable:** `ControlFS-Portable-x64.zip` — unzip anywhere and run `ControlFS.exe` (Windows 11 x64). Not code-signed yet: see the code signing policy.'
+            '- **Checksum:** `SHA256SUMS.txt`.'
+            ""
+            "---"
+            ""
+            "🇧🇷 Notas em português: [CHANGELOG.md](https://github.com/$($env:REPO)/blob/$tag/CHANGELOG.md)"
+          ) -join "`n"
+          Set-Content -LiteralPath "release-notes.md" -Value $releaseNotes -Encoding utf8
+
+      - name: Restore (locked)
+        run: dotnet restore ControlFS.slnx --locked-mode
+
+      - name: Run tests
+        run: dotnet test ControlFS.slnx -c Release --no-restore --nologo
+
+      - name: Build portable package
+        shell: pwsh
+        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControlFS-${{ steps.version.outputs.version }}
+          path: |
+            dist/ControlFS-Portable-x64.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ControlFS ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          append_body: false
+          body_path: release-notes.md
+          files: |
+            dist/ControlFS-Portable-x64.zip
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
