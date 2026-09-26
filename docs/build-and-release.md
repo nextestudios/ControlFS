@@ -40,8 +40,10 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 - `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
   `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
   de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
-- Release inclui também `ControlFS-Setup-x64.exe` (Inno Setup, por usuário), testado por instalação e desinstalação
-  silenciosas no runner, e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
+- Release inclui `ControlFS-Setup-x64.exe` (Inno Setup, por usuário) e `ControlFS-Portable-x64.exe` (arquivo único).
+  Antes de publicar, a CI **abre de verdade** o portátil e o app instalado (`build/Test-Startup.ps1`,
+  `build/Test-Installed.ps1`: processo vivo, janela, eventos do Windows, logs e print). O workflow `smoke.yml` faz o
+  mesmo em PRs, na `main` e sob demanda para uma release já publicada. Inclui também e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
   (`build/New-ReleaseManifest.ps1` confere a assinatura com a chave pública do app antes de publicar).
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 

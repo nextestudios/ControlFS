@@ -48,10 +48,11 @@ The **portable** version only tells you a new version exists; download it from t
 
 ## Privacy
 
-Everything stays on your PC. Settings live in `%LOCALAPPDATA%\ControlFS\settings.json`. Passwords are never saved or logged. Core features never use the network. The only network access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off.
+Everything stays on your PC. Settings and logs live in `%LOCALAPPDATA%\ControlFS` (installed) or in `ControlFS_Data` next to `ControlFS-Portable-x64.exe` (portable). Passwords are never saved or logged. Core features never use the network. The only network access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off.
 
 ## Troubleshooting
 
+- **The app doesn't open:** send us `logs\startup.log` and `logs\crash.log` from the data folder above (they contain no passwords or file contents).
 - **No controller detected:** plug it in and press a button; the header shows the active pad. Keyboard and mouse always work.
 - **Windows SmartScreen warning:** the build isn't code-signed yet ([policy](CODE_SIGNING.md)).
 - **"Format recognized but not supported":** only ZIP is supported for now.
@@ -66,5 +67,5 @@ dotnet build ControlFS.slnx
 dotnet test ControlFS.slnx
 ```
 
-The app runs only on Windows 11 x64. Installer + portable (needs Inno Setup 6): `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.2`.
+The app runs only on Windows 11 x64. Installer + portable (needs Inno Setup 6): `.\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.3`.
 More in [build-and-release.md](build-and-release.md) (Portuguese).
