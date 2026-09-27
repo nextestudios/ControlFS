@@ -52,6 +52,18 @@ public sealed partial class AppController
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
+            case TextPreviewModal text:
+                if (text.Document is { Lines.Count: > 0 })
+                {
+                    hints.Add(new(InputAction.NavigateDown, "Rolar"));
+                    hints.Add(new(InputAction.PageUp, "Página ▲"));
+                    hints.Add(new(InputAction.PageDown, "Página ▼"));
+                    hints.Add(new(InputAction.PreviousRegion, "Início"));
+                    hints.Add(new(InputAction.NextRegion, "Fim"));
+                    hints.Add(new(InputAction.Confirm, text.Monospace ? "Fonte proporcional" : "Fonte fixa"));
+                }
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
             case ImagePreviewModal preview:
                 if (preview.ZoomIndex > 0)
                 {

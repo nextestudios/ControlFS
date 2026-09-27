@@ -52,6 +52,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Lixeira** na tela inicial: restaure itens para a pasta original ou exclua de vez (sempre com confirmação)
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor visível, segurar para repetir, senha mascarada) usável só com direções + confirmar + voltar
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima no controle; limites de tamanho e resolução conferidos antes de decodificar
+- **Visualização de texto** (logs, notas, configurações, código): somente leitura, detecção de codificação, limites de tamanho e de linhas, binários recusados
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos
 - **Criar pasta** com as regras de nomes do Windows
 - **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; testar integridade sem extrair; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item

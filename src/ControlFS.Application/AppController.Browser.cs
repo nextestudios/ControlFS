@@ -128,6 +128,7 @@ public sealed partial class AppController
         var format = await Task.Run(() => _archives.Detect(path));
         if (ArchiveFormats.CanExtract(format)) await OpenArchiveAsync(pane, path);
         else if (IsPreviewableImage(entry) && _imageDecoder is not null) OpenImagePreview(pane, entry);
+        else if (OpensAsText(entry)) OpenTextPreview(pane, entry);
         else OpenExternally(entry, path);
     }
 
@@ -409,6 +410,8 @@ public sealed partial class AppController
             items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable));
+        else if (!ArchiveFormats.CanExtract(format))
+            items.Add(new MenuItem("Visualizar como texto", () => OpenTextPreview(pane, entry), Detail: "Somente leitura; nada é executado."));
         items.Add(new MenuItem(ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
             () => OpenExternally(entry, file), ShellUnavailable));
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,

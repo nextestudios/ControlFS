@@ -28,6 +28,7 @@ public static partial class ModalView
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             ControllerTestModal test => BuildControllerTest(app, test),
             ImagePreviewModal preview => BuildImagePreview(preview),
+            TextPreviewModal text => BuildTextPreview(app, text),
             _ => null,
         };
         if (panel is null) return null;

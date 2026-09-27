@@ -123,9 +123,13 @@ Se o ControlFS for fechado no meio de uma operação (travamento, falta de energ
 
 **Sul** numa imagem JPG, PNG, GIF, BMP ou WebP abre a imagem dentro do ControlFS (Norte → **Abrir com o aplicativo padrão** continua abrindo no Windows). **Esquerda/Direita** ou **LB/RB** vão para a imagem anterior/próxima na ordem da lista; **RT** aumenta o zoom e **LT** diminui; com zoom, o direcional percorre a imagem e **Sul** volta a ajustar à tela; **Leste/B** fecha, com o foco na última imagem vista. A decodificação acontece em segundo plano (a tela nunca trava) e reduz a imagem a no máximo 4096 px no lado maior; de GIFs animados aparece só o primeiro quadro, e fotos de celular aparecem em pé. Antes de decodificar, o ControlFS confere o formato real pelo conteúdo (não pela extensão) e recusa arquivos acima de 100 MB ou de 80 megapixels com uma mensagem clara. Nada é executado. Imagens dentro de compactados não são visualizadas: extraia antes. WebP depende do codec WebP do Windows (incluído no Windows 11 e no Windows 10 recente).
 
+## Visualizar texto
+
+**Sul** num arquivo de texto (.txt, .md, .log, .json, .xml, .csv, .ini, .yaml, código-fonte…) abre o arquivo dentro do ControlFS, somente leitura; para qualquer outro arquivo, Norte → **Visualizar como texto**. Isso vale também para scripts como .ps1 ou .bat, que o Sul pediria para executar: ler nunca executa nada. **Cima/Baixo** rolam uma linha, **LT/RT** uma página, **LB/RB** vão ao início/fim, **Esquerda/Direita** deslocam linhas longas para o lado, **Sul** alterna entre fonte fixa e proporcional e **Leste/B** fecha. A codificação é detectada (UTF-8 com ou sem BOM, UTF-16 ou, se não for nenhuma, a página de código ANSI do Windows) e aparece com o número de linhas. Só os primeiros 2 MB e 10.000 linhas são lidos; um arquivo maior mostra um aviso claro de "prévia parcial". Arquivos binários são recusados com uma mensagem. Arquivos dentro de compactados não são visualizados.
+
 ## Abrindo arquivos com o Windows
 
-**Sul** num arquivo que não é compactado nem imagem visualizável abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.
+**Sul** num arquivo que não é compactado, imagem visualizável nem texto abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.
 
 ## Atualizações
 

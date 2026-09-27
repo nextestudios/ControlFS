@@ -179,3 +179,51 @@ public sealed class ImagePreviewModal : Modal
         CenterX = CenterY = 0.5;
     }
 }
+
+/// <summary>
+/// Visualização de texto (#58), somente leitura. O documento já vem limitado em bytes e linhas; a tela desenha só as linhas
+/// visíveis a partir de <see cref="Top"/> e <see cref="Column"/>.
+/// </summary>
+public sealed class TextPreviewModal : Modal
+{
+    /// <summary>Colunas deslocadas por Esquerda/Direita (linhas longas não quebram).</summary>
+    public const int ColumnStep = 16;
+
+    internal TextPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Visualizar texto")
+    {
+        Pane = pane;
+        Entry = entry;
+    }
+
+    internal PaneState Pane { get; }
+    public Core.Models.FileEntry Entry { get; }
+    public bool IsLoading { get; internal set; } = true;
+    public Core.Preview.TextDocument? Document { get; internal set; }
+    public string? Error { get; internal set; }
+
+    /// <summary>Primeira linha visível (0-based).</summary>
+    public int Top { get; private set; }
+
+    /// <summary>Primeira coluna visível.</summary>
+    public int Column { get; private set; }
+
+    /// <summary>Fonte de largura fixa (padrão) ou proporcional.</summary>
+    public bool Monospace { get; internal set; } = true;
+
+    /// <summary>Linhas que cabem na tela; informado pela tela (usado para paginar e limitar a rolagem).</summary>
+    public int PageLines { get; internal set; } = 20;
+
+    private int LineCount => Document?.Lines.Count ?? 0;
+
+    internal void ScrollTo(int top) => Top = Math.Clamp(top, 0, Math.Max(0, LineCount - PageLines));
+
+    internal void ScrollBy(int lines) => ScrollTo(Top + lines);
+
+    internal void ShiftColumns(int delta)
+    {
+        var longest = 0;
+        if (Document is { } document)
+            for (var i = Top; i < Math.Min(LineCount, Top + PageLines); i++) longest = Math.Max(longest, document.Lines[i].Length);
+        Column = Math.Clamp(Column + delta, 0, Math.Max(0, longest - ColumnStep));
+    }
+}

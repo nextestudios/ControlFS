@@ -15,6 +15,12 @@ public sealed record PreviewLimits
     /// <summary>Maior lado da imagem decodificada (reduzida na decodificação): limita a memória a ~64 MB por imagem.</summary>
     public int MaxDecodedSide { get; init; } = 4096;
 
+    /// <summary>Bytes lidos de um arquivo de texto; o resto não é lido (a prévia avisa que é parcial).</summary>
+    public int MaxTextBytes { get; init; } = 2 * 1024 * 1024;
+
+    /// <summary>Linhas mostradas de um arquivo de texto.</summary>
+    public int MaxTextLines { get; init; } = 10_000;
+
     public static PreviewLimits Default { get; } = new();
 }
 

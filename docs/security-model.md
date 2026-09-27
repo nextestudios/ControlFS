@@ -62,6 +62,8 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
   tamanho do arquivo (100 MB) e a resolução declarada (80 megapixels): uma "bomba" de poucos bytes que declara
   100 000 × 100 000 é recusada sem chegar ao decodificador (`ImagePreviewPolicyTests`, `ImagePreviewJourneyTests`).
 - A imagem é reduzida na decodificação para no máximo 4096 px no lado maior (~64 MB por imagem em memória).
+- A visualização de texto é somente leitura e lê no máximo 2 MB / 10.000 linhas (`TextPreview`, Core); arquivos binários
+  são recusados; scripts podem ser lidos pelo menu sem nunca serem executados (`TextPreviewTests`, `TextPreviewJourneyTests`).
 - Arquivos dentro de compactados não são visualizados.
 
 ## Atualizações automáticas
