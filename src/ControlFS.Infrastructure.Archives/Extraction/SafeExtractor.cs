@@ -4,6 +4,7 @@ using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
 using ControlFS.Infrastructure.Archives.Engines;
 using ControlFS.Infrastructure.Archives.Security;
+using ControlFS.Infrastructure.Windows.FileSystem;
 
 namespace ControlFS.Infrastructure.Archives.Extraction;
 
@@ -13,10 +14,11 @@ namespace ControlFS.Infrastructure.Archives.Extraction;
 /// conflitos resolvidos pelo usuário (sem sobrescrita silenciosa) e cancelamento cooperativo.
 /// Nunca apaga o compactado original nem executa conteúdo extraído.
 /// </summary>
-public sealed class SafeExtractor(IArchiveEngine engine)
+public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? journal = null)
 {
-    public const string StagingPrefix = ".controlfs-staging-";
-    public const string ManifestName = ".controlfs-operation";
+    public const string StagingPrefix = TemporaryJournal.StagingPrefix;
+    public const string ManifestName = TemporaryJournal.ManifestName;
+    private readonly ITemporaryJournal _journal = journal ?? NoTemporaryJournal.Instance;
     private const int BufferSize = 81920;
 
     public async Task<OperationResult> ExtractAsync(ArchiveFormat format, ExtractionRequest request, IExtractionInteraction interaction,
@@ -94,7 +96,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             }
 
             var guard = new DestinationGuard(root);
-            var staging = CreateStaging(root);
+            var (staging, stagingRegistration) = CreateStaging(root);
             var zone = MarkOfTheWeb.Read(request.ArchivePath);
             var results = new List<ItemResult>(planResults);
             var state = new RunState();
@@ -168,7 +170,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             finally
             {
                 ArrayPool<byte>.Shared.Return(buffer);
-                TryDeleteStaging(staging);
+                TryDeleteStaging(staging, stagingRegistration);
             }
 
             progress?.Report(new OperationProgress(null, state.FilesDone, fileTotal, state.TotalBytes, declared));
@@ -394,7 +396,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         return false;
     }
 
-    private static string CreateDedicatedFolder(string parent, string requestedName)
+    private string CreateDedicatedFolder(string parent, string requestedName)
     {
         var name = WindowsNameRules.ValidateComponent(requestedName).IsValid ? requestedName : "Extraído";
         // Cria em nome temporário e renomeia: Directory.Move falha se o alvo já existir, o que
@@ -403,9 +405,10 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         {
             var candidate = UniqueNames.Next(name, n => PathExists(Path.Join(parent, n)), isDirectory: true);
             var temp = Path.Join(parent, ".controlfs-new-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(temp);
+            var registration = _journal.Register(temp, TemporaryKind.EmptyFolder);
             try
             {
+                Directory.CreateDirectory(temp);
                 var final = Path.Join(parent, candidate);
                 Directory.Move(temp, final);
                 return final;
@@ -414,21 +417,28 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             {
                 TryDeleteIfEmpty(temp);
             }
+            finally
+            {
+                if (!Directory.Exists(temp)) registration.Dispose();
+            }
         }
         throw new IOException("Não foi possível criar a pasta de destino.");
     }
 
-    private static string CreateStaging(string root)
+    private (string Path, IDisposable Registration) CreateStaging(string root)
     {
         var staging = Path.Join(root, StagingPrefix + Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)).ToLowerInvariant());
+        var token = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        // Registrada antes de existir: se o app cair, a próxima inicialização remove esta pasta (e só ela).
+        var registration = _journal.Register(staging, TemporaryKind.StagingFolder, token);
         var info = Directory.CreateDirectory(staging);
         if (OperatingSystem.IsWindows()) info.Attributes |= FileAttributes.Hidden;
-        // Manifesto da própria operação: base para limpeza confiável após falha (nunca por padrão de nomes).
-        File.WriteAllText(Path.Join(staging, ManifestName), $"gamepad-explorer-staging v1 {DateTimeOffset.UtcNow:O}");
-        return staging;
+        // Manifesto da própria operação, com o token do registro: base para limpeza confiável (nunca por padrão de nomes).
+        File.WriteAllText(Path.Join(staging, ManifestName), TemporaryJournal.ManifestContent(token));
+        return (staging, registration);
     }
 
-    private static void TryDeleteStaging(string staging)
+    private static void TryDeleteStaging(string staging, IDisposable registration)
     {
         try
         {
@@ -437,6 +447,7 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
+        if (!Directory.Exists(staging)) registration.Dispose(); // se ficou para trás, o registro também fica
     }
 
     /// <summary>Remove apenas diretórios vazios criados por nós (de baixo para cima). Nunca remove arquivos.</summary>

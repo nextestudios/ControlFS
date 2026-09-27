@@ -17,10 +17,11 @@ public static class ArchiveCreator
     public const string TempPrefix = ".controlfs-new-";
     private const int BufferSize = 81920;
 
-    public static Task<OperationResult> CreateAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken ct) =>
-        Task.Run(() => Create(request, progress, ct), CancellationToken.None);
+    public static Task<OperationResult> CreateAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken ct,
+        ITemporaryJournal? journal = null) =>
+        Task.Run(() => Create(request, progress, journal ?? NoTemporaryJournal.Instance, ct), CancellationToken.None);
 
-    private static OperationResult Create(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken ct)
+    private static OperationResult Create(CompressionRequest request, IProgress<OperationProgress>? progress, ITemporaryJournal journal, CancellationToken ct)
     {
         var destination = Path.GetFullPath(request.DestinationPath);
         var folder = Path.GetDirectoryName(destination);
@@ -54,6 +55,8 @@ public static class ArchiveCreator
         var totalBytes = plan.Sum(p => p.Size);
         var totalFiles = plan.Count(p => !p.IsDirectory);
         var temp = Path.Join(folder, TempPrefix + Guid.NewGuid().ToString("N") + ".part");
+        // Registrado antes de existir: se o app cair, a próxima inicialização remove este parcial.
+        var registration = journal.Register(temp, TemporaryKind.PartialFile);
         long done = 0;
         var filesDone = 0;
         try
@@ -77,6 +80,10 @@ public static class ArchiveCreator
             var (kind, message) = ErrorMapper.Map(ex);
             if (File.Exists(destination) && kind == OperationErrorKind.Unknown) (kind, message) = (OperationErrorKind.AlreadyExists, $"\"{fileName}\" foi criado por outro programa enquanto compactávamos.");
             return new OperationResult(OperationState.Failed, results, kind, message);
+        }
+        finally
+        {
+            if (!File.Exists(temp)) registration.Dispose(); // se ficou para trás, o registro também fica
         }
 
         progress?.Report(new OperationProgress(null, filesDone, totalFiles, done, totalBytes));

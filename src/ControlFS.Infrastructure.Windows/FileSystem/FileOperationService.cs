@@ -12,8 +12,10 @@ namespace ControlFS.Infrastructure.Windows.FileSystem;
 /// Mover no mesmo volume: renomeação atômica; entre volumes: copia e só então remove cada origem copiada.
 /// Links/junctions dentro de pastas nunca são seguidos. Lixeira nunca vira exclusão permanente silenciosa.
 /// </summary>
-public sealed partial class FileOperationService : IFileOperationService
+public sealed partial class FileOperationService(ITemporaryJournal? journal = null) : IFileOperationService
 {
+    private readonly ITemporaryJournal _journal = journal ?? NoTemporaryJournal.Instance;
+
     public const string TempPrefix = ".controlfs-copy-";
     private const int BufferSize = 81920;
     private const int ErrorSharingViolation = unchecked((int)0x80070020);
@@ -31,7 +33,7 @@ public sealed partial class FileOperationService : IFileOperationService
     private async Task<OperationResult> RunCoreAsync(FileOperationRequest request, IConflictInteraction conflicts, IProgress<OperationProgress>? progress,
         CancellationToken ct)
     {
-        var run = new Run(conflicts, progress, ct);
+        var run = new Run(conflicts, progress, ct) { Journal = _journal };
         if (request.DestinationFolder is { } root) run.Root = Path.GetFullPath(root);
         string? destination = null;
         try
@@ -157,6 +159,8 @@ public sealed partial class FileOperationService : IFileOperationService
 
             // Cópia (ou movimentação entre volumes): temporário → nome final.
             var temp = Path.Join(destDir, TempPrefix + Guid.NewGuid().ToString("N") + ".part");
+            // Registrado antes de existir: se o app cair no meio, a próxima inicialização remove este parcial.
+            var registration = run.Journal.Register(temp, TemporaryKind.PartialFile);
             try
             {
                 ItemResult? placed = null;
@@ -190,6 +194,7 @@ public sealed partial class FileOperationService : IFileOperationService
             finally
             {
                 if (File.Exists(temp)) File.Delete(temp);
+                registration.Dispose();
             }
         }
         catch (OperationCanceledException)
@@ -717,6 +722,7 @@ public sealed partial class FileOperationService : IFileOperationService
         public int FilesDone { get; set; }
         /// <summary>Pasta de destino autorizada (raiz das cadeias presas) e sua identidade no Windows, fixada na primeira verificação.</summary>
         public string? Root { get; set; }
+        public ITemporaryJournal Journal { get; init; } = NoTemporaryJournal.Instance;
         public string? RootIdentity { get; set; }
         private long _bytes;
 
