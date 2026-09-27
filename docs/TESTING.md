@@ -5,7 +5,7 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 
 ## Antes de cada release
 
-- [ ] Baixar `ControlFS-Portable-x64.exe` da release, conferir o SHA-256 com `SHA256SUMS.txt` e abrir numa conta padrão; a pasta `ControlFS_Data` aparece ao lado.
+- [ ] Baixar `ControlFS-Portable-x64.exe` da release, conferir o SHA-256 com o valor do `release-manifest.json` e abrir numa conta padrão; a pasta `ControlFS_Data` aparece ao lado.
 - [ ] Tela inicial mostra Downloads/Documentos reais e as unidades.
 - [ ] Teclado físico: setas, Enter, Esc, Espaço, F2, F10, F11 (tela cheia).
 - [ ] Conectar um controle **depois** de abrir o app: o cabeçalho mostra o controle ao apertar um botão.

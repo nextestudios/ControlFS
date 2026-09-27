@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v0.2.0 (stable) or v0.2.0-alpha.1 (pre-release) to publish a release.
+# Push a tag like v0.2.0-alpha.2 on main to publish a release (only when the maintainer asks; PRs are merged without releasing).
+# Alpha versions are published as regular releases so the newest one shows as "Latest", like Console Mode.
 # The notes come from CHANGELOG.en-US.md (pasted) and CHANGELOG.md (linked); both need the section.
 on:
   push:
@@ -78,10 +79,10 @@ jobs:
             ""
             "### Downloads"
             ""
-            '- **Installer (recommended):** `ControlFS-Setup-x64.exe` — per-user install, no admin; updates itself automatically.'
-            '- **Portable:** `ControlFS-Portable-x64.exe` — a single executable; keeps its data in the `ControlFS_Data` folder next to it; updates are manual.'
-            '- **Integrity:** `SHA256SUMS.txt`; `release-manifest.json` + `.sig` are the signed update manifest the app verifies.'
-            '- Windows 11 x64. Not code-signed yet: Windows SmartScreen may warn (see the code signing policy).'
+            '- **Installer:** `ControlFS-Setup-x64.exe` — installs the app per user (no admin) and updates itself.'
+            '- **Portable:** `ControlFS-Portable-x64.exe` — a single executable; keeps its data in the `ControlFS_Data` folder next to the file.'
+            ''
+            '`release-manifest.json` and `release-manifest.json.sig` are the signed update manifest the installed app verifies (SHA-256 of both downloads).'
             ""
             "---"
             ""
@@ -142,7 +143,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ControlFS ${{ steps.version.outputs.version }}
-          prerelease: ${{ steps.version.outputs.prerelease }}
+          prerelease: false
+          make_latest: true
           fail_on_unmatched_files: true
           generate_release_notes: false
           append_body: false
@@ -150,7 +152,6 @@ jobs:
           files: |
             dist/ControlFS-Setup-x64.exe
             dist/ControlFS-Portable-x64.exe
-            dist/SHA256SUMS.txt
             dist/release-manifest.json
             dist/release-manifest.json.sig
         env:

@@ -24,8 +24,10 @@ temporária:
 - **Preparar versão:** `release/X.Y.Z` a partir de `develop` (só correções, changelog e docs) → pull request para `main` →
   tag no merge em `main` (publica a release) → merge de `main` de volta em `develop`.
 - **Correção urgente:** `hotfix/X.Y.Z` a partir de `main` → pull request para `main` → tag → merge de volta em `develop`.
-- CI roda só nesses pontos: PR para `develop` (build + testes), PR para `main` (build + testes + abrir o app), tag em
-  `main` (release) e CodeQL em `main`/semanal.
+- CI roda só nesses pontos: PR (build + testes), tag em `main` (release: gera os pacotes e abre o app antes de
+  publicar) e CodeQL em `main`/semanal. PRs não geram pacotes.
+- **Releases:** PRs são mergeados conforme ficam prontos; a release só é publicada quando o mantenedor pede. As
+  versões ficam em `0.x.y-alpha.N` até o mantenedor decidir ir para a 1.0.
 
 ## Regras do projeto
 

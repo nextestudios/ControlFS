@@ -39,7 +39,7 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows. (Um job extra em Linux existiu até 2026-09-27 e
   foi removido: o produto é só para Windows e os mesmos testes já rodam lá.)
 - `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
-  `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
+  o manifesto assinado com `build/Publish-ControlFS.ps1` e publica a release (como release normal, marcada como "Latest"). As notas vêm
   de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
 - Release inclui `ControlFS-Setup-x64.exe` (Inno Setup, por usuário) e `ControlFS-Portable-x64.exe` (arquivo único).
   Antes de publicar, a CI **abre de verdade** o portátil e o app instalado (`build/Test-Startup.ps1`,
@@ -54,4 +54,4 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   app, pacotes e releases valem apenas quando executados na CI.
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
-Para publicar antes da 1.0: PRs de feature já estão na `main`; adicione a seção da versão nos dois changelogs num PR para `main` e crie a tag `vX.Y.Z` no merge. A partir da 1.0 (Gitflow completo): crie `release/X.Y.Z` a partir de `develop`, adicione a seção da versão nos dois changelogs, abra PR para `main`, crie a tag `vX.Y.Z` no merge em `main` e faça merge de `main` de volta em `develop` (somente mantenedores). O workflow de release recusa tags fora da `main`.
+Releases só quando o mantenedor pede (PRs são mergeados sem publicar). Versões `0.x.y-alpha.N` até a 1.0, publicadas como release normal (aparece como "Latest"), com dois downloads (`ControlFS-Setup-x64.exe`, `ControlFS-Portable-x64.exe`) mais o manifesto assinado de atualização. Para publicar antes da 1.0: PRs de feature já estão na `main`; adicione a seção da versão nos dois changelogs num PR para `main` e crie a tag `vX.Y.Z` no merge. A partir da 1.0 (Gitflow completo): crie `release/X.Y.Z` a partir de `develop`, adicione a seção da versão nos dois changelogs, abra PR para `main`, crie a tag `vX.Y.Z` no merge em `main` e faça merge de `main` de volta em `develop` (somente mantenedores). O workflow de release recusa tags fora da `main`.
