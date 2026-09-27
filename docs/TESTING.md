@@ -566,3 +566,7 @@ Não validado em hardware:
 - [ ] Menu (Start), visualização de texto longa, imagem com zoom e Propriedades/Sobre: só o painel aberto rola; a lista por trás não se mexe.
 - [ ] Dois controles conectados: inclinar o analógico direito do controle parado não tira o comando do ativo.
 - [ ] Joystick sem perfil (mapeado pelo assistente): sem analógico para rolar, a navegação continua normal.
+
+## Renomear em lote (#71) — não validado em hardware
+- [ ] Com controle real: marcar ~20 fotos, Norte → Renomear em lote…; trocar o modo com Sul, digitar o nome base no teclado virtual e aplicar com Start. A prévia (12 linhas + "e mais N") fica legível a 3 m e em 1280×720, sem cortar a opção focada.
+- [ ] Menu → Desfazer volta todos os nomes; a Central de operações mostra o resultado por item.

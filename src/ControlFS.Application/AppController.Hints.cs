@@ -113,6 +113,7 @@ public sealed partial class AppController
             case DialogModal dialog:
                 // Confirmar executa a opção em foco; diálogo sem opções só fecha com Voltar.
                 if (dialog.Options.Count > 0) hints.Add(new(InputAction.Confirm, dialog.Options[dialog.FocusIndex].Label));
+                if (dialog.StartOption is { } start && dialog.Options.Count > 0 && start != dialog.Options[dialog.FocusIndex]) hints.Add(new(InputAction.OpenAppMenu, start.Label));
                 hints.Add(new(InputAction.Back, dialog.BackOption?.Label ?? "Fechar"));
                 return hints;
         }

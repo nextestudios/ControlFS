@@ -100,6 +100,17 @@ Menu → Configurações → **Exibição** (ou **R3**, apertando o analógico d
 
 **Tamanho da pasta:** Norte numa pasta ou unidade → **Propriedades** → **Calcular tamanho** soma todos os arquivos dentro dela (inclusive os ocultos, como o "Tamanho" do Explorador), mostrando o total parcial enquanto calcula. **Leste** cancela na hora e mantém o valor parcial. Junções e links nunca são seguidos (aparecem contados à parte) e pastas que não puderam ser lidas são listadas em vez de puladas em silêncio.
 
+## Renomear em lote
+
+Marque os itens (X/Oeste, ou Norte → Marcar todos) e escolha Norte → **Renomear em lote…**. O diálogo mostra a prévia ao vivo (nome atual → nome novo, problemas primeiro) e as opções do **Modo** escolhido (Sul em "Modo" troca):
+
+- **Numeração:** nome base, número inicial e dígitos (`Foto 001.jpg`, `Foto 002.jpg`… na ordem da lista; o nome base começa como o nome da pasta).
+- **Localizar e substituir:** texto a localizar e o substituto, com **Diferenciar maiúsculas e minúsculas** desligado por padrão.
+- **Prefixo e sufixo:** texto antes e depois do nome (o sufixo fica antes da extensão).
+- **Maiúsculas e minúsculas:** minúsculas, MAIÚSCULAS ou Iniciais Maiúsculas.
+
+Os campos de texto abrem o teclado virtual; vazio é permitido (ex.: sem prefixo). A extensão dos arquivos nunca muda. Se um nome novo for inválido, repetir o nome novo de outro item marcado ou já existir na pasta (inclusive itens ocultos), o item mostra o motivo e o lote inteiro fica bloqueado até o padrão ser corrigido: nada é sobrescrito nem renomeado em cadeia. **Start** (ou a opção **Renomear N itens**) aplica pela Central de operações, com resultado por item; Menu → **Desfazer** volta todos os nomes.
+
 ## Busca
 
 Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Outras ações da busca** → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.

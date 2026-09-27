@@ -100,6 +100,17 @@ Menu → Configurações → **View** (or **R3**, pressing the right stick, or *
 
 **Folder size:** North on a folder or drive → **Properties** → **Calculate size** adds up every file inside it (hidden ones included, like Explorer's "Size"), showing the running total while it works. **East** cancels at once and keeps the partial value. Junctions and links are never followed (they are counted separately), and folders that could not be read are listed instead of silently skipped.
 
+## Batch rename
+
+Mark the items (X/West, or North → Select all), then North → **Batch rename…**. The dialog shows a live preview (current name → new name, problems first) and the options of the chosen **Mode** (South on "Mode" cycles through them):
+
+- **Numbering:** base name, start number and digits (`Photo 001.jpg`, `Photo 002.jpg`… in list order; the base name starts as the folder's name).
+- **Find and replace:** text to find and its replacement, with **Match case** off by default.
+- **Prefix and suffix:** text added before and after the name (the suffix goes before the extension).
+- **Case:** lowercase, UPPERCASE or Title Case.
+
+Text fields open the on-screen keyboard; empty is allowed (e.g. no prefix). File extensions never change. If a new name is invalid, repeats another marked item's new name or is already used in the folder (hidden items included), the item shows the reason and the whole batch is blocked until the pattern is fixed: nothing is overwritten and nothing is renamed in a chain. **Start** (or the **Rename N items** option) applies it through the Operations center with a per-item result; Menu → **Undo** puts every name back.
+
 ## Search
 
 Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Other search actions** → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.

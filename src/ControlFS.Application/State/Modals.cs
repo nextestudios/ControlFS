@@ -177,6 +177,9 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
     /// <summary>Andamento (0–1) de uma operação mostrada no diálogo; null: sem barra.</summary>
     public double? Progress { get; internal set; }
     internal DialogOption? BackOption { get; set; }
+
+    /// <summary>Opção executada por Start/Menu (ex.: aplicar a renomeação em lote de qualquer opção em foco). Opcional.</summary>
+    internal DialogOption? StartOption { get; set; }
     public override bool IsSensitive => sensitive;
 
     private ActionIcon _icon;
