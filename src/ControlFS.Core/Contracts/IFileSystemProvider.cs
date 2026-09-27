@@ -13,7 +13,8 @@ public interface IFileSystemProvider
 
     /// <summary>
     /// Busca por nome sob <see cref="SearchRequest.RootPath"/>, sem índice. Síncrono e preguiçoso: quem chama enumera fora
-    /// da thread de UI. Nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode ser
+    /// da thread de UI. Nunca entra em junções, links simbólicos ou outros pontos de nova análise, exceto pastas de arquivos na nuvem
+    /// (OneDrive sob demanda), que são pastas comuns e só têm os nomes listados (o próprio link pode ser
     /// um resultado). Pastas que não puderam ser lidas viram <see cref="SearchResult.Skipped"/>, nunca somem em silêncio.
     /// </summary>
     IEnumerable<SearchResult> Search(SearchRequest request, CancellationToken cancellationToken);

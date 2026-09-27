@@ -80,7 +80,7 @@ Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the 
 - **East/B** while searching stops it and keeps the partial results; East/B again goes back to the folder.
 - **South/A** on a result opens its folder with the item focused; Back returns to the results.
 - **Filters:** North on the results opens the filters. **South** toggles a type (Folders, Images, Videos, Music and audio, Documents, Archives, Executables; several types combine) or steps through **Size** and **Modified** ranges; the menu stays open so you can pick several. The list updates right away without searching again, the bottom bar shows "N of M results (filters: …)", and the filters stay on for later searches in this session until **Clear filters**.
-- Search never enters junctions, symbolic links or other reparse points (the link itself can show up as a result).
+- Search never enters junctions, symbolic links or other reparse points (the link itself can show up as a result). OneDrive folders with files on demand are searched like normal folders: only names are read, so nothing is downloaded (OneDrive may fetch the list of a folder that was never opened).
 
 ## Recent folders and files
 

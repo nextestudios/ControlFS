@@ -100,7 +100,7 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
                 inaccessible.Add(step.Folder);
                 continue;
             }
-            if ((step.Attributes & FileAttributes.ReparsePoint) != 0 && step.IsDirectory) links++;
+            if (step.IsDirectory && !step.IsTraversed) links++;
             else if (step.IsDirectory) folders++;
             else
             {
