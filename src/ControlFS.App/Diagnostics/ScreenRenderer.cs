@@ -128,7 +128,7 @@ internal static class ScreenRenderer
 
                 app.GoHome();
                 await CaptureAsync(stage, target, dir, "1-home", window);
-                app.Handle(InputAction.PreviousRegion); // LB: acesso rápido da barra superior
+                app.Handle(InputAction.PreviousRegion); // L1: acesso rápido da barra superior
                 app.Handle(InputAction.NavigateRight);
                 await CaptureAsync(stage, target, dir, "1b-home-top-bar", window);
                 app.Handle(InputAction.Back);
@@ -172,9 +172,21 @@ internal static class ScreenRenderer
                 await FocusAsync(app, stage, "backup-2026-09.zip");
                 await CaptureAsync(stage, target, dir, "2f-details-archive", window);
                 await FocusAsync(app, stage, "arquivo sem extensão");
-                app.Handle(InputAction.PreviousRegion); // LB: pasta de cima na barra de caminho
+                app.Handle(InputAction.PreviousRegion); // L1: pasta de cima na barra de caminho
                 await CaptureAsync(stage, target, dir, "2b-folder-path-bar", window);
                 app.Handle(InputAction.Back);
+
+                // Abas (#176): com 2+ a faixa aparece no cabeçalho, sem legenda própria; Cima na barra superior leva a ela.
+                ChooseAppMenu(app, "Abas");
+                ChooseOpenMenu(app, "Nova aba");
+                await app.WhenIdleAsync();
+                app.Handle(InputAction.PreviousRegion);
+                app.Handle(InputAction.NavigateUp);
+                await CaptureAsync(stage, target, dir, "2g-folder-tabs", window);
+                app.Handle(InputAction.Back);
+                ChooseAppMenu(app, "Abas");
+                ChooseOpenMenu(app, "Fechar aba");
+                await app.WhenIdleAsync();
 
                 ChooseAppMenu(app, "Densidade");
                 await CaptureAsync(stage, target, dir, "3-folder-compact", window);
@@ -387,6 +399,12 @@ internal static class ScreenRenderer
     private static void ChooseAppMenu(AppController app, string prefix)
     {
         app.Handle(InputAction.OpenAppMenu);
+        ChooseOpenMenu(app, prefix);
+    }
+
+    /// <summary>Escolhe o item que começa com <paramref name="prefix"/> no menu aberto (fecha os menus se não houver).</summary>
+    private static void ChooseOpenMenu(AppController app, string prefix)
+    {
         if (app.TopModal is not Application.State.MenuModal menu) return;
         var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(prefix, StringComparison.Ordinal));
         if (index < 0)
@@ -409,7 +427,7 @@ internal static class ScreenRenderer
         await app.WhenIdleAsync();
     }
 
-    /// <summary>LB e direita até o atalho <paramref name="label"/> da barra superior, e Confirmar.</summary>
+    /// <summary>L1 e direita até o atalho <paramref name="label"/> da barra superior, e Confirmar.</summary>
     private static void ChooseQuickAccess(AppController app, string label)
     {
         app.Handle(InputAction.PreviousRegion);

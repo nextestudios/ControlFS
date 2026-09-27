@@ -53,7 +53,10 @@ public sealed partial class AppController
         }
     }
 
-    /// <summary>LB leva à barra superior (foco na pasta de cima) e RB às abas; na barra, ver <see cref="HandleTopBar"/>.</summary>
+    /// <summary>
+    /// L1/R1 no conteúdo levam à barra superior (L1 na pasta de cima, R1 no primeiro atalho; ver
+    /// <see cref="HandleTopBar"/>). A faixa de abas fica acima da barra: Cima na barra entra nela (com 2+ abas).
+    /// </summary>
     private bool HandleRegionSwitch(PaneState pane, InputAction action)
     {
         if (pane.Region == PaneRegion.Tabs)
@@ -63,16 +66,8 @@ public sealed partial class AppController
         }
         if (pane.Region == PaneRegion.List)
         {
-            if (action == InputAction.NextRegion && pane.Mode == PaneMode.Browse)
-            {
-                pane.Region = PaneRegion.Tabs;
-                return true;
-            }
-            if (action != InputAction.PreviousRegion || pane.IsLoading) return false;
-            var crumbs = Breadcrumbs;
-            if (crumbs.Count < 2) return true;
-            pane.Region = PaneRegion.Breadcrumbs;
-            pane.BreadcrumbFocus = crumbs.Count - 2;
+            if (action is not (InputAction.PreviousRegion or InputAction.NextRegion)) return false;
+            if (!pane.IsLoading) EnterTopBar(forward: action == InputAction.NextRegion);
             return true;
         }
         HandleTopBar(action);
@@ -123,8 +118,8 @@ public sealed partial class AppController
     public void PointerActivateBreadcrumb(int index)
     {
         if (TopModal is not null) return;
-        var crumbs = Breadcrumbs;
-        if (index < 0 || index >= crumbs.Count) return;
+        if (!IsBreadcrumbTarget(index)) return; // a pasta atual é só o rótulo do local: tocar não recarrega
+        if (ActivePane.IsLoading) return;
         SetTopBar(PaneRegion.Breadcrumbs, index);
         Handle(InputAction.Confirm);
     }

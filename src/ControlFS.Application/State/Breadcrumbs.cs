@@ -36,7 +36,7 @@ public enum PaneRegion
 {
     List,
     Breadcrumbs,
-    /// <summary>Faixa de abas do navegador (RB entra; LB/RB trocam de aba).</summary>
+    /// <summary>Faixa de abas do navegador (com 2+ abas: Cima na barra superior entra; L1/R1 trocam de aba).</summary>
     Tabs,
 
     /// <summary>Acesso rápido da barra superior (Favoritos, Recentes, pastas do Windows, Meu computador, Lixeira).</summary>

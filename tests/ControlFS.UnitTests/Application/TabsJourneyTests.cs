@@ -14,7 +14,7 @@ public class TabsJourneyTests : IDisposable
     public void Dispose() => _tmp.Dispose();
 
     [Fact]
-    public void Each_tab_keeps_its_own_location_focus_and_selection_when_switching_with_the_tab_strip() => UiContext.Run(async () =>
+    public void Each_tab_keeps_its_own_location_focus_and_selection_and_the_strip_is_reached_above_the_top_bar() => UiContext.Run(async () =>
     {
         var music = _tmp.MakeDir("Músicas");
         _tmp.MakeDir("Jogos");
@@ -38,8 +38,11 @@ public class TabsJourneyTests : IDisposable
         await d.FocusItem("b.mp3");
         d.Press(InputAction.ToggleSelection);
 
-        // RB entra na faixa de abas; LB volta para a aba 1, que continua na pasta de teste com o foco em "Músicas"
+        // #176: R1 leva à barra superior e Cima nela entra na faixa de abas (antes, RB ia direto para a faixa);
+        // L1 na faixa volta para a aba 1, que continua na pasta de teste com o foco em "Músicas"
         d.Press(InputAction.NextRegion);
+        Assert.Equal(PaneRegion.QuickAccess, app.Browser.Region);
+        d.Press(InputAction.NavigateUp);
         Assert.Equal(PaneRegion.Tabs, app.Browser.Region);
         d.Press(InputAction.PreviousRegion);
         Assert.Equal(0, app.ActiveTab);
@@ -55,12 +58,29 @@ public class TabsJourneyTests : IDisposable
         d.Press(InputAction.NavigateDown);
         Assert.Equal(PaneRegion.List, app.Browser.Region);
 
+        // Menu → Abas: trocar de aba sem a faixa
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Abas (2 de 2)");
+        await d.ChooseMenu("Aba 1:");
+        Assert.Equal((0, PaneRegion.List), (app.ActiveTab, app.Browser.Region));
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Abas");
+        await d.ChooseMenu("Aba 2:");
+        Assert.Equal(1, app.ActiveTab);
+
         // Norte na faixa: fechar a aba 2 volta para a aba 1
-        d.Press(InputAction.NextRegion);
+        d.Press(InputAction.PreviousRegion);
+        d.Press(InputAction.NavigateUp);
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Fechar aba");
         Assert.Single(app.Tabs);
         Assert.Equal(0, app.ActiveTab);
         Assert.Equal(_tmp.Path, ((PhysicalLocation)app.Browser.Location!).FullPath);
+        Assert.Equal(PaneRegion.List, app.Browser.Region);
+
+        // Com uma aba só a faixa some (repetiria o caminho): Cima na barra não leva a ela
+        d.Press(InputAction.NextRegion);
+        d.Press(InputAction.NavigateUp);
+        Assert.Equal(PaneRegion.QuickAccess, app.Browser.Region);
     });
 }

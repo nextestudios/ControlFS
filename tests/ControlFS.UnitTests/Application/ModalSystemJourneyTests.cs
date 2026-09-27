@@ -93,9 +93,9 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.OpenAppMenu);
         AssertIcons(d.App.TopModal, "Menu na pasta");
         d.Press(InputAction.Back);
-        d.Press(InputAction.NextRegion); // faixa de abas
-        d.Press(InputAction.OpenContextMenu);
-        AssertIcons(d.App.TopModal, "Abas");
+        d.Press(InputAction.OpenAppMenu); // uma aba só: a faixa não aparece; Menu → Abas
+        await d.ChooseMenu("Abas");
+        AssertIcons(await d.WaitMenu(), "Abas");
     });
 
     [Fact]

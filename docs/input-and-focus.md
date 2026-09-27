@@ -19,7 +19,7 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | East | Voltar / fechar | Esc, Backspace |
 | West | Marcar/desmarcar | Espaço |
 | North | Ações do item | F2, tecla Menu |
-| LB / RB | Barra superior (caminho + acesso rápido) / abas; nelas, voltar ao conteúdo (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
+| LB / RB (L1/R1, L/R) | Barra superior: no conteúdo, entra (LB na pasta de cima, RB no primeiro atalho); na barra, alvo anterior/seguinte; na faixa de abas, aba anterior/seguinte (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
 | LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
 | Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
@@ -77,7 +77,7 @@ perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
 ## Rodapé por contexto
 
 `AppController.BuildHints` é a fonte única; `HintJourneyTests` cobre os contextos. Ação que não funciona não aparece.
-Nas telas (não nos modais) a ordem é fixa: Confirmar, Voltar, Marcar, Ações, Menu, Buscar, Lista/Grade, LB, RB
+Nas telas (não nos modais) a ordem é fixa: Confirmar, Voltar, Marcar, Ações, Menu, Buscar, Lista/Grade, L1, R1
 (`PromptJourneyTests`). Lista/Grade (R3, Ctrl+G) aparece no início, nas pastas, na busca e na Lixeira e diz a exibição
 de destino: "Grade" na lista, "Lista" na grade. No Xbox, os glifos das faces têm as cores do controle (A verde,
 B vermelho, X azul, Y amarelo); as outras famílias mantêm seus desenhos.
@@ -118,22 +118,34 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
   a ordem visual e passam de seção; cima/baixo trocam de linha na mesma coluna (limitada às colunas da seção de destino);
   LT/RT vão ao começo da seção anterior/seguinte (`SectionGridNavigation`). O foco continua sendo um índice de
   `Places` (a lista mostra a mesma coleção na ordem original), então trocar lista ↔ grade mantém o local focado.
-- Regiões (#30, #50, redesenho): conteúdo, barra superior (caminho + acesso rápido) e abas (`AppController.FocusRegion`:
-  `PaneState.Region` no navegador, estado próprio no início). A barra superior é uma linha só:
-  `[LB] [Locais|Meu computador] › segmentos │ Favoritos · Arquivos recentes · pastas do Windows · Meu computador · Lixeira`.
-  - LB no conteúdo: no navegador, foco na pasta de cima (como antes); no início, no primeiro atalho.
-  - Esquerda/direita percorrem a linha toda: do último segmento a direita passa ao primeiro atalho e do primeiro atalho
-    a esquerda volta ao último segmento. LT/RT: primeiro/último item da parte atual (caminho ou atalhos).
+- Regiões (#30, #50, redesenho, #176): conteúdo, barra superior (caminho + acesso rápido) e abas
+  (`AppController.FocusRegion`: `PaneState.Region` no navegador, estado próprio no início). A barra superior é uma
+  região só, uma linha:
+  `[L1] [Locais|Meu computador] › segmentos › atual │ Favoritos · Arquivos recentes · pastas do Windows · Meu computador · Lixeira [R1]`.
+  - Alvos (`TopBarTargets`, na ordem da tela): segmentos e atalhos que levam a outro lugar. A pasta atual (último
+    segmento) é o rótulo do local, não uma ação: é pulada por L1/R1/esquerda/direita, não tem legenda de Sul e o toque
+    nela não faz nada; no início, "Locais › Início" já é aqui (só os atalhos são alvos); o atalho que aponta para o local
+    atual (`IsQuickAccessActive`) também é pulado. Favoritos e Arquivos recentes (menus) são sempre alvos.
+  - Entrar a partir do conteúdo: a pasta atual fica entre o caminho e o acesso rápido, então **L1** foca o alvo logo
+    antes dela (a pasta de cima) e **R1** o logo depois (o primeiro atalho); sem alvo desse lado, o mais próximo do
+    outro (no início, os dois vão para Favoritos).
+  - Na barra: **L1/R1** e **esquerda/direita** vão ao alvo anterior/seguinte, sem dar a volta (param nas pontas); do
+    último segmento alvo passam ao primeiro atalho. LT/RT: primeiro/último alvo da parte atual (caminho ou atalhos).
   - Sul: segmento navega (com histórico) e foca o filho de onde viemos; a raiz "Locais" vai ao início e "Meu computador"
     abre as unidades na aba atual com histórico (fase B; no seletor de pasta, abre os outros locais); atalho de pasta/Lixeira abre na aba atual com
     histórico (no início, abre o navegador); Favoritos e Arquivos recentes abrem um menu, e fechar o menu devolve o foco
     ao atalho.
-  - Norte num segmento: caminho completo em menu. Baixo, Leste, LB e RB voltam ao conteúdo; Start abre o menu.
-  - RB no conteúdo continua indo para a faixa de abas, que agora fica no cabeçalho ao lado do logo.
+  - Norte num segmento: caminho completo em menu. Baixo e Leste voltam ao conteúdo com o foco da lista onde estava
+    (depois de navegar, o foco vai para a lista: no filho de onde viemos ou no primeiro item); Start abre o menu.
+  - Abas: a faixa fica no cabeçalho ao lado do logo e só aparece com 2+ abas (com uma, repetiria o caminho), sem
+    legenda própria. **Cima** na barra superior entra nela; lá, L1/R1 e esquerda/direita trocam de aba, Norte abre
+    Nova/Fechar/lista das abas, Sul/baixo/Leste voltam ao conteúdo. Menu → Abas faz o mesmo sem a faixa; "Abrir em nova
+    aba" continua nas ações de pasta. (Antes do #176, RB no conteúdo ia direto para a faixa.)
   - Só um foco fica visível: na barra ou nas abas, o anel da lista some. Enquanto o foco está no conteúdo, os glifos
-    de LB (na barra) e RB (ao lado das abas) ficam no topo e saem do rodapé; as legendas continuam em
-    `AppController.Hints`.
-  - Coberto por `BreadcrumbJourneyTests`, `TabsJourneyTests` e `TopBarJourneyTests`.
+    de L1/R1 ficam nas pontas da barra (família do controle em uso via `IControllerPromptProvider`) e saem do rodapé;
+    na barra, o rodapé mostra Ir para/Abrir, Anterior/Próximo, Abas (Cima, com 2+) e Voltar à lista.
+  - Coberto por `BreadcrumbJourneyTests`, `TabsJourneyTests` e `TopBarJourneyTests` (L1/R1 pelos alvos, pasta atual
+    pulada e sem recarregar, restauração do foco em lista e grade).
 - Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização. Item focado removido (excluir,
   mover, mudança externa) → o **próximo item que sobreviveu** na ordem anterior; sem próximo, o anterior. Com itens na
   lista, o foco nunca fica vazio (`StateTests`).

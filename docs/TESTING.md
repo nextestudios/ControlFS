@@ -44,7 +44,7 @@ Com o Narrador ligado (Ctrl+Win+Enter), usando só o controle:
 - [ ] Menu (Start e Norte): lê "Menu <título>" e o item; item indisponível lê "indisponível: motivo".
 - [ ] Diálogo de exclusão: lê o título, os itens, a mensagem e "Cancelar, botão 1 de 3"; ao andar, só o botão.
 - [ ] Teclado virtual: lê "Teclado virtual: <título>" e cada tecla focada; o cursor lê a posição.
-- [ ] Barra de caminho (LB) e abas (RB): lê o segmento/aba focado e "pasta atual"/"ativa".
+- [ ] Barra superior (L1/R1) e abas (Cima na barra): lê o segmento/atalho/aba focado e "ativa".
 - [ ] Avisos do rodapé (ex.: "3 itens restaurados") são lidos sem mover o foco; nenhuma informação depende só de som,
       vibração ou cor.
 - [ ] Caps+Tab (ler o item atual) repete o último foco anunciado.
@@ -130,7 +130,7 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real, Configurações d
 ## Barra de caminho (#30)
 
 - [ ] Com o controle: LB na lista leva o foco para a barra; esquerda/direita; Sul numa pasta de cima navega e foca a
-      pasta de origem; RB volta para a lista. Mesmo com Ctrl+←/→ no teclado.
+      pasta de origem; baixo ou Leste voltam para a lista. Mesmo com Ctrl+←/→ no teclado.
 - [ ] Dentro de um ZIP em subpasta: o `▸` e o ícone de pacote separam disco e compactado; escolher a pasta do disco
       foca o arquivo .zip.
 - [ ] Caminho longo (8+ níveis) em 1280×720: o meio vira `…`, nada sai da tela; Sul no `…` mostra as pastas escondidas.
@@ -140,23 +140,39 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real, Configurações d
 
 Não validado em hardware.
 
-- [ ] Início, com controle: LB leva o foco a Favoritos; direita percorre Arquivos recentes, as pastas do Windows (com os
+- [ ] Início, com controle: LB (ou RB) leva o foco a Favoritos; direita percorre Arquivos recentes, as pastas do Windows (com os
       ícones do Windows, sem emoji), Meu computador e Lixeira; Sul em Downloads abre a pasta; Leste/baixo voltam à lista.
 - [ ] Numa pasta funda: a barra mostra "Meu computador › C:\ › … › pasta" (caminho real, meio recolhido); LB foca a pasta
-      de cima; direita no último segmento passa aos atalhos; Sul num atalho abre na mesma aba e Leste volta.
+      de cima; direita pula a pasta atual e passa aos atalhos; Sul num atalho abre na mesma aba e Leste volta.
 - [ ] Favoritos e Arquivos recentes abrem uma lista; fechar a lista devolve o foco ao atalho. Sem favoritos, a lista
       explica como adicionar.
 - [ ] 1280×720 e 1280×800: os atalhos que não cabem mostram só o ícone (o focado e o da pasta atual mostram o nome);
-      nada sai da tela; LB e RB aparecem na barra/ao lado das abas e não no rodapé.
+      nada sai da tela; os glifos de LB e RB aparecem nas pontas da barra e não no rodapé.
 - [ ] O logo com o nome aparece em todas as telas; minimizar, maximizar, fechar, redimensionar, mover e F11 continuam
       funcionando (barra de título do Windows).
 - [ ] Clique/toque num atalho ou num segmento faz o mesmo que focar e apertar Sul.
 - [ ] Narrador: "Acesso rápido. Downloads, 3 de 10" ao andar pelos atalhos; "Barra de caminho" nos segmentos.
 
+## Barra superior com L1/R1 (#176)
+
+Não validado em hardware.
+
+- [ ] O cabeçalho não mostra a pasta atual num chip separado nem uma legenda de R1 ao lado do logo (com uma aba só).
+- [ ] Xbox, PlayStation, Nintendo (Switch Pro) e genérico: os glifos nas pontas da barra são LB/RB, L1/R1, L/R e
+      L1/R1 genérico; com o teclado, Ctrl+← / Ctrl+→. O glifo troca na hora ao pegar outro controle.
+- [ ] Numa pasta: L1 foca a pasta de cima, R1 o primeiro atalho; L1/R1 e esquerda/direita andam pelos alvos com o anel
+      de foco bem visível a 3 m; a pasta atual (último segmento) e o atalho da pasta atual nunca recebem o foco nem
+      recarregam, nem com clique/toque.
+- [ ] Sul num segmento de cima ou num atalho navega e o foco volta à lista (no filho de onde veio, ou no primeiro
+      item); Leste/baixo voltam à lista com o foco onde estava. Em lista e em grade.
+- [ ] 1920×1080, 1280×720 e 1280×800, em lista e grade: a barra e os glifos cabem, nada é cortado.
+
 ## Abas (#50)
 
-- [ ] Com o controle: RB na lista mostra o anel de foco na aba ativa; LB/RB trocam de aba e a lista abaixo muda na hora;
-      baixo ou Leste voltam para a lista. O rodapé mostra "Aba anterior / Próxima aba / Nova/fechar aba".
+- [ ] Com uma aba, a faixa não aparece. Com duas ou mais, aparece ao lado do logo sem legenda de botão.
+- [ ] Com o controle: L1/R1 na lista, depois Cima, mostra o anel de foco na aba ativa; L1/R1 trocam de aba e a lista
+      abaixo muda na hora; baixo ou Leste voltam para a lista. O rodapé mostra "Aba anterior / Próxima aba /
+      Nova/fechar aba". Menu → Abas cria, fecha e troca de aba.
 - [ ] Cinco abas com nomes longos em 1280×720: a faixa não empurra a lista para fora da tela; nomes cortados com "…".
 - [ ] Clique/toque numa aba troca para ela; o Narrador lê "Aba N de M: nome, ativa".
 
