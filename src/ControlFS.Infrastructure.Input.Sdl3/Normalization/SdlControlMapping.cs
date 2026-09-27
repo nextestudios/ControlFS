@@ -24,6 +24,7 @@ internal static class SdlControlMapping
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START => PhysicalControl.Start,
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK => PhysicalControl.Select,
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_STICK => PhysicalControl.RightStickClick,
+        SDL_GamepadButton.SDL_GAMEPAD_BUTTON_LEFT_STICK => PhysicalControl.LeftStickClick,
         _ => null,
     };
 }

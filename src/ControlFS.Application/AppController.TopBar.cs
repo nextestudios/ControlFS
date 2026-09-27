@@ -160,7 +160,7 @@ public sealed partial class AppController
     }
 
     /// <summary>Com 2+ abas no navegador, a faixa de abas (acima da barra) recebe o foco com Cima.</summary>
-    private bool CanFocusTabs => Screen == Screen.Browser && ActivePane.Mode == PaneMode.Browse && _tabs.Count > 1;
+    private bool CanFocusTabs => Screen == Screen.Browser && ActivePane.Mode == PaneMode.Browse && _tabs.Count > 1 && !FocusOnSecond;
 
     private void HandleTopBar(InputAction action)
     {

@@ -99,7 +99,7 @@ public sealed partial class AppController
             return;
         }
         // Abas que mostravam algo dentro da unidade voltam para Meu computador.
-        foreach (var tab in _tabs.Where(t => t.Location is PhysicalLocation here &&
+        foreach (var tab in BrowsePanes.Where(t => t.Location is PhysicalLocation here &&
             here.FullPath.StartsWith(driveRoot, StringComparison.OrdinalIgnoreCase)).ToList())
             Track(NavigateAsync(tab, ThisPcLocation.Instance, pushHistory: false));
         RefreshDrives();

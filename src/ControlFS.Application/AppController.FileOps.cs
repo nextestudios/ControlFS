@@ -252,7 +252,7 @@ public sealed partial class AppController
         else PushModal(dialog);
         // Todas as abas que mostram a origem ou o destino são atualizadas, não só a ativa.
         var affected = new[] { plan.Destination, plan.SourceFolder }.Where(p => p is not null).ToList();
-        foreach (var tab in _tabs.Where(t => t.Location is PhysicalLocation here && affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())
+        foreach (var tab in BrowsePanes.Where(t => t.Location is PhysicalLocation here && affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())
             Refresh(tab);
     }
 

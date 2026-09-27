@@ -41,7 +41,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Recursos
 
-- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** e **pastas/arquivos recentes** no Início, **barra de caminho navegável** e **abas**
+- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** e **pastas/arquivos recentes** no Início, **barra de caminho navegável**, **abas** (restauradas ao abrir) e **dois painéis** lado a lado (L3 troca; copiar/mover/extrair para o outro painel)
 - **Legendas do controle** de acordo com o que está na sua mão (Xbox, PlayStation, Nintendo, genérico), glifos vetoriais originais, rodapé por contexto e **assistente de mapeamento** para joysticks sem perfil
 - **Layout responsivo** para portáteis 720p/800p, desktop e TVs 1080p/4K
 - **Tema escuro ou claro** (segue o Windows por padrão) e **cores de destaque** à escolha, todas com contraste conferido

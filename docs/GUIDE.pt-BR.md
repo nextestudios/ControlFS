@@ -18,6 +18,7 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Start | Menu do app | Concluir |
 | Select / View | Buscar | Símbolos |
 | R3 (pressionar analógico direito) | Lista ↔ grade | — |
+| L3 (pressionar analógico esquerdo) | Com dois painéis: trocar o painel ativo (Tab no teclado) | — |
 | Analógico direito (inclinar) | Rolar a lista, o menu, o texto, a imagem com zoom ou o diálogo ativo | — |
 
 **Voltar** fecha primeiro o menu aberto, depois limpa a seleção, depois volta no histórico e por fim vai à tela inicial. Sair do app sempre pede confirmação, começando em "Cancelar".
@@ -89,6 +90,10 @@ Cada aba guarda a própria pasta, histórico, itens marcados e foco. Com duas ou
 Com duas ou mais abas abertas, a próxima abertura do ControlFS traz as mesmas abas, na mesma ordem e na aba que estava ativa (compactados e buscas voltam na pasta de onde vieram). Se a pasta de uma aba sumiu ou a unidade está desconectada, a aba aparece como "(indisponível)" e mostra o início com um aviso; abrir outro local nela a reaproveita. Menu → Configurações → **Restaurar abas ao abrir** desliga (e apaga a lista guardada).
 
 Fechou uma aba sem querer? Menu → **Reabrir aba fechada** (ou Norte na faixa de abas) a traz de volta na mesma posição, com a pasta e o histórico dela; repita para reabrir as anteriores (até 10 por sessão). **Duplicar aba** (no mesmo menu) abre ao lado uma cópia da aba: mesma pasta, mesmo item focado e o mesmo histórico, sem as marcações.
+
+## Dois painéis
+
+Menu → **Dois painéis** mostra duas pastas lado a lado, cada painel com o próprio local, histórico, marcações e foco. O painel ativo tem o contorno em ciano e o título "ATIVO", e a barra superior mostra o caminho dele; o outro fica esmaecido, com o caminho no título. **L3** (apertar o analógico esquerdo; **Tab** no teclado) troca o painel ativo sem mudar marcações nem iniciar nada; clicar no outro painel faz o mesmo. As abas continuam no painel esquerdo (com o direito ativo, LT/RT paginam a lista). Em **Ações** (Norte), **Copiar para o outro painel**, **Mover para o outro painel** e, num compactado, **Extrair para o outro painel** mostram a origem e o destino antes de executar; com os dois painéis na mesma pasta elas ficam indisponíveis e dizem o motivo. Em portáteis e janelas estreitas aparece um painel só (a escolha fica salva e volta numa tela maior).
 
 ## A lista
 

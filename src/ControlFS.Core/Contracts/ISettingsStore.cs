@@ -66,6 +66,9 @@ public sealed record AppSettings
     /// <summary>Índice, em <see cref="OpenTabs"/>, da aba que estava ativa.</summary>
     public int ActiveOpenTab { get; init; }
 
+    /// <summary>Dois painéis lado a lado (#56) onde a tela comporta; portáteis e janelas estreitas mostram um.</summary>
+    public bool DualPane { get; init; }
+
     /// <summary>
     /// Fluidez máxima: com a janela ativa, o controle é lido a cada quadro desenhado (120 vezes por segundo numa tela de
     /// 120 Hz, 144 numa de 144), em sincronia com a tela. Desligado (economia): um temporizador mais lento, que gasta

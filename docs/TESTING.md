@@ -317,6 +317,16 @@ e um .lnk); `ShortcutIconIntegrationTests` extrai ícones reais de .ico/.dll e d
 - [ ] Unidade de rede mapeada (`net use Z: \\servidor\pasta`): aparece com ícone de rede; desconectar o servidor não
       trava o início.
 
+## Dois painéis (#56) — não validado em hardware
+
+- [ ] 1080p e TV: Menu → Dois painéis mostra as duas pastas lado a lado; de longe dá para ver qual painel está ativo (contorno
+      ciano, "ATIVO") sem depender só da cor (o outro esmaecido, com "L3 ou Tab para ativar").
+- [ ] L3 num Xbox, DualSense e Switch Pro troca o painel na hora; segurar L3 não repete; o rodapé mostra "LS/L3 Painel …".
+- [ ] Steam Deck/portátil 1280×800: um painel só; ligar a opção num monitor externo mostra os dois.
+- [ ] Copiar, mover e extrair para o outro painel: o resumo mostra De/Para; o outro painel atualiza sozinho ao terminar.
+- [ ] Mouse: clicar no painel esmaecido o torna ativo; clicar numa linha dele não abre nada.
+- [ ] Narrador: trocar de painel lê "Painel direito, Pasta …".
+
 ## Locais de rede (#27) — não validado em rede real
 
 - [ ] NAS com unidade mapeada (Z:): aparece no início (Unidades e dispositivos) e em Meu computador com o símbolo de rede,

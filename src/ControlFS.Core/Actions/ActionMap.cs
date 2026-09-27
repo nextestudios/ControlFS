@@ -31,6 +31,7 @@ public sealed class ActionMap
             [PhysicalControl.Start] = InputAction.OpenAppMenu,
             [PhysicalControl.Select] = InputAction.Search,
             [PhysicalControl.RightStickClick] = InputAction.ChangeView,
+            [PhysicalControl.LeftStickClick] = InputAction.SwitchPane,
         };
     }
 

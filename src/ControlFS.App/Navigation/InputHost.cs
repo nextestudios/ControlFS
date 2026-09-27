@@ -290,6 +290,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
             VirtualKey.PageDown => InputAction.PageDown,
             VirtualKey.F when ctrl => InputAction.Search,
             VirtualKey.G when ctrl && !typing => InputAction.ChangeView,
+            VirtualKey.Tab when !typing => InputAction.SwitchPane,
             _ => null,
         };
         if (action is not null || (typing && key == VirtualKey.Back)) _app.SetActiveController(null); // teclado em uso: legendas de teclado

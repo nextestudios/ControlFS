@@ -24,9 +24,11 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
 | Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
 | R3 (pressionar analógico direito) | Lista ↔ grade (`ChangeView`) | Ctrl+G |
+| L3 (pressionar analógico esquerdo) | Com dois painéis (#56): troca o painel ativo (`SwitchPane`); nunca muda marcação nem inicia operação | Tab |
 
 "Confirmar com botão direito" (Menu → Configurações) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
-Guide/Home não é mapeado. L3 não é usado; R3 troca lista ↔ grade (também Ctrl+G e Menu → Configurações → Exibição). Joysticks sem
+Guide/Home não é mapeado. L3 troca o painel ativo com os dois painéis ligados (sem conflito: LB/RB são da barra
+superior, LT/RT das abas com 2+ abas, R3 da exibição); com um painel só, não faz nada. R3 troca lista ↔ grade (também Ctrl+G e Menu → Configurações → Exibição). Joysticks sem
 perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
 
 ## Regras implementadas e testadas (unitário)

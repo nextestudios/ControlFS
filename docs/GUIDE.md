@@ -18,6 +18,7 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | Start | App menu | Done |
 | Select / View | Search | Symbols |
 | R3 (press right stick) | List ↔ grid | — |
+| L3 (press left stick) | With two panes: switch the active pane (Tab on the keyboard) | — |
 | Right stick (tilt) | Scroll the active list, menu, text, zoomed image or dialog | — |
 
 **Back** closes the open menu first, then clears the selection, then goes back in history, then to the home screen. Leaving the app always asks for confirmation, starting on "Cancel".
@@ -89,6 +90,10 @@ Each tab keeps its own folder, history, marked items and focus. With two or more
 With two or more tabs open, the next launch of ControlFS brings back the same tabs, in the same order and on the tab that was active (archives and searches come back at the folder they came from). If a tab's folder is gone or its drive is disconnected, the tab shows as "(indisponível)" (unavailable) and displays Home with a notice; opening another place in it reuses it. Menu → Configurações → **Restaurar abas ao abrir** (restore tabs on launch) turns this off (and erases the saved list).
 
 Closed a tab by mistake? Menu → **Reabrir aba fechada** (reopen closed tab, or North on the tab strip) brings it back at the same position, with its folder and history; repeat to reopen earlier ones (up to 10 per session). **Duplicar aba** (duplicate tab, same menu) opens a copy next to it: same folder, same focused item and the same history, without the marks.
+
+## Two panes
+
+Menu → **Dois painéis** (two panes) shows two folders side by side, each pane with its own location, history, marks and focus. The active pane has the cyan outline and the "ATIVO" (active) title, and the top bar shows its path; the other one is dimmed, with its path in its title. **L3** (press the left stick; **Tab** on the keyboard) switches the active pane without changing marks or starting anything; clicking the other pane does the same. Tabs stay in the left pane (with the right pane active, LT/RT page the list). In **Actions** (North), **Copiar para o outro painel** (copy to the other pane), **Mover para o outro painel** (move) and, on an archive, **Extrair para o outro painel** (extract) show the source and destination before running; with both panes in the same folder they are unavailable and say why. Handhelds and narrow windows show a single pane (the choice is saved and comes back on a larger screen).
 
 ## The list
 

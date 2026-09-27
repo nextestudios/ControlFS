@@ -45,6 +45,7 @@ public sealed partial class AppController
             return;
         }
         Browser.Region = PaneRegion.List;
+        FocusLeftPane();
         var tab = new PaneState(PaneMode.Browse);
         _tabs.Insert(ActiveTab + 1, tab);
         ActiveTab++;
@@ -86,7 +87,7 @@ public sealed partial class AppController
     /// </summary>
     private bool HandleTabTrigger(InputAction action)
     {
-        if (_tabs.Count < 2 || action is not (InputAction.PageUp or InputAction.PageDown)) return false;
+        if (_tabs.Count < 2 || FocusOnSecond || action is not (InputAction.PageUp or InputAction.PageDown)) return false; // no painel direito, os gatilhos paginam
         var step = action == InputAction.PageDown ? 1 : -1;
         SwitchTab((ActiveTab + step + _tabs.Count) % _tabs.Count, keepStripFocus: false);
         StatusMessage = $"Aba {ActiveTab + 1} de {_tabs.Count}: {TabTitle(Browser)}.";
@@ -95,7 +96,8 @@ public sealed partial class AppController
 
     private void AddTabTriggerHints(List<Hint> hints)
     {
-        if (_tabs.Count < 2) return;
+        if (DualPaneActive) hints.Add(new(InputAction.SwitchPane, SecondPaneFocused ? "Painel esquerdo" : "Painel direito"));
+        if (_tabs.Count < 2 || FocusOnSecond) return;
         hints.Add(new(InputAction.PageUp, "Aba anterior"));
         hints.Add(new(InputAction.PageDown, "Próxima aba"));
     }
@@ -103,7 +105,8 @@ public sealed partial class AppController
     private void SwitchTab(int index, bool keepStripFocus)
     {
         index = Math.Clamp(index, 0, _tabs.Count - 1);
-        if (index == ActiveTab) return;
+        if (index == ActiveTab && !FocusOnSecond) return;
+        FocusLeftPane();
         Browser.Region = PaneRegion.List;
         ActiveTab = index;
         Browser.Region = keepStripFocus ? PaneRegion.Tabs : PaneRegion.List;
@@ -144,7 +147,7 @@ public sealed partial class AppController
     private void ShowTabMenu()
     {
         var index = ActiveTab;
-        var fromStrip = Browser.Region == PaneRegion.Tabs;
+        var fromStrip = Browser.Region == PaneRegion.Tabs && !FocusOnSecond;
         var items = new List<MenuItem>
         {
             new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
@@ -277,6 +280,7 @@ public sealed partial class AppController
         var (tab, index) = _closedTabs[^1];
         _closedTabs.RemoveAt(_closedTabs.Count - 1);
         Browser.Region = PaneRegion.List;
+        FocusLeftPane();
         index = Math.Clamp(index, 0, _tabs.Count);
         _tabs.Insert(index, tab);
         ActiveTab = index;
@@ -319,6 +323,7 @@ public sealed partial class AppController
         foreach (var entry in source.Forward.Reverse()) copy.Forward.Push(entry);
         copy.List.SetSort(source.List.Sort);
         Browser.Region = PaneRegion.List;
+        FocusLeftPane();
         _tabs.Insert(index + 1, copy);
         ActiveTab = index + 1;
         Screen = Screen.Browser;

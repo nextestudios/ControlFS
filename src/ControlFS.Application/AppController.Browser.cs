@@ -363,6 +363,7 @@ public sealed partial class AppController
                     Detail: "Numeração, localizar e substituir, prefixo e sufixo ou maiúsculas, com prévia.", Icon: ActionIcon.Rename),
                 new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo),
                 new MenuItem($"Mover {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo),
+                .. OtherPaneTransferItems(pane, marked),
                 new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked), Icon: ActionIcon.Compress, Placement: MenuPlacement.Quick, ShortLabel: "Compactar"),
                 new MenuItem($"Excluir {Plural.Of(marked.Count, "item", "itens")}…", () => BeginDelete(pane, marked), FileOpsUnavailable, Icon: ActionIcon.Delete, Placement: MenuPlacement.Quick, ShortLabel: "Excluir"),
                 .. SelectionItems(pane),
@@ -388,6 +389,7 @@ public sealed partial class AppController
             items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar", Placement: MenuPlacement.Quick));
             items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo, Section: "Organizar"));
             items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo, Section: "Organizar"));
+            items.AddRange(OtherPaneTransferItems(pane, [entry], "Organizar"));
             items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar", Placement: MenuPlacement.Quick));
             items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
         }
@@ -457,6 +459,7 @@ public sealed partial class AppController
             items.Add(extract);
             items.Add(new MenuItem("Extrair aqui", () => BeginExtraction(file, folder, dedicated: false, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado"));
             items.Add(new MenuItem("Extrair para…", () => PickDestinationThenExtract(file, folder, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado"));
+            items.AddRange(OtherPaneExtractItems(pane, file, null, string.Empty, "Compactado"));
             items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable, Icon: ActionIcon.Image, Section: "Abrir"));
@@ -477,6 +480,7 @@ public sealed partial class AppController
         items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar", Placement: MenuPlacement.Quick));
         items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo, Section: "Organizar"));
         items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo, Section: "Organizar"));
+        items.AddRange(OtherPaneTransferItems(pane, [entry], "Organizar"));
         items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar", Placement: MenuPlacement.Quick));
         items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
@@ -504,6 +508,7 @@ public sealed partial class AppController
             new("Extrair tudo aqui (pasta do arquivo)", () => BeginExtraction(path, folder, dedicated: false, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
             new("Extrair tudo para…", () => PickDestinationThenExtract(path, folder, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
         };
+        items.AddRange(OtherPaneExtractItems(pane, path, selected.Count > 0 ? selected : null, selected.Count > 0 ? archive.InnerPath : string.Empty, "Extrair"));
         var noSelection = selected.Count == 0 ? "Marque entradas primeiro (botão de marcar)." : null;
         var extractSelection = new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection, Icon: ActionIcon.Extract, Section: "Extrair");
         items.Add(extractSelection);
@@ -539,6 +544,9 @@ public sealed partial class AppController
                 Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Navegar"),
             new(_tabs.Count > 1 ? $"Abas ({ActiveTab + 1} de {_tabs.Count})…" : "Abas…", ShowTabMenu, inBrowser || _closedTabs.Count > 0 ? null : "Abra uma pasta primeiro.",
                 Detail: "Fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.NewTab, Section: "Navegar"),
+            new(Settings.DualPane ? "Dois painéis: ligado" : "Dois painéis: desligado", ToggleDualPane,
+                Detail: DualPaneFits ? "Lado a lado; L3 (Tab) troca de painel e Ações copia ou move para o outro." : "Esta tela é estreita: com a opção ligada, os dois aparecem numa tela maior.",
+                Icon: ActionIcon.DualPane, Section: "Navegar"),
             new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable, Detail: "A última aba fechada volta com o local e o histórico dela.", Icon: ActionIcon.Undo, Section: "Navegar"),
             .. UndoMenuItems(),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),

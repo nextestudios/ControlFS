@@ -74,6 +74,7 @@ public enum ActionIcon
     View,
     Density,
     DetailsPane,
+    DualPane,
     Subfolders,
     Theme,
     Accent,
@@ -195,6 +196,7 @@ public static class ActionIcons
         ActionIcon.Theme => "\uE793", // Brightness (claro/escuro)
         ActionIcon.Accent => "\uE790", // Color
         ActionIcon.DetailsPane => "\uE90D",
+        ActionIcon.DualPane => "\uE90C",
         ActionIcon.Subfolders => "\uE8B7",
         ActionIcon.Operations => "\uE895",
         ActionIcon.Undo => "\uE7A7",

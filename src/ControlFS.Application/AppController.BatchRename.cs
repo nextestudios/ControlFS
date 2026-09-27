@@ -254,7 +254,7 @@ public sealed partial class AppController
             PushUndo(undo, run.Redo);
         }
         var focus = renamed.Count > 0 ? Path.GetFileName(renamed[0].FinalPath!) : null;
-        foreach (var tab in _tabs.Where(t => t.Location is PhysicalLocation here && string.Equals(here.FullPath, run.Folder, StringComparison.OrdinalIgnoreCase)).ToList())
+        foreach (var tab in BrowsePanes.Where(t => t.Location is PhysicalLocation here && string.Equals(here.FullPath, run.Folder, StringComparison.OrdinalIgnoreCase)).ToList())
         {
             tab.List.ClearSelection();
             Refresh(tab, ReferenceEquals(tab, Browser) ? focus : null);

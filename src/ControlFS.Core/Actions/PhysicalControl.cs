@@ -27,6 +27,9 @@ public enum PhysicalControl
 
     /// <summary>Pressionar o analógico direito (R3/RS): troca lista ↔ grade.</summary>
     RightStickClick,
+
+    /// <summary>Pressionar o analógico esquerdo (L3/LS): troca o painel ativo com os dois painéis ligados (#56).</summary>
+    LeftStickClick,
 }
 
 /// <summary>Qual botão de face confirma. O padrão é South; a alternativa troca comportamento E legendas.</summary>

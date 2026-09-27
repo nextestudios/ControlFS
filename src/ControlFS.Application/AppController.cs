@@ -63,7 +63,7 @@ public sealed partial class AppController
     public IReadOnlyList<FileEntry> Places { get; private set; } = [];
     public int PlacesFocus { get; private set; }
     /// <summary>Aba ativa do navegador (cada aba é um <see cref="PaneState"/> independente).</summary>
-    public PaneState Browser => _tabs[ActiveTab];
+    public PaneState Browser => FocusOnSecond ? _second : _tabs[ActiveTab];
     public PaneState Picker { get; } = new(PaneMode.PickFolder);
     public string PickerTitle { get; private set; } = string.Empty;
     public IReadOnlyList<Modal> Modals => _modals;
@@ -103,6 +103,7 @@ public sealed partial class AppController
         Places = BuildPlaces();
         PlacesFocus = IsGrid && HomeSections is [{ Places: [var first, ..] }, ..] ? first : 0; // grade: o primeiro cartão na tela
         Screen = RestoreOpenTabs() ? Screen.Browser : Screen.Home;
+        if (Settings.DualPane) OpenSecondPaneBeside();
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
         StartAutomaticUpdateCheck();
@@ -155,6 +156,7 @@ public sealed partial class AppController
         StatusMessage = null;
         MappingWizard?.Wizard.Touch(Clock()); // quem está agindo não perde a configuração por inatividade
         if (TopModal is { } modal) HandleModal(modal, action);
+        else if (action == InputAction.SwitchPane) SwitchPane();
         else if (Screen == Screen.Home) HandleHome(action);
         else HandlePane(ActivePane, action);
         RaiseChanged();
