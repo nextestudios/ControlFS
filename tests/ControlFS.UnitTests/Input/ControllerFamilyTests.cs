@@ -45,4 +45,15 @@ public class ControllerFamilyTests
         store.Save(new AppSettings { LabelStyle = ButtonLabelStyle.Generic }); // escolha explícita na v2 é mantida
         Assert.Equal(ButtonLabelStyle.Generic, store.Load().Settings.LabelStyle);
     }
+
+    [Fact]
+    public void Glyph_letters_and_spoken_names_follow_position_per_family()
+    {
+        // Nintendo imprime A à direita (East) e B embaixo (South): o glifo segue a posição, não a letra.
+        Assert.Equal("A", ControllerButtons.FaceLetter(ControllerButtons.From(PhysicalControl.East), ControllerFamily.Nintendo));
+        Assert.Equal("A", ControllerButtons.FaceLetter(ControllerButtons.From(PhysicalControl.South), ControllerFamily.Xbox));
+        Assert.Equal("Botão cruz", ControllerButtons.SpokenName(ControllerButton.FaceSouth, ControllerFamily.PlayStation));
+        Assert.Equal("Botão inferior", ControllerButtons.SpokenName(ControllerButton.FaceSouth, ControllerFamily.Generic));
+        Assert.Equal("ZR", ControllerButtons.SpokenName(ControllerButton.RightTrigger, ControllerFamily.Nintendo));
+    }
 }
