@@ -30,6 +30,14 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Operações de arquivo (0.3.0-alpha.1)
+
+- Todas as issues críticas do roadmap resolvidas: motor de operações #10, copiar #13, mover #14, conflitos #17 (PR #101),
+  recortar #15 e colar #16 (PR #102), renomear #11 (PR #103), Lixeira #12 (PR #104).
+- Evidência (CI Windows, 2026-09-27): 228 testes unitários/jornadas + 14 de integração Windows, incluindo mover entre
+  volumes reais (D: → C:), arquivo bloqueado, renomear só maiúsculas/minúsculas, envio real à Lixeira e exclusão
+  permanente sem seguir junction. Licença AGPL-3.0-only a partir desta versão (#9); ícone oficial (#100).
+
 ## Formatos, compactar e abrir com o Windows (0.2.0-alpha.1)
 
 - Extrair 7z, RAR4/RAR5 (inclusive sólidos), TAR, TAR.GZ, GZ; compactar em ZIP e TAR.GZ; abrir com o programa padrão,

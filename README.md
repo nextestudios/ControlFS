@@ -13,7 +13,7 @@ A **file manager for Windows made for the controller**, with a **built-in extrac
 
 ## Download
 
-Get **[0.2.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.2.0-alpha.1)** (pre-release):
+Get **[0.3.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.3.0-alpha.1)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
 - **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.
@@ -42,6 +42,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 ## Features
 
 - Real folders and drives, history, sorting, hidden items, marking, properties
+- **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, cursor, masked passwords) usable with only directions + confirm + back
 - **Create folder** with Windows naming rules
 - **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
@@ -54,7 +55,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** rename/delete (Recycle Bin), copy/move, ZIP64 and AES, create 7z · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** native Windows icons, controller button prompts, virtual keyboard redesign, search, favorites ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## More
 

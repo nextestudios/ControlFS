@@ -13,7 +13,7 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.2.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.2.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.3.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.3.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
@@ -42,6 +42,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 ## Recursos
 
 - Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação, propriedades
+- **Operações de arquivo:** renomear, copiar, recortar, colar, mover e excluir para a Lixeira, com conflitos (pular / manter ambos / substituir / mesclar pastas) e resultado por item
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor, senha mascarada) usável só com direções + confirmar + voltar
 - **Criar pasta** com as regras de nomes do Windows
 - **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
@@ -54,7 +55,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** renomear/excluir (Lixeira), copiar/mover, ZIP64 e AES, criar 7z · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** ícones nativos do Windows, botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Mais
 
