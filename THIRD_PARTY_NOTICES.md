@@ -22,8 +22,9 @@ SDL 3.5.0 (biblioteca nativa SDL3.dll incluída no pacote acima)
   PENDENTE: confirmar quais componentes opcionais (ex.: hidapi) estão compilados no binário
   distribuído e reproduzir aqui os avisos correspondentes.
 
-Microsoft Windows App SDK 2.5.1 (e pacotes de componentes dependentes)
-  Origem: https://www.nuget.org/packages/Microsoft.WindowsAppSDK
+Microsoft Windows App SDK 2.5.1 — componentes WinUI, Foundation, InteractiveExperiences e Base (e Microsoft.Web.WebView2,
+  dependência do WinUI)
+  Origem: https://www.nuget.org/packages/Microsoft.WindowsAppSDK.WinUI (e pacotes Microsoft.WindowsAppSDK.* listados)
   Licença: Microsoft Software License Terms — Microsoft Windows App SDK (license.txt no pacote).
   A seção "Distributable Code" permite redistribuir arquivos colocados junto ao aplicativo pelo pacote,
   inclusive em implantação self-contained. Contém avisos de terceiros próprios; ver o pacote.

@@ -25,7 +25,8 @@ dotnet publish src/ControlFS.App -c Release -r win-x64 --self-contained true -o 
 artifacts\ControlFS-win-x64\ControlFS.exe
 ```
 
-- Implantação: não empacotada (`WindowsPackageType=None`), Windows App SDK self-contained, .NET self-contained.
+- Implantação: não empacotada (`WindowsPackageType=None`), Windows App SDK self-contained (só os componentes usados, ver
+  `docs/decisions/0001`), .NET self-contained. O `Publish-ControlFS.ps1` imprime o tamanho de cada pacote no log.
   **Precisa ser demonstrada em máquina limpa** antes de anunciar "portátil".
 - Nativos: `SDL3.dll` (win-x64) vem do pacote `ppy.SDL3-CS` e é copiado para a saída (verificado no build).
 - Manifesto: `asInvoker` (nunca pede elevação), PerMonitorV2, `longPathAware`.
