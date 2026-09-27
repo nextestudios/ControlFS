@@ -595,7 +595,7 @@ public sealed partial class AppController
             new("Ir para caminho…", () => BeginGoToPath(Picker), Icon: ActionIcon.GoToPath),
             new("Cancelar escolha", CancelPicker, Icon: ActionIcon.Cancel),
         };
-        PushModal(new MenuModal(PickerTitle, items) { Icon = ActionIcon.Folder, Subtitle = here?.FullPath });
+        PushModal(new MenuModal(PickerTitle, items) { Icon = ActionIcon.Folder });
     }
 
     /// <summary>Ícone do item no cabeçalho do menu de ações: o mesmo tipo que a lista mostra.</summary>

@@ -31,7 +31,7 @@ public static partial class ModalView
         header.Measure(new Size(inner, double.PositiveInfinity));
         var footer = Footer(app);
         footer.Measure(new Size(inner, double.PositiveInfinity));
-        var chrome = (2 * PanelMargin) + (PanelPadding - Theme.SpaceXs) + Theme.Space(20) + (2 * Theme.SpaceM) + 2;
+        var chrome = (2 * PanelMargin) + (PanelPadding - Theme.SpaceXs) + Theme.Space(20) + (3 * Theme.SpaceM) + Theme.Hairline.Top + 2;
         var height = Theme.Viewport.Height - chrome - header.DesiredSize.Height - footer.DesiredSize.Height - reserved - Theme.SpaceXs;
         return (inner, Math.Max(160, height));
     }

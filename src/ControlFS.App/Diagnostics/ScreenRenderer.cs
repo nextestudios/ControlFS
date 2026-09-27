@@ -236,13 +236,35 @@ internal static class ScreenRenderer
         app.Handle(InputAction.Confirm); // Extrair
         if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal))
         {
+            var first = app.TopModal;
             app.TypeText("senha errada");
             await CaptureAsync(stage, target, dir, "m4-password", window);
-            app.Handle(InputAction.OpenAppMenu); // Concluir
-            if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
-                await CaptureAsync(stage, target, dir, "m5-result-error", window);
+            app.Handle(InputAction.OpenAppMenu); // Concluir: senha errada reabre o teclado com o erro
+            if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal k && !ReferenceEquals(k, first) && !k.IsBusy))
+            {
+                await CaptureAsync(stage, target, dir, "m5-password-error", window);
+                app.TypeText("certa");
+                app.Handle(InputAction.OpenAppMenu);
+                if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
+                    await CaptureAsync(stage, target, dir, "m5b-result", window);
+            }
         }
         CloseModals(app);
+
+        // Erro: a pasta sumiu do disco depois de listada.
+        await app.WhenIdleAsync();
+        var gone = Path.Join(folder, "Pasta removida");
+        if (Directory.Exists(gone)) Directory.Delete(gone);
+        await FocusAsync(app, stage, "Pasta removida");
+        app.Handle(InputAction.Confirm);
+        if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
+            await CaptureAsync(stage, target, dir, "m5c-error", window);
+        CloseModals(app);
+        Directory.CreateDirectory(gone);
+        app.Handle(InputAction.OpenAppMenu);
+        FocusMenuItem(app, "Atualizar");
+        app.Handle(InputAction.Confirm);
+        await app.WhenIdleAsync();
 
         ChooseAppMenu(app, "Operações");
         await CaptureAsync(stage, target, dir, "m6-operations", window);
@@ -289,6 +311,7 @@ internal static class ScreenRenderer
     {
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Join(folder, "relatório.txt"), "Relatório de exemplo.");
+        Directory.CreateDirectory(Path.Join(folder, "Pasta removida"));
         File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
         return folder;
     }

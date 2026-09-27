@@ -96,23 +96,26 @@ public static partial class ModalView
     /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela) e, embaixo, o aviso do rodapé (se
     /// houver) e as legendas do controle em uso. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
     /// </summary>
-    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false)
+    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0)
     {
         var grid = new Grid { RowSpacing = Theme.SpaceM };
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.Children.Add(header);
+        // Cabeçalho separado do corpo por um fio: o conteúdo que rola nunca encosta no título.
+        var top = new StackPanel { Spacing = Theme.SpaceM };
+        top.Children.Add(header);
+        top.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider });
+        grid.Children.Add(top);
 
         UIElement content = body;
         if (scroll)
         {
-            // A opção focada cresce um pouco: a folga lateral evita que o recorte da rolagem corte as bordas.
+            // A opção focada cresce um pouco: a folga (dentro do conteúdo, que a rolagem não recorta) mantém as bordas dela.
             var inset = Theme.Scaled(8);
             content = new ScrollViewer
             {
-                Content = body,
-                Padding = new Thickness(inset, Theme.SpaceXs, inset, Theme.SpaceXs),
+                Content = new Border { Padding = new Thickness(inset, Theme.SpaceXs, inset, Theme.SpaceXs), Child = body },
                 Margin = new Thickness(-inset, -Theme.SpaceXs, -inset, -Theme.SpaceXs),
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
@@ -134,6 +137,7 @@ public static partial class ModalView
             Padding = new Thickness(PanelPadding, PanelPadding - Theme.SpaceXs, PanelPadding, Theme.Space(20)),
             MaxWidth = Math.Min(Theme.Scaled(maxWidth), Theme.Viewport.Width - (2 * PanelMargin)),
             MaxHeight = Theme.Viewport.Height - (2 * PanelMargin),
+            MinWidth = Math.Min(Theme.Scaled(minWidth), Theme.Viewport.Width - (2 * PanelMargin)),
             Width = stretch ? Theme.Viewport.Width - (2 * PanelMargin) : double.NaN,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -385,7 +389,7 @@ public static partial class ModalView
         }
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
-        return Panel(app, Header(menu), stack, 600);
+        return Panel(app, Header(menu), stack, 600, minWidth: 460);
     }
 
     // ---------- Diálogos ----------
