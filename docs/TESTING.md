@@ -122,6 +122,8 @@ Ainda manual, num aparelho real:
 - [ ] Desligar "Verificar automaticamente" e confirmar (monitor de rede) que nenhuma requisição é feita ao abrir.
 - [ ] Sem internet: o app abre normalmente e "Verificar agora" mostra erro claro.
 - [ ] Desinstalar pelo Windows: arquivos do app e cache de atualizações removidos; `settings.json` preservado.
+- [ ] Windows 10 22H2 limpo, sem Windows App Runtime instalado: o portátil e o instalado abrem, mostram a lista, o teclado
+      virtual e os ícones (#85: só os componentes WinUI/Foundation do Windows App SDK vão no pacote).
 
 ## Teste de controles (#78)
 
