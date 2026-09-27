@@ -108,6 +108,8 @@ Menu → Configurações → **View** (or **R3**, pressing the right stick, or *
 
 **Disk usage:** North on a folder or drive (or on empty space for the current folder) → **Analisar uso do disco** (analyze disk usage) reads the whole tree once in the background, showing the running total; **East** cancels at once. The result lists the subfolders and then the largest files, each from biggest to smallest, with size and share of the folder (e.g. "Jogos — 12 GB (45%)"). South on a folder drills into it without reading the disk again, East goes back up a level, South on a file opens its folder with the file focused, and **Abrir esta pasta** opens the level you're on. Same rules as folder size: junctions and links are never followed and unreadable folders are listed, so the totals match Explorer's "Size".
 
+**Git status:** Menu → Configurações → **Status do Git** (off by default). In a folder inside a Git repository, the line above the list shows the branch and how many items changed ("GIT · ramo main · 3 itens com mudanças"), and items show "Git: modificado" (modified), "novo (não rastreado)" (untracked), "adicionado", "renomeado", "conflito" or, for folders, "com mudanças" (something inside changed). It is read-only (no Git operations), doesn't need Git installed and never runs anything configured in the repository; the status arrives after the list, so browsing never waits for it.
+
 ## Batch rename
 
 Mark the items (X/West, or North → Select all), then North → **Batch rename…**. The dialog shows a live preview (current name → new name, problems first) and the options of the chosen **Mode** (South on "Mode" cycles through them):

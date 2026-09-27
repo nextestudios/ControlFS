@@ -2,6 +2,8 @@
   <!-- Versões fixadas. Mudanças exigem registro em docs/decisions. -->
   <ItemGroup>
     <PackageVersion Include="SharpCompress" Version="1.0.0" />
+    <!-- Status do Git somente leitura (#75); traz a libgit2 nativa (GPLv2 com exceção de linking). Ver docs/decisions/0008. -->
+    <PackageVersion Include="LibGit2Sharp" Version="0.32.0" />
     <PackageVersion Include="ppy.SDL3-CS" Version="2026.722.0" />
     <!-- Só os componentes do Windows App SDK 2.5.1 que o app usa (WinUI e dependências), com as versões do metapacote.
          O metapacote traria IA/ML (ONNX Runtime), Widgets, Search e DWriteCore. Ver docs/decisions/0001. -->

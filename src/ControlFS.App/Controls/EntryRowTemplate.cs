@@ -195,9 +195,9 @@ public static class EntryRowTemplate
 
     /// <summary>
     /// O que a linha da lista precisa saber além do item: o tipo mostrado (pastas do sistema), o tamanho das pastas com
-    /// soma (início), se a lista permite marcar e o relógio das datas amigáveis.
+    /// soma (início), se a lista permite marcar, o relógio das datas amigáveis e o estado do Git (#75).
     /// </summary>
-    public sealed record RowContext(Func<FileEntry, string> TypeName, Func<FileEntry, string?> FolderSize, bool CanMark, DateTime Now);
+    public sealed record RowContext(Func<FileEntry, string> TypeName, Func<FileEntry, string?> FolderSize, bool CanMark, DateTime Now, Func<FileEntry, string?>? Git = null);
 
     public static void Fill(SelectorItem container, FileEntry entry, bool focused, bool selected, bool cut, IconLoader icons, IReadOnlySet<string>? specialFolders, RowContext? row = null)
     {
@@ -227,6 +227,7 @@ public static class EntryRowTemplate
         if (selected) { glyphs.Add(Glyphs.Checked); states.Add("Marcado"); }
         if (cut) { glyphs.Add(Glyphs.Cut); states.Add("Recortado"); }
         if (entry.IsEncrypted) { glyphs.Add(Glyphs.Lock); states.Add("Com senha"); }
+        if (row?.Git?.Invoke(entry) is { } git) states.Add(git);
         var stateGlyph = (TextBlock)root.FindName("StateGlyph");
         var stateText = (TextBlock)root.FindName("StateText");
         if (root.FindName("SizeColumn") is TextBlock size)

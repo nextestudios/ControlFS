@@ -108,6 +108,8 @@ Menu → Configurações → **Exibição** (ou **R3**, apertando o analógico d
 
 **Uso do disco:** Norte numa pasta ou unidade (ou num espaço vazio, para a pasta atual) → **Analisar uso do disco** lê a árvore inteira uma vez, em segundo plano, mostrando o total parcial; **Leste** cancela na hora. O resultado lista as subpastas e depois os maiores arquivos, cada grupo do maior para o menor, com o tamanho e a fatia da pasta (ex.: "Jogos — 12 GB (45%)"). Sul numa pasta desce nela sem ler o disco de novo, Leste sobe um nível, Sul num arquivo abre a pasta dele com o foco no arquivo, e **Abrir esta pasta** abre o nível atual. Mesmas regras do tamanho da pasta: junções e links nunca são seguidos e pastas sem acesso são listadas, então os totais batem com o "Tamanho" do Explorador.
 
+**Status do Git:** Menu → Configurações → **Status do Git** (desligado por padrão). Numa pasta dentro de um repositório Git, a linha acima da lista mostra o ramo e quantos itens mudaram ("GIT · ramo main · 3 itens com mudanças"), e os itens mostram "Git: modificado", "novo (não rastreado)", "adicionado", "renomeado", "conflito" ou, em pastas, "com mudanças" (algo dentro mudou). É somente leitura (nenhuma operação do Git), não precisa do Git instalado e nunca executa nada configurado no repositório; o status chega depois da lista, então navegar nunca espera por ele.
+
 ## Renomear em lote
 
 Marque os itens (X/Oeste, ou Norte → Marcar todos) e escolha Norte → **Renomear em lote…**. O diálogo mostra a prévia ao vivo (nome atual → nome novo, problemas primeiro) e as opções do **Modo** escolhido (Sul em "Modo" troca):

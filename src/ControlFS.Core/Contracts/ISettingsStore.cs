@@ -73,6 +73,9 @@ public sealed record AppSettings
     /// </summary>
     public bool GyroKeyboard { get; init; }
 
+    /// <summary>Status do Git (#75): ramo e marcas de modificado/novo em pastas de repositórios. Desligado por padrão.</summary>
+    public bool ShowGitStatus { get; init; }
+
     /// <summary>Sugestões locais no teclado virtual (nunca em senhas). Desligar apaga <see cref="TypedTexts"/>.</summary>
     public bool KeyboardSuggestions { get; init; } = true;
 

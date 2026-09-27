@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Status do Git (#75), somente leitura, pela libgit2 (LibGit2Sharp): não exige o Git instalado e nunca executa
+       comandos configurados no repositório (fsmonitor, filtros, hooks). Ver docs/decisions/0008. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Infrastructure.Git</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+    <PackageReference Include="LibGit2Sharp" />
+  </ItemGroup>
+</Project>
