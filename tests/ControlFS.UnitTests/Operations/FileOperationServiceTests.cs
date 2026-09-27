@@ -188,10 +188,11 @@ public class FileOperationServiceTests : IDisposable
         var dest = _tmp.MakeDir("destino");
         var gate = new PauseGate();
         long bytes = 0;
+        var paused = 0;
         var progress = new SyncProgress(p =>
         {
             Interlocked.Exchange(ref bytes, p.BytesProcessed);
-            if (p.BytesProcessed > 0) gate.Pause();
+            if (p.BytesProcessed > 0 && Interlocked.Exchange(ref paused, 1) == 0) gate.Pause(); // só a primeira vez
         });
         return (source, dest, gate, progress, () => Interlocked.Read(ref bytes));
     }
