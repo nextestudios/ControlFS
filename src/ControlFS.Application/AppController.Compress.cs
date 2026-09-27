@@ -1,5 +1,6 @@
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
@@ -31,7 +32,7 @@ public sealed partial class AppController
     private void ShowCompressDialog(PaneState pane, CompressPlan initial)
     {
         var plan = initial;
-        var dialog = new DialogModal("Compactar", []);
+        var dialog = new DialogModal("Compactar", []) { Icon = ActionIcon.Compress };
         bool Exists(string name) => File.Exists(Path.Join(plan.Folder, name)) || Directory.Exists(Path.Join(plan.Folder, name));
         void Refill()
         {
@@ -54,25 +55,25 @@ public sealed partial class AppController
             plan = plan with { BaseName = newName };
             name!.Label = $"Nome: {plan.BaseName}…";
             Refill();
-        }));
+        }), icon: ActionIcon.Rename);
         format = new DialogOption(FormatLabel(plan.Format), DialogOptionKind.Toggle, () =>
         {
             plan = plan with { Format = plan.Format == CompressionFormat.Zip ? CompressionFormat.TarGZip : CompressionFormat.Zip };
             format!.Label = FormatLabel(plan.Format);
             Refill();
-        });
+        }, icon: ActionIcon.Archive);
         strength = new DialogOption(StrengthOption(plan.Strength), DialogOptionKind.Toggle, () =>
         {
             plan = plan with { Strength = (CompressionStrength)(((int)plan.Strength + 1) % 3) };
             strength!.Label = StrengthOption(plan.Strength);
             Refill();
-        });
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        }, icon: ActionIcon.Density);
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(new DialogOption("Compactar", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             EnqueueCompression(plan, plan.FileName(Exists));
-        }));
+        }, icon: ActionIcon.Compress));
         dialog.Options.Add(name);
         dialog.Options.Add(format);
         dialog.Options.Add(strength);
@@ -133,8 +134,8 @@ public sealed partial class AppController
         if (included > 0) lines.Add(("Arquivos incluídos", included.ToString()));
         foreach (var problem in result.Items.Where(i => i.Outcome is ItemOutcome.Failed or ItemOutcome.Skipped).Take(6))
             lines.Add(("• " + problem.Name, problem.Message ?? problem.Error.ToString()));
-        var dialog = new DialogModal(title, lines) { Message = result.Message };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var dialog = new DialogModal(title, lines) { Message = result.Message, Icon = ResultIcon(result.FinalState) };
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         if (result.Destination is { } path && File.Exists(path))
             dialog.Options.Add(new DialogOption("Mostrar o arquivo", DialogOptionKind.Primary, () =>
             {
@@ -142,7 +143,7 @@ public sealed partial class AppController
                 Screen = Screen.Browser;
                 Track(NavigateAsync(Browser, new PhysicalLocation(plan.Folder), pushHistory: Browser.Location is PhysicalLocation p && p.FullPath != plan.Folder,
                     focusId: Path.GetFileName(path)));
-            }));
+            }, icon: ActionIcon.Reveal));
         dialog.Options.Add(close);
         dialog.BackOption = close;
         PushModal(dialog);

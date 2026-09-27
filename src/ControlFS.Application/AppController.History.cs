@@ -1,6 +1,7 @@
 using System.Globalization;
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 
@@ -86,16 +87,16 @@ public sealed partial class AppController
             $"{op.Title} — {StateLabel(op.State)}",
             () => ShowOperationDetails(op),
             Detail: op.Progress is { } p && op.IsActive ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"} itens · {FormatBytes(p.BytesProcessed)}"
-                : History.Find(op.HistoryEntryId) is { } done ? When(done) : null)).ToList();
+                : History.Find(op.HistoryEntryId) is { } done ? When(done) : null, Icon: ActionIcon.Operations)).ToList();
         var session = Operations.Items.Select(o => o.HistoryEntryId).OfType<string>().ToHashSet(StringComparer.Ordinal);
         items.AddRange(History.Entries.Reverse().Where(e => !session.Contains(e.Id)).Select(entry => new MenuItem(
             $"{entry.Title} — {StateLabel(entry.FinalState)}",
             () => ShowHistoryEntry(entry),
-            Detail: When(entry))));
+            Detail: When(entry), Icon: ActionIcon.Recent)));
         if (History.Entries.Count > 0)
             items.Add(new MenuItem("Limpar histórico…", ConfirmClearHistory,
-                Detail: "Apaga o histórico salvo. As operações desta sessão continuam listadas até fechar o app."));
-        PushModal(new MenuModal("Operações", items));
+                Detail: "Apaga o histórico salvo. As operações desta sessão continuam listadas até fechar o app.", Icon: ActionIcon.Erase));
+        PushModal(new MenuModal("Operações", items) { Icon = ActionIcon.Operations });
     }
 
     private static string When(OperationHistoryEntry entry) => entry.FinishedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
@@ -111,33 +112,37 @@ public sealed partial class AppController
         }
         if (History.Find(op.HistoryEntryId) is { } entry) lines.AddRange(HistoryLines(entry));
         else if (op.Result?.Message is { } message) lines.Add(("Resultado", message));
-        var dialog = new DialogModal(op.Title, lines);
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var dialog = new DialogModal(op.Title, lines)
+        {
+            Icon = op.IsActive ? ActionIcon.Operations : ResultIcon(op.State),
+            Progress = op.IsActive && op.Progress is { ItemsTotal: > 0 and var total } progress ? Math.Clamp((double)progress.ItemsProcessed / total, 0, 1) : null,
+        };
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(close);
         if (op.CanPause)
             dialog.Options.Add(new DialogOption("Pausar", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 if (Operations.Pause(op)) StatusMessage = $"{op.Title}: pausada. Menu → Operações para continuar.";
-            }));
+            }, icon: ActionIcon.Pause));
         if (op.CanResume)
             dialog.Options.Add(new DialogOption("Continuar", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 if (Operations.Resume(op)) StatusMessage = $"{op.Title}: continuando.";
-            }));
+            }, icon: ActionIcon.Resume));
         if (op.IsActive)
             dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Danger, () =>
             {
                 Operations.Cancel(op);
                 CloseModal(dialog);
-            }));
+            }, icon: ActionIcon.Cancel));
         if (op.CanRetry)
             dialog.Options.Add(new DialogOption("Tentar de novo", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 Operations.Retry(op);
-            }));
+            }, icon: ActionIcon.Retry));
         AddRetryFailedOption(dialog, op);
         dialog.BackOption = close;
         PushModal(dialog);
@@ -148,7 +153,7 @@ public sealed partial class AppController
     {
         var lines = new List<(string, string)> { ("Estado", StateLabel(entry.FinalState)) };
         lines.AddRange(HistoryLines(entry));
-        ShowMessage(entry.Title, lines);
+        ShowMessage(entry.Title, lines, icon: ResultIcon(entry.FinalState));
     }
 
     private static IEnumerable<(string, string)> HistoryLines(OperationHistoryEntry entry)
@@ -181,7 +186,7 @@ public sealed partial class AppController
         {
             Message = "Só o registro é apagado; nenhum arquivo é alterado.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Limpar histórico", DialogOptionKind.Danger, () =>
         {
@@ -189,7 +194,7 @@ public sealed partial class AppController
             History.Clear();
             SaveHistory();
             StatusMessage = "Histórico de operações apagado.";
-        }));
+        }, icon: ActionIcon.Erase));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);

@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -15,7 +16,7 @@ public sealed partial class AppController
     {
         var cts = new CancellationTokenSource();
         dialog.Options.Clear();
-        var cancel = new DialogOption("Cancelar cálculo", DialogOptionKind.Safe, cts.Cancel);
+        var cancel = new DialogOption("Cancelar cálculo", DialogOptionKind.Safe, cts.Cancel, icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
@@ -58,8 +59,8 @@ public sealed partial class AppController
         dialog.Lines = [.. baseLines, .. result is not null ? SizeLines(result, string.Empty) : SizeLines(last, "Parcial: ")];
         dialog.Message = outcome;
         dialog.Options.Clear();
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
-        dialog.Options.Add(new DialogOption(result is null ? "Calcular de novo" : "Recalcular", DialogOptionKind.Primary, () => StartFolderSize(dialog, baseLines, folder)));
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
+        dialog.Options.Add(new DialogOption(result is null ? "Calcular de novo" : "Recalcular", DialogOptionKind.Primary, () => StartFolderSize(dialog, baseLines, folder), icon: ActionIcon.Refresh));
         dialog.Options.Add(close);
         dialog.BackOption = close;
         dialog.FocusIndex = Math.Clamp(dialog.FocusIndex, 0, dialog.Options.Count - 1);

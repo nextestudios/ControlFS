@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
 
@@ -120,19 +121,19 @@ public sealed partial class AppController
         var location = search.Location;
         var items = new List<MenuItem>
         {
-            new("Mostrar na pasta", entry is null ? null : () => RevealResult(pane, entry), entry is null ? "Nenhum resultado em foco." : null),
-            new("Nova busca…", () => BeginSearch(pane)),
+            new("Mostrar na pasta", entry is null ? null : () => RevealResult(pane, entry), entry is null ? "Nenhum resultado em foco." : null, Icon: ActionIcon.Reveal),
+            new("Nova busca…", () => BeginSearch(pane), Icon: ActionIcon.Search),
             new($"Subpastas: {(location.IncludeSubfolders ? "incluídas" : "não incluídas")}", () =>
             {
                 SearchIncludesSubfolders = !location.IncludeSubfolders;
                 StartSearch(pane, location with { IncludeSubfolders = SearchIncludesSubfolders });
-            }, Detail: "Alterna e busca de novo."),
+            }, Detail: "Alterna e busca de novo.", Icon: ActionIcon.Subfolders),
             new($"Pastas puladas ({search.SkippedFolders.Count})", () => ShowSkippedFolders(search),
-                search.SkippedFolders.Count == 0 ? "Nenhuma pasta foi pulada." : null),
+                search.SkippedFolders.Count == 0 ? "Nenhuma pasta foi pulada." : null, Icon: ActionIcon.Warning),
         };
-        if (search.IsRunning) items.Add(new MenuItem("Cancelar busca", () => CancelSearch(search)));
-        if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
-        PushModal(new MenuModal(entry?.Name ?? "Busca", items));
+        if (search.IsRunning) items.Add(new MenuItem("Cancelar busca", () => CancelSearch(search), Icon: ActionIcon.Cancel));
+        if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties));
+        PushModal(new MenuModal(entry?.Name ?? "Busca", items) { Icon = ActionIcon.Search });
     }
 
     private void ShowSkippedFolders(SearchState search)
@@ -140,7 +141,7 @@ public sealed partial class AppController
         const int shown = 20;
         var lines = search.SkippedFolders.Take(shown).Select(f => ("Pasta", f)).ToList();
         if (search.SkippedFolders.Count > shown) lines.Add(("…", $"mais {search.SkippedFolders.Count - shown}"));
-        ShowMessage("Pastas puladas na busca", lines, "Sem permissão de leitura ou indisponíveis: o conteúdo delas não foi pesquisado.");
+        ShowMessage("Pastas puladas na busca", lines, "Sem permissão de leitura ou indisponíveis: o conteúdo delas não foi pesquisado.", icon: ActionIcon.Warning);
     }
 
     private static string FolderName(string path) =>

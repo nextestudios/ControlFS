@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 
 namespace ControlFS.Application;
@@ -117,9 +118,9 @@ public sealed partial class AppController
     }
 
     /// <summary>Item de menu que adiciona ou remove <paramref name="path"/> dos favoritos.</summary>
-    private MenuItem FavoriteToggleItem(string path, string? label = null) => IsFavorite(path)
-        ? new MenuItem(label is null ? "Remover dos favoritos" : $"Remover {label} dos favoritos", () => RemoveFavorite(path))
-        : new MenuItem(label is null ? "Adicionar aos favoritos" : $"Adicionar {label} aos favoritos", () => AddFavorite(path));
+    private MenuItem FavoriteToggleItem(string path, string? label = null, string? section = null) => IsFavorite(path)
+        ? new MenuItem(label is null ? "Remover dos favoritos" : $"Remover {label} dos favoritos", () => RemoveFavorite(path), Icon: ActionIcon.Unfavorite, Section: section)
+        : new MenuItem(label is null ? "Adicionar aos favoritos" : $"Adicionar {label} aos favoritos", () => AddFavorite(path), Icon: ActionIcon.Favorite, Section: section);
 
     // ---------- Início ----------
 
@@ -129,26 +130,26 @@ public sealed partial class AppController
         {
             PushModal(new MenuModal("Recentes",
             [
-                new("Abrir", ShowRecents),
-                new("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador."),
-                new("Desligar recentes", ToggleRememberRecents, Detail: "Para de lembrar e apaga as listas. Religue no Menu."),
-            ]));
+                new("Abrir", ShowRecents, Icon: ActionIcon.Recent),
+                new("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador.", Icon: ActionIcon.Erase),
+                new("Desligar recentes", ToggleRememberRecents, Detail: "Para de lembrar e apaga as listas. Religue no Menu.", Icon: ActionIcon.Erase),
+            ]) { Icon = ActionIcon.Recent });
             return;
         }
         if (PlacesFocus < 0 || PlacesFocus >= Places.Count || Places[PlacesFocus] is not { FullPath: { } path } place) return;
         var items = new List<MenuItem>
         {
-            new("Abrir", () => OpenPlace(place), place.IsBlocked ? "Pasta indisponível no momento." : null),
+            new("Abrir", () => OpenPlace(place), place.IsBlocked ? "Pasta indisponível no momento." : null, Icon: ActionIcon.OpenFolder),
             FavoriteToggleItem(path),
         };
         if (IsFavoriteEntry(place))
         {
             var index = IndexOfFavorite(path);
-            items.Add(new MenuItem("Mover favorito para cima", () => MoveFavorite(path, -1), index <= 0 ? "Já é o primeiro favorito." : null));
+            items.Add(new MenuItem("Mover favorito para cima", () => MoveFavorite(path, -1), index <= 0 ? "Já é o primeiro favorito." : null, Icon: ActionIcon.MoveUp));
             items.Add(new MenuItem("Mover favorito para baixo", () => MoveFavorite(path, 1),
-                index >= Settings.Favorites.Count - 1 ? "Já é o último favorito." : null));
+                index >= Settings.Favorites.Count - 1 ? "Já é o último favorito." : null, Icon: ActionIcon.MoveDown));
         }
-        PushModal(new MenuModal(place.Name, items));
+        PushModal(new MenuModal(place.Name, items) { Icon = PlaceIcon(place), Subtitle = place.Detail });
     }
 
     private void OpenPlace(FileEntry place)
@@ -178,13 +179,13 @@ public sealed partial class AppController
         {
             Message = "A pasta não existe ou não está acessível agora (unidade desconectada?). O favorito foi mantido.",
         };
-        var keep = new DialogOption("Manter", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var keep = new DialogOption("Manter", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Favorite);
         dialog.Options.Add(keep);
         dialog.Options.Add(new DialogOption("Remover dos favoritos", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             RemoveFavorite(path);
-        }));
+        }, icon: ActionIcon.Unfavorite));
         dialog.BackOption = keep;
         PushModal(dialog);
     }

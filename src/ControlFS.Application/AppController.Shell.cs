@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
@@ -51,14 +52,14 @@ public sealed partial class AppController
             {
                 Message = "Só continue se você confia na origem deste arquivo. O Windows pode pedir outras confirmações (SmartScreen, UAC), que ficam fora do ControlFS.",
             };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption(game is not null ? "Jogar" : "Executar", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             RecordRecentFile(path);
             RunShell(s => s.Open(path), external: true);
-        }));
+        }, icon: game is not null ? ActionIcon.Game : ActionIcon.Run));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -74,7 +75,7 @@ public sealed partial class AppController
         }
         catch (ShellException ex)
         {
-            ShowMessage("Não foi possível abrir", [("Motivo", ex.Message)]);
+            ShowMessage("Não foi possível abrir", [("Motivo", ex.Message)], icon: ActionIcon.Error);
         }
         RaiseChanged();
     }

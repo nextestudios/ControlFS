@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 
@@ -63,12 +64,12 @@ public sealed partial class AppController
         {
             case UpdateCheckOutcome.UpToDate:
                 UpdateState = UpdateState.UpToDate;
-                if (manual) ShowMessage("Atualizações", [("Versão atual", _updates.CurrentVersion.ToString())], "Você já está na versão mais recente.");
+                if (manual) ShowMessage("Atualizações", [("Versão atual", _updates.CurrentVersion.ToString())], "Você já está na versão mais recente.", icon: ActionIcon.Success);
                 break;
             case UpdateCheckOutcome.Failed:
                 UpdateState = UpdateState.Failed;
                 UpdateMessage = result.Message;
-                if (manual) ShowMessage("Não foi possível verificar atualizações", [("Motivo", result.Message ?? "desconhecido")]);
+                if (manual) ShowMessage("Não foi possível verificar atualizações", [("Motivo", result.Message ?? "desconhecido")], icon: ActionIcon.Error);
                 break;
             case UpdateCheckOutcome.UpdateAvailable:
                 AvailableUpdate = result.Manifest;
@@ -78,7 +79,7 @@ public sealed partial class AppController
                     UpdateState = UpdateState.AvailableManual;
                     if (manual || TopModal is null)
                         ShowMessage($"Nova versão {result.Manifest!.Version}", [("Versão atual", _updates.CurrentVersion.ToString()), ("Página", result.Manifest.ReleasePageUrl)],
-                            "No modo portátil a atualização é manual: baixe o novo pacote na página da versão. Com o instalador, o ControlFS se atualiza sozinho.");
+                            "No modo portátil a atualização é manual: baixe o novo pacote na página da versão. Com o instalador, o ControlFS se atualiza sozinho.", icon: ActionIcon.Update);
                 }
                 break;
         }
@@ -101,13 +102,13 @@ public sealed partial class AppController
         {
             UpdateState = UpdateState.Failed;
             UpdateMessage = ex.Message;
-            if (manual) ShowMessage("Falha ao baixar a atualização", [("Motivo", ex.Message)]);
+            if (manual) ShowMessage("Falha ao baixar a atualização", [("Motivo", ex.Message)], icon: ActionIcon.Error);
         }
         catch (IOException ex)
         {
             UpdateState = UpdateState.Failed;
             UpdateMessage = "Não foi possível gravar a atualização no disco.";
-            if (manual) ShowMessage("Falha ao baixar a atualização", [("Motivo", UpdateMessage), ("Detalhe", ex.GetType().Name)]);
+            if (manual) ShowMessage("Falha ao baixar a atualização", [("Motivo", UpdateMessage), ("Detalhe", ex.GetType().Name)], icon: ActionIcon.Error);
         }
     }
 
@@ -121,13 +122,13 @@ public sealed partial class AppController
             ("Verificação", "assinatura do manifesto e SHA-256 conferidos"),
             ("Notas", ready.Manifest.ReleasePageUrl),
         ])
-        { Message = Operations.ActiveCount > 0 ? "Há operações em andamento: a instalação fica para quando terminarem." : null };
-        var later = new DialogOption(Settings.InstallUpdatesOnExit ? "Depois (instalar ao sair)" : "Depois", DialogOptionKind.Safe, () => CloseModal(dialog));
+        { Message = Operations.ActiveCount > 0 ? "Há operações em andamento: a instalação fica para quando terminarem." : null, Icon = ActionIcon.Update };
+        var later = new DialogOption(Settings.InstallUpdatesOnExit ? "Depois (instalar ao sair)" : "Depois", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(new DialogOption("Instalar e reiniciar", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             InstallUpdateNow();
-        }));
+        }, icon: ActionIcon.Update));
         dialog.Options.Add(later);
         dialog.BackOption = later;
         PushModal(dialog);
@@ -138,7 +139,7 @@ public sealed partial class AppController
         if (ReadyUpdate is not { } ready || _updates is null) return;
         if (Operations.ActiveCount > 0)
         {
-            ShowMessage("Aguarde as operações", [("Em andamento", Operations.ActiveCount.ToString())], "A atualização será oferecida de novo quando as operações terminarem.");
+            ShowMessage("Aguarde as operações", [("Em andamento", Operations.ActiveCount.ToString())], "A atualização será oferecida de novo quando as operações terminarem.", icon: ActionIcon.Warning);
             return;
         }
         try
@@ -149,7 +150,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is UpdateException or IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            ShowMessage("Não foi possível instalar a atualização", [("Motivo", ex is UpdateException ? ex.Message : ex.GetType().Name)]);
+            ShowMessage("Não foi possível instalar a atualização", [("Motivo", ex is UpdateException ? ex.Message : ex.GetType().Name)], icon: ActionIcon.Error);
         }
     }
 
@@ -181,19 +182,19 @@ public sealed partial class AppController
         var items = new List<MenuItem>();
         if (ReadyUpdate is { } ready)
             items.Add(new MenuItem($"Instalar {ready.Manifest.Version} e reiniciar", InstallUpdateNow,
-                Operations.ActiveCount > 0 ? "Aguarde as operações em andamento terminarem." : null));
+                Operations.ActiveCount > 0 ? "Aguarde as operações em andamento terminarem." : null, Icon: ActionIcon.Update));
         items.Add(new MenuItem("Verificar agora", () => Track(CheckForUpdatesNowAsync()),
             busy ? "Já verificando ou baixando." : ReadyUpdate is not null ? "Uma atualização já está pronta." : null,
-            Detail: $"Versão atual {_updates.CurrentVersion}" + (Settings.LastUpdateCheck is { } last ? $" · última verificação {last.LocalDateTime:g}" : string.Empty)));
+            Detail: $"Versão atual {_updates.CurrentVersion}" + (Settings.LastUpdateCheck is { } last ? $" · última verificação {last.LocalDateTime:g}" : string.Empty), Icon: ActionIcon.Refresh));
         items.Add(new MenuItem($"Verificar automaticamente: {(Settings.AutoCheckUpdates ? "sim" : "não")}",
             () => UpdateSettings(s => s with { AutoCheckUpdates = !s.AutoCheckUpdates }),
-            Detail: "Uma consulta por dia às releases do GitHub; nenhum dado pessoal é enviado."));
+            Detail: "Uma consulta por dia às releases do GitHub; nenhum dado pessoal é enviado.", Icon: ActionIcon.Operations));
         items.Add(new MenuItem($"Instalar ao sair: {(Settings.InstallUpdatesOnExit ? "sim" : "não")}",
             () => UpdateSettings(s => s with { InstallUpdatesOnExit = !s.InstallUpdatesOnExit }),
-            _updates.IsInstalled ? null : "Somente na versão instalada; a portátil é atualizada manualmente."));
+            _updates.IsInstalled ? null : "Somente na versão instalada; a portátil é atualizada manualmente.", Icon: ActionIcon.Exit));
         items.Add(new MenuItem($"Versões de pré-lançamento: {(Settings.IncludePrereleases is null ? $"automático ({(IncludePrereleases ? "sim" : "não")})" : Settings.IncludePrereleases.Value ? "sim" : "não")}",
-            () => UpdateSettings(s => s with { IncludePrereleases = s.IncludePrereleases switch { null => true, true => false, false => null } })));
-        if (UpdateMessage is { } message) items.Add(new MenuItem("Último erro: " + message, null, message));
-        PushModal(new MenuModal("Atualizações", items));
+            () => UpdateSettings(s => s with { IncludePrereleases = s.IncludePrereleases switch { null => true, true => false, false => null } }), Icon: ActionIcon.Labels));
+        if (UpdateMessage is { } message) items.Add(new MenuItem("Último erro: " + message, null, message, Icon: ActionIcon.Error));
+        PushModal(new MenuModal("Atualizações", items) { Icon = ActionIcon.Update });
     }
 }

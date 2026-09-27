@@ -1,5 +1,6 @@
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -44,14 +45,15 @@ public sealed partial class AppController
             ("De", sourceFolder),
             ("Para", destination),
             ("Conflitos", "perguntar a cada conflito (padrão: manter o existente)"),
-        ]);
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        ])
+        { Icon = kind == FileOperationKind.Move ? ActionIcon.MoveTo : ActionIcon.CopyTo };
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(new DialogOption(Verb(kind), DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             EnqueueFileOperation(new FileOperationPlan(kind, sources, destination, false, sourceFolder));
             onStarted?.Invoke();
-        }));
+        }, icon: kind == FileOperationKind.Move ? ActionIcon.MoveTo : ActionIcon.CopyTo));
         dialog.Options.Add(cancel);
         dialog.BackOption = cancel;
         PushModal(dialog);
@@ -155,7 +157,7 @@ public sealed partial class AppController
             .ToList();
         if (remaining.Count == 0)
         {
-            ShowMessage("Nada para tentar de novo", [], "Os itens da operação não existem mais na origem.");
+            ShowMessage("Nada para tentar de novo", [], "Os itens da operação não existem mais na origem.", icon: ActionIcon.Warning);
             return;
         }
         EnqueueFileOperation(summary, remaining, retryOfFailed);
@@ -220,8 +222,8 @@ public sealed partial class AppController
         foreach (var skipped in result.Items.Where(i => i.Outcome == ItemOutcome.Skipped && i.Error == OperationErrorKind.LinkOrSpecialBlocked).Take(3))
             lines.Add(("• " + skipped.Name, skipped.Message ?? "Ignorado."));
 
-        var dialog = new DialogModal(title, lines) { Message = result.Message };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var dialog = new DialogModal(title, lines) { Message = result.Message, Icon = ResultIcon(result.FinalState) };
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         AddRetryFailedOption(dialog, item);
         if (RegisterFileUndo(item, plan, result) is { } undo)
         {
@@ -229,7 +231,7 @@ public sealed partial class AppController
             {
                 CloseModal(dialog);
                 ConfirmUndo(undo);
-            }));
+            }, icon: ActionIcon.Undo));
             if (plan.Kind == FileOperationKind.Delete) title += " (Menu → Desfazer restaura)";
         }
         if (plan.Destination is { } dest && Directory.Exists(dest) && plan.Kind != FileOperationKind.Delete &&
@@ -240,7 +242,7 @@ public sealed partial class AppController
                 CloseModal(dialog);
                 Screen = Screen.Browser;
                 Track(NavigateAsync(Browser, new PhysicalLocation(dest), pushHistory: Browser.Location is not null));
-            }));
+            }, icon: ActionIcon.OpenFolder));
         }
         dialog.Options.Add(close);
         dialog.BackOption = close;
@@ -265,6 +267,6 @@ public sealed partial class AppController
         {
             CloseModal(dialog);
             Operations.RetryFailed(item);
-        }));
+        }, icon: ActionIcon.Retry));
     }
 }

@@ -200,8 +200,8 @@ public sealed partial class AppController
     {
         var wizard = modal.Wizard;
         var items = wizard.Targets.Select(t => new MenuItem(t.Label, () => wizard.Redo(t.Control, Clock()),
-            Detail: wizard.Bindings.TryGetValue(t.Control, out var b) ? b.Describe() : "sem botão")).ToList();
-        PushModal(new MenuModal("Refazer qual passo?", items));
+            Detail: wizard.Bindings.TryGetValue(t.Control, out var b) ? b.Describe() : "sem botão", Icon: ActionIcon.Retry)).ToList();
+        PushModal(new MenuModal("Refazer qual passo?", items) { Icon = ActionIcon.Retry });
     }
 
     private void ConfirmDiscardMapping(MappingWizardModal modal)
@@ -210,9 +210,9 @@ public sealed partial class AppController
         {
             Message = "Nada foi salvo ainda. O perfil atual (se houver) continua valendo.",
         };
-        var keep = new DialogOption("Continuar testando", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var keep = new DialogOption("Continuar testando", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.ControllerTest);
         dialog.Options.Add(keep);
-        dialog.Options.Add(new DialogOption("Descartar", DialogOptionKind.Danger, () => EndMapping(modal, "Configuração cancelada; nada foi salvo.")));
+        dialog.Options.Add(new DialogOption("Descartar", DialogOptionKind.Danger, () => EndMapping(modal, "Configuração cancelada; nada foi salvo."), icon: ActionIcon.Erase));
         dialog.BackOption = keep;
         PushModal(dialog);
     }
@@ -245,13 +245,13 @@ public sealed partial class AppController
         {
             Message = "Se cancelar, o perfil atual continua valendo.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Substituir", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             commit();
-        }));
+        }, icon: ActionIcon.Replace));
         dialog.BackOption = cancel;
         PushModal(dialog);
     }
@@ -286,15 +286,15 @@ public sealed partial class AppController
         {
             var profile = ProfileFor(device);
             items.Add(new MenuItem($"Configurar {device.Name}", () => StartMapping(device),
-                Detail: profile is null ? "Sem perfil: ainda não navega." : $"Perfil salvo: {profile.Name}"));
+                Detail: profile is null ? "Sem perfil: ainda não navega." : $"Perfil salvo: {profile.Name}", Icon: ActionIcon.ControllerSetup));
         }
         if (devices.Count == 0)
-            items.Add(new MenuItem("Nenhum joystick sem perfil conectado", null, "Conecte o controle; gamepads conhecidos não precisam de configuração."));
+            items.Add(new MenuItem("Nenhum joystick sem perfil conectado", null, "Conecte o controle; gamepads conhecidos não precisam de configuração.", Icon: ActionIcon.Controller));
         var noStore = _profileStore is null ? "Perfis indisponíveis nesta compilação." : null;
-        items.Add(new MenuItem("Importar perfil…", BeginImportProfile, noStore, "Arquivo .json exportado pelo ControlFS"));
+        items.Add(new MenuItem("Importar perfil…", BeginImportProfile, noStore, "Arquivo .json exportado pelo ControlFS", Icon: ActionIcon.Import));
         foreach (var profile in _controllerProfiles)
-            items.Add(new MenuItem($"Exportar \"{profile.Name}\"…", () => BeginExportProfile(profile), noStore));
-        PushModal(new MenuModal("Controles sem perfil", items));
+            items.Add(new MenuItem($"Exportar \"{profile.Name}\"…", () => BeginExportProfile(profile), noStore, Icon: ActionIcon.Export));
+        PushModal(new MenuModal("Controles sem perfil", items) { Icon = ActionIcon.ControllerSetup });
     }
 
     private string StartFolder() =>
@@ -322,9 +322,9 @@ public sealed partial class AppController
             SetStatus($"Não foi possível ler a pasta: {ex.Message}");
             return;
         }
-        var items = files.Select(f => new MenuItem(Path.GetFileName(f), () => ImportProfile(f))).ToList();
-        if (items.Count == 0) items.Add(new MenuItem("Nenhum arquivo .json nesta pasta", null, "Escolha a pasta onde o perfil foi exportado."));
-        PushModal(new MenuModal("Escolha o perfil", items));
+        var items = files.Select(f => new MenuItem(Path.GetFileName(f), () => ImportProfile(f), Icon: ActionIcon.File)).ToList();
+        if (items.Count == 0) items.Add(new MenuItem("Nenhum arquivo .json nesta pasta", null, "Escolha a pasta onde o perfil foi exportado.", Icon: ActionIcon.File));
+        PushModal(new MenuModal("Escolha o perfil", items) { Icon = ActionIcon.Import });
     });
 
     internal void ImportProfile(string path)
@@ -336,7 +336,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is ControllerProfileException or IOException or UnauthorizedAccessException)
         {
-            ShowMessage("Perfil não importado", [("Arquivo", Path.GetFileName(path))], ex.Message);
+            ShowMessage("Perfil não importado", [("Arquivo", Path.GetFileName(path))], ex.Message, icon: ActionIcon.Error);
             return;
         }
         var match = profile.Match;
@@ -345,8 +345,9 @@ public sealed partial class AppController
             ("Nome", profile.Name),
             ("Controle", match.DeviceGuid.Length > 0 ? $"GUID {match.DeviceGuid}" : string.Create(CultureInfo.InvariantCulture, $"VID {match.VendorId:X4} · PID {match.ProductId:X4}")),
             ("Controles ligados", profile.Bindings.Count.ToString(CultureInfo.InvariantCulture)),
-        ]);
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        ])
+        { Icon = ActionIcon.Import };
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(new DialogOption("Importar", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
@@ -356,7 +357,7 @@ public sealed partial class AppController
                 SetStatus($"Perfil importado: {profile.Name}");
                 ControllerProfilesChanged?.Invoke();
             });
-        }));
+        }, icon: ActionIcon.Import));
         dialog.Options.Add(cancel);
         dialog.BackOption = cancel;
         PushModal(dialog);

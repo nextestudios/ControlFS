@@ -23,7 +23,7 @@ public sealed partial class AppController
             case MenuModal menu:
                 if (menu.Items.Count == 0) return new($"Menu {menu.Title}", "sem opções");
                 var item = menu.Items[Math.Clamp(menu.FocusIndex, 0, menu.Items.Count - 1)];
-                var state = item.IsEnabled ? string.Empty : ", indisponível" + (item.DisabledReason is { } why ? ": " + why : string.Empty);
+                var state = (item.IsDestructive ? ", ação perigosa" : string.Empty) + (item.IsEnabled ? string.Empty : ", indisponível" + (item.DisabledReason is { } why ? ": " + why : string.Empty));
                 var detail = item.Detail is { Length: > 0 } d ? ", " + d : string.Empty;
                 return new($"Menu {menu.Title}", $"{item.Label}{state}{detail}, {Position(menu.FocusIndex, menu.Items.Count)}");
             case DialogModal dialog:
@@ -31,7 +31,7 @@ public sealed partial class AppController
                 var context = Sentence($"Diálogo {dialog.Title}", body);
                 if (dialog.Options.Count == 0) return new(context, string.Empty);
                 var option = dialog.Options[Math.Clamp(dialog.FocusIndex, 0, dialog.Options.Count - 1)];
-                var toggle = option.Kind == DialogOptionKind.Toggle ? (option.IsChecked ? ", marcado" : ", desmarcado") : string.Empty;
+                var toggle = option.Kind == DialogOptionKind.Toggle ? (option.IsChecked ? ", marcado" : ", desmarcado") : option.IsDestructive ? ", ação perigosa" : string.Empty;
                 return new(context, $"{option.Label}{toggle}, botão {Position(dialog.FocusIndex, dialog.Options.Count)}");
             case KeyboardModal keyboard:
                 var kb = keyboard.Keyboard;

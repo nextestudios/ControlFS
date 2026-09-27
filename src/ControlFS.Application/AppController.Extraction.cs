@@ -1,5 +1,6 @@
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -25,7 +26,7 @@ public sealed partial class AppController
     internal void BeginExtraction(string archivePath, string destination, bool dedicated, IReadOnlyCollection<string>? selected, string basePath)
     {
         var plan = new ExtractionPlan(archivePath, destination, dedicated, selected, basePath);
-        var dialog = new DialogModal("Extrair", []);
+        var dialog = new DialogModal("Extrair", []) { Icon = ActionIcon.Extract };
         void Refill()
         {
             var stem = ArchiveFormats.StemOf(plan.ArchivePath);
@@ -43,7 +44,7 @@ public sealed partial class AppController
         {
             CloseModal(dialog);
             Track(StartExtractionAsync(plan));
-        });
+        }, icon: ActionIcon.Extract);
         DialogOption? dedicatedToggle = null;
         dedicatedToggle = new DialogOption(DedicatedLabel(plan.Dedicated), DialogOptionKind.Toggle, () =>
         {
@@ -55,7 +56,7 @@ public sealed partial class AppController
         {
             IsChecked = plan.Dedicated,
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(start);
         dialog.Options.Add(dedicatedToggle);
         dialog.Options.Add(cancel);
@@ -86,7 +87,7 @@ public sealed partial class AppController
         }
         catch (ArchiveAccessException ex)
         {
-            ShowMessage("Não foi possível extrair", [("Arquivo", Path.GetFileName(plan.ArchivePath)), ("Motivo", ex.Message)]);
+            ShowMessage("Não foi possível extrair", [("Arquivo", Path.GetFileName(plan.ArchivePath)), ("Motivo", ex.Message)], icon: ActionIcon.Error);
             return;
         }
         if (needsPassword) AskPassword(plan, retryMessage: null);
@@ -226,8 +227,8 @@ public sealed partial class AppController
         foreach (var problem in result.Items.Where(i => i.Outcome is ItemOutcome.Failed or ItemOutcome.Blocked).Take(6))
             lines.Add(("• " + problem.Name, problem.Message ?? problem.Error.ToString()));
 
-        var dialog = new DialogModal(title, lines) { Message = result.Message };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var dialog = new DialogModal(title, lines) { Message = result.Message, Icon = ResultIcon(result.FinalState) };
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         AddRetryFailedOption(dialog, item);
         if (result.Destination is { } dest && Directory.Exists(dest))
         {
@@ -236,14 +237,14 @@ public sealed partial class AppController
                 CloseModal(dialog);
                 Screen = Screen.Browser;
                 Track(NavigateAsync(Browser, new PhysicalLocation(dest), pushHistory: Browser.Location is not null));
-            }));
+            }, icon: ActionIcon.OpenFolder));
         }
         if (result.Items.Any(i => i.Error == OperationErrorKind.WrongPasswordOrCorrupt))
             dialog.Options.Add(new DialogOption("Tentar outra senha", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 AskPassword(plan, "Algumas entradas falharam: senha incorreta ou dados corrompidos.");
-            }));
+            }, icon: ActionIcon.Password));
         dialog.Options.Add(close);
         dialog.BackOption = close;
         PushModal(dialog);
@@ -267,11 +268,11 @@ public sealed partial class AppController
             Operations.SetWaiting(op, false);
             answer.TrySetResult(new ConflictDecision(choice, applyToRest));
         }
-        var skip = new DialogOption("Pular (manter existente)", DialogOptionKind.Safe, () => Answer(ConflictChoice.Skip));
+        var skip = new DialogOption("Pular (manter existente)", DialogOptionKind.Safe, () => Answer(ConflictChoice.Skip), icon: ActionIcon.Skip);
         dialog.Options.Add(skip);
-        dialog.Options.Add(new DialogOption("Manter ambos", DialogOptionKind.Primary, () => Answer(ConflictChoice.KeepBoth)));
+        dialog.Options.Add(new DialogOption("Manter ambos", DialogOptionKind.Primary, () => Answer(ConflictChoice.KeepBoth), icon: ActionIcon.KeepBoth));
         dialog.Options.Add(new DialogOption(conflict.IsFolderMerge ? "Mesclar pastas…" : "Substituir…", DialogOptionKind.Danger,
-            () => ConfirmReplace(conflict, applyToRest, () => Answer(ConflictChoice.Replace))));
+            () => ConfirmReplace(conflict, applyToRest, () => Answer(ConflictChoice.Replace)), icon: conflict.IsFolderMerge ? ActionIcon.Merge : ActionIcon.Replace));
         DialogOption? applyToggle = null;
         applyToggle = new DialogOption("Aplicar aos demais conflitos desta operação: não", DialogOptionKind.Toggle, () =>
         {
@@ -280,7 +281,7 @@ public sealed partial class AppController
             applyToggle.IsChecked = applyToRest;
         });
         dialog.Options.Add(applyToggle);
-        dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Safe, () => Answer(ConflictChoice.Cancel)));
+        dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Safe, () => Answer(ConflictChoice.Cancel), icon: ActionIcon.Cancel));
         dialog.BackOption = skip;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -299,13 +300,13 @@ public sealed partial class AppController
                     ? "O conteúdo existente será perdido — e a mesma escolha valerá para os demais conflitos desta operação."
                     : "O conteúdo existente será perdido.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption(merge ? "Mesclar" : "Substituir", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             confirmed();
-        }));
+        }, icon: merge ? ActionIcon.Merge : ActionIcon.Replace));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);

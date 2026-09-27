@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
 
@@ -72,17 +73,17 @@ public sealed partial class AppController
         {
             var available = SafeDirectoryExists(folder);
             items.Add(new MenuItem(FavoriteName(folder), () => OpenPhysical(folder),
-                available ? null : "A pasta não existe ou não está acessível agora.", "Pasta · " + folder));
+                available ? null : "A pasta não existe ou não está acessível agora.", "Pasta · " + folder, Icon: ActionIcon.Folder));
         }
         foreach (var file in Settings.RecentFiles)
         {
             var folder = Path.GetDirectoryName(file);
             var available = folder is not null && SafeDirectoryExists(folder);
             items.Add(new MenuItem(Path.GetFileName(file), () => Track(OpenRecentFileAsync(file)),
-                available ? null : "A pasta do arquivo não existe ou não está acessível agora.", "Arquivo · " + file));
+                available ? null : "A pasta do arquivo não existe ou não está acessível agora.", "Arquivo · " + file, Icon: ActionIcon.File));
         }
-        items.Add(new MenuItem("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador."));
-        PushModal(new MenuModal("Recentes", items));
+        items.Add(new MenuItem("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador.", Icon: ActionIcon.Erase));
+        PushModal(new MenuModal("Recentes", items) { Icon = ActionIcon.Recent });
     }
 
     /// <summary>Abre a pasta do arquivo com o foco nele e o abre como Confirmar faria (compactado explora, executável pede confirmação).</summary>

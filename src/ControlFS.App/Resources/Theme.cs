@@ -164,6 +164,65 @@ public static class Theme
         };
     }
 
+    // ---------- Modais (#172): painel fosco, linha focada preenchida, tons ----------
+
+    /// <summary>
+    /// Transparência reduzida (Configurações → Personalização → Cores → Efeitos de transparência desligados), alto
+    /// contraste ou efeitos indisponíveis: o painel dos modais fica sólido e o fundo, mais escuro. Publicado pela janela.
+    /// </summary>
+    public static bool SolidSurfaces { get; set; }
+
+    /// <summary>Animações do Windows desligadas (Acessibilidade → Efeitos visuais): modais aparecem sem transição.</summary>
+    public static bool ReduceMotion { get; set; }
+
+    /// <summary>Cor do vidro dos modais (azul-marinho do tema) e a versão sólida usada sem transparência.</summary>
+    public static readonly Color ModalTintColor = ColorHelper.FromArgb(255, 0x0C, 0x1B, 0x2A);
+    public static readonly Color ModalSolidColor = ColorHelper.FromArgb(255, 0x0D, 0x1C, 0x2B);
+
+    /// <summary>Página por trás de um modal: escurecida (mais ainda sem transparência, para o painel se destacar).</summary>
+    public static Brush ModalScrim => SolidSurfaces ? ModalScrimSolid : ModalScrimGlass;
+    private static readonly SolidColorBrush ModalScrimGlass = new(ColorHelper.FromArgb(0xB4, 0x02, 0x07, 0x0C));
+    private static readonly SolidColorBrush ModalScrimSolid = new(ColorHelper.FromArgb(0xE6, 0x02, 0x07, 0x0C));
+
+    /// <summary>
+    /// Material do painel: acrílico do WinUI (desfoca o que está atrás, dentro da janela) com tinta escura e opaca o
+    /// bastante para ler a distância. O próprio WinUI troca pela cor de reserva quando o Windows desliga a transparência
+    /// (economia de energia, área de trabalho remota); com <see cref="SolidSurfaces"/> a cor sólida é usada sempre.
+    /// </summary>
+    public static Brush ModalPanel() => SolidSurfaces
+        ? new SolidColorBrush(ModalSolidColor)
+        : new AcrylicBrush { TintColor = ModalTintColor, TintOpacity = 0.82, TintLuminosityOpacity = 0.9, FallbackColor = ModalSolidColor };
+
+    /// <summary>Borda clara e fina do painel (o "fio de luz" que separa o vidro do fundo escurecido).</summary>
+    public static readonly SolidColorBrush ModalEdge = new(ColorHelper.FromArgb(0x38, 0xFF, 0xFF, 0xFF));
+
+    /// <summary>Linhas divisórias e o fundo discreto das informações dentro do painel.</summary>
+    public static readonly SolidColorBrush ModalDivider = new(ColorHelper.FromArgb(0x24, 0xFF, 0xFF, 0xFF));
+    public static readonly SolidColorBrush ModalInset = new(ColorHelper.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
+
+    /// <summary>
+    /// Opção focada: preenchimento ciano com texto escuro (contraste ~9:1), negrito e um pouco maior. Perigosa focada:
+    /// vermelho com texto escuro. Indisponível focada: cinza-azulado com o motivo por extenso.
+    /// </summary>
+    public static readonly SolidColorBrush FocusFill = Accent;
+    public static readonly SolidColorBrush FocusText = new(ColorHelper.FromArgb(255, 0x03, 0x10, 0x1A));
+    public static readonly SolidColorBrush DangerFill = new(ColorHelper.FromArgb(255, 0xFF, 0x8A, 0x7F));
+    public static readonly SolidColorBrush DisabledFill = new(ColorHelper.FromArgb(255, 0x2A, 0x3E, 0x52));
+
+    /// <summary>Tons do cabeçalho: sucesso (verde), aviso (âmbar), erro (vermelho) e informação (ciano).</summary>
+    public static readonly SolidColorBrush Success = new(ColorHelper.FromArgb(255, 0x4C, 0xD9, 0x8A));
+    public static readonly SolidColorBrush Warning = Selected;
+
+    /// <summary>Aumento da opção focada (discreto, como nos menus de TV; não muda o layout).</summary>
+    public const double ModalFocusScale = 1.025;
+
+    /// <summary>Cantos do painel (~22 px a 1080p) e das linhas de opção.</summary>
+    public static CornerRadius ModalRadius => new(Scaled(22));
+    public static CornerRadius RowRadius => new(Scaled(12));
+
+    /// <summary>Entrada do modal: só opacidade, curta, e nunca atrasa a entrada (o estado já é o do modal).</summary>
+    public static readonly TimeSpan MotionModal = TimeSpan.FromMilliseconds(120);
+
     /// <summary>Cores das faces do Xbox nas legendas (A verde, B vermelho, X azul, Y amarelo) e a cor da letra por cima.</summary>
     public static (Color Body, Color Letter) XboxFace(Core.Actions.ControllerButton button) => button switch
     {

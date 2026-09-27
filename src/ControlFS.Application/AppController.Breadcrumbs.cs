@@ -96,6 +96,14 @@ public sealed partial class AppController
         Track(NavigateAsync(pane, crumb.Target, pushHistory: true, focusId: crumb.ChildFocusId));
     }
 
+    private static ActionIcon CrumbIcon(Breadcrumb crumb) => crumb.Kind switch
+    {
+        BreadcrumbKind.Archive => ActionIcon.Archive,
+        _ when crumb.Target is ThisPcLocation => ActionIcon.ThisPc,
+        _ when crumb.Target is PhysicalLocation { FullPath: { } path } && Path.GetPathRoot(path) is { } root && string.Equals(Path.TrimEndingDirectorySeparator(root), Path.TrimEndingDirectorySeparator(path), StringComparison.OrdinalIgnoreCase) => ActionIcon.Drive,
+        _ => ActionIcon.Folder,
+    };
+
     /// <summary>Todas as pastas acima da atual, num menu (também é o caminho pelo menu do app e o conteúdo do "…").</summary>
     private void ShowPathMenu(PaneState pane, IReadOnlyList<Breadcrumb>? only = null)
     {
@@ -107,8 +115,8 @@ public sealed partial class AppController
                 BreadcrumbKind.Archive => "Compactado (raiz)",
                 BreadcrumbKind.ArchiveFolder => "Dentro do compactado",
                 _ => c.Target?.DisplayPath,
-            })).ToList();
-        PushModal(new MenuModal("Ir para", items) { FocusIndex = items.Count - 1 });
+            }, Icon: CrumbIcon(c))).ToList();
+        PushModal(new MenuModal("Ir para", items) { Icon = ActionIcon.FolderUp, FocusIndex = items.Count - 1 });
     }
 
     /// <summary>Mouse/toque num segmento: mesmo efeito de focar e confirmar.</summary>

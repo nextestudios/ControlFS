@@ -1,5 +1,6 @@
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 
@@ -36,7 +37,7 @@ public sealed partial class AppController
         }
         catch (ArchiveAccessException ex)
         {
-            ShowMessage("Não foi possível testar", [("Arquivo", Path.GetFileName(archivePath)), ("Motivo", ex.Message)]);
+            ShowMessage("Não foi possível testar", [("Arquivo", Path.GetFileName(archivePath)), ("Motivo", ex.Message)], icon: ActionIcon.Error);
             return;
         }
         if (needsPassword) AskSecretFor(archivePath, null, secret => EnqueueArchiveTest(archivePath, secret));
@@ -92,16 +93,17 @@ public sealed partial class AppController
 
         var dialog = new DialogModal(title, lines)
         {
+            Icon = ResultIcon(result.FinalState),
             Message = (result.Message is { } m ? m + " " : string.Empty) +
                 "O teste confere se os dados podem ser lidos e batem com o CRC; não é uma verificação de vírus.",
         };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         if (item.CanRetry)
             dialog.Options.Add(new DialogOption("Testar de novo", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 Operations.Retry(item);
-            }));
+            }, icon: ActionIcon.Retry));
         dialog.Options.Add(close);
         dialog.BackOption = close;
         PushModal(dialog);
