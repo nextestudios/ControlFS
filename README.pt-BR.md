@@ -1,12 +1,12 @@
 # ControlFS
 
-Um **gerenciador de arquivos para Windows feito para o controle**, com **extrator integrado**: navegue, organize e descompacte arquivos do sofá, num PC ligado à TV ou num portátil Windows. Código aberto, local, sem login, sem telemetria.
+Um **gerenciador de arquivos para Windows feito para o controle**, com **extrator integrado**: navegue, organize e descompacte arquivos do sofá, num PC ligado à TV ou num portátil Windows. Código aberto (AGPL-3.0-only), local, sem login, sem telemetria.
 
 🇺🇸 [Read in English](README.md)
 
 ![Windows](https://img.shields.io/badge/Windows-11%20x64-blue)
 ![Versão](https://img.shields.io/github/v/release/nextestudios/ControlFS?include_prereleases&label=vers%C3%A3o&color=brightgreen)
-![Licença](https://img.shields.io/github/license/nextestudios/ControlFS)
+![Licença](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0--only-blue)
 ![CI](https://github.com/nextestudios/ControlFS/actions/workflows/ci.yml/badge.svg)
 
 > **Pré-alfa.** A primeira jornada funciona e é coberta por testes automatizados sobre arquivos reais, mas o app **ainda não foi validado em Windows com controles físicos**. Veja o [PROGRESS.md](PROGRESS.md).
@@ -62,4 +62,4 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Feedback:** [este formulário](https://github.com/nextestudios/ControlFS/issues/new?template=feedback.yml)
 - Histórico: [português](CHANGELOG.md) · [English](CHANGELOG.en-US.md)
 
-Licença [MIT](LICENSE) · [Avisos de terceiros](THIRD_PARTY_NOTICES.md) · [Política de assinatura de código](docs/CODE_SIGNING.md) · [Segurança](SECURITY.md)
+Licença [GNU Affero General Public License v3.0 only](LICENSE) ([notas sobre a licença](docs/LICENSING.md)) · [Avisos de terceiros](THIRD_PARTY_NOTICES.md) · [Política de assinatura de código](docs/CODE_SIGNING.md) · [Segurança](SECURITY.md)

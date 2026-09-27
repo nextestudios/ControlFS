@@ -1,5 +1,9 @@
 # Contribuindo
 
+> **Licença das contribuições:** o ControlFS é licenciado sob **AGPL-3.0-only**. Ao enviar uma contribuição (código,
+> documentação, testes, recursos), você concorda que ela seja licenciada sob os mesmos termos. Veja `docs/LICENSING.md`.
+> *Contributions are accepted under AGPL-3.0-only.*
+
 1. Instale o .NET SDK indicado em `global.json` (10.0.401 ou patch mais novo da mesma banda).
 2. `dotnet build ControlFS.slnx` e `dotnet test ControlFS.slnx` precisam passar.
 3. Versões de pacotes ficam em `Directory.Packages.props`; ao mudar, atualize os lock files (`dotnet restore`) e registre

@@ -3,6 +3,9 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### License
+- Changed the project license from MIT to GNU AGPL v3.0 only (`AGPL-3.0-only`). Releases up to and including 0.2.0-alpha.1 remain available under MIT; later releases are distributed under AGPL-3.0-only. See `docs/LICENSING.md`.
+
 
 ## [0.2.0-alpha.1]
 ### What's new

@@ -10,7 +10,8 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <Company>ControlFS contributors</Company>
     <Product>ControlFS</Product>
-    <Copyright>Copyright (c) ControlFS contributors. MIT License.</Copyright>
+    <Copyright>Copyright (c) ControlFS contributors. Licensed under AGPL-3.0-only.</Copyright>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
     <Version>0.1.0</Version>
     <!-- Permite restaurar/compilar alvos -windows fora do Windows (apenas compilação; nunca execução). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
