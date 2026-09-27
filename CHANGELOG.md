@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.9.0-alpha.1]
 ### Melhorias
 - **Dois painéis** (#56): Menu → **Dois painéis** mostra duas pastas lado a lado, cada uma com local, histórico, marcações e foco próprios. O painel ativo tem contorno ciano e o título "ATIVO"; **L3** (apertar o analógico esquerdo; **Tab** no teclado) ou um clique troca de painel sem mexer em marcações. Em Ações, **Copiar/Mover para o outro painel** (blocos rápidos) e **Extrair para o outro painel** mostram origem e destino antes de executar, e o outro painel atualiza ao terminar. Em portáteis e janelas estreitas fica um painel só.
 - **Editar texto pela visualização** (#62): na visualização de um arquivo de texto (até 1 MB, inteiro na tela), **Norte** entra na edição. A linha em foco fica destacada; **Cima/Baixo** escolhem a linha, **Sul** abre a linha no teclado virtual, **Norte** insere uma linha acima/abaixo, apaga a linha ou desfaz, **Start** salva. Salvar pede confirmação e troca o arquivo de uma vez (nunca fica pela metade), mantendo a codificação, o BOM e as quebras de linha; o original fica ao lado em `nome.controlfs.bak`. **Voltar** com alterações pergunta antes de descartar, começando em "Continuar editando". Se outro programa mexeu no arquivo enquanto você editava, salvar avisa antes de substituir. Binários, arquivos somente leitura, grandes demais ou numa codificação que não volta igual são recusados com o motivo.
@@ -42,6 +44,11 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - O ícone do ControlFS não aparece mais num quadrado preto: o executável, a janela, a barra de tarefas, o menu Iniciar, os atalhos e o instalador usam a arte com fundo transparente e o brilho neon, em todos os tamanhos do Windows (16–256 px). Se o Windows ainda mostrar o ícone antigo, é o cache de ícones dele. (#187)
 ### Segurança
 - PDFs: o conteúdo precisa começar como PDF (um executável renomeado nunca chega ao renderizador), com limite de 200 MB, 5.000 páginas navegáveis, páginas desenhadas com no máximo 3072 px e 20 s para abrir ou desenhar (um PDF feito para travar vira erro). Só pixels: nada é executado nem aberto.
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
+- Áudio, vídeo, PDF, ISO, rede e terminal foram testados só no que o CI do Windows consegue verificar; o restante está em `docs/TESTING.md`.
 
 ## [0.8.0-alpha.1]
 ### Melhorias

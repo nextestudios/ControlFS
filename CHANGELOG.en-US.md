@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.9.0-alpha.1]
 ### Improvements
 - **Two panes** (#56): Menu → **Dois painéis** shows two folders side by side, each with its own location, history, marks and focus. The active pane has a cyan outline and the "ATIVO" (active) title; **L3** (press the left stick; **Tab** on the keyboard) or a click switches panes without touching marks. In Actions, **Copiar/Mover para o outro painel** (copy/move to the other pane, quick tiles) and **Extrair para o outro painel** (extract to the other pane) show the source and destination before running, and the other pane refreshes when done. Handhelds and narrow windows keep a single pane.
 - **Edit text from the preview** (#62): in the preview of a text file (up to 1 MB, fully shown), **North** starts editing. The focused line is highlighted; **Up/Down** pick the line, **South** opens it on the on-screen keyboard, **North** inserts a line above/below, deletes the line or undoes, **Start** saves. Saving asks first and swaps the file in one step (never half-written), keeping the encoding, BOM and line endings; the original stays next to it as `name.controlfs.bak`. **Back** with changes asks before discarding, starting on "Continuar editando" (keep editing). If another program changed the file while you were editing, saving warns before replacing it. Binary, read-only, oversized files or encodings that wouldn't round-trip are refused with the reason.
@@ -42,6 +44,11 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - The ControlFS icon no longer sits on a black square: the executable, window, taskbar, Start menu, shortcuts and installer use the artwork with a transparent background and the neon glow, at every Windows size (16–256 px). If Windows still shows the old icon, that's its icon cache. (#187)
 ### Security
 - PDFs: the content must start as a PDF (a renamed executable never reaches the renderer), limited to 200 MB, 5,000 browsable pages, pages drawn at most 3072 px and 20 s to open or draw (a PDF built to hang becomes an error). Pixels only: nothing is executed or opened.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Audio, video, PDF, ISO, network and terminal were verified only as far as Windows CI can; the rest is in `docs/TESTING.md`.
 
 ## [0.8.0-alpha.1]
 ### Improvements
