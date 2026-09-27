@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Fluidez máxima** (padrão): com a janela ativa, o controle é lido a cada quadro desenhado, na taxa da tela — 120 vezes por segundo numa tela de 120 Hz, 144 numa de 144 — em vez de um temporizador que o Windows arredonda para ~64 vezes por segundo. Menu → **Fluidez** troca para **economia de bateria** (portáteis).
 ### Correções
 - Menus, confirmações e o teclado virtual ficaram fluidos: ao mover o foco só as opções/teclas que ganham ou perdem o foco mudam, sem recriar o painel, a sombra e a rolagem a cada movimento (o que deixava um "fantasma" e um pulo na rolagem).
 - A linha que acabou de perder o foco não fica mais com um destaque cinza "fantasma" quando o ponteiro do mouse está parado sobre a lista ou a grade: só o item focado tem o anel; marcados e recortados mantêm os próprios desenhos. (#182)

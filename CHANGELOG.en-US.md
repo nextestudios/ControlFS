@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **Maximum smoothness** (default): while the window is active, the controller is read on every rendered frame, at the display's rate — 120 times per second on a 120 Hz screen, 144 on a 144 Hz one — instead of a timer that Windows rounds to ~64 times per second. Menu → **Fluidez** switches to **battery saver** (handhelds).
 ### Fixes
 - Menus, confirmations and the on-screen keyboard are now smooth: moving the focus only changes the options/keys that gain or lose it, instead of rebuilding the panel, shadow and scroll area on every move (which left a "ghost" and a scroll jump).
 - The row that just lost focus no longer keeps a grey "ghost" highlight when the mouse pointer rests over the list or grid: only the focused item has the ring; marked and cut items keep their own marks. (#182)

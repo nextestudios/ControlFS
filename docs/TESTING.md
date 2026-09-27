@@ -529,3 +529,6 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 ## Fluidez dos modais — não validado em hardware
 - [ ] Com controle real, segurar baixo num menu longo (Menu, Ações): o foco anda sem piscar, sem "fantasma" na opção anterior e sem a rolagem pular para o topo.
 - [ ] No teclado virtual, andar rápido pelas teclas e digitar: sem piscar; a faixa de sugestões e o campo atualizam sem mexer nas teclas.
+## Fluidez máxima (leitura por quadro) — não validado em hardware
+- [ ] Tela de 120/144 Hz: segurar o direcional numa lista longa e nos menus; o foco anda liso. Comparar com Menu → Fluidez: economia.
+- [ ] Portátil na bateria: uso de CPU/GPU com a janela parada em "máxima" vs "economia"; em segundo plano a leitura cai para o temporizador lento.

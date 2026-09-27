@@ -8,6 +8,7 @@ using ControlFS.Infrastructure.Input.Sdl3;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using VirtualKey = Windows.System.VirtualKey;
 using Windows.UI.Core;
 
@@ -28,6 +29,8 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly Sdl3InputBackend _backend = new(InputSettings.Default);
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly DispatcherQueueTimer _timer;
+    private bool _active = true;
+    private bool _frameSynced;
     private readonly Dictionary<string, InputDeviceInfo> _devices = [];
     private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
     private readonly Dictionary<string, LongPressTranslator> _longPress = [];
@@ -50,6 +53,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         };
         app.SettingsChanged += s =>
         {
+            UpdateCadence();
             Router.UpdateMap(new ActionMap(s.Convention));
             foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device); // Confirmar/Voltar do substituto
         };
@@ -66,8 +70,32 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _timer.Interval = ActiveInterval;
         _timer.IsRepeating = true;
         _timer.Tick += (_, _) => Pump();
-        _timer.Start();
+        UpdateCadence();
     }
+
+    /// <summary>
+    /// Cadência da leitura: com a janela ativa e "Fluidez máxima", a cada quadro desenhado (CompositionTarget.Rendering,
+    /// na taxa da tela: 60/120/144 Hz); senão o temporizador (8 ms ativo — na prática limitado pelo relógio do Windows —
+    /// e 120 ms em segundo plano, só para notar conexões).
+    /// </summary>
+    private void UpdateCadence()
+    {
+        var frameSync = _active && _app.Settings.SyncInputToDisplay;
+        if (frameSync != _frameSynced)
+        {
+            if (frameSync) CompositionTarget.Rendering += OnRendering;
+            else CompositionTarget.Rendering -= OnRendering;
+            _frameSynced = frameSync;
+        }
+        if (frameSync) _timer.Stop();
+        else
+        {
+            _timer.Interval = _active ? ActiveInterval : BackgroundInterval;
+            if (!_timer.IsRunning) _timer.Start();
+        }
+    }
+
+    private void OnRendering(object? sender, object e) => Pump();
 
     public InputRouter Router { get; }
     public bool BackendReady { get; }
@@ -90,16 +118,10 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
 
     public void OnWindowActivated(bool active)
     {
-        if (active)
-        {
-            Router.Resume();
-            _timer.Interval = ActiveInterval;
-        }
-        else
-        {
-            Router.Suspend();
-            _timer.Interval = BackgroundInterval; // continua detectando conexão/desconexão
-        }
+        _active = active;
+        if (active) Router.Resume();
+        else Router.Suspend(); // o temporizador lento continua detectando conexão/desconexão
+        UpdateCadence();
     }
 
     private void Pump()
@@ -280,6 +302,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
 
     public void Dispose()
     {
+        if (_frameSynced) CompositionTarget.Rendering -= OnRendering;
         _timer.Stop();
         _backend.Dispose();
     }
