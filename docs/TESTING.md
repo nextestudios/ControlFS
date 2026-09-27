@@ -246,7 +246,7 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
       descer para a última linha incompleta vai ao último item; gatilhos paginam; LB entra na barra de caminho.
 - [ ] Pasta com 10.000 arquivos em grade: rolagem sem travar enquanto os ícones grandes aparecem.
 - [ ] 1280×720, 1080p e 4K (100–300%), confortável e compacta: cartões (fase B2) sem cortes, foco inteiro (borda ciano,
-      halo, leve aumento) sem cobrir o vizinho, nome com reticências; colunas 3 (1080p), 2 (portátil), 1 (estreita),
+      halo, leve aumento) sem cobrir o vizinho, nome com reticências; colunas 3 (1080p; 2 com o painel de detalhes), 2 (portátil), 1 (estreita),
       4 (TV 4K); as capturas `3b-folder-grid-compact` e `3c-folder-grid` do `--render-screens` conferem.
 - [ ] Busca e Lixeira em grade: a terceira linha do cartão mostra "em <pasta>" quando não há estado.
 - [ ] Redimensionar a janela: o número de colunas acompanha e a navegação usa as colunas que aparecem.

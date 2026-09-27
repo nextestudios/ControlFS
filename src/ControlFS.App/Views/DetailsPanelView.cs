@@ -119,7 +119,9 @@ internal sealed class DetailsPanelView
     /// <summary>Miniatura da imagem (quando pronta) ou o ícone grande do Windows com o símbolo de reserva.</summary>
     private Grid Hero(ItemDetails details, IReadOnlySet<string> specialFolders)
     {
-        var height = Theme.Scaled(200);
+        // Portáteis: ícone e área menores, para as linhas (caminho, tamanho, datas) aparecerem sem rolar.
+        var compact = Theme.Layout.Tier == Core.Layout.LayoutTier.Compact;
+        var height = Theme.Scaled(compact ? 120 : 200);
         var cell = new Grid { Height = height, HorizontalAlignment = HorizontalAlignment.Stretch };
         if (details.Thumbnail is { } thumbnail)
         {
@@ -141,7 +143,7 @@ internal sealed class DetailsPanelView
             cell.Children.Add(frame);
             return cell;
         }
-        var size = Theme.Scaled(IconSize);
+        var size = Theme.Scaled(compact ? 96 : IconSize);
         var entry = details.Entry;
         var fallback = new TextBlock
         {
