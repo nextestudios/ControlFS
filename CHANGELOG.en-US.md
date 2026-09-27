@@ -3,12 +3,19 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.6.0-alpha.1]
 ### Improvements
 - **New look, first step of the redesign**: a navy palette with a cyan focus (border, blue fill and a subtle glow, with a short transition) and a larger bottom bar with the actions always in the same order (Open · Back · Mark · Actions · Menu · Search · List/Grid) and the Xbox face colors in the glyphs (A green, B red, X blue, Y yellow). **R3** (pressing the right stick) switches between list and grid, like Ctrl+G and Menu → View; the bottom bar names the target: "Grade" (grid) in the list, "Lista" (list) in the grid.
 - **New header and top bar**: the logo with the name shows on every screen, with the tabs next to it (RB). Below, a single bar shows the real path with a root button ("Locais › Início" on the home screen, "Meu computador › C:\ › …" in folders) and quick access: Favorites, Recent files, the Windows folders, This PC and the Recycle Bin, with the Windows icons. LB moves focus to the bar (in a folder onto the folder above; on the home screen onto Favorites), Left/Right walk from the path to the shortcuts and South opens in the same tab, with history.
 - **Grid home screen with cards**: "Pastas principais" (main folders) with the Windows icon, the real path and how many items and how much space are inside (calculated in the background with "Calculando…", never freezing the screen, kept for 10 minutes), and "Unidades e dispositivos" (drives and devices) with a usage bar, "X livres de Y" (free of) and the file system. Favorites get their own section; Recent and the Recycle Bin go under "Outros locais" (other places). Columns follow the width (3 at 1080p, 2 on handhelds, 1 in a narrow window) and the D-pad moves across sections. Sizes are now always in the Brazilian format ("698,5 GB").
 - **This PC** (Meu computador) is now its own screen: the drives in a tab (cards in the grid, rows in the list), with history; a drive's Properties show capacity, free, used and file system. It used to go back to the home screen.
 - **Grid of cards** in folders, search results, archives and the Recycle Bin, matching the home screen: large icon, name, type and size, states (marked, cut, password-protected) or the folder of a search result, and a chevron on folders. Columns follow the width (3 at 1080p, 2 on handhelds, 1 in a narrow window, 4 on a 4K TV).
+
+### Known limitations
+- Redesign in progress: the **List** mode with a details panel comes in the next version; in this one, List keeps the previous look.
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
 
 ## [0.5.0-alpha.1]
 ### What's new
