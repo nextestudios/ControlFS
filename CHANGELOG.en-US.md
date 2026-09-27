@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.7.0-alpha.1]
 ### Improvements
 - **List in the new look (redesign, phase C)**: the list sits in a card with a column header (mark box · Name · Type · Size · Modified) and the current sort arrow on the sorted column (↑ ascending, ↓ descending), the same as Menu → Sort by/Order; with a mouse, clicking a title sorts by it and clicking again reverses it, and the header box marks all or clears. Tall rows for TV and controller, with the mark box (focus never marks), Windows icon, name, type, size, a friendly date ("Hoje, 14:32" today, "Ontem, 18:05" yesterday, otherwise "25/09/2026, 20:11") and a chevron on folders; the focused row has a blue fill, cyan border and a highlighted chevron. On the home screen, Windows folders show as "Pasta do sistema" (system folder) with their real size (the same sum as the grid cards, with "Calculando…"). Compact density stays, with short rows in the same columns; when space runs out, the type column goes first.
 - **Details panel** on the right of the list, shown by default: large Windows icon, name, type and real data of the focused item. Folder: path, how many items and how much space are inside ("Calculando…" while summing, in the background and only for the focused folder); file: path, size and date; image: thumbnail, format and dimensions (same decoder and limits as the viewer); archive: format from the content and how many files (ZIP and 7z, without extracting); drive: file system, capacity, free, used and the usage bar; inside an archive and in the Recycle Bin, the path in the archive or the original location. With marked items, the panel says how many and their total size. On handhelds and narrow windows the panel steps aside so the list is not squeezed (the same data stays in Actions → Properties).
@@ -11,6 +13,10 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ### Fixes
 - Opening another folder (or an archive) without a chosen item now focuses the first item, instead of keeping the previous list's position or jumping to an item with the same name. Back and up still focus the item you came from.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
 
 ## [0.6.0-alpha.1]
 ### Improvements

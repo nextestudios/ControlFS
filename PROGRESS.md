@@ -30,6 +30,14 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Redesign: modo Lista e painel de detalhes (0.7.0-alpha.1)
+
+- Fase C (PRs #164, #165): Lista com cabeçalho de colunas e ordenação, caixas de marcação, datas amigáveis e painel de
+  detalhes com dados reais (pasta, arquivo, imagem, compactado, unidade, Lixeira, marcados); foco no primeiro item ao abrir
+  um local novo; rodapé e barra superior mais próximos da referência. Plurais em português corrigidos (#166).
+- Evidência (CI Windows, 2026-09-27): suíte completa sem alterar testes na fase C; capturas em 720p, 1080p e 4K conferidas
+  contra a referência da Lista. Checklist de regressão da especificação em `docs/ui-redesign.md`.
+
 ## Redesign: nova interface e modo Grade (0.6.0-alpha.1)
 
 - Fase A (PRs #159, #160): matriz de regressão em `docs/ui-redesign.md`, paleta nova, cabeçalho com logo, barra superior
