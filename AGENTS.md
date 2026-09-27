@@ -25,6 +25,9 @@ The product spec lives outside the repo; the rules that matter are summarized he
 - Screens only see `InputAction`; never check vendor buttons in UI code.
 - Security rules (names, containment, conflicts, limits) stay in Core/Infrastructure, never in views.
 - Destructive tests only in temp dirs (`TempDir`). Never real user data.
+- **Tests earn their place:** add one when it reproduces a real bug (before the fix), protects a security boundary
+  (extraction containment, update signature, executables), covers a new format/feature path, or proves something only
+  Windows shows. Don't add trivial variations (extra cases that hit the same branch).
 - Don't mark anything as supported without a test; update `docs/archive-support.md` and `docs/controller-compatibility.md` with observed results.
 - **Changelog:** user-visible changes go under `## [Unreleased]` in both `CHANGELOG.md` (Portuguese) and `CHANGELOG.en-US.md`.
 - **Docs come in pairs:** `README.md` / `README.pt-BR.md`, `docs/GUIDE.md` / `docs/GUIDE.pt-BR.md`.
