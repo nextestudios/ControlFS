@@ -9,6 +9,13 @@ public enum ListDensity
     Compact,
 }
 
+/// <summary>Forma de exibir pastas e locais: lista (linhas) ou grade (blocos com ícone grande, navegação em 2D).</summary>
+public enum ViewMode
+{
+    List,
+    Grid,
+}
+
 public sealed record AppSettings
 {
     /// <summary>2: <see cref="ButtonLabelStyle.Automatic"/> passou a ser o padrão (antes era Generic).</summary>
@@ -20,6 +27,9 @@ public sealed record AppSettings
     public bool ShowHidden { get; init; }
     public bool ReducedMotion { get; init; }
     public ListDensity Density { get; init; } = ListDensity.Comfortable;
+
+    /// <summary>Lista ou grade, para todas as pastas (a densidade vale para as duas: grade compacta tem blocos menores).</summary>
+    public ViewMode View { get; init; } = ViewMode.List;
     public string? LastLocation { get; init; }
     public IReadOnlyList<string> Favorites { get; init; } = [];
 

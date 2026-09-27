@@ -62,6 +62,8 @@ Norte → **Marcar todos (N)** marca todos os itens da pasta ou do compactado (n
 
 Menu → **Densidade da lista** alterna entre **confortável** (duas linhas por item, para a TV) e **compacta** (uma linha com colunas de tipo, tamanho e data). A escolha fica salva.
 
+Menu → **Exibição** (ou **Ctrl+G** no teclado) alterna entre **lista** e **grade** de ícones grandes, nas pastas e na tela inicial. Na grade, o direcional e o analógico andam para cima, baixo, esquerda e direita entre os blocos: esquerda/direita continuam na linha anterior/seguinte nas pontas, e descer para uma última linha mais curta vai ao último item. Os gatilhos paginam uma tela de linhas. Como a esquerda não sobe de pasta na grade, use Voltar ou a barra de caminho (LB). A densidade vale também para a grade (compacta = blocos menores), e trocar de exibição mantém o item focado.
+
 ## Busca
 
 Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.

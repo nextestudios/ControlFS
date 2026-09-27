@@ -36,8 +36,9 @@ public class DensityJourneyTests : IDisposable
         relaunched.Start();
         Assert.Equal(ListDensity.Compact, relaunched.Settings.Density);
 
-        // A ação reservada "trocar visualização" alterna a mesma preferência
+        // "Trocar visualização" (Ctrl+G / menu) alterna lista e grade; a densidade continua valendo para as duas
         relaunched.Handle(InputAction.ChangeView);
-        Assert.Equal(ListDensity.Comfortable, store.Load().Settings.Density);
+        Assert.Equal(ViewMode.Grid, store.Load().Settings.View);
+        Assert.Equal(ListDensity.Compact, store.Load().Settings.Density);
     });
 }

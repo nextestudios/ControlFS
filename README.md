@@ -46,6 +46,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Responsive layout** for 720p/800p handhelds, desktops and 1080p/4K TVs
 - **Retry** a failed operation or only its failed items; leftovers of interrupted operations are cleaned up on the next launch
 - **Native Windows icons** for files, folders, special folders and drives, loaded in the background and sized for the screen's scale
+- **List or grid view** (Menu → View or Ctrl+G), with 2D controller navigation between tiles
 - **Drive types** at a glance (local, USB, optical, network), refreshed when a USB stick is plugged in or removed
 - **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, visible caret, hold-to-repeat, masked passwords) usable with only directions + confirm + back

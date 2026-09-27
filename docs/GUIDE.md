@@ -62,6 +62,8 @@ North → **Select all (N)** marks every item in the folder or archive (never dr
 
 Menu → **List density** switches between **comfortable** (two lines per item, for the TV) and **compact** (one line with type, size and date columns). The choice is saved.
 
+Menu → **View** (or **Ctrl+G** on the keyboard) switches between the **list** and a **grid** of large icons, for folders and the home screen alike. In the grid the D-pad and stick move up, down, left and right between tiles: left/right continue onto the previous/next row at the ends, and down onto a shorter last row lands on its last item. The triggers page one screen of rows. Since left no longer goes to the parent folder in the grid, use Back or the path bar (LB). Density applies to the grid too (compact = smaller tiles), and switching views keeps the focused item.
+
 ## Search
 
 Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.
