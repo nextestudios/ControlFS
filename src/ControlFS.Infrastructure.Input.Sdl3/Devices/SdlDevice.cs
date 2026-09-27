@@ -11,6 +11,8 @@ internal sealed unsafe class SdlDevice(InputDeviceInfo info, SDL.SDL_Gamepad* ga
     public StickNormalizer Stick { get; } = new(settings);
     public double StickX { get; set; }
     public double StickY { get; set; }
+    public double RightX { get; set; }
+    public double RightY { get; set; }
     public bool LeftTriggerDown { get; set; }
     public bool RightTriggerDown { get; set; }
 }

@@ -18,8 +18,11 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | Start | App menu | Done |
 | Select / View | Search | Symbols |
 | R3 (press right stick) | List ↔ grid | — |
+| Right stick (tilt) | Scroll the active list, menu, text, zoomed image or dialog | — |
 
 **Back** closes the open menu first, then clears the selection, then goes back in history, then to the home screen. Leaving the app always asks for confirmation, starting on "Cancel".
+
+**Right stick:** tilt it to scroll the active content: the list or grid moves one row per step (the focus follows, so it never leaves the screen and never wraps), menus move one option, the text preview scrolls lines (sideways: columns), a zoomed image pans, and long dialogs and About scroll their body. Only the surface on top scrolls: with a menu or preview open, the list behind it doesn't move. A short flick scrolls one step, a stronger tilt scrolls faster, and holding it speeds up gradually; back in the center it stops at once. Pressing the stick (R3) switches list ↔ grid without scrolling. Controllers without an SDL gamepad mapping (the ones set up in "Controles sem perfil…") don't scroll with a stick; the D-pad and triggers still do everything.
 
 Only one controller drives the app at a time: the first one to press a button. Pressing a button on another controller (while the active one isn't holding anything) makes it the active one. With the window in the background, input is ignored. The menu has "Confirm with: bottom/right button" and the label style: **automatic** (default: follows the family of the controller in use: Xbox, PlayStation, Nintendo or generic) or fixed to generic, Xbox, PlayStation or Nintendo.
 

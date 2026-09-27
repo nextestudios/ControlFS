@@ -307,8 +307,11 @@ public sealed class ImagePreviewModal : Modal
         Pan(0, 0);
     }
 
+    /// <summary>Deslize de um passo do analógico direito, em quartos de tela (um passo do D-pad é 1).</summary>
+    public const double ScrollPan = 0.125;
+
     /// <summary>Move a área visível em passos de 1/4 da tela; nunca sai da imagem.</summary>
-    internal void Pan(int dx, int dy)
+    internal void Pan(double dx, double dy)
     {
         var half = 0.5 / Zoom;
         CenterX = Math.Clamp(CenterX + dx * 0.25 / Zoom, half, 1 - half);
@@ -330,6 +333,9 @@ public sealed class TextPreviewModal : Modal
 {
     /// <summary>Colunas deslocadas por Esquerda/Direita (linhas longas não quebram).</summary>
     public const int ColumnStep = 16;
+
+    /// <summary>Colunas por passo do analógico direito (rolagem horizontal contínua).</summary>
+    public const int ScrollColumns = 4;
 
     internal TextPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Visualizar texto")
     {

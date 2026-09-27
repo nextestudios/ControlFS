@@ -128,6 +128,12 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
                 if (before != StickDirection.None) _sink?.OnControl(device.Info.SessionKey, StickNormalizer.ToControl(before), false, now);
                 if (after != StickDirection.None) _sink?.OnControl(device.Info.SessionKey, StickNormalizer.ToControl(after), true, now);
                 break;
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX:
+            case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY:
+                // Analógico direito: rolagem contínua (#175). A normalização (zona morta, taxa) fica no AnalogScroller.
+                if (axis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX) device.RightX = value; else device.RightY = value;
+                _sink?.OnScrollStick(device.Info.SessionKey, device.RightX, device.RightY, now);
+                break;
             case SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
                 device.LeftTriggerDown = Trigger(device, device.LeftTriggerDown, value, PhysicalControl.LeftTrigger, now);
                 break;

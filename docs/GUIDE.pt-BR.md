@@ -18,8 +18,11 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Start | Menu do app | Concluir |
 | Select / View | Buscar | Símbolos |
 | R3 (pressionar analógico direito) | Lista ↔ grade | — |
+| Analógico direito (inclinar) | Rolar a lista, o menu, o texto, a imagem com zoom ou o diálogo ativo | — |
 
 **Voltar** fecha primeiro o menu aberto, depois limpa a seleção, depois volta no histórico e por fim vai à tela inicial. Sair do app sempre pede confirmação, começando em "Cancelar".
+
+**Analógico direito:** incline para rolar o conteúdo ativo: a lista ou a grade anda uma linha por passo (o foco acompanha, então nunca sai da tela nem dá a volta), menus andam uma opção, a visualização de texto rola linhas (para os lados, colunas), a imagem com zoom desliza e diálogos longos e o Sobre rolam o corpo. Só a superfície de cima rola: com um menu ou visualização aberta, a lista por trás não se mexe. Um toque curto rola um passo, mais inclinado rola mais rápido e mantido acelera aos poucos; no centro para na hora. Apertar o analógico (R3) troca lista ↔ grade sem rolar. Controles sem mapeamento de gamepad do SDL (os configurados em "Controles sem perfil…") não rolam por analógico; o direcional e os gatilhos continuam fazendo tudo.
 
 Só um controle comanda o app por vez: o primeiro a apertar um botão. Apertar um botão em outro controle (com o ativo solto) passa o comando para ele. Com a janela em segundo plano, a entrada é ignorada. O menu tem "Confirmar com: botão inferior/direito" e o estilo das legendas: **automáticas** (padrão: seguem a família do controle em uso: Xbox, PlayStation, Nintendo ou genérico) ou fixas em genérico, Xbox, PlayStation ou Nintendo.
 

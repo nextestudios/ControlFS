@@ -19,5 +19,16 @@ public sealed record InputSettings
     /// <summary>Fator aplicado ao intervalo a cada repetição (repetição progressiva).</summary>
     public double RepeatAcceleration { get; init; } = 0.9;
 
+    /// <summary>Analógico direito (rolagem, #175): magnitude para começar a rolar (zona morta contra drift).</summary>
+    public double ScrollDeadzone { get; init; } = 0.28;
+    /// <summary>Magnitude abaixo da qual a rolagem para (histerese: menor que <see cref="ScrollDeadzone"/>).</summary>
+    public double ScrollRelease { get; init; } = 0.2;
+    /// <summary>Passos por segundo logo depois da zona morta e com o analógico no fim do curso.</summary>
+    public double ScrollMinRate { get; init; } = 3;
+    public double ScrollMaxRate { get; init; } = 14;
+    /// <summary>Inclinação mantida acelera até este fator em <see cref="ScrollAccelerationTime"/> (proporcional à inclinação).</summary>
+    public double ScrollMaxBoost { get; init; } = 2.2;
+    public TimeSpan ScrollAccelerationTime { get; init; } = TimeSpan.FromMilliseconds(1500);
+
     public static InputSettings Default { get; } = new();
 }

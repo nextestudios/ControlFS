@@ -146,6 +146,12 @@ public sealed partial class AppController
 
     public void Handle(InputAction action)
     {
+        if (action.IsScroll())
+        {
+            // Rolagem contínua: chega muitas vezes por segundo; só redesenha quando algo mudou e mantém o aviso do rodapé.
+            if (HandleScroll(action)) RaiseChanged();
+            return;
+        }
         StatusMessage = null;
         MappingWizard?.Wizard.Touch(Clock()); // quem está agindo não perde a configuração por inatividade
         if (TopModal is { } modal) HandleModal(modal, action);

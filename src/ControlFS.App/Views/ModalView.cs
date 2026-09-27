@@ -48,6 +48,20 @@ public static partial class ModalView
 
     private static Retained? _retained;
 
+    /// <summary>Rolagem do corpo do modal desenhado por último (o analógico direito rola diálogos e "Sobre", #175).</summary>
+    private static WeakReference<ScrollViewer>? _body;
+
+    /// <summary>Distância de um passo do analógico direito no corpo de um modal (pixels efetivos, antes da escala).</summary>
+    private const double BodyScrollStep = 40;
+
+    /// <summary>Rola o corpo do modal do topo em passos (negativo: para cima), no lugar e sem animação (a taxa já é contínua).</summary>
+    public static void ScrollBody(int steps)
+    {
+        if (_body is null || !_body.TryGetTarget(out var scroll) || scroll.XamlRoot is null) return;
+        var offset = Math.Clamp(scroll.VerticalOffset + (steps * Theme.Scaled(BodyScrollStep)), 0, scroll.ScrollableHeight);
+        scroll.ChangeView(null, offset, null, disableAnimation: true);
+    }
+
     /// <summary>
     /// Devolve a camada do modal do topo. Menus, diálogos e o teclado virtual são montados uma vez e, enquanto a estrutura
     /// (opções, textos, página, tamanho da tela…) não muda, só as linhas/teclas que ganham ou perdem o foco são trocadas
@@ -159,13 +173,15 @@ public static partial class ModalView
         {
             // A opção focada cresce um pouco: a folga (dentro do conteúdo, que a rolagem não recorta) mantém as bordas dela.
             var inset = Theme.Scaled(8);
-            content = new ScrollViewer
+            var bodyScroll = new ScrollViewer
             {
                 Content = new Border { Padding = new Thickness(inset, Theme.SpaceXs, inset, Theme.SpaceXs), Child = body },
                 Margin = new Thickness(-inset, -Theme.SpaceXs, -inset, -Theme.SpaceXs),
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             };
+            _body = new WeakReference<ScrollViewer>(bodyScroll);
+            content = bodyScroll;
         }
         Grid.SetRow((FrameworkElement)content, 1);
         grid.Children.Add(content);

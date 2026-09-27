@@ -558,3 +558,11 @@ Não validado em hardware:
       coluna; segurar baixo percorre a lista sem piscar (só o bloco/linha que muda é redesenhado).
 - [ ] Mouse: clicar num bloco escolhe; clicar num ajuste em Configurações alterna e mantém a tela aberta.
 - [ ] Narrador: bloco lido com o nome completo, "ação perigosa"/"indisponível: motivo" e "ação rápida N de M".
+
+## Rolagem com o analógico direito (#175) — não validado em hardware
+- [ ] Xbox, DualSense (USB e Bluetooth), Switch Pro e um controle genérico com mapeamento SDL: numa pasta com 500+ itens, em lista e em grade, inclinar pouco rola devagar e com precisão; inclinar tudo rola rápido e acelera se mantido; soltar para na hora, sem drift com o analógico em repouso (deixar parado 1 min).
+- [ ] O item focado fica sempre à vista e a rolagem não "pula" itens de forma imprevisível; com o analógico direito solto, o direcional e o analógico esquerdo navegam exatamente como antes (mesma velocidade).
+- [ ] Apertar R3 com o analógico levemente inclinado troca lista ↔ grade sem rolar.
+- [ ] Menu (Start), visualização de texto longa, imagem com zoom e Propriedades/Sobre: só o painel aberto rola; a lista por trás não se mexe.
+- [ ] Dois controles conectados: inclinar o analógico direito do controle parado não tira o comando do ativo.
+- [ ] Joystick sem perfil (mapeado pelo assistente): sem analógico para rolar, a navegação continua normal.
