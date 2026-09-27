@@ -151,6 +151,11 @@ public sealed class SharpCompressEngine : IArchiveEngine
     private static IArchive OpenArchive(string path, VolumeSet? volumes, ArchiveFormat format, ReaderOptions options)
     {
         if (volumes is not { Parts.Count: > 1 }) return ArchiveFactory.Open(volumes?.Parts[0] ?? path, options);
+        if (format == ArchiveFormat.Zip && volumes.IsSpannedZip)
+        {
+            options.LeaveStreamOpen = false; // o fluxo juntado é nosso: fecha junto com o compactado
+            return ZipArchive.Open(SpannedZip.Open(volumes.Parts), options);
+        }
         var files = volumes.Parts.Select(p => new FileInfo(p)).ToList();
         return format switch
         {

@@ -162,28 +162,3 @@ public class VolumeTests : IDisposable
         Assert.Empty(Directory.EnumerateFileSystemEntries(destination));
     }
 }
-
-public class VolumeDiagTests
-{
-    [Fact]
-    public void Diag_files()
-    {
-        using var a = SharpCompress.Archives.Zip.ZipArchive.Open([new FileInfo(ZipFixtures.FixturePath("zip/volumes.zip")), new FileInfo(ZipFixtures.FixturePath("zip/volumes.z01"))]);
-        var e = a.Entries.First(x => x.Key == "volumes.txt");
-        using var s = e.OpenEntryStream();
-        var ms = new MemoryStream();
-        s.CopyTo(ms);
-        Assert.Equal(70400, ms.Length);
-    }
-
-    [Fact]
-    public void Diag_streams()
-    {
-        using var a = SharpCompress.Archives.Zip.ZipArchive.Open([File.OpenRead(ZipFixtures.FixturePath("zip/volumes.zip")), File.OpenRead(ZipFixtures.FixturePath("zip/volumes.z01"))]);
-        var e = a.Entries.First(x => x.Key == "volumes.txt");
-        using var s = e.OpenEntryStream();
-        var ms = new MemoryStream();
-        s.CopyTo(ms);
-        Assert.Equal(70400, ms.Length);
-    }
-}

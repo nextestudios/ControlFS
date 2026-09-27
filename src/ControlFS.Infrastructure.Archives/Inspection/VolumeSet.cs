@@ -18,10 +18,13 @@ internal sealed partial record VolumeSet(IReadOnlyList<string> Parts, IReadOnlyL
 
     /// <summary>Volume cujo conteúdo identifica o formato (o primeiro existente em ordem de gravação).</summary>
     public string? DetectionPath => Parts.Count == 0 ? null
-        : Parts.Count > 1 && Parts[0].EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? Parts[1] // ZIP dividido: o ".zip" é o último
+        : IsSpannedZip ? Parts[1] // ZIP dividido: o ".zip" é o último
         : Parts[0];
 
     public bool IsMultiPart => Parts.Count + Missing.Count > 1;
+
+    /// <summary>ZIP dividido do Info-ZIP/WinZip: ".zip" (último disco) seguido de ".z01"….</summary>
+    public bool IsSpannedZip => Parts.Count > 1 && Parts[0].EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
 
     public static VolumeSet? Find(string path)
     {

@@ -28,7 +28,7 @@ SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 | 7z | dividido (`.7z.001`…) | — | `7z/volumes.7z.001`–`.003` | **validado** (abre por qualquer volume; sem o primeiro → lista o que falta pelo nome; sem o último → percebido pelo tamanho declarado no cabeçalho 7z) | — |
 | RAR | RAR5 e RAR4 em volumes (`.partN.rar`) | — | `rar/Rar5.multi.part01–06.rar`, `rar/Rar4.multi.part01–07.rar` | **validado** (abre por qualquer volume, SHA-256 idêntico; sem o último → percebido pelo bloco final do volume anterior, que diz "há mais volumes") | Volumes com cabeçalhos criptografados: o último ausente só é percebido se algum arquivo ficar pela metade. |
 | RAR | nomes antigos (`.rar`, `.r00`, `.r01`…) | — | os volumes RAR5 acima renomeados no teste | **validado** | — |
-| ZIP | dividido do Info-ZIP/WinZip (`.z01`… + `.zip`) | — | `zip/volumes.z01`, `zip/volumes.zip` | **validado** (abre pelo `.zip` ou `.z01`; sem um deles → falta apontada pelo nome, usando o número do disco no registro final) | ZIP64 dividido não testado. |
+| ZIP | dividido do Info-ZIP/WinZip (`.z01`… + `.zip`) | — | `zip/volumes.z01`, `zip/volumes.zip` | **validado** (abre pelo `.zip` ou `.z01`; sem um deles → falta apontada pelo nome, usando o número do disco no registro final) | Lido como um ZIP comum (diretório central reescrito em memória, nada é gravado): ZIP64 dividido ou conjunto acima de 4 GiB é recusado como não suportado. |
 | ZIP | cortado em pedaços (`.zip.001`…) | — | gerada no teste | **validado** (sem o último → erro de volume ausente sem nome exato: só o motor percebe que a lista final sumiu) | — |
 | TAR, TAR.GZ | dividido (`.tar.gz.001`…) | — | gerada no teste | **recusado** ("não suportado"): nada é extraído pela metade | — |
 
