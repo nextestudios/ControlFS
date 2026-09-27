@@ -1,4 +1,4 @@
-# ControlFS
+<h1 align="center"><img src="logos/controlfs-logo-text.png" alt="ControlFS" width="560"></h1>
 
 Um **gerenciador de arquivos para Windows feito para o controle**, com **extrator integrado**: navegue, organize e descompacte arquivos do sofá, num PC ligado à TV ou num portátil Windows. Código aberto (AGPL-3.0-only), local, sem login, sem telemetria.
 

@@ -40,6 +40,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
 OutputDir={#OutputDir}
 OutputBaseFilename=ControlFS-Setup-x64
+SetupIconFile=..\assets\controlfs.ico
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
 LicenseFile=..\LICENSE

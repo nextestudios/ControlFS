@@ -1,4 +1,4 @@
-# ControlFS
+<h1 align="center"><img src="logos/controlfs-logo-text.png" alt="ControlFS" width="560"></h1>
 
 A **file manager for Windows made for the controller**, with a **built-in extractor**: browse, organize and unzip files from the couch, on a TV-connected PC or a Windows handheld. Open source (AGPL-3.0-only), local, no login, no telemetry.
 

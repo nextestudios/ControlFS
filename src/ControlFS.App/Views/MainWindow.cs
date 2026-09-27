@@ -44,6 +44,8 @@ public sealed class MainWindow : Window
     public MainWindow()
     {
         Title = "ControlFS";
+        var icon = Path.Join(AppContext.BaseDirectory, "controlfs.ico");
+        if (File.Exists(icon)) AppWindow.SetIcon(icon);
         var settingsStore = new JsonSettingsStore(AppPaths.DataDirectory);
         _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService());
