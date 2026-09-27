@@ -50,6 +50,34 @@ public static class EntryText
         _ => "Calculando…",
     };
 
+    /// <summary>
+    /// Coluna "Tamanho" de uma pasta com soma recursiva (pastas principais do início): "5,2 GB", "5,2 GB+" (parcial),
+    /// "Calculando…" ou vazio quando o conteúdo não pôde ser lido.
+    /// </summary>
+    public static string FolderSize(FolderStats stats) => stats.State switch
+    {
+        FolderStatsState.Ready => Size(stats.Bytes),
+        FolderStatsState.Partial => Size(stats.Bytes) + "+",
+        FolderStatsState.Unavailable => string.Empty,
+        _ => "Calculando…",
+    };
+
+    /// <summary>
+    /// Data amigável da lista e do painel de detalhes, na hora local: "Hoje, 14:32", "Ontem, 18:05"; senão
+    /// "25/09/2026, 20:11" (também para datas depois de hoje, como as de um relógio adiantado).
+    /// </summary>
+    public static string FriendlyDate(DateTimeOffset value, DateTime now)
+    {
+        var local = value.ToLocalTime().DateTime;
+        var time = local.ToString("HH:mm", Culture);
+        if (local.Date == now.Date) return "Hoje, " + time;
+        if (local.Date == now.Date.AddDays(-1)) return "Ontem, " + time;
+        return local.ToString("dd/MM/yyyy", Culture) + ", " + time;
+    }
+
+    /// <summary>Data amigável em relação ao relógio do computador.</summary>
+    public static string FriendlyDate(DateTimeOffset value) => FriendlyDate(value, DateTime.Now);
+
     /// <summary>Uso de uma unidade: "698,5 GB livres de 1,8 TB · NTFS" (sistema de arquivos quando o Windows informa).</summary>
     public static string DriveUsage(FileEntry drive)
     {

@@ -148,7 +148,7 @@ public sealed partial class AppController
             pane.Archive = tree;
             pane.ArchivePassword = password;
             pane.Location = new ArchiveLocation(archivePath, string.Empty);
-            pane.List.SetItems(tree.Children(string.Empty));
+            pane.List.SetItems(tree.Children(string.Empty), newLocation: true);
             if (pane.Mode == PaneMode.Browse) RecordRecentFile(archivePath);
             if (tree.BlockedCount > 0) StatusMessage = $"{tree.BlockedCount} entrada(s) com nome inseguro foram bloqueadas.";
         }
@@ -211,11 +211,12 @@ public sealed partial class AppController
             }
             if (generation != pane.Generation) return;
             if (pushHistory && pane.Location is { } previous) PushHistory(pane, previous);
+            var newLocation = pane.Location != target; // outra pasta: sem item pedido, o foco começa no primeiro
             pane.Archive = tree;
             if (tree is null) pane.ArchivePassword = null;
             pane.Location = target;
             pane.InaccessibleCount = inaccessible;
-            pane.List.SetItems(entries, focusId);
+            pane.List.SetItems(entries, focusId, newLocation: newLocation);
             if (target is PhysicalLocation p)
             {
                 pane.LastValidPhysical = p;

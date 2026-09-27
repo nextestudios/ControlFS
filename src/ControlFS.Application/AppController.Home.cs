@@ -69,8 +69,14 @@ public sealed partial class AppController
 
     public int HomeColumns(HomeSectionKind kind) => _homeColumns.TryGetValue(kind, out var columns) ? columns : 1;
 
+    /// <summary>Muda a cada soma concluída (a lista refaz só as linhas visíveis quando muda).</summary>
+    public int FolderStatsVersion { get; private set; }
+
     /// <summary>Contagem e tamanho de uma pasta principal: pronto, parcial, indisponível ou "Calculando…".</summary>
     public FolderStats FolderStatsFor(string path) => _folderStats.TryGetValue(path, out var cached) ? cached.Stats : FolderStats.Calculating;
+
+    /// <summary>Pasta principal do início (tem contagem e tamanho reais, na grade e na lista).</summary>
+    public bool IsHomeStatFolder(string path) => HomeStatFolders().Contains(path, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Pastas principais do início (as que têm contagem e tamanho).</summary>
     private IEnumerable<string> HomeStatFolders()
@@ -84,7 +90,7 @@ public sealed partial class AppController
     }
 
     /// <summary>
-    /// Chamado a cada mudança de estado: no início em grade, soma as pastas que ainda não têm valor recente; fora do
+    /// Chamado a cada mudança de estado: no início (grade ou lista), soma as pastas que ainda não têm valor recente; fora do
     /// início, cancela a soma em andamento (o que já terminou fica guardado).
     /// </summary>
     private void UpdateHomeStats()
@@ -94,7 +100,7 @@ public sealed partial class AppController
             StatsRun?.Cancel();
             return;
         }
-        if (!IsGrid || StatsRun is not null) return;
+        if (StatsRun is not null) return; // grade (cartões) e lista (coluna "Tamanho") mostram as mesmas somas
         var now = Clock();
         var pending = HomeStatFolders().Where(path => !_folderStats.TryGetValue(path, out var cached) || now - cached.At > FolderStatsLifetime).ToList();
         if (pending.Count == 0) return;
@@ -133,6 +139,7 @@ public sealed partial class AppController
                     result = new FolderStats(FolderStatsState.Unavailable);
                 }
                 _folderStats[folder] = (result, Clock());
+                FolderStatsVersion++;
                 RaiseChanged();
             }
         }

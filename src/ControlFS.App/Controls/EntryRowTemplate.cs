@@ -53,36 +53,98 @@ public static class EntryRowTemplate
         $"<Border x:Name=\"MarkBar\" Width=\"{W(6)}\" HorizontalAlignment=\"Left\" CornerRadius=\"3\" Margin=\"2,6,0,6\"/>" +
         body + "</Grid></Border></Border></DataTemplate>";
 
-    private static string ComfortableXaml() => Frame(
-        $"<Grid x:Name=\"Body\" Padding=\"{W(16)},{S(8)},{S(12)},{S(8)}\" ColumnSpacing=\"{S(12)}\">" +
-        $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"{W(36)}\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
-        IconCell(32, 26) +
-        "<StackPanel Grid.Column=\"1\" VerticalAlignment=\"Center\">" +
-        $"<TextBlock x:Name=\"Title\" FontSize=\"{F(20)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
-        $"<TextBlock x:Name=\"Detail\" FontSize=\"{F(14)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
-        "</StackPanel>" +
-        StateCell(2, 20, 16) +
-        "</Grid>");
+    /// <summary>
+    /// Colunas da lista (redesenho, fase C): [caixa de marcação] [ícone] Nome | Tipo | Tamanho | Modificado em | seta. As
+    /// mesmas medidas servem às linhas e ao cabeçalho (alinhados). Sem espaço, a coluna de tipo sai primeiro (o tipo
+    /// continua no painel de detalhes e em Propriedades); sem marcação possível (início, busca), a caixa sai.
+    /// </summary>
+    public sealed record ListColumns(bool Compact, bool Mark, bool Type, double MarkWidth, double IconWidth, double TypeWidth, double SizeWidth,
+        double DateWidth, double ChevronWidth, double Spacing, Thickness Padding, double RowHeight)
+    {
+        /// <summary>Distância da borda da linha até o conteúdo (halo + anel), igual no cabeçalho.</summary>
+        public static double Inset => Theme.GlowRing.Left + Theme.FocusRing.Left;
+
+        /// <summary>Largura que as colunas fixas ocupam (o nome fica com o resto).</summary>
+        public double FixedWidth => (2 * Inset) + Padding.Left + Padding.Right + (Mark ? MarkWidth + Spacing : 0) + IconWidth + Spacing
+            + (Type ? TypeWidth + Spacing : 0) + SizeWidth + Spacing + DateWidth + Spacing + ChevronWidth + Spacing;
+
+        public string Key => $"{Compact}|{Mark}|{Type}|{Theme.Layout}|{Theme.SimulatedTextScale}";
+    }
+
+    /// <summary>Medidas das colunas para a largura da lista.</summary>
+    public static ListColumns Columns(ListDensity density, double listWidth, bool mark)
+    {
+        var compact = density == ListDensity.Compact;
+        var columns = compact
+            ? new ListColumns(true, mark, true, Theme.Scaled(32), Theme.Scaled(28), Theme.Scaled(170), Theme.Scaled(110), Theme.Scaled(180), Theme.Scaled(22),
+                Theme.Space(12), new Thickness(Theme.Space(14), Theme.Space(2), Theme.Space(14), Theme.Space(2)), Theme.Scaled(44))
+            : new ListColumns(false, mark, true, Theme.Scaled(44), Theme.Scaled(60), Theme.Scaled(200), Theme.Scaled(140), Theme.Scaled(220), Theme.Scaled(28),
+                Theme.Space(18), new Thickness(Theme.Space(18), Theme.Space(6), Theme.Space(22), Theme.Space(6)), Theme.Scaled(88));
+        // O nome precisa de espaço para ser lido: sem ele, o tipo sai da linha.
+        return listWidth > 0 && listWidth - columns.FixedWidth < Theme.Scaled(compact ? 260 : 320) ? columns with { Type = false } : columns;
+    }
+
+    /// <summary>Grade das colunas (linha e cabeçalho): índices das colunas e as definições.</summary>
+    public static (int Mark, int Icon, int Name, int Type, int Size, int Date, int Chevron, string Definitions) ColumnLayout(ListColumns c)
+    {
+        var defs = new List<string>();
+        int Add(double? width)
+        {
+            defs.Add(width is { } w ? $"<ColumnDefinition Width=\"{N(w)}\"/>" : "<ColumnDefinition Width=\"*\"/>");
+            return defs.Count - 1;
+        }
+        var mark = c.Mark ? Add(c.MarkWidth) : -1;
+        var icon = Add(c.IconWidth);
+        var name = Add(null);
+        var type = c.Type ? Add(c.TypeWidth) : -1;
+        var size = Add(c.SizeWidth);
+        var date = Add(c.DateWidth);
+        var chevron = Add(c.ChevronWidth);
+        return (mark, icon, name, type, size, date, chevron, "<Grid.ColumnDefinitions>" + string.Concat(defs) + "</Grid.ColumnDefinitions>");
+    }
 
     /// <summary>
-    /// Compacta: colunas de tipo, tamanho e data (e estado) com largura fixa proporcional ao texto, para ficarem
-    /// alinhadas entre linhas marcadas e não marcadas. Em janelas estreitas
-    /// (portátil 1280 de largura com texto grande) a coluna de tipo sai para o nome continuar legível.
+    /// Linha da lista: alta na densidade confortável (TV/controle), baixa na compacta. Foco = anel ciano + fundo azul +
+    /// halo e seta em destaque; marcado = caixa marcada + faixa âmbar + "Marcado" (o foco nunca marca). Estados, pasta
+    /// do resultado e atributos numa segunda linha discreta (confortável) ou ao lado do nome (compacta).
     /// </summary>
-    private static string CompactXaml()
+    private static string ListXaml(ListColumns c)
     {
-        var typeWidth = IsNarrow(Theme.Viewport.Width) ? "0" : W(160);
-        return Frame(
-            $"<Grid x:Name=\"Body\" Padding=\"{W(14)},{S(2)},{S(12)},{S(2)}\" ColumnSpacing=\"{S(12)}\">" +
-            $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"{W(26)}\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"{typeWidth}\"/>" +
-            $"<ColumnDefinition Width=\"{W(96)}\"/><ColumnDefinition Width=\"{W(150)}\"/><ColumnDefinition Width=\"{W(190)}\"/></Grid.ColumnDefinitions>" +
-            IconCell(24, 20) +
-            $"<TextBlock x:Name=\"Title\" Grid.Column=\"1\" FontSize=\"{F(17)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>" +
-            $"<TextBlock x:Name=\"TypeColumn\" Grid.Column=\"2\" FontSize=\"{F(14)}\" TextTrimming=\"CharacterEllipsis\" VerticalAlignment=\"Center\"/>" +
-            $"<TextBlock x:Name=\"SizeColumn\" Grid.Column=\"3\" FontSize=\"{F(14)}\" HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"/>" +
-            $"<TextBlock x:Name=\"DateColumn\" Grid.Column=\"4\" FontSize=\"{F(14)}\" VerticalAlignment=\"Center\"/>" +
-            StateCell(5, 16, 14) +
-            "</Grid>");
+        var (mark, icon, name, type, size, date, chevron, definitions) = ColumnLayout(c);
+        var titleSize = c.Compact ? 17 : 22;
+        var columnSize = c.Compact ? 15 : 19;
+        var iconSize = c.Compact ? 24 : 52;
+        string Cell(int column, string xname, string extra = "") =>
+            $"<TextBlock x:Name=\"{xname}\" Grid.Column=\"{column}\" FontSize=\"{F(columnSize)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"{extra}/>";
+        var states =
+            $"<StackPanel x:Name=\"StateLine\" Orientation=\"Horizontal\" Spacing=\"{S(6)}\" VerticalAlignment=\"Center\"{(c.Compact ? " Grid.Column=\"1\" Margin=\"" + S(10) + ",0,0,0\"" : string.Empty)}>" +
+            $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(c.Compact ? 13 : 15)}\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(c.Compact ? 13 : 15)}\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+            "</StackPanel>";
+        var title = $"<TextBlock x:Name=\"Title\" FontSize=\"{F(titleSize)}\"{(c.Compact ? string.Empty : " FontWeight=\"Medium\"")} TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>";
+        var nameCell = c.Compact
+            ? $"<Grid Grid.Column=\"{name}\" VerticalAlignment=\"Center\"><Grid.ColumnDefinitions><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>{title}{states}</Grid>"
+            : $"<StackPanel Grid.Column=\"{name}\" VerticalAlignment=\"Center\" Spacing=\"{S(2)}\">{title}{states}</StackPanel>";
+        var body =
+            $"<Grid x:Name=\"Body\" MinHeight=\"{N(c.RowHeight - (2 * ListColumns.Inset))}\" Padding=\"{N(c.Padding.Left)},{N(c.Padding.Top)},{N(c.Padding.Right)},{N(c.Padding.Bottom)}\" ColumnSpacing=\"{N(c.Spacing)}\">" +
+            definitions +
+            (mark >= 0 ? $"<TextBlock x:Name=\"Check\" Grid.Column=\"{mark}\" {IconFont} FontSize=\"{F(c.Compact ? 18 : 26)}\" HorizontalAlignment=\"Left\" VerticalAlignment=\"Center\"/>" : string.Empty) +
+            IconCell(iconSize, iconSize * (c.Compact ? 0.8 : 0.7)).Replace("<Grid Width=", $"<Grid Grid.Column=\"{icon}\" HorizontalAlignment=\"Left\" Width=", StringComparison.Ordinal) +
+            nameCell +
+            (type >= 0 ? Cell(type, "TypeColumn") : string.Empty) +
+            Cell(size, "SizeColumn") +
+            Cell(date, "DateColumn") +
+            $"<TextBlock x:Name=\"Chevron\" Grid.Column=\"{chevron}\" {IconFont} Text=\"&#xE76C;\" FontSize=\"{F(c.Compact ? 16 : 24)}\" HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"/>" +
+            "</Grid>";
+        // Separador discreto entre linhas (fora do anel: o foco nunca é coberto).
+        return $"<DataTemplate {Ns}><Grid>" +
+            $"<Border Tag=\"glow\" BorderThickness=\"{N(Theme.GlowRing.Left)}\" CornerRadius=\"{N(Theme.Radius.TopLeft + Theme.GlowRing.Left)}\">" +
+            $"<Border x:Name=\"Ring\" Tag=\"row\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"{N(Theme.Radius.TopLeft)}\">" +
+            $"<Border.BackgroundTransition><BrushTransition Duration=\"0:0:0.{Theme.MotionFocus.Milliseconds:000}\"/></Border.BackgroundTransition><Grid>" +
+            $"<Border x:Name=\"MarkBar\" Width=\"{W(4)}\" HorizontalAlignment=\"Left\" CornerRadius=\"2\" Margin=\"2,{S(10)},0,{S(10)}\"/>" +
+            body + "</Grid></Border></Border>" +
+            $"<Border x:Name=\"Separator\" Height=\"{N(Theme.Hairline.Top)}\" VerticalAlignment=\"Bottom\" Margin=\"{N(ListColumns.Inset + c.Padding.Left)},0,{N(ListColumns.Inset + c.Padding.Right)},0\" IsHitTestVisible=\"False\"/>" +
+            "</Grid></DataTemplate>";
     }
 
     /// <summary>
@@ -128,14 +190,16 @@ public static class EntryRowTemplate
     /// <summary>Modelo do bloco da grade na densidade pedida (recriar quando a faixa de layout mudar).</summary>
     public static DataTemplate CreateTile(ListDensity density) => (DataTemplate)XamlReader.Load(TileXaml(density));
 
-    /// <summary>Janela estreita demais para a coluna de tipo da lista compacta.</summary>
-    public static bool IsNarrow(double viewportWidth) => viewportWidth < 1200;
+    /// <summary>Modelo das linhas com as colunas pedidas, nas medidas da faixa de layout atual (recriar quando mudarem).</summary>
+    public static DataTemplate Create(ListColumns columns) => (DataTemplate)XamlReader.Load(ListXaml(columns));
 
-    /// <summary>Modelo da densidade pedida, com as medidas da faixa de layout atual (recriar quando ela mudar).</summary>
-    public static DataTemplate Create(ListDensity density) =>
-        (DataTemplate)XamlReader.Load(density == ListDensity.Compact ? CompactXaml() : ComfortableXaml());
+    /// <summary>
+    /// O que a linha da lista precisa saber além do item: o tipo mostrado (pastas do sistema), o tamanho das pastas com
+    /// soma (início), se a lista permite marcar e o relógio das datas amigáveis.
+    /// </summary>
+    public sealed record RowContext(Func<FileEntry, string> TypeName, Func<FileEntry, string?> FolderSize, bool CanMark, DateTime Now);
 
-    public static void Fill(SelectorItem container, FileEntry entry, bool focused, bool selected, bool cut, IconLoader icons, IReadOnlySet<string>? specialFolders)
+    public static void Fill(SelectorItem container, FileEntry entry, bool focused, bool selected, bool cut, IconLoader icons, IReadOnlySet<string>? specialFolders, RowContext? row = null)
     {
         if (container.ContentTemplateRoot is not FrameworkElement root) return;
         var icon = (TextBlock)root.FindName("Icon");
@@ -156,36 +220,6 @@ public static class EntryRowTemplate
         title.Foreground = entry.IsBlocked ? Theme.Danger : entry.IsHidden ? Theme.TextMuted : Theme.Text;
 
         var muted = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
-        if (root.FindName("Detail") is TextBlock detail)
-        {
-            detail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason : string.Join(" · ", DetailParts(entry));
-            detail.Foreground = muted;
-        }
-        if (root.FindName("TileDetail") is TextBlock tileDetail)
-        {
-            var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
-            tileDetail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
-                : place ? entry.Detail ?? TypeName(entry)
-                : entry.Size is long bytes && !entry.IsContainer ? $"{TypeName(entry)} · {Format(bytes)}" : TypeName(entry);
-            tileDetail.Foreground = muted;
-        }
-        if (root.FindName("Chevron") is TextBlock chevron) chevron.Visibility = entry.IsContainer && !entry.IsBlocked ? Visibility.Visible : Visibility.Collapsed;
-        if (root.FindName("TypeColumn") is TextBlock type)
-        {
-            var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
-            type.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
-                : place ? entry.Detail ?? TypeName(entry)
-                : string.Join(" · ", (entry.FoundIn is { } folder ? new[] { "em " + folder, TypeName(entry) } : [TypeName(entry)]).Concat(Flags(entry)));
-            type.Foreground = muted;
-            // Unidades e pastas especiais não têm tamanho/data: o espaço livre ocupa as três colunas.
-            Grid.SetColumnSpan(type, place || entry.IsBlocked ? 3 : 1);
-            var size = (TextBlock)root.FindName("SizeColumn");
-            var date = (TextBlock)root.FindName("DateColumn");
-            size.Text = place || entry.IsBlocked || entry.IsContainer || entry.Size is not long bytes ? string.Empty : Format(bytes);
-            date.Text = place || entry.IsBlocked || entry.Modified is not { } modified ? string.Empty : modified.LocalDateTime.ToString("g");
-            size.Foreground = date.Foreground = Theme.TextMuted;
-        }
-
         var glyphs = new List<string>();
         var states = new List<string>();
         if (selected) { glyphs.Add(Glyphs.Checked); states.Add("Marcado"); }
@@ -193,14 +227,34 @@ public static class EntryRowTemplate
         if (entry.IsEncrypted) { glyphs.Add(Glyphs.Lock); states.Add("Com senha"); }
         var stateGlyph = (TextBlock)root.FindName("StateGlyph");
         var stateText = (TextBlock)root.FindName("StateText");
+        if (root.FindName("SizeColumn") is TextBlock size)
+            FillListColumns(root, entry, size, selected, row);
+        else if (root.FindName("TileDetail") is TextBlock tileDetail)
+        {
+            var tileType = row?.TypeName(entry) ?? TypeName(entry);
+            var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
+            tileDetail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
+                : place ? entry.Detail ?? tileType
+                : entry.Size is long bytes && !entry.IsContainer ? $"{tileType} · {Format(bytes)}" : tileType;
+            tileDetail.Foreground = muted;
+        }
+        if (root.FindName("Chevron") is TextBlock chevron) chevron.Visibility = entry.IsContainer && !entry.IsBlocked ? Visibility.Visible : Visibility.Collapsed;
+
         stateGlyph.Text = string.Join(" ", glyphs);
-        stateText.Text = string.Join(" · ", states);
-        // Cartão da grade: sem estado, a terceira linha diz onde o resultado da busca está (ou onde estava, na Lixeira).
-        if (states.Count == 0 && entry.FoundIn is { } foundIn && root.FindName("TileStates") is not null) stateText.Text = "em " + foundIn;
+        var stateParts = new List<string>(states);
+        // Sem estado, a linha extra diz onde o resultado da busca está (ou onde estava, na Lixeira); na lista, também os atributos.
+        if (entry.FoundIn is { } foundIn && (states.Count == 0 || root.FindName("SizeColumn") is not null)) stateParts.Add("em " + foundIn);
+        if (root.FindName("SizeColumn") is not null)
+        {
+            if (entry is { Kind: EntryKind.ArchiveFile, Detail.Length: > 0 }) stateParts.Add(entry.Detail); // compressão
+            stateParts.AddRange(Flags(entry));
+        }
+        stateText.Text = string.Join(" · ", stateParts);
         stateGlyph.Foreground = stateText.Foreground = selected ? Theme.Selected : Theme.TextMuted;
-        if (states.Count == 0) stateText.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
-        else stateText.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
+        stateText.FontWeight = states.Count == 0 ? Microsoft.UI.Text.FontWeights.Normal : Microsoft.UI.Text.FontWeights.SemiBold;
+        if (root.FindName("StateLine") is UIElement line) line.Visibility = stateText.Text.Length > 0 || stateGlyph.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         ((Border)root.FindName("MarkBar")).Background = selected ? Theme.Selected : Theme.Transparent;
+        if (root.FindName("Separator") is Border separator) separator.Background = Theme.Border;
         // Recortado: conteúdo esmaecido (e indicado em texto e símbolo); o anel de foco e a faixa de marcado continuam nítidos.
         ((UIElement)root.FindName("Body")).Opacity = cut ? 0.55 : 1.0;
 
@@ -208,6 +262,41 @@ public static class EntryRowTemplate
         var state = string.Concat(states.Select(s => ", " + s.ToLowerInvariant()));
         var kind = entry.Kind == EntryKind.Drive ? ", " + TypeName(entry).ToLowerInvariant() : string.Empty;
         AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{kind}{state}");
+    }
+
+    /// <summary>
+    /// Colunas da linha: tipo, tamanho e data amigável. Unidades, favoritos, Recentes, Lixeira e entradas bloqueadas não
+    /// têm tamanho/data próprios: o texto delas (uso da unidade, caminho, motivo) ocupa as três colunas. Pastas do sistema
+    /// no início mostram a soma real (ou "Calculando…").
+    /// </summary>
+    private static void FillListColumns(FrameworkElement root, FileEntry entry, TextBlock size, bool selected, RowContext? row)
+    {
+        var date = (TextBlock)root.FindName("DateColumn");
+        var type = root.FindName("TypeColumn") as TextBlock;
+        var typeName = row?.TypeName(entry) ?? TypeName(entry);
+        var folderSize = row?.FolderSize(entry);
+        var spanned = entry.IsBlocked || entry.Kind == EntryKind.Drive || (entry.Kind == EntryKind.KnownFolder && folderSize is null);
+        var spanText = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
+            : entry.Kind == EntryKind.Drive ? EntryText.DriveUsage(entry)
+            : entry.Detail ?? typeName;
+        if (type is not null)
+        {
+            type.Text = spanned ? spanText : typeName;
+            Grid.SetColumnSpan(type, spanned ? 3 : 1);
+        }
+        size.Text = spanned ? (type is null ? spanText : string.Empty) : folderSize ?? (entry.IsContainer || entry.Size is not long bytes ? string.Empty : Format(bytes));
+        Grid.SetColumnSpan(size, spanned && type is null ? 2 : 1);
+        date.Text = spanned || entry.Modified is not { } modified ? string.Empty : EntryText.FriendlyDate(modified, row?.Now ?? DateTime.Now);
+        var muted = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
+        if (type is not null) type.Foreground = muted;
+        size.Foreground = date.Foreground = muted;
+        if (root.FindName("Check") is TextBlock check)
+        {
+            var markable = row?.CanMark == true && Application.State.FileListState.IsSelectable(entry);
+            check.Visibility = markable ? Visibility.Visible : Visibility.Collapsed;
+            check.Text = selected ? Glyphs.Checked : Glyphs.Unchecked;
+            check.Foreground = selected ? Theme.Selected : Theme.TextMuted;
+        }
     }
 
     /// <summary>Linha voltou para a fila de reciclagem: cancela o ícone pendente.</summary>
@@ -229,6 +318,7 @@ public static class EntryRowTemplate
         public const string Archive = "\uE7B8";
         public const string Warning = "\uE7BA";
         public const string Checked = "\uE73A";
+        public const string Unchecked = "\uE739";
         public const string Cut = "\uE8C6";
         public const string Lock = "\uE72E";
     }
@@ -249,6 +339,7 @@ public static class EntryRowTemplate
             return;
         }
         Theme.ApplyFocus(ring, focused);
+        if (ring.FindName("Chevron") is TextBlock rowChevron) rowChevron.Foreground = focused ? Theme.Accent : Theme.TextMuted;
         if (ring.FindName("Title") is TextBlock title)
         {
             title.TextWrapping = focused ? TextWrapping.WrapWholeWords : TextWrapping.NoWrap;
@@ -267,22 +358,6 @@ public static class EntryRowTemplate
 
     private static bool IsArchiveName(string name) =>
         new[] { ".zip", ".7z", ".rar", ".tar", ".tgz", ".gz" }.Any(ext => name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>Ordem fixa em toda a lista: tipo · tamanho · data · atributos.</summary>
-    private static IEnumerable<string> DetailParts(FileEntry entry)
-    {
-        if (entry.Detail is { Length: > 0 } d && entry.Kind is EntryKind.Drive or EntryKind.KnownFolder)
-        {
-            yield return d;
-            yield break;
-        }
-        if (entry.FoundIn is { } folder) yield return "em " + folder;
-        yield return TypeName(entry);
-        if (entry.Size is long size && !entry.IsContainer) yield return Format(size);
-        if (entry.Kind == EntryKind.ArchiveFile && entry.Detail is { Length: > 0 } compression) yield return compression;
-        if (entry.Modified is { } m) yield return m.LocalDateTime.ToString("g");
-        foreach (var flag in Flags(entry)) yield return flag;
-    }
 
     private static IEnumerable<string> Flags(FileEntry entry)
     {

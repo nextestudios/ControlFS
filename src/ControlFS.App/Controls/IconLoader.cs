@@ -17,7 +17,7 @@ namespace ControlFS.App.Controls;
 public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoader.RowIconSize)
 {
     /// <summary>Tamanho do ícone na linha, em pixels independentes de dispositivo.</summary>
-    public const double RowIconSize = 32;
+    public const double RowIconSize = 48;
 
     /// <summary>Tamanho do ícone no bloco da grade (a lista de 256 px do Shell, reduzida com nitidez).</summary>
     public const double TileIconSize = 64;

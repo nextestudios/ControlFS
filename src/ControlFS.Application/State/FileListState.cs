@@ -26,13 +26,14 @@ public sealed class FileListState
     /// <summary>
     /// Substitui os itens preservando o foco pelo Id. Se o item focado sumiu (excluído, movido, renomeado fora do app),
     /// o foco vai para o próximo item que sobreviveu na ordem anterior; sem próximo, para o anterior. Com itens na lista,
-    /// o foco nunca fica vazio.
+    /// o foco nunca fica vazio. <paramref name="newLocation"/>: os itens são de outro local (pasta aberta): sem
+    /// <paramref name="preferFocusId"/>, o foco vai para o primeiro item, nunca para a posição da pasta anterior.
     /// </summary>
-    public void SetItems(IEnumerable<FileEntry> items, string? preferFocusId = null, bool keepSelection = false)
+    public void SetItems(IEnumerable<FileEntry> items, string? preferFocusId = null, bool keepSelection = false, bool newLocation = false)
     {
-        var previous = _items;
-        var previousIndex = FocusIndex;
-        var targetId = preferFocusId ?? FocusedId;
+        var previous = newLocation ? [] : _items;
+        var previousIndex = newLocation ? 0 : FocusIndex;
+        var targetId = preferFocusId ?? (newLocation ? null : FocusedId);
         _items = items.OrderBy(i => i, Sort.CreateComparer()).ToList();
         if (keepSelection) _selected.IntersectWith(_items.Select(i => i.Id));
         else _selected.Clear();
@@ -113,7 +114,8 @@ public sealed class FileListState
     /// <summary>Itens que "Marcar todos" marcaria: nunca unidades, pastas especiais ou entradas bloqueadas.</summary>
     public int SelectableCount => _items.Count(IsSelectable);
 
-    private static bool IsSelectable(FileEntry entry) => entry.Kind is not (EntryKind.Drive or EntryKind.KnownFolder) && !entry.IsBlocked;
+    /// <summary>Pode ser marcado (a caixa de marcação da lista só aparece nesses itens).</summary>
+    public static bool IsSelectable(FileEntry entry) => entry.Kind is not (EntryKind.Drive or EntryKind.KnownFolder) && !entry.IsBlocked;
 
     public void SelectAll()
     {
