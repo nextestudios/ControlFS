@@ -82,6 +82,8 @@ Cada aba guarda a própria pasta, histórico, itens marcados e foco. Com duas ou
 
 Com duas ou mais abas abertas, a próxima abertura do ControlFS traz as mesmas abas, na mesma ordem e na aba que estava ativa (compactados e buscas voltam na pasta de onde vieram). Se a pasta de uma aba sumiu ou a unidade está desconectada, a aba aparece como "(indisponível)" e mostra o início com um aviso; abrir outro local nela a reaproveita. Menu → Configurações → **Restaurar abas ao abrir** desliga (e apaga a lista guardada).
 
+Fechou uma aba sem querer? Menu → **Reabrir aba fechada** (ou Norte na faixa de abas) a traz de volta na mesma posição, com a pasta e o histórico dela; repita para reabrir as anteriores (até 10 por sessão).
+
 ## A lista
 
 A lista fica num cartão com um cabeçalho de colunas: caixa de marcação, **Nome**, **Tipo**, **Tamanho** e **Modificado em**. A coluna pela qual a pasta está ordenada tem uma seta (↑ crescente, ↓ decrescente); a ordem muda em Menu → Configurações → **Ordenar por** / **Ordem** e, com mouse, clicando no título da coluna (de novo inverte). Datas aparecem como "Hoje, 14:32", "Ontem, 18:05" ou "25/09/2026, 20:11". Abrir uma pasta começa no primeiro item; Voltar e subir focam de novo a pasta de onde você veio. No início, as pastas do Windows aparecem como "Pasta do sistema" com o tamanho real de tudo o que há dentro ("Calculando…" enquanto soma).

@@ -154,6 +154,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Quick access: Favoritos, Arquivos recentes, known folders, Meu computador (B1: opens This PC), Lixeira; the active shortcut is skipped (#176) | top bar right segment (A2) | R1 (or L1 then Right), South | `TopBarJourneyTests` (2), `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
 | Tabs (8 max), each with its own folder/history/marks/focus; strip only with 2+ tabs, no standalone prompt (#176) | header tab strip (A2) | Up from the top bar, L1/R1, North new/close/switch, Menu → Abas, "Abrir em nova aba" | `TabsJourneyTests`, `ModalSystemJourneyTests`; Screens `2g-folder-tabs`; Manual "Abas (#50)" |
 | Open tabs (2+) restored on launch, missing folder = "(indisponível)" tab showing Home with a notice, checked off the UI thread (#51) | settings `OpenTabs`/`ActiveOpenTab` | automatic; Menu → Configurações → "Restaurar abas ao abrir" turns it off | `TabsJourneyTests::Open_tabs_are_restored_on_the_next_launch_…` |
+| Reopen closed tab: last 10 closed tabs (location + history, no marks), back at their position | Menu → "Reabrir aba fechada", Menu → Abas, North on the strip (#52) | — | `TabsJourneyTests::A_closed_tab_reopens_at_its_place_…` |
 | Go to path (typed/pasted, quotes, %VARS%) | Menu → Ir para caminho… | Start | `GoToPathJourneyTests`, `TypedPathTests` |
 | Go to folder above… | Menu | Start | `BreadcrumbJourneyTests` (same menu as the `…` segment) |
 | Go home | Menu → Ir para o início; top bar root chip "Locais" (A2) | Start / LB | `JourneyTests::Back_semantics_…`, `TopBarJourneyTests` |
@@ -192,7 +193,7 @@ by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTes
 | Search: filters, Outras ações (Mostrar na pasta, Nova busca, Subpastas, Pastas puladas, Cancelar busca, Propriedades) | Y Filtros | `SearchFilterJourneyTests`, `SearchJourneyTests` |
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
 | Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
-| Tab strip: Nova aba, Fechar aba, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
+| Tab strip: Nova aba, Fechar aba, Reabrir aba fechada, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |
 
 ### App menu (Start)

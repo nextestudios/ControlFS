@@ -67,9 +67,12 @@ public sealed partial class AppController
         var tab = _tabs[index];
         tab.LoadCts?.Cancel();
         tab.Generation++;
+        tab.IsLoading = false;
         tab.Search?.Cts?.Cancel();
+        tab.ArchivePassword = null; // senha só enquanto o compactado está aberto numa aba
         var title = TabTitle(tab);
         _tabs.RemoveAt(index);
+        RememberClosedTab(tab, index);
         if (ActiveTab > index || ActiveTab >= _tabs.Count) ActiveTab = Math.Max(0, ActiveTab - 1);
         if (_tabs.Count < 2 && Browser.Region == PaneRegion.Tabs) Browser.Region = PaneRegion.List; // a faixa some com uma aba
         StatusMessage = $"Aba \"{title}\" fechada.";
@@ -146,6 +149,8 @@ public sealed partial class AppController
         {
             new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
             new("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
+            new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable,
+                Detail: _closedTabs.Count > 0 ? $"\"{TabTitle(_closedTabs[^1].Tab)}\", com o histórico dela." : null, Icon: ActionIcon.Undo),
         };
         if (_tabs.Count > 1)
             for (var i = 0; i < _tabs.Count; i++)
@@ -239,5 +244,45 @@ public sealed partial class AppController
         UpdateSettings(s => restore ? s with { RestoreTabs = true } : s with { RestoreTabs = false, OpenTabs = [], ActiveOpenTab = 0 });
         SaveOpenTabs();
         StatusMessage = restore ? "As abas abertas serão restauradas ao abrir o ControlFS." : "As abas não serão mais restauradas.";
+    }
+
+    // ---------- Abas fechadas recentemente (#52) ----------
+
+    internal const int MaxClosedTabs = 10;
+
+    /// <summary>Abas fechadas, a mais recente no fim: o próprio <see cref="PaneState"/> (local, histórico e foco).</summary>
+    private readonly List<(PaneState Tab, int Index)> _closedTabs = [];
+
+    public int ClosedTabCount => _closedTabs.Count;
+
+    private void RememberClosedTab(PaneState tab, int index)
+    {
+        if (tab.Location is null && tab.RestoredPath is null) return; // nada para reabrir
+        tab.List.ClearSelection(); // reabrir traz o lugar e o histórico, não marcações antigas
+        _closedTabs.Add((tab, index));
+        if (_closedTabs.Count > MaxClosedTabs) _closedTabs.RemoveAt(0);
+    }
+
+    private string? ReopenClosedTabUnavailable => _closedTabs.Count == 0 ? "Nenhuma aba foi fechada nesta sessão." : NewTabUnavailable;
+
+    /// <summary>Reabre a última aba fechada na posição que ela tinha, já ativa, com o local e o histórico dela.</summary>
+    internal void ReopenClosedTab()
+    {
+        if (ReopenClosedTabUnavailable is { } reason)
+        {
+            StatusMessage = reason;
+            return;
+        }
+        var (tab, index) = _closedTabs[^1];
+        _closedTabs.RemoveAt(_closedTabs.Count - 1);
+        Browser.Region = PaneRegion.List;
+        index = Math.Clamp(index, 0, _tabs.Count);
+        _tabs.Insert(index, tab);
+        ActiveTab = index;
+        tab.Region = PaneRegion.List;
+        // A pasta pode ter mudado enquanto a aba estava fechada: relê (compactado e busca voltam como estavam).
+        if (tab.Location is PhysicalLocation) Refresh(tab);
+        Screen = tab.Location is null ? Screen.Home : Screen.Browser;
+        StatusMessage = $"Aba \"{TabTitle(tab)}\" reaberta ({ActiveTab + 1} de {_tabs.Count}).";
     }
 }
