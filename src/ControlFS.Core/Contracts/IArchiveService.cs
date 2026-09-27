@@ -34,6 +34,19 @@ public sealed class ExtractionRequest
     public override string ToString() => $"Extract '{Path.GetFileName(ArchivePath)}' ({Mode})";
 }
 
+/// <summary>
+/// Pedido de teste de integridade: lê todas as entradas até o fim e confere tamanho e CRC, sem gravar nada em disco.
+/// Classe (não record) para que a senha nunca apareça em ToString/logs.
+/// </summary>
+public sealed class ArchiveTestRequest
+{
+    public required string ArchivePath { get; init; }
+    public string? Password { get; init; }
+    public ExtractionLimits Limits { get; init; } = ExtractionLimits.Default;
+
+    public override string ToString() => $"Test '{Path.GetFileName(ArchivePath)}'";
+}
+
 public enum CompressionFormat
 {
     Zip,
@@ -73,6 +86,12 @@ public interface IArchiveService
     Task<ArchiveInfo> InspectAsync(string archivePath, string? password, ExtractionLimits limits, CancellationToken cancellationToken);
 
     Task<OperationResult> ExtractAsync(ExtractionRequest request, IExtractionInteraction interaction, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Testa a integridade sem extrair: cada entrada de arquivo é lida por completo (descartando os dados) e conferida
+    /// com o tamanho declarado e o CRC, quando o formato guarda um. Um item por entrada no resultado.
+    /// </summary>
+    Task<OperationResult> TestAsync(ArchiveTestRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);
 
     /// <summary>Cria um compactado. Escreve num temporário na pasta de destino e só o torna visível ao concluir.</summary>
     Task<OperationResult> CompressAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);

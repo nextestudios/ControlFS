@@ -9,6 +9,7 @@ public enum OperationKind
     Move,
     Delete,
     Rename,
+    TestArchive,
 }
 
 public enum OperationState
@@ -68,6 +69,12 @@ public sealed record ItemResult(string Name, ItemOutcome Outcome, OperationError
 
     /// <summary>Pasta onde o item deveria chegar (operações de arquivo com destino; pode ser uma subpasta do destino).</summary>
     public string? TargetFolder { get; init; }
+
+    /// <summary>
+    /// Teste de integridade: a entrada foi lida por completo, mas o formato não guarda checksum para conferir
+    /// (TAR, GZ, ZIP AES AE-2), então só o tamanho e a leitura sem erro foram verificados.
+    /// </summary>
+    public bool NoChecksum { get; init; }
 
     /// <summary>Não chegou ao fim: falhou, não foi processado ou foi interrompido no diálogo de conflito.</summary>
     public bool NeedsRetry => Outcome is ItemOutcome.Failed or ItemOutcome.NotProcessed ||

@@ -393,6 +393,7 @@ public sealed partial class AppController
             items.Add(new MenuItem($"Extrair para \"{stem}\"", () => BeginExtraction(file, folder, dedicated: true, null, string.Empty)));
             items.Add(new MenuItem("Extrair aqui", () => BeginExtraction(file, folder, dedicated: false, null, string.Empty)));
             items.Add(new MenuItem("Extrair para…", () => PickDestinationThenExtract(file, folder, null, string.Empty)));
+            items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable));
         items.Add(new MenuItem(ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
@@ -416,6 +417,9 @@ public sealed partial class AppController
         PushModal(new MenuModal(entry.Name, items) { FocusIndex = ArchiveFormats.CanExtract(format) ? 1 : 0 });
     }
 
+    private MenuItem TestIntegrityItem(string archivePath) => new("Testar integridade", () => BeginArchiveTest(archivePath),
+        Detail: "Lê todas as entradas e confere o CRC sem extrair nada. Não é antivírus.");
+
     private void ShowArchiveMenu(PaneState pane, ArchiveLocation archive)
     {
         var path = archive.ArchivePath;
@@ -432,6 +436,7 @@ public sealed partial class AppController
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection));
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para…", () => PickDestinationThenExtract(path, folder, selected, archive.InnerPath), noSelection));
         items.AddRange(SelectionItems(pane));
+        items.Add(TestIntegrityItem(path));
         items.Add(new MenuItem("Informações do compactado", () => ShowArchiveInfo(pane)));
         PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items));
     }

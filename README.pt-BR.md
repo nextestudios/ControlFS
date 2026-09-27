@@ -53,13 +53,13 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima no controle; limites de tamanho e resolução conferidos antes de decodificar
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos
 - **Criar pasta** com as regras de nomes do Windows
-- **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
+- **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; testar integridade sem extrair; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
 - **Compactar** em ZIP ou TAR.GZ a partir dos itens marcados, com o nome digitado no teclado virtual
 - **Abrir com o Windows:** programa padrão, "Abrir com…", "Mostrar no Explorador de Arquivos"; programas e scripts pedem confirmação
 - **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
 - **Extração segura:** nada é gravado fora do destino, links são bloqueados, colisões de nome são recusadas, limites de tamanho, staging temporário, verificação CRC ([modelo de segurança](docs/security-model.md))
 
-**Extrair:** ZIP, 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. RAR não pode ser criado (formato proprietário); criar 7z, volumes divididos, ZIP AES e ZIP64 ainda precisam de validação ([matriz](docs/archive-support.md)).
+**Extrair:** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. RAR não pode ser criado (formato proprietário); criar 7z e volumes divididos ainda não são suportados ([matriz](docs/archive-support.md)).
 
 ## Roadmap
 
