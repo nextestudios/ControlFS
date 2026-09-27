@@ -67,3 +67,5 @@ if ($Target -in "All", "Portable") {
 $lines = foreach ($f in $files) { "$((Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash.ToLowerInvariant())  $(Split-Path -Leaf $f)" }
 [IO.File]::WriteAllText((Join-Path $dist "SHA256SUMS.txt"), (($lines -join "`n") + "`n"), [Text.Encoding]::ASCII)
 $lines | ForEach-Object { Write-Host "Gerado: $_" }
+# Tamanho de cada pacote no log (#85: medir antes/depois de mexer nas dependências).
+foreach ($f in $files) { Write-Host ("Tamanho: {0} = {1:N0} bytes ({2:N1} MB)" -f (Split-Path -Leaf $f), (Get-Item -LiteralPath $f).Length, ((Get-Item -LiteralPath $f).Length / 1MB)) }

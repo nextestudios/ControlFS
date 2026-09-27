@@ -41,6 +41,13 @@
   <!-- makepri.exe e mt.exe só existem no Windows; fora dele compilamos apenas para verificação de tipos. -->
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
     <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <!-- Sem o pacote Microsoft.WindowsAppSDK.Runtime (#85) o SDK assume self-contained, que chama mt.exe. Fora do Windows
+         compilamos como dependente de framework, só para verificação: o diretório falso cala a checagem do Runtime e os
+         inicializadores (que precisam dele) ficam desligados. Nada disso vale para os pacotes, sempre feitos no Windows. -->
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <MicrosoftWindowsAppSDKPackageDir>$(MSBuildProjectDirectory)</MicrosoftWindowsAppSDKPackageDir>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+    <WindowsAppSdkDeploymentManagerInitialize>false</WindowsAppSdkDeploymentManagerInitialize>
   </PropertyGroup>
   <ItemGroup>
     <!-- Ícone da janela/barra de tarefas (AppWindow.SetIcon). -->
@@ -49,7 +56,11 @@
     <Content Include="..\..\assets\controlfs-logo-text-900.png" Link="controlfs-logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <!-- Componentes, não o metapacote Microsoft.WindowsAppSDK (#85): sem IA/ML, Widgets, Search e DWriteCore. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Base" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
   </ItemGroup>
   <ItemGroup>

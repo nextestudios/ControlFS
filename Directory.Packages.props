@@ -3,7 +3,12 @@
   <ItemGroup>
     <PackageVersion Include="SharpCompress" Version="1.0.0" />
     <PackageVersion Include="ppy.SDL3-CS" Version="2026.722.0" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <!-- Só os componentes do Windows App SDK 2.5.1 que o app usa (WinUI e dependências), com as versões do metapacote.
+         O metapacote traria IA/ML (ONNX Runtime), Widgets, Search e DWriteCore. Ver docs/decisions/0001. -->
+    <PackageVersion Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK.Foundation" Version="2.3.12" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK.Base" Version="2.0.4" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
