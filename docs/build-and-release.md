@@ -54,4 +54,4 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   app, pacotes e releases valem apenas quando executados na CI.
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
-Para publicar: adicione a seção da versão nos dois changelogs, faça merge na `main` e crie a tag (somente mantenedores).
+Para publicar (Gitflow): crie `release/X.Y.Z` a partir de `develop`, adicione a seção da versão nos dois changelogs, abra PR para `main`, crie a tag `vX.Y.Z` no merge em `main` e faça merge de `main` de volta em `develop` (somente mantenedores). O workflow de release recusa tags fora da `main`.

@@ -9,6 +9,18 @@
 3. Versões de pacotes ficam em `Directory.Packages.props`; ao mudar, atualize os lock files (`dotnet restore`) e registre
    uma decisão em `docs/decisions/` se for mudança de stack.
 
+## Fluxo de branches (Gitflow)
+
+Seguimos o [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+
+- `main` guarda só versões publicadas (cada commit tem tag `vX.Y.Z`). `develop` integra o que vai para a próxima versão.
+- **Nova funcionalidade/correção comum:** `feature/<issue>-<nome>` a partir de `develop` → pull request para `develop`.
+- **Preparar versão:** `release/X.Y.Z` a partir de `develop` (só correções, changelog e docs) → pull request para `main` →
+  tag no merge em `main` (publica a release) → merge de `main` de volta em `develop`.
+- **Correção urgente:** `hotfix/X.Y.Z` a partir de `main` → pull request para `main` → tag → merge de volta em `develop`.
+- CI roda só nesses pontos: PR para `develop` (build + testes), PR para `main` (build + testes + abrir o app), tag em
+  `main` (release) e CodeQL em `main`/semanal.
+
 ## Regras do projeto
 
 - Código, telas, estilos e recursos originais. **Não copie** de vTree/OmniConsole (GPL-3.0), Playnite, Aniki ReMake,

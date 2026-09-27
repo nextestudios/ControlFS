@@ -18,7 +18,19 @@ The product spec lives outside the repo; the rules that matter are summarized he
 - `src/ControlFS.Application`: `AppController` (presentation state), lists, panes, archive tree, modals, operation queue.
 - `src/ControlFS.Infrastructure.*`: Windows filesystem/settings, archives (SharpCompress + `SafeExtractor`), SDL3 input.
 - `src/ControlFS.App`: WinUI window and views, built in C# (see `docs/decisions/0003`).
-- `build/Publish-ControlFS.ps1` and `.github/workflows/release.yml` publish a release when a `v*` tag is pushed. **Never create or push tags.**
+- `build/Publish-ControlFS.ps1` and `.github/workflows/release.yml` publish a release when a `v*` tag is pushed on `main`. **Never create or push tags** unless the maintainer asks for a release.
+
+## Branching: Gitflow
+
+ControlFS follows [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+
+- `main`: released history only. Every commit on `main` is a release and is tagged `vX.Y.Z[-pre]`.
+- `develop`: integration branch for the next release.
+- `feature/<issue>-<short-name>` (e.g. `feature/11-rename`): branch from `develop`, pull request back into `develop`. Features never touch `main`.
+- `release/X.Y.Z[-pre]`: branch from `develop` when a release is ready; only fixes, docs and changelog entries. Pull request into `main`, tag the merge on `main` (this publishes the release), then merge `main` back into `develop`.
+- `hotfix/X.Y.Z[-pre]`: branch from `main` for urgent fixes; pull request into `main`, tag, then merge back into `develop`.
+
+CI runs only at the Gitflow integration points: pull requests into `develop` (build + tests), pull requests into `main` (build + tests + launching the real app), tags on `main` (release) and CodeQL on `main`/weekly. Tags that don't point to a commit on `main` fail the release workflow.
 
 ## Conventions
 

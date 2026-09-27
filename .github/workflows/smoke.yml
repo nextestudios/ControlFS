@@ -3,18 +3,13 @@ name: Smoke
 # Abre o app de verdade num Windows do GitHub e coleta evidências (processo, janela, eventos, print).
 # "released": testa exatamente o ZIP portátil publicado numa release. "source": publica a partir do commit.
 on:
+  # Gitflow: opens the real app only before something reaches main (release/* and hotfix/* pull requests).
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Tag da release a testar (vazio = só o build do commit)"
+        description: "Release tag to test (empty = build from this commit)"
         required: false
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "LICENSE"
-      - ".github/ISSUE_TEMPLATE/**"
-  push:
     branches: [main]
     paths-ignore:
       - "**/*.md"
