@@ -140,7 +140,9 @@ public sealed class SharpCompressEngine : IArchiveEngine
             Size: format == ArchiveFormat.GZip || e.Size < 0 ? null : e.Size,
             CompressedSize: compressed is > 0 ? compressed : null,
             Modified: modified is DateTime m ? new DateTimeOffset(DateTime.SpecifyKind(m, DateTimeKind.Local)) : null,
-            IsEncrypted: e.IsEncrypted,
+            // 7z: arquivos vazios não têm bloco de dados, e o SharpCompress 1.0.0 os marca como criptografados (sem bloco,
+            // a busca pelo codificador AES dá "não achou" ≠ -1). Sem dados não há o que decifrar.
+            IsEncrypted: e.IsEncrypted && !(format == ArchiveFormat.SevenZip && !e.IsDirectory && e.Size == 0),
             IsLinkOrSpecial: IsLinkOrSpecial(format, attrib, linkTarget),
             // TAR/GZ não têm CRC por entrada; RAR5 criptografado guarda o CRC transformado pela chave (não comparável).
             Crc32: e.IsDirectory || crc is null || format is ArchiveFormat.Tar or ArchiveFormat.TarGZip or ArchiveFormat.GZip
