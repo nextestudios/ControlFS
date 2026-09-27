@@ -35,7 +35,8 @@ public sealed record VolumeInfo(long TotalBytes, long FreeBytes, string? FileSys
 /// Item apresentado em uma lista. <see cref="Id"/> identifica o item de forma estável dentro
 /// da localização (usado para foco e seleção); <see cref="FullPath"/> só existe para itens físicos.
 /// <see cref="FoundIn"/> só existe em resultados de busca: a pasta onde o item está, a partir da pasta buscada.
-/// <see cref="Drive"/> e <see cref="Volume"/> só existem em unidades.
+/// <see cref="Drive"/> e <see cref="Volume"/> só existem em unidades. <see cref="Shortcut"/> só existe em atalhos .url
+/// locais que puderam ser lidos (conteúdo não confiável: só para exibir).
 /// </summary>
 public sealed record FileEntry(
     string Id,
@@ -53,9 +54,13 @@ public sealed record FileEntry(
     string? BlockedReason = null,
     string? FoundIn = null,
     DriveKind? Drive = null,
-    VolumeInfo? Volume = null)
+    VolumeInfo? Volume = null,
+    InternetShortcut? Shortcut = null)
 {
     public bool IsBlocked => BlockedReason is not null;
+
+    /// <summary>Atalho da Internet que abre um jogo da Steam (<c>steam://</c>).</summary>
+    public bool IsSteamGame => Kind == EntryKind.File && Shortcut is { IsSteamGame: true };
 
     public bool IsContainer => Kind is EntryKind.Drive or EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory;
 

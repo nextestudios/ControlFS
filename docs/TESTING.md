@@ -228,6 +228,24 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
       com outra escala troca os ícones para o novo tamanho.
 - [ ] Anel de foco e marcação continuam legíveis sobre os ícones.
 
+## Atalhos de jogos da Steam e .lnk (#168)
+
+Não validado em hardware (Steam real, controle real). Evidência automática: capturas `6-shortcuts-list` e
+`6b-shortcuts-grid` do `--render-screens` (atalhos de exemplo com ícones de um .dll do Windows, um sem ícone, um site
+e um .lnk); `ShortcutIconIntegrationTests` extrai ícones reais de .ico/.dll e de .lnk no runner.
+
+- [ ] Área de trabalho com atalhos reais criados pela Steam (ex.: Valheim, Dead Space): em lista e em grade, título sem
+      ".url", tipo "Jogo da Steam" e o ícone **do próprio jogo** (não globo, não logo da Steam, não documento em branco).
+- [ ] Dois jogos com ícones diferentes aparecem diferentes; trocar Grade/Lista e atualizar (F5) mantém os ícones e o foco.
+- [ ] Apagar/renomear o `.ico` de um jogo em `Steam\steam\games`: o atalho mostra o símbolo de jogo, a navegação não
+      trava e Abrir ainda inicia o jogo pela Steam.
+- [ ] Com controle: focar o jogo, Sul → "Abrir este jogo da Steam?" começa em Cancelar; Jogar inicia o jogo pela Steam.
+- [ ] Sem a Steam instalada (ou num PC sem ela): Abrir mostra "A Steam não está instalada…" sem travar.
+- [ ] Atalho de site (`https://`) abre no navegador padrão e não aparece como jogo.
+- [ ] `.lnk` na Área de trabalho (ex.: atalho de um programa) mostra o ícone do programa, não o documento em branco.
+- [ ] Painel de detalhes e Ações → Propriedades de um jogo: nome real "Valheim.url", o `steam://rungameid/…` e o tipo real.
+- [ ] Narrador: "Valheim, jogo da steam, …" ao focar o atalho.
+
 ## Tipos de unidade (#25)
 
 - [ ] Início com o app aberto: conectar um pendrive faz ele aparecer em até ~2 s, com ícone de USB e "Removível (USB)";

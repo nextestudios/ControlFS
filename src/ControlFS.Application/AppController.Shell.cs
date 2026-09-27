@@ -29,18 +29,31 @@ public sealed partial class AppController
             RunShell(s => s.Open(path), external: true);
             return;
         }
-        var dialog = new DialogModal("Executar este arquivo?",
-        [
-            ("Arquivo", entry.Name),
-            ("Pasta", Path.GetDirectoryName(path) ?? "—"),
-            ("Tipo", $"{Path.GetExtension(path)} — pode executar programas ou alterar o sistema"),
-        ], sensitive: true)
-        {
-            Message = "Só continue se você confia na origem deste arquivo. O Windows pode pedir outras confirmações (SmartScreen, UAC), que ficam fora do ControlFS.",
-        };
+        // Jogo da Steam: continua pedindo confirmação (um .url é um arquivo comum; qualquer um pode deixar um na Área de
+        // trabalho), mas mostra o que ele abre. O Windows entrega o próprio arquivo à Steam; nada é montado a partir dele.
+        var game = entry is { IsSteamGame: true, Shortcut.Url: { } target } ? target : null;
+        var dialog = game is not null
+            ? new DialogModal("Abrir este jogo da Steam?",
+            [
+                ("Jogo", EntryText.DisplayName(entry)),
+                ("Arquivo", entry.Name),
+                ("Abre", ShortText(game)),
+            ], sensitive: true)
+            {
+                Message = "O atalho é entregue à Steam pelo Windows. Só continue se você confia na origem deste atalho.",
+            }
+            : new DialogModal("Executar este arquivo?",
+            [
+                ("Arquivo", entry.Name),
+                ("Pasta", Path.GetDirectoryName(path) ?? "—"),
+                ("Tipo", $"{Path.GetExtension(path)} — pode executar programas ou alterar o sistema"),
+            ], sensitive: true)
+            {
+                Message = "Só continue se você confia na origem deste arquivo. O Windows pode pedir outras confirmações (SmartScreen, UAC), que ficam fora do ControlFS.",
+            };
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
         dialog.Options.Add(cancel);
-        dialog.Options.Add(new DialogOption("Executar", DialogOptionKind.Danger, () =>
+        dialog.Options.Add(new DialogOption(game is not null ? "Jogar" : "Executar", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             RecordRecentFile(path);

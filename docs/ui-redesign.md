@@ -197,6 +197,7 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 | Undo/redo with checks | `UndoJourneyTests` (4) |
 | Leftover cleanup after a crash | `LeftoverCleanupTests` (2); Manual "Limpeza após queda" |
 | Open with Windows, executables ask first starting on Cancel, leaving-app warning | `ShellAndCompressJourneyTests`, `ShellIntegrationTests` (3) |
+| Steam game shortcut: South/Jogar… asks first (starts on Cancel, shows the game and `steam://` target), then the `.url` file itself goes to the Shell; readable error without Steam | `SteamShortcutJourneyTests`, `ShortcutIconIntegrationTests::Opening_a_steam_shortcut_without_steam_…` |
 
 ### Archives and security
 
@@ -229,6 +230,7 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 | Narrator announces context then item, states in words, live status line | `ScreenReaderJourneyTests`; Manual "Narrador (#40)" |
 | Responsive tiers (compact/regular/large), Windows text scale | `LayoutBreakpointsTests` (3); Screens (720p, 800p, 800p+150% text, 1080p, 1080p@150%, 4K@100/200/300%); Manual "Layout responsivo (#36)" |
 | Shell icons (known folders, drives, file associations), cached, async | `IconRequestTests` (2), `ShellIconIntegrationTests`; Manual "Ícones do Windows (#24)" |
+| Shortcut icons: Steam `.url` games show their title (no `.url`), "Jogo da Steam" and the icon the shortcut declares (local only, cache keyed by path + date + size); `.lnk` its own icon; game/link glyph as fallback. Details/Properties keep the real name and type | `ShortcutTests` (7), `SteamShortcutJourneyTests`, `ShortcutIconIntegrationTests` (4); Screens `6-shortcuts-list`, `6b-shortcuts-grid`; Manual "Atalhos de jogos da Steam e .lnk (#168)" |
 | Full screen (F11) and windowed (min/max/close/resize/move) | Manual "Antes de cada release" |
 | Settings persisted (view, density, favorites, recents, hidden, labels, convention, updates) and migrated | `DensityJourneyTests`, `GridViewJourneyTests`, `ControllerFamilyTests::Settings_v1_…`, `FavoritesJourneyTests`, `RecentsJourneyTests` |
 
@@ -246,6 +248,8 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 - The footer label for ChangeView is computed from `IsGrid` (target view); don't hardcode it in views.
 - Keep `EntryRowTemplate.Fill` as the single place that turns a `FileEntry` into text; the details panel should reuse
   `EntryText` so list, grid, details and Narrator say the same thing.
+- Row/tile titles and the Narrator use `EntryText.DisplayName` (Steam games by title); the details panel title and
+  Properties use the real `FileEntry.Name`.
 - Recursive sizes/counts on Home cards must reuse the folder-size walker (#55: never follows junctions, cancellable)
   off the UI thread, with "Calculando…" until done.
 - Every new visual state must keep the rule "focus = cyan ring + fill (+ halo); marked = amber bar + check + text".

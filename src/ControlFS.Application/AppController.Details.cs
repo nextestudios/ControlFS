@@ -208,6 +208,12 @@ public sealed partial class AppController
             AddSizeAndModified(lines, entry);
             return Done(DetailsKind.Archive, TypeNameOf(entry));
         }
+        if (entry is { IsSteamGame: true, Shortcut.Url: { } target })
+        {
+            // Título e tipo "Jogo da Steam" na lista; aqui também o que o atalho abre e o tipo real do arquivo.
+            lines.Add(new DetailsLine(DetailsIcon.Format, "Abre", ShortText(target)));
+            lines.Add(new DetailsLine(DetailsIcon.Info, "Arquivo", "Atalho da Internet (.url)"));
+        }
         AddSizeAndModified(lines, entry);
         var attributes = new List<string>();
         if (entry.IsReadOnly) attributes.Add("somente leitura");
@@ -217,6 +223,9 @@ public sealed partial class AppController
         if (attributes.Count > 0) lines.Add(new DetailsLine(DetailsIcon.Info, "Atributos", string.Join(", ", attributes)));
         return Done(DetailsKind.File, TypeNameOf(entry));
     }
+
+    /// <summary>Texto vindo de um arquivo (não confiável) encurtado para caber no painel e nos diálogos.</summary>
+    internal static string ShortText(string text) => text.Length <= 160 ? text : text[..159] + "…";
 
     private static void AddSizeAndModified(List<DetailsLine> lines, FileEntry entry)
     {

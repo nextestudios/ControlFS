@@ -154,6 +154,8 @@ If ControlFS is closed in the middle of an operation (crash, power loss), the ne
 
 **South** on a file that isn't an archive, a previewable image or a text file opens it in the default Windows program. North on a file also offers **Open with…** and **Show in File Explorer**. The other program may not work with the controller: come back with Alt+Tab or the system button. Programs and scripts (.exe, .msi, .bat, .ps1, .lnk…) ask first, starting on **Cancel**. Nothing is ever opened automatically after extracting.
 
+**Game shortcuts and shortcut icons.** Steam game shortcuts (`.url` files that open `steam://…`, like the ones Steam puts on the Desktop) show the game's title without `.url` (e.g. "Valheim"), the type **Jogo da Steam** and the icon the shortcut declares (the game's own `.ico` in the local Steam folder); if that icon is missing, ControlFS looks for the same file in the local Steam installation, and otherwise shows a game symbol. The details panel and Properties keep the real file name, what the shortcut opens (`steam://rungameid/…`) and its real type. **South** (or North → **Jogar…**) asks first, starting on **Cancel**, and then hands the shortcut file itself to Windows, which passes it to Steam; without Steam installed you get a readable error. Ordinary website shortcuts (`https://…`) stay regular `.url` files. Windows `.lnk` shortcuts show their own icon (the one they declare, or their target program's) instead of a blank document. Icons are only read from local paths on fixed drives: a shortcut that points its icon at a network share (`\\server\…`), a web address or a link is shown with the generic symbol and never touched.
+
 ## Updates
 
 The **installed** version updates itself:

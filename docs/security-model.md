@@ -55,6 +55,35 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
   "Cancelar"; SmartScreen/Mark of the Web do Windows continuam valendo. Nada é aberto automaticamente após extrair.
   Testado de verdade no runner Windows (`ShellIntegrationTests`: abre o Bloco de Notas, mostra no Explorador).
 
+## Atalhos (.url, .lnk) e seus ícones (#168)
+
+Um atalho é um arquivo comum que qualquer programa (ou download) pode deixar na Área de trabalho, então o conteúdo dele
+não é confiável.
+
+- **Leitura:** `.url` só é lido para exibir (`InternetShortcut.Parse`, Core): limite de 64 KB, leitura tolerante (primeira
+  ocorrência de cada chave, linhas estranhas ignoradas), valores com caractere de controle ou acima de 2048 caracteres
+  descartados. Não é lido se for link/ponto de nova análise ou arquivo só na nuvem (ler baixaria o conteúdo). O `.lnk`
+  é lido pelo `IShellLink` sem resolver o destino (sem procura, sem rede).
+- **Jogo da Steam:** decidido só pelo esquema `steam://` da URL; qualquer outro esquema continua um atalho da Internet
+  comum. O título mostrado é o nome do arquivo sem `.url` (nunca um texto de dentro do atalho).
+- **Ícones:** o Shell nunca é chamado sobre o atalho (o manipulador de `.url`/`.lnk` do Windows leria o ícone declarado,
+  inclusive de `\\servidor\…`, o que enviaria as credenciais NTLM do usuário a esse servidor só por mostrar a pasta). O
+  caminho declarado (`IconFile`, IconLocation ou o destino do `.lnk`) passa por `IconLocationPolicy` (Core): só
+  `X:\…` absoluto, sem UNC, sem `\\?\`/`\\.\`/`\??\`, sem URL (`file:`, `http:`), sem relativo, sem `..`, sem fluxo
+  alternativo, sem nome de dispositivo, sem variável por expandir, e (para ícones) só .ico/.exe/.dll/.icl/.cpl. Depois,
+  `ShortcutFiles.ResolveLocal` (Infrastructure) exige unidade fixa (unidade mapeada de rede é recusada) e confere cada
+  pasta do caminho da raiz para dentro sem seguir nenhuma: um link/junção no caminho recusa o ícone. Só então o ícone é
+  extraído do arquivo local (`SHDefExtractIcon`, na thread dedicada de ícones, .ico até 16 MB). Documento de destino de
+  um `.lnk` usa só o ícone do tipo (pela extensão), para que um `.lnk` apontando para outro `.url` não seja seguido.
+  Reserva da Steam: o mesmo nome `<hash>.ico` em `steam\games` da instalação achada em `HKCU\Software\Valve\Steam\SteamPath`,
+  com as mesmas regras; nada é baixado. Testes: `ShortcutTests` (política e leitura), `ShortcutIconIntegrationTests`
+  (ícones reais, caminho remoto e junção recusados).
+- **Abrir:** o próprio arquivo do atalho vai para o Shell (`ShellExecute`), como qualquer arquivo; nunca se monta uma linha
+  de comando com o conteúdo. `.url` e `.lnk` continuam em `ExecutableFiles`, então pedem confirmação começando em
+  "Cancelar" — **também para jogos da Steam** (decisão: um `steam://` pode levar argumentos a um jogo, e o arquivo pode ter
+  mudado desde a listagem; o diálogo mostra o jogo, o arquivo e o que o atalho abre). Sem programa registrado para o
+  esquema da URL (ex.: Steam não instalada), o ControlFS mostra um erro legível em vez de chamar o Windows.
+
 ## Visualizações internas
 
 - A visualização de imagens nunca executa nada: só o decodificador de imagens do Windows (WIC) lê os pixels, fora da thread de UI.
