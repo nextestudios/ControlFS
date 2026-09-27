@@ -5,6 +5,7 @@ using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Layout;
 using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Updates;
@@ -29,7 +30,9 @@ public sealed class MainWindow : Window
 {
     private readonly AppController _app;
     private readonly InputHost _input;
-    private readonly GitHubReleaseUpdateService _updates;
+    private readonly GitHubReleaseUpdateService? _updates;
+    private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
+    private bool _layoutPinned;
     private readonly ShellIconProvider _iconProvider = new();
     private readonly IconLoader _icons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
@@ -40,11 +43,15 @@ public sealed class MainWindow : Window
     private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0) };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 4) };
-    private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right };
-    private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right };
+    private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
+    private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly ListView _list = new();
-    private readonly StackPanel _hints = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceL };
+    private readonly WrapPanel _hints = new();
+    private readonly StackPanel _footer = new() { Background = Theme.Surface };
+    private readonly Grid _header = new();
+    private readonly StackPanel _headerRight = new() { VerticalAlignment = VerticalAlignment.Center };
+    private Grid? _layout;
     private readonly TextBlock _status = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
     private readonly Grid _overlay = new();
     private IReadOnlyList<FileEntry>? _shownItems;
@@ -54,16 +61,26 @@ public sealed class MainWindow : Window
     private bool _fullScreen;
 
     public MainWindow()
+        : this(dataDirectory: null)
+    {
+    }
+
+    /// <summary>
+    /// <paramref name="dataDirectory"/> diferente de null: modo de capturas (--render-screens). Preferências numa pasta
+    /// temporária, sem serviço de atualização (nenhum acesso à rede) e layout fixado pelo gerador de capturas.
+    /// </summary>
+    internal MainWindow(string? dataDirectory)
     {
         Title = "ControlFS";
         var icon = Path.Join(AppContext.BaseDirectory, "controlfs.ico");
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
-        var settingsStore = new JsonSettingsStore(AppPaths.DataDirectory);
-        _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
+        var data = dataDirectory ?? AppPaths.DataDirectory;
+        var settingsStore = new JsonSettingsStore(data);
+        _updates = dataDirectory is null ? GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(data, "updates")) : null;
         // Temporários (staging, cópias parciais) registrados para limpeza na próxima inicialização se o app cair no meio.
-        var temporaries = new TemporaryJournal(Path.Join(AppPaths.DataDirectory, "operations"));
+        var temporaries = new TemporaryJournal(Path.Join(data, "operations"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(temporaries), settingsStore, _updates, new WindowsShellService(),
-            new FileOperationService(temporaries), new JsonControllerProfileStore(AppPaths.DataDirectory), temporaries);
+            new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries);
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _icons.Invalidated += () =>
@@ -74,7 +91,7 @@ public sealed class MainWindow : Window
 
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
-        _root.Content = BuildLayout();
+        _root.Content = _layout = BuildLayout();
         AppLog.Info("MainWindow: layout montado");
         _root.PreviewKeyDown += (_, e) =>
         {
@@ -85,9 +102,11 @@ public sealed class MainWindow : Window
         _root.Loaded += (_, _) =>
         {
             _root.Focus(FocusState.Programmatic);
-            _icons.SetScale(_root.XamlRoot.RasterizationScale);
-            _root.XamlRoot.Changed += (root, _) => _icons.SetScale(root.RasterizationScale);
+            UpdateLayoutProfile();
+            _root.XamlRoot.Changed += (_, _) => UpdateLayoutProfile(); // tamanho, monitor ou DPI
         };
+        // Tamanho do texto do Windows (Acessibilidade): o WinUI aumenta cada texto; o layout decide o que cabe.
+        _uiSettings.TextScaleFactorChanged += (_, _) => DispatcherQueue.TryEnqueue(UpdateLayoutProfile);
 
         Activated += (_, e) =>
         {
@@ -99,7 +118,7 @@ public sealed class MainWindow : Window
         {
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
-            _updates.Dispose();
+            _updates?.Dispose();
             _iconProvider.Dispose();
         };
 
@@ -115,6 +134,7 @@ public sealed class MainWindow : Window
             _shownItems = null; // recria as linhas no novo modelo
         };
         _app.Start();
+        ApplyLayout();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
         AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
     }
@@ -127,7 +147,7 @@ public sealed class MainWindow : Window
         layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         // Cabeçalho
-        var header = new Grid { Padding = new Thickness(Theme.SpaceL, Theme.SpaceM, Theme.SpaceL, Theme.SpaceS), ColumnSpacing = Theme.SpaceM };
+        var header = _header;
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var titleStack = new StackPanel();
@@ -138,7 +158,7 @@ public sealed class MainWindow : Window
         titleStack.Children.Add(_location);
         titleStack.Children.Add(_crumbs);
         header.Children.Add(titleStack);
-        var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        var right = _headerRight;
         right.Children.Add(_device);
         right.Children.Add(_operation);
         Grid.SetColumn(right, 1);
@@ -152,7 +172,6 @@ public sealed class MainWindow : Window
         _list.IsTabStop = false;
         _list.AllowFocusOnInteraction = false;
         _list.ItemContainerTransitions = new TransitionCollection(); // sem animações de lista
-        _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
         _list.ContainerContentChanging += (_, args) =>
         {
             if (args.InRecycleQueue)
@@ -174,9 +193,10 @@ public sealed class MainWindow : Window
         layout.Children.Add(content);
 
         // Rodapé
-        var footer = new StackPanel { Padding = new Thickness(Theme.SpaceL, Theme.SpaceS, Theme.SpaceL, Theme.SpaceM), Spacing = Theme.SpaceXs, Background = Theme.Surface };
+        // Legendas quebram linha em vez de rolar para o lado: em 1280×720 todas continuam visíveis.
+        var footer = _footer;
         footer.Children.Add(_status);
-        footer.Children.Add(new ScrollViewer { Content = _hints, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        footer.Children.Add(_hints);
         Grid.SetRow(footer, 2);
         layout.Children.Add(footer);
 
@@ -283,7 +303,7 @@ public sealed class MainWindow : Window
         {
             var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
             if (prompt is { Button: { } button, Family: { } family })
-                chip.Children.Add(ControllerGlyphs.Create(button, family, Theme.FontCaption * 1.6));
+                chip.Children.Add(ControllerGlyphs.Create(button, family, Math.Round(Theme.FontCaption * 1.6)));
             else
                 chip.Children.Add(new Border
                 {
@@ -291,7 +311,7 @@ public sealed class MainWindow : Window
                     BorderBrush = Theme.Border,
                     BorderThickness = Theme.Hairline,
                     CornerRadius = Theme.Radius,
-                    Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2),
+                    Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
                     Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
                 });
             chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center });
@@ -355,10 +375,10 @@ public sealed class MainWindow : Window
                 FontWeight = crumb.IsCurrent ? FontWeights.SemiBold : FontWeights.Normal,
                 Foreground = crumb.IsCurrent ? Theme.Text : crumb.Kind is BreadcrumbKind.Archive or BreadcrumbKind.ArchiveFolder ? Theme.Accent : Theme.TextMuted,
                 TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxWidth = 260,
+                MaxWidth = Theme.Scaled(260),
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            var chip = new Border { Child = content, CornerRadius = Theme.Radius, Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2) };
+            var chip = new Border { Child = content, CornerRadius = Theme.Radius, Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2) };
             Theme.ApplyFocus(chip, i == focus);
             var index = i;
             chip.Tapped += (_, _) => _app.PointerActivateBreadcrumb(index);
@@ -388,6 +408,83 @@ public sealed class MainWindow : Window
             AppLog.Info($"Área de transferência indisponível: {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Recalcula a faixa de layout (portátil, desktop, TV grande) pelo tamanho efetivo da janela, pelo DPI e pelo
+    /// fator de texto do Windows. Só refaz as telas quando a faixa muda.
+    /// </summary>
+    private void UpdateLayoutProfile()
+    {
+        if (_layoutPinned || _root.XamlRoot is not { } xamlRoot) return;
+        var size = xamlRoot.Size;
+        var profile = LayoutBreakpoints.Select(size.Width, size.Height, xamlRoot.RasterizationScale, _uiSettings.TextScaleFactor);
+        var previous = Theme.Viewport;
+        if (Theme.SetLayout(profile, size) || EntryRowTemplate.IsNarrow(previous.Width) != EntryRowTemplate.IsNarrow(size.Width))
+        {
+            ApplyLayout();
+        }
+        else if (previous != size)
+        {
+            // Mesma faixa: só o que depende do tamanho exato (altura máxima de menus, largura do status).
+            _headerRight.MaxWidth = Math.Max(240, size.Width * 0.4);
+            Render();
+        }
+    }
+
+    /// <summary>Gerador de capturas: fixa a faixa de layout de uma resolução/escala simulada.</summary>
+    internal void PinLayout(LayoutProfile profile, Windows.Foundation.Size viewport, double simulatedTextScale)
+    {
+        _layoutPinned = true;
+        Theme.SetLayout(profile, viewport, simulatedTextScale);
+        ApplyLayout();
+    }
+
+    internal AppController Controller => _app;
+
+    internal ContentControl RootHost => _root;
+
+    internal Grid LayoutRoot => _layout!;
+
+    internal IconLoader Icons => _icons;
+
+    /// <summary>Gerador de capturas: quanto cada região ocupou e se o modal coube inteiro na área do app.</summary>
+    internal string DescribeFit()
+    {
+        var viewport = Theme.Viewport;
+        var fit = $"cabeçalho {_header.ActualHeight:0}, lista {_list.ActualHeight:0}, rodapé {_footer.ActualHeight:0} de {viewport.Height:0} px efetivos";
+        if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
+        {
+            var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
+            fit += $"; modal {card.ActualWidth:0}x{card.ActualHeight:0}" + (needed > viewport.Height + 0.5 ? " NÃO CABE" : " cabe");
+        }
+        var layoutTooTall = _header.ActualHeight + _footer.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
+        return fit + (layoutTooTall ? " · LISTA ESPREMIDA" : string.Empty);
+    }
+
+    /// <summary>Aplica os tokens da faixa atual ao cabeçalho, à lista e ao rodapé e refaz a tela.</summary>
+    private void ApplyLayout()
+    {
+        _header.Padding = new Thickness(Theme.SpaceL, Theme.SpaceM, Theme.SpaceL, Theme.SpaceS);
+        _header.ColumnSpacing = Theme.SpaceM;
+        _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.4); // o caminho nunca é espremido pelo status
+        _logo.Height = Theme.Layout.LogoHeight;
+        _logo.Margin = new Thickness(0, 0, 0, Theme.SpaceXs);
+        _location.FontSize = Theme.FontTitle;
+        _crumbs.Spacing = Theme.SpaceXs;
+        _crumbs.Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0);
+        _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
+        _empty.FontSize = Theme.FontBody;
+        _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
+        _list.ItemTemplate = EntryRowTemplate.Create(_density);
+        _footer.Padding = new Thickness(Theme.SpaceL, Theme.SpaceS, Theme.SpaceL, Theme.SpaceM);
+        _footer.Spacing = Theme.SpaceXs;
+        _hints.HorizontalSpacing = Theme.SpaceL;
+        _hints.VerticalSpacing = Theme.SpaceXs;
+        // Ícones do sistema no tamanho em pixels físicos da linha (DPI × escala da faixa).
+        _icons.SetScale(Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale);
+        _shownItems = null; // recria as linhas com as novas medidas
+        Render();
     }
 
     private void ToggleFullScreen()

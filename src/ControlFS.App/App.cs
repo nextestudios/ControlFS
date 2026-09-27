@@ -1,3 +1,4 @@
+using ControlFS.App.Diagnostics;
 using ControlFS.App.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -27,6 +28,13 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
         {
             AppLog.Info("OnLaunched: carregando XamlControlsResources");
             Resources.MergedDictionaries.Add(new XamlControlsResources());
+            if (ScreenRenderer.OutputDirectory(Environment.GetCommandLineArgs()) is { } renderTo)
+            {
+                // Modo de desenvolvimento (workflow Smoke): gera as capturas e fecha. Ver docs/TESTING.md.
+                AppLog.Info("OnLaunched: gerando capturas em " + renderTo);
+                _ = ScreenRenderer.RunAsync(renderTo);
+                return;
+            }
             AppLog.Info("OnLaunched: criando janela");
             _window = new MainWindow();
             AppLog.Info("OnLaunched: ativando janela");

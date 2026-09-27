@@ -1,3 +1,4 @@
+using System.Globalization;
 using ControlFS.App.Resources;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
@@ -20,48 +21,72 @@ public static class EntryRowTemplate
     private const string Ns = "xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"";
     private const string IconFont = "FontFamily=\"Segoe Fluent Icons, Segoe MDL2 Assets\"";
 
-    private static string IconCell(int size, int glyph) =>
-        $"<Grid Width=\"{size}\" Height=\"{size}\" VerticalAlignment=\"Center\">" +
-        $"<TextBlock x:Name=\"Icon\" {IconFont} FontSize=\"{glyph}\" HorizontalAlignment=\"Center\" VerticalAlignment=\"Center\"/>" +
-        $"<Image x:Name=\"IconImage\" Width=\"{size}\" Height=\"{size}\" Stretch=\"Uniform\" Visibility=\"Collapsed\"/>" +
+    private static string N(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    /// <summary>Fonte na escala da faixa de layout (portátil, desktop, TV grande).</summary>
+    private static string F(double size) => N(Math.Round(size * Theme.Layout.FontScale * Theme.SimulatedTextScale));
+
+    /// <summary>Espaço na escala da faixa de layout.</summary>
+    private static string S(double size) => N(Theme.Layout.Snap(size * Theme.Layout.SpaceScale));
+
+    /// <summary>Medida que acompanha o texto (ícones, colunas de largura fixa).</summary>
+    private static string W(double size) => N(Theme.Scaled(size));
+
+    private static string IconCell(double size, double glyph) =>
+        $"<Grid Width=\"{W(size)}\" Height=\"{W(size)}\" VerticalAlignment=\"Center\">" +
+        $"<TextBlock x:Name=\"Icon\" {IconFont} FontSize=\"{F(glyph)}\" HorizontalAlignment=\"Center\" VerticalAlignment=\"Center\"/>" +
+        $"<Image x:Name=\"IconImage\" Width=\"{W(size)}\" Height=\"{W(size)}\" Stretch=\"Uniform\" Visibility=\"Collapsed\"/>" +
         "</Grid>";
 
-    private static string StateCell(int column, int glyph, int text) =>
-        $"<StackPanel Grid.Column=\"{column}\" Orientation=\"Horizontal\" Spacing=\"6\" VerticalAlignment=\"Center\">" +
-        $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{glyph}\" VerticalAlignment=\"Center\"/>" +
-        $"<TextBlock x:Name=\"StateText\" FontSize=\"{text}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\"/>" +
+    private static string StateCell(int column, double glyph, double text) =>
+        $"<StackPanel Grid.Column=\"{column}\" Orientation=\"Horizontal\" Spacing=\"{S(6)}\" VerticalAlignment=\"Center\">" +
+        $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(glyph)}\" VerticalAlignment=\"Center\"/>" +
+        $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(text)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\"/>" +
         "</StackPanel>";
 
     private static string Frame(string body) =>
-        $"<DataTemplate {Ns}><Border x:Name=\"Ring\" BorderThickness=\"3\" CornerRadius=\"6\"><Grid>" +
-        "<Border x:Name=\"MarkBar\" Width=\"6\" HorizontalAlignment=\"Left\" CornerRadius=\"3\" Margin=\"2,6,0,6\"/>" +
+        $"<DataTemplate {Ns}><Border x:Name=\"Ring\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"6\"><Grid>" +
+        $"<Border x:Name=\"MarkBar\" Width=\"{W(6)}\" HorizontalAlignment=\"Left\" CornerRadius=\"3\" Margin=\"2,6,0,6\"/>" +
         body + "</Grid></Border></DataTemplate>";
 
-    private static readonly string ComfortableXaml = Frame(
-        "<Grid x:Name=\"Body\" Padding=\"16,8,12,8\" ColumnSpacing=\"12\">" +
-        "<Grid.ColumnDefinitions><ColumnDefinition Width=\"36\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
+    private static string ComfortableXaml() => Frame(
+        $"<Grid x:Name=\"Body\" Padding=\"{W(16)},{S(8)},{S(12)},{S(8)}\" ColumnSpacing=\"{S(12)}\">" +
+        $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"{W(36)}\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
         IconCell(32, 26) +
         "<StackPanel Grid.Column=\"1\" VerticalAlignment=\"Center\">" +
-        "<TextBlock x:Name=\"Title\" FontSize=\"20\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
-        "<TextBlock x:Name=\"Detail\" FontSize=\"14\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+        $"<TextBlock x:Name=\"Title\" FontSize=\"{F(20)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+        $"<TextBlock x:Name=\"Detail\" FontSize=\"{F(14)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
         "</StackPanel>" +
         StateCell(2, 20, 16) +
         "</Grid>");
 
-    private static readonly string CompactXaml = Frame(
-        "<Grid x:Name=\"Body\" Padding=\"14,2,12,2\" ColumnSpacing=\"12\">" +
-        "<Grid.ColumnDefinitions><ColumnDefinition Width=\"26\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"160\"/>" +
-        "<ColumnDefinition Width=\"96\"/><ColumnDefinition Width=\"150\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
-        IconCell(24, 20) +
-        "<TextBlock x:Name=\"Title\" Grid.Column=\"1\" FontSize=\"17\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>" +
-        "<TextBlock x:Name=\"TypeColumn\" Grid.Column=\"2\" FontSize=\"14\" TextTrimming=\"CharacterEllipsis\" VerticalAlignment=\"Center\"/>" +
-        "<TextBlock x:Name=\"SizeColumn\" Grid.Column=\"3\" FontSize=\"14\" HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"/>" +
-        "<TextBlock x:Name=\"DateColumn\" Grid.Column=\"4\" FontSize=\"14\" VerticalAlignment=\"Center\"/>" +
-        StateCell(5, 16, 14) +
-        "</Grid>");
+    /// <summary>
+    /// Compacta: colunas de tipo, tamanho e data (e estado) com largura fixa proporcional ao texto, para ficarem
+    /// alinhadas entre linhas marcadas e não marcadas. Em janelas estreitas
+    /// (portátil 1280 de largura com texto grande) a coluna de tipo sai para o nome continuar legível.
+    /// </summary>
+    private static string CompactXaml()
+    {
+        var typeWidth = IsNarrow(Theme.Viewport.Width) ? "0" : W(160);
+        return Frame(
+            $"<Grid x:Name=\"Body\" Padding=\"{W(14)},{S(2)},{S(12)},{S(2)}\" ColumnSpacing=\"{S(12)}\">" +
+            $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"{W(26)}\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"{typeWidth}\"/>" +
+            $"<ColumnDefinition Width=\"{W(96)}\"/><ColumnDefinition Width=\"{W(150)}\"/><ColumnDefinition Width=\"{W(190)}\"/></Grid.ColumnDefinitions>" +
+            IconCell(24, 20) +
+            $"<TextBlock x:Name=\"Title\" Grid.Column=\"1\" FontSize=\"{F(17)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"TypeColumn\" Grid.Column=\"2\" FontSize=\"{F(14)}\" TextTrimming=\"CharacterEllipsis\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"SizeColumn\" Grid.Column=\"3\" FontSize=\"{F(14)}\" HorizontalAlignment=\"Right\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"DateColumn\" Grid.Column=\"4\" FontSize=\"{F(14)}\" VerticalAlignment=\"Center\"/>" +
+            StateCell(5, 16, 14) +
+            "</Grid>");
+    }
 
+    /// <summary>Janela estreita demais para a coluna de tipo da lista compacta.</summary>
+    public static bool IsNarrow(double viewportWidth) => viewportWidth < 1200;
+
+    /// <summary>Modelo da densidade pedida, com as medidas da faixa de layout atual (recriar quando ela mudar).</summary>
     public static DataTemplate Create(ListDensity density) =>
-        (DataTemplate)XamlReader.Load(density == ListDensity.Compact ? CompactXaml : ComfortableXaml);
+        (DataTemplate)XamlReader.Load(density == ListDensity.Compact ? CompactXaml() : ComfortableXaml());
 
     public static void Fill(SelectorItem container, FileEntry entry, bool focused, bool selected, bool cut, IconLoader icons, IReadOnlySet<string>? specialFolders)
     {

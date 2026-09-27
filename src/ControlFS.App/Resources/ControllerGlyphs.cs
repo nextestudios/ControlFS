@@ -194,38 +194,54 @@ public static class ControllerGlyphs
 
     // ---------- Direcional e analógicos ----------
 
-    /// <summary>Cruz do direcional; setas marcam as direções que a legenda usa.</summary>
+    /// <summary>
+    /// Cruz do direcional; setas marcam as direções que a legenda usa. Numa direção só (ou num eixo), os braços que não
+    /// valem ficam esmaecidos: a direção é lida pela forma, não só pela seta pequena (legível a 100% e a distância).
+    /// </summary>
     private static Grid DPad(ControllerButton button, GlyphPalette p)
     {
         var g = Box(Unit);
-        g.Children.Add(Shape(new Polygon { Fill = p.Body },
-            (8.5, 1), (15.5, 1), (15.5, 8.5), (23, 8.5), (23, 15.5), (15.5, 15.5),
-            (15.5, 23), (8.5, 23), (8.5, 15.5), (1, 15.5), (1, 8.5), (8.5, 8.5)));
         var up = button is ControllerButton.DPad or ControllerButton.DPadUp or ControllerButton.DPadVertical;
         var down = button is ControllerButton.DPad or ControllerButton.DPadDown or ControllerButton.DPadVertical;
         var left = button is ControllerButton.DPad or ControllerButton.DPadLeft or ControllerButton.DPadHorizontal;
         var right = button is ControllerButton.DPad or ControllerButton.DPadRight or ControllerButton.DPadHorizontal;
-        if (up) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (12, 3), (14.8, 6.8), (9.2, 6.8)));
-        if (down) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (12, 21), (14.8, 17.2), (9.2, 17.2)));
-        if (left) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (3, 12), (6.8, 9.2), (6.8, 14.8)));
-        if (right) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (21, 12), (17.2, 9.2), (17.2, 14.8)));
+        var all = up && down && left && right;
+        g.Children.Add(Shape(new Polygon { Fill = p.Body, Opacity = all ? 1 : 0.35 },
+            (8.5, 1), (15.5, 1), (15.5, 8.5), (23, 8.5), (23, 15.5), (15.5, 15.5),
+            (15.5, 23), (8.5, 23), (8.5, 15.5), (1, 15.5), (1, 8.5), (8.5, 8.5)));
+        if (!all)
+        {
+            g.Children.Add(Place(new Rectangle { Width = 7, Height = 7, Fill = p.Body }, 8.5, 8.5)); // centro
+            if (up) g.Children.Add(Place(new Rectangle { Width = 7, Height = 8, Fill = p.Body }, 8.5, 1));
+            if (down) g.Children.Add(Place(new Rectangle { Width = 7, Height = 8, Fill = p.Body }, 8.5, 15));
+            if (left) g.Children.Add(Place(new Rectangle { Width = 8, Height = 7, Fill = p.Body }, 1, 8.5));
+            if (right) g.Children.Add(Place(new Rectangle { Width = 8, Height = 7, Fill = p.Body }, 15, 8.5));
+        }
+        if (up) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (12, 2.4), (15, 6.8), (9, 6.8)));
+        if (down) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (12, 21.6), (15, 17.2), (9, 17.2)));
+        if (left) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (2.4, 12), (6.8, 9), (6.8, 15)));
+        if (right) g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (21.6, 12), (17.2, 9), (17.2, 15)));
         return g;
     }
 
-    /// <summary>Analógico: anel externo e topo interno. Pressionado (L3/R3): topo cheio com anel de clique.</summary>
+    /// <summary>
+    /// Analógico: anel externo e topo interno. Pressionado (L3/R3): disco cheio com a letra em cima e uma seta para
+    /// baixo (apertar), para não ser confundido com o analógico solto em tamanhos pequenos.
+    /// </summary>
     private static Grid Stick(string side, bool pressed, GlyphPalette p)
     {
         var g = Box(Unit);
         if (pressed)
         {
             g.Children.Add(Disc(p.Body));
-            g.Children.Add(Place(new Ellipse { Width = 15, Height = 15, Stroke = p.Symbol, StrokeThickness = 1.4 }, 4.5, 4.5));
+            var letter = Letter(side, p.Symbol, 9.5);
+            letter.Margin = new Thickness(0, 0, 0, 5);
+            g.Children.Add(letter);
+            g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (8.5, 15), (15.5, 15), (12, 19)));
+            return g;
         }
-        else
-        {
-            g.Children.Add(Place(new Ellipse { Width = 21, Height = 21, Stroke = p.Body, StrokeThickness = 1.8 }, 1.5, 1.5));
-            g.Children.Add(Place(new Ellipse { Width = 15, Height = 15, Fill = p.Body }, 4.5, 4.5));
-        }
+        g.Children.Add(Place(new Ellipse { Width = 21, Height = 21, Stroke = p.Body, StrokeThickness = 1.8 }, 1.5, 1.5));
+        g.Children.Add(Place(new Ellipse { Width = 15, Height = 15, Fill = p.Body }, 4.5, 4.5));
         g.Children.Add(Letter(side, p.Symbol, 9.5));
         return g;
     }
