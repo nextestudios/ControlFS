@@ -128,6 +128,18 @@ public sealed partial class AppController
 
         var focused = pane.List.Focused;
         var selection = pane.List.SelectionCount;
+        if (pane.Location is RecycleBinLocation)
+        {
+            if (focused is not null)
+            {
+                hints.Add(new(InputAction.Confirm, "Restaurar/Excluir"));
+                hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
+            }
+            hints.Add(new(InputAction.OpenContextMenu, selection > 0 ? $"Operações ({selection})" : "Ações"));
+            hints.Add(new(InputAction.OpenAppMenu, "Menu"));
+            hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
+            return hints;
+        }
         var archiveOnDisk = focused is { Kind: EntryKind.File, IsBlocked: false } && ArchiveFormats.HasExtractableExtension(focused.Name);
         if (focused is { IsBlocked: true }) hints.Add(new(InputAction.Confirm, "Motivo"));
         else if (focused is { IsContainer: true }) hints.Add(new(InputAction.Confirm, "Abrir"));

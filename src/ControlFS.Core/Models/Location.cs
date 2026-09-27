@@ -33,3 +33,20 @@ public sealed record ArchiveLocation(string ArchivePath, string InnerPath) : Loc
     public override string DisplayPath =>
         InnerPath.Length == 0 ? $"{ArchivePath} ▸ /" : $"{ArchivePath} ▸ /{InnerPath}";
 }
+
+/// <summary>
+/// Lixeira do Windows: local virtual (não é uma pasta física). Os itens só podem ser restaurados ao local original ou
+/// excluídos de vez; nunca abertos, copiados ou movidos como arquivos comuns.
+/// </summary>
+public sealed record RecycleBinLocation : Location
+{
+    /// <summary>Id da Lixeira entre os locais da tela inicial.</summary>
+    public const string PlaceId = "recyclebin:";
+
+    /// <summary>Nome de análise do Shell para a Lixeira (usado só para pedir o ícone do Windows).</summary>
+    public const string ShellParsingName = "::{645FF040-5081-101B-9F08-00AA002F954E}";
+
+    public static RecycleBinLocation Instance { get; } = new();
+
+    public override string DisplayPath => "Lixeira";
+}

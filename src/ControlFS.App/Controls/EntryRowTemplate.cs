@@ -125,6 +125,7 @@ public static class EntryRowTemplate
         icon.Text = entry.IsBlocked ? Glyphs.Warning : entry.Kind switch
         {
             EntryKind.Drive => DriveGlyph(entry.Drive),
+            EntryKind.KnownFolder when entry.Id == RecycleBinLocation.PlaceId => Glyphs.RecycleBin,
             EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory => Glyphs.Folder,
             _ when IsArchiveName(entry.Name) => Glyphs.Archive,
             _ => Glyphs.File,
@@ -197,6 +198,7 @@ public static class EntryRowTemplate
         public const string File = "\uE8A5";
         public const string Drive = "\uEDA2";
         public const string Usb = "\uE88E";
+        public const string RecycleBin = "\uE74D";
         public const string Optical = "\uE958";
         public const string NetworkDrive = "\uE8CE";
         public const string Archive = "\uE7B8";

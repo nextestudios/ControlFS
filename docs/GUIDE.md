@@ -87,6 +87,10 @@ Press **North** on a folder (or anywhere inside one, for "this folder") and choo
 
 The home screen lists drives with their type (local, USB, optical, network), label, letter and free space. Plugging in or removing a USB stick updates the list within a couple of seconds, without restarting; a favorite on that stick becomes available again.
 
+## Recycle Bin
+
+Home → **Recycle Bin** lists what was deleted to the Windows Recycle Bin, with the original folder and the deletion date (the date shown on each item is when it was deleted). **South/A** or **North** on an item offers **Restore** (back to the folder it came from, recreated if needed; if something with the same name is already there, nothing is overwritten) and **Delete permanently…**, which always asks first with the focus on **Cancel**. Mark several items with **West/X** to restore or delete them together. An item whose recorded original location is invalid can only be deleted for good.
+
 ## Extracting
 
 On an archive the bottom bar shows **South Explore** (opens it read-only), **West Mark** and **North Extract…**: North opens the actions menu already on **Extract to "name"**, so North then South extracts.

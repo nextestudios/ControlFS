@@ -72,6 +72,7 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
     private const uint FileAttributeNormal = 0x80;
     private const uint ShgfiSysIconIndex = 0x4000;
     private const uint ShgfiUseFileAttributes = 0x10;
+    private const uint ShgfiPidl = 0x8;
     private const int ShilLarge = 0;      // 32 px
     private const int ShilSmall = 1;      // 16 px
     private const int ShilExtraLarge = 2; // 48 px
@@ -137,7 +138,20 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
             _ => (request.Value, 0u, ShgfiSysIconIndex),
         };
         ShFileInfo info = default;
-        if (SHGetFileInfoW(name, attributes, &info, (uint)sizeof(ShFileInfo), flags) == 0) return null;
+        if (request.Kind == IconSourceKind.Path && name.StartsWith("::", StringComparison.Ordinal))
+        {
+            // Pasta virtual do Shell (ex.: Lixeira): o ícone vem do PIDL, que reflete o estado atual (vazia/cheia).
+            if (SHParseDisplayName(name, 0, out var pidl, 0, out _) != 0 || pidl == 0) return null;
+            try
+            {
+                if (SHGetFileInfoW((char*)pidl, 0, &info, (uint)sizeof(ShFileInfo), ShgfiSysIconIndex | ShgfiPidl) == 0) return null;
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(pidl);
+            }
+        }
+        else if (SHGetFileInfoW(name, attributes, &info, (uint)sizeof(ShFileInfo), flags) == 0) return null;
 
         var list = sizePx <= 16 ? ShilSmall : sizePx <= 32 ? ShilLarge : sizePx <= 48 ? ShilExtraLarge : ShilJumbo;
         var image = FromImageList(list, info.IIcon);
@@ -252,6 +266,14 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
     [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
     [SupportedOSPlatform("windows")]
     private static unsafe partial nint SHGetFileInfoW(string pszPath, uint dwFileAttributes, ShFileInfo* psfi, uint cbFileInfo, uint uFlags);
+
+    [LibraryImport("shell32.dll", EntryPoint = "SHGetFileInfoW")]
+    [SupportedOSPlatform("windows")]
+    private static unsafe partial nint SHGetFileInfoW(char* pidl, uint dwFileAttributes, ShFileInfo* psfi, uint cbFileInfo, uint uFlags);
+
+    [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    [SupportedOSPlatform("windows")]
+    private static partial int SHParseDisplayName(string name, nint bindingContext, out nint pidl, uint sfgaoIn, out uint sfgaoOut);
 
     [LibraryImport("shell32.dll")]
     [SupportedOSPlatform("windows")]

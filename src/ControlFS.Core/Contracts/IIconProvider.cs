@@ -31,6 +31,8 @@ public sealed record IconRequest(string Key, IconSourceKind Kind, string Value)
         if (entry.IsBlocked) return null;
         switch (entry.Kind)
         {
+            case EntryKind.KnownFolder when entry.Id == RecycleBinLocation.PlaceId:
+                return new IconRequest("recyclebin", IconSourceKind.Path, RecycleBinLocation.ShellParsingName);
             case EntryKind.Drive or EntryKind.KnownFolder when entry.FullPath is { } place:
                 return ForPath(place);
             case EntryKind.Directory when entry.FullPath is { } dir && specialFolders is not null && specialFolders.Contains(dir):

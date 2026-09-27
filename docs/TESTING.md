@@ -92,6 +92,18 @@ Ainda manual, num aparelho real:
 - [ ] Redimensionar a janela: o número de colunas acompanha e a navegação usa as colunas que aparecem.
 - [ ] Narrador lê nome e estado do bloco focado.
 
+## Lixeira (#26)
+
+- [ ] Excluir arquivos e uma pasta pelo ControlFS → Início → Lixeira: aparecem com a pasta de origem e a data; o ícone
+      da Lixeira no início segue o do Windows (vazia/cheia).
+- [ ] Restaurar um arquivo cuja pasta original foi apagada: a pasta é recriada e o arquivo volta; o Explorador de
+      Arquivos deixa de mostrá-lo na Lixeira.
+- [ ] Restaurar quando já existe um item com o mesmo nome no local original: aviso, nada sobrescrito, item continua na
+      Lixeira.
+- [ ] Excluir permanentemente (um e vários marcados): o diálogo abre em Cancelar; Voltar não apaga.
+- [ ] Pendrive com Lixeira (formatado em NTFS): itens dele aparecem e restauram.
+- [ ] Controle real e Narrador: Sul/A abre Restaurar/Excluir; o Narrador lê nome e local original.
+
 ## Ícones do Windows (#24)
 
 - [ ] Início: Downloads, Documentos, Área de trabalho, Imagens, Vídeos e Músicas com o ícone próprio; unidade fixa, pendrive,

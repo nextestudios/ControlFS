@@ -28,7 +28,7 @@ public sealed partial class AppController
     internal static bool IsFavoriteEntry(FileEntry entry) => entry.Id.StartsWith(FavoriteIdPrefix, StringComparison.Ordinal);
 
     /// <summary>Favoritas primeiro, depois "Recentes" (quando há) e os locais do sistema.</summary>
-    private IReadOnlyList<FileEntry> BuildPlaces() => [.. FavoriteEntries(), .. RecentPlace(), .. _fs.GetPlaces()];
+    private IReadOnlyList<FileEntry> BuildPlaces() => [.. FavoriteEntries(), .. RecentPlace(), .. _fs.GetPlaces(), .. RecycleBinPlace()];
 
     private List<FileEntry> FavoriteEntries()
     {
@@ -153,6 +153,11 @@ public sealed partial class AppController
         if (IsRecentPlace(place))
         {
             ShowRecents();
+            return;
+        }
+        if (place.Id == RecycleBinLocation.PlaceId)
+        {
+            OpenRecycleBin();
             return;
         }
         if (place.FullPath is not { } path) return;

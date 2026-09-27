@@ -506,7 +506,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
     }
 
     /// <summary>Exclusão permanente sem seguir links: um link/junction é removido, nunca o que ele aponta.</summary>
-    private static void DeletePermanently(string path)
+    internal static void DeletePermanently(string path)
     {
         if (IsLink(path))
         {
@@ -692,7 +692,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         }
     }
 
-    private static (OperationErrorKind Kind, string Message) Map(Exception ex) => ex switch
+    internal static (OperationErrorKind Kind, string Message) Map(Exception ex) => ex switch
     {
         FileOperationException f => (f.Kind, f.Message),
         UnauthorizedAccessException => (OperationErrorKind.AccessDenied, "Permissão negada."),
