@@ -315,6 +315,26 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
 - [ ] Exportar para uma pasta, importar em outro computador (ou após apagar `controllers\` na pasta de dados) e usar.
 - [ ] Importar um `.json` qualquer (não perfil) e um perfil editado com um campo extra: ambos recusados com mensagem clara.
 
+## Início em grade e Meu computador (redesenho, fase B1)
+
+Não validado em hardware. Capturas do Smoke: `1c-home-grid`, `1d-home-grid-drives`, `1e-this-pc-grid`, `1f-this-pc-list`.
+
+- [ ] PC real com Downloads/Documentos grandes e OneDrive: os cartões mostram "Calculando…" e depois "N itens • tamanho"
+      sem travar a navegação; nenhum arquivo do OneDrive sob demanda é baixado; voltar ao início em menos de 10 minutos
+      não recalcula (disco quieto).
+- [ ] Pasta com centenas de milhares de arquivos: depois de ~20 s o cartão mostra o parcial com "+".
+- [ ] Unidades: rótulo, barra de uso e "X livres de Y · NTFS" batem com o Explorador; pendrive (exFAT/FAT32) e unidade
+      de rede mapeada aparecem com o tipo; conectar um pendrive com o início aberto adiciona o cartão sem perder o foco.
+- [ ] Controle real: direcional passa de "Pastas principais" para "Unidades e dispositivos" e volta na mesma coluna;
+      LT/RT vão ao começo da seção anterior/seguinte; o cartão focado (borda ciano, fundo azul, halo, leve aumento) fica
+      à vista ao rolar.
+- [ ] 1920×1080, 1280×720 (portátil), 4K a 100/150/200% e janela estreita: 3/2/1 colunas de pastas, unidades em 2 (ou 1
+      no portátil), nada cortado, textos legíveis a 3 m na TV.
+- [ ] Meu computador (acesso rápido e raiz do caminho): unidades em cartões na grade e em linhas na lista; Sul abre,
+      Voltar retorna com o foco na mesma unidade; Norte → Propriedades mostra capacidade, livre, usado e sistema de
+      arquivos.
+- [ ] Narrador no início em grade lê nome, caminho e "N itens • tamanho" (ou "Calculando…"); nas unidades, o espaço livre.
+
 ## Redesenho: tokens, rodapé e R3 (fase A)
 
 Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hardware.

@@ -50,16 +50,19 @@ internal sealed class HomeView
         _app = app;
         _icons = icons;
         _scroll.Content = _sections;
-        _scroll.SizeChanged += (_, _) => Render();
+        _scroll.SizeChanged += (_, _) => SizeChanged?.Invoke();
         AutomationProperties.SetName(_scroll, "Início");
     }
 
     public FrameworkElement Root => _scroll;
 
+    /// <summary>A largura mudou: a janela pede um novo Render (as colunas podem mudar).</summary>
+    public event Action? SizeChanged;
+
     /// <summary>Medidas da faixa de layout atual: refaz os cartões no próximo Render.</summary>
     public void ApplyLayout()
     {
-        _sections.Padding = new Thickness(PageGutter, Theme.Space(12), PageGutter, Theme.Space(32));
+        _sections.Padding = new Thickness(PageGutter, Theme.Space(28), PageGutter, Theme.Space(32));
         _shownPlaces = null;
     }
 
@@ -90,35 +93,79 @@ internal sealed class HomeView
         return columns;
     }
 
-    public void Render()
+    /// <summary>Início em grade: os locais em seções.</summary>
+    public void RenderHome()
+    {
+        var focus = _app.FocusRegion == PaneRegion.List && _app.TopModal is null ? _app.PlacesFocus : -1;
+        Render(_app.Places, _app.HomeSections, focus, _app.SetHomeGridLayout);
+    }
+
+    /// <summary>Meu computador em grade: as unidades da aba como cartões (mesmo desenho do início).</summary>
+    public void RenderThisPc(PaneState pane)
+    {
+        var items = pane.List.Items;
+        if (!ReferenceEquals(items, _thisPcSource))
+        {
+            _thisPcSource = items;
+            _thisPcSections = items.Count == 0 ? [] : [new HomeSection(HomeSectionKind.Drives, "Unidades e dispositivos", [.. Enumerable.Range(0, items.Count)])];
+        }
+        var focus = _app.FocusRegion == PaneRegion.List && _app.TopModal is null ? pane.List.FocusIndex : -1;
+        Render(items, _thisPcSections, focus, columns => _app.SetGridLayout(columns.GetValueOrDefault(HomeSectionKind.Drives, 1), 1));
+    }
+
+    private IReadOnlyList<FileEntry>? _thisPcSource;
+    private IReadOnlyList<HomeSection> _thisPcSections = [];
+
+    /// <summary>Página vai ser mostrada: força refazer (a mesma view serve o início e Meu computador).</summary>
+    public void Reset() => _shownPlaces = null;
+
+    private void Render(IReadOnlyList<FileEntry> places, IReadOnlyList<HomeSection> sections, int focus, Action<Dictionary<HomeSectionKind, int>> publish)
     {
         if (_scroll.Visibility != Visibility.Visible) return;
-        var places = _app.Places;
-        var sections = _app.HomeSections;
         var columns = Columns(sections);
         var columnsKey = string.Join(",", columns.OrderBy(c => c.Key).Select(c => $"{c.Key}={c.Value}"));
+        var rebuilt = false;
         if (!ReferenceEquals(places, _shownPlaces) || columnsKey != _shownColumns)
         {
             _shownPlaces = places;
             _shownColumns = columnsKey;
             _shownFocus = -2;
-            _app.SetHomeGridLayout(columns);
+            publish(columns);
             Build(places, sections, columns);
+            rebuilt = true;
         }
 
         // Contagens e tamanhos chegam aos poucos: só o texto muda.
         foreach (var card in _cards.Values)
             if (card is { Stats: { } stats, StatsPath: { } path }) stats.Text = EntryText.FolderStats(_app.FolderStatsFor(path));
 
-        var focus = _app.FocusRegion == PaneRegion.List && _app.TopModal is null ? _app.PlacesFocus : -1;
         if (focus == _shownFocus) return;
         if (_cards.TryGetValue(_shownFocus, out var previous)) SetFocused(previous, false);
         _shownFocus = focus;
         if (!_cards.TryGetValue(focus, out var current)) return;
         SetFocused(current, true);
-        // Primeira linha de uma seção: o título da seção também fica à vista.
-        var target = current.FirstRow ? current.Section : current.Glow;
-        target.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true, VerticalOffset = -Theme.SpaceM });
+        if (rebuilt) _sections.UpdateLayout();
+        ScrollTo(current);
+    }
+
+    /// <summary>
+    /// Rola só o necessário para o cartão focado aparecer inteiro; na primeira linha de uma seção, o título dela também
+    /// (na primeira seção, volta ao topo).
+    /// </summary>
+    private void ScrollTo(Card card)
+    {
+        var margin = Theme.SpaceM;
+        var viewport = _scroll.ViewportHeight;
+        if (viewport <= 0) return;
+        var cardTop = card.Glow.TransformToVisual(_sections).TransformPoint(default).Y;
+        var top = card.FirstRow ? card.Section.TransformToVisual(_sections).TransformPoint(default).Y : cardTop;
+        var bottom = cardTop + card.Glow.ActualHeight;
+        var offset = _scroll.VerticalOffset;
+        double? target = null;
+        if (card.FirstRow && ReferenceEquals(card.Section, _sections.Children.FirstOrDefault())) target = 0;
+        else if (top - margin < offset) target = top - margin;
+        else if (bottom + margin > offset + viewport) target = Math.Min(top - margin, bottom + margin - viewport);
+        if (target is { } y) _scroll.ChangeView(null, Math.Max(0, y), null, disableAnimation: false);
     }
 
     private static void SetFocused(Card card, bool focused)
@@ -222,7 +269,7 @@ internal sealed class HomeView
     private static Grid UsageBar(double used)
     {
         var height = Theme.Space(12);
-        var bar = new Grid { Height = height, MaxWidth = Theme.Scaled(560), HorizontalAlignment = HorizontalAlignment.Stretch };
+        var bar = new Grid { Height = height, Margin = new Thickness(0, Theme.Space(2), Theme.Space(56), Theme.Space(2)) };
         bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(used, 0.001), GridUnitType.Star) });
         bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(1 - used, 0.001), GridUnitType.Star) });
         var track = new Border { Background = Theme.Border, CornerRadius = new CornerRadius(height / 2) };

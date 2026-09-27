@@ -102,6 +102,7 @@ public sealed class MainWindow : Window
         _topBar = new TopBarView(_app, _navIcons);
         _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
         _home = new HomeView(_app, _cardIcons);
+        _home.SizeChanged += Render;
         _cardIcons.Invalidated += () =>
         {
             _home.ApplyLayout(); // refaz os cartões com ícones no novo tamanho
@@ -283,6 +284,7 @@ public sealed class MainWindow : Window
     /// </summary>
     private void UpdateGridMetrics()
     {
+        if (_home.Root.Visibility == Visibility.Visible) return; // cartões publicam as próprias colunas
         var (width, height, _) = EntryRowTemplate.TileSize(_density);
         var available = _grid.ActualWidth - _grid.Padding.Left - _grid.Padding.Right;
         var columns = available > 0 ? Math.Max(1, (int)Math.Floor(available / width)) : 1;
@@ -334,8 +336,12 @@ public sealed class MainWindow : Window
             _shownPlaces = _app.Places;
             _specialFolders = new HashSet<string>(_app.Places.Where(p => p.Kind == EntryKind.KnownFolder && p.FullPath is not null).Select(p => p.FullPath!), StringComparer.OrdinalIgnoreCase);
         }
-        if (ShowHomeCards(_app.Screen == Screen.Home && _view == ViewMode.Grid))
-            _home.Render();
+        var thisPcCards = _app.Screen == Screen.Browser && _view == ViewMode.Grid && pane is { Location: ThisPcLocation, IsLoading: false } && pane.List.Items.Count > 0;
+        if (ShowHomeCards(_app.Screen == Screen.Home && _view == ViewMode.Grid, thisPcCards))
+        {
+            if (thisPcCards) _home.RenderThisPc(pane);
+            else _home.RenderHome();
+        }
         else
             RenderItems(pane);
         RenderFooter();
@@ -345,9 +351,12 @@ public sealed class MainWindow : Window
     /// Início em grade: os cartões por seção substituem a grade virtualizada (poucos itens, tamanhos diferentes por
     /// seção). Devolve se os cartões estão à mostra.
     /// </summary>
-    private bool ShowHomeCards(bool show)
+    private bool ShowHomeCards(bool home, bool thisPc)
     {
+        var show = home || thisPc;
         var visible = show ? Visibility.Visible : Visibility.Collapsed;
+        if (_cardsShowThisPc != thisPc) _home.Reset(); // outra página nos mesmos cartões
+        _cardsShowThisPc = thisPc;
         if (_home.Root.Visibility != visible)
         {
             _home.Root.Visibility = visible;
@@ -361,6 +370,8 @@ public sealed class MainWindow : Window
         }
         return show;
     }
+
+    private bool _cardsShowThisPc;
 
     private void RenderItems(PaneState pane)
     {

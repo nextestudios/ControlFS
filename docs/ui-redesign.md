@@ -12,7 +12,8 @@ mouse-only or lose its test.** A later phase that moves a feature updates its "W
 |---|---|---|
 | A1 | This inventory, design tokens, footer (prompt colors, order, Lista/Grade), R3 → ChangeView | done |
 | A2 | Shared header (logo on every screen, tabs next to it) and top navigation bar (breadcrumb + quick access) | done |
-| B | Grid mode: Home cards ("Pastas principais" with real counts/sizes, "Unidades e dispositivos" with usage bars), folder tiles, This PC | planned |
+| B1 | Grid Home cards ("Pastas principais" with real counts/sizes, "Unidades e dispositivos" with usage bars, Favoritos, Outros locais), This PC view | done |
+| B2 | Grid tiles restyled as cards in folders, search, archives, Recycle Bin and This PC; responsive columns | planned |
 | C | List mode: column header, friendly dates, details panel | planned |
 
 Legend for the matrix: **Where** is the place in the new shell (after the phase in brackets). **Test** names the automated
@@ -27,7 +28,7 @@ hardware, visual or timing checks that CI can't prove.
 ┌ [ControlFS logo with text] [tabs · RB]                         [controller · operation] ┐  (system title bar above)
 ├ [LB] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira
 ├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
-├ CONTENT: Grid (B) or List (+ details panel, C)
+├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List (+ details panel, C)
 └ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Lista/Grade
 ```
 
@@ -111,25 +112,28 @@ hardware, visual or timing checks that CI can't prove.
 
 | Feature | Where | Shortcut / flow | Test |
 |---|---|---|---|
-| Home with places (favorites, Recentes, known folders, drives, Lixeira) | Home content (B: cards) | South opens, North actions | `FavoritesJourneyTests`, `RecentsJourneyTests`, `RecycleBinJourneyTests`, `DriveJourneyTests` |
+| Home with places (favorites, Recentes, known folders, drives, Lixeira) | List: rows as before. Grid (B1): sections Favoritos · Pastas principais · Unidades e dispositivos · Outros locais (Recentes, Lixeira) | South opens, North actions, 2D per section, LT/RT = section | `FavoritesJourneyTests`, `RecentsJourneyTests`, `RecycleBinJourneyTests`, `DriveJourneyTests`, `HomeGridJourneyTests`; Screens `1c`, `1d`; Manual "Início em grade e Meu computador (redesenho, fase B1)" |
+| Real item count and recursive size on main folder cards ("Calculando…", async, cancelled when leaving Home, one folder at a time, 20 s budget with "+", cached 10 min) | Home grid (B1) | — | `HomeGridJourneyTests::Main_folder_cards_show_real_counts_…` |
+| Drive cards: label, usage bar, "X livres de Y", file system (pt-BR numbers) | Home grid, This PC (B1) | — | `HomeGridJourneyTests::Home_sections_…`; Manual (B1 section) |
+| This PC (Meu computador): drives in a browser tab, with history; drive menu and properties (capacity, free, used, file system) | quick access / path root → tab (B1; was: Home on the first drive) | South, Back, North | `HomeGridJourneyTests::Home_sections_…`, `TopBarJourneyTests`; Screens `1e`, `1f` |
 | Real known folders (Downloads via Known Folder API) and drives with type/label/free space | Home, top bar (A2) | — | `WindowsBehaviorTests::Downloads_comes_from_known_folder_api`, `::Drives_are_listed_as_places`; Manual "Tipos de unidade (#25)" |
 | Drive plugged in while open, focus kept | Home | — | `DriveJourneyTests`, `DriveWatcherIntegrationTests` |
 | Browse real folders, open, up (Left in list), history Back with focus restore | content | South/Right, Left, East | `JourneyTests::Back_semantics_selection_then_history_then_home_then_confirmed_exit`, `BreadcrumbJourneyTests` |
 | Stale listing never overwrites a newer navigation | — | — | `JourneyTests::Late_listing_response_does_not_overwrite_newer_navigation` |
 | Focus by identity, survives resort/removal; focus ≠ selection | content | — | `StateTests` (5) |
 | Breadcrumb / path bar with archive boundary and collapse, root chip (Locais / Meu computador) | top bar left segment (A2) | LB, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3), `TopBarJourneyTests`; Manual "Barra de caminho (#30)" |
-| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador, Lixeira | top bar right segment (A2) | LB then Right, South | `TopBarJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
+| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador (B1: opens This PC), Lixeira | top bar right segment (A2) | LB then Right, South | `TopBarJourneyTests`, `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
 | Tabs (8 max), each with its own folder/history/marks/focus | header tab strip (A2) | RB, LB/RB, North new/close, "Abrir em nova aba" | `TabsJourneyTests`; Manual "Abas (#50)" |
 | Go to path (typed/pasted, quotes, %VARS%) | Menu → Ir para caminho… | Start | `GoToPathJourneyTests`, `TypedPathTests` |
 | Go to folder above… | Menu | Start | `BreadcrumbJourneyTests` (same menu as the `…` segment) |
-| Go home | Menu → Ir para o início; top bar root chip (A2) | Start / LB | `JourneyTests::Back_semantics_…` |
+| Go home | Menu → Ir para o início; top bar root chip "Locais" (A2) | Start / LB | `JourneyTests::Back_semantics_…`, `TopBarJourneyTests` |
 | Favorites: add/remove/reorder, missing kept until removed, first on Home and in the picker | Home, item actions, top bar (A2) | North → Adicionar aos favoritos | `FavoritesJourneyTests` |
 | Recents: bounded, persisted, clear, turn off | Home "Recentes", Menu → Recentes, top bar (A2) | North on Recentes | `RecentsJourneyTests` |
 | Recycle Bin: list, restore (never overwrite), permanent delete asks on Cancel | Home, top bar (A2) | South/North on an item | `RecycleBinJourneyTests`, `RecycleBinIntegrationTests` (2), `UndoJourneyTests::Undo_of_a_recycle_…` |
 | Search (on-screen keyboard, streaming, partial/complete, skipped folders, cancel keeps partial) | results in the current mode | Select/View, Ctrl+F | `SearchJourneyTests` (2), `SearchIntegrationTests` (3); Manual "Busca (#46)" |
 | Search filters (type/size/date), subfolders toggle | North on results | — | `SearchFilterJourneyTests` |
 | OneDrive files-on-demand folders searched without downloading | — | — | `SearchIntegrationTests::Reparse_tag_…`; Manual "OneDrive sob demanda (#126)" |
-| Grid view with 2D navigation, persisted; switching keeps focus | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests` |
+| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
 | Density comfortable/compact, persisted | Menu → Densidade da lista | — | `DensityJourneyTests` |
 | Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem (C: column header) | Start | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity` |
 | Hidden items show/hide (persisted) | Menu → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
@@ -225,6 +229,11 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 | Settings persisted (view, density, favorites, recents, hidden, labels, convention, updates) and migrated | `DensityJourneyTests`, `GridViewJourneyTests`, `ControllerFamilyTests::Settings_v1_…`, `FavoritesJourneyTests`, `RecentsJourneyTests` |
 
 ## Notes for phases B and C
+
+- B1: the Home grid is `HomeView` (non-virtualized card sections), not the `GridView`; the folder `GridView` keeps
+  `EntryRowTemplate` tiles until B2. Card texts come from `AppController.DescribePlace` (also read by Narrator);
+  numbers from `EntryText` (pt-BR). Folder stats: `AppController.FolderStatsFor(path)`; drives: `FileEntry.Volume`.
+- The details panel (C) can reuse `FolderStatsFor` for known folders and `EntryText.DriveUsage` for drives.
 
 - `AppController.IsGrid`, `SetGridLayout(columns, rows)` and `GridNavigation` already give 2D focus with the same columns
   the view shows. Cards must publish their real column count the same way (`UpdateGridMetrics`).
