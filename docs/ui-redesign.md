@@ -104,8 +104,8 @@ Icons: `ActionIcon` (Core) is the only map from meaning to symbol (`ActionIcons.
 (`AppController.SafeInitialFocus`). `MenuItem.Icon`/`Section`, `DialogOption.Icon`, `Modal.Icon`/`Subtitle` are set by
 `AppController`; views never pick icons. Menus (#193): `MenuItem.Placement = Quick` (set by `AppController`) puts an
 option in the quick-action grid (≤ 4 tiles per row, destructive tiles last, `ShortLabel` under the icon, full label for
-Narrator/UIA); the rest is a compact list (42 px rows, detail only on the focused row). Menu panel: 500 px wide with a
-grid, 460 without, `MenuPadding` 20, compact header. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
+Narrator/UIA); the rest is a compact list (40 px rows, detail only on the focused row; with a grid, groups are separated by a divider
+only, without titles). Menu panel: 540 px wide with a grid, 460 without, `MenuPadding` 20, compact header. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
 menu open (`MenuModal.Reload`). The retained panel (#191) swaps only the tile/row that loses and gains focus. `Theme.SolidSurfaces` comes from Windows transparency effects off or high
 contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContrast`); `Theme.ReduceMotion` from
 `UISettings.AnimationsEnabled`.
@@ -174,8 +174,8 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 
 ### Item actions (North menus)
 
-Since #193 the frequent actions are quick-grid tiles (folder: Abrir, Recortar, Copiar, Renomear, Colar, Propriedades,
-Excluir; file: Abrir/Executar/Jogar, the same file ops; marked items: Recortar, Copiar, Compactar, Excluir; drive: Abrir,
+Since #193 the frequent actions are quick-grid tiles (folder: Abrir, Recortar, Copiar, Renomear, Compactar, Colar,
+Propriedades, Excluir; file: Abrir/Executar/Jogar, the same file ops; marked items: Recortar, Copiar, Compactar, Excluir; drive: Abrir,
 Nova aba, Propriedades, Atualizar); everything else stays in the list below. Initial focus is unchanged (first item passed
 by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTests::Quick_action_grid_…`.
 

@@ -384,9 +384,9 @@ public static partial class ModalView
             Child = grid,
             Background = fill,
             CornerRadius = Theme.RowRadius,
-            Padding = compact ? new Thickness(Theme.Space(12), Theme.Space(7), Theme.Space(12), Theme.Space(7)) : new Thickness(Theme.Space(14), Theme.Space(11), Theme.Space(14), Theme.Space(11)),
+            Padding = compact ? new Thickness(Theme.Space(12), Theme.Space(6), Theme.Space(12), Theme.Space(6)) : new Thickness(Theme.Space(14), Theme.Space(11), Theme.Space(14), Theme.Space(11)),
             Margin = new Thickness(0, 1, 0, 1),
-            MinHeight = Theme.Scaled(compact ? 42 : 52),
+            MinHeight = Theme.Scaled(compact ? 40 : 52),
         };
         if (focused)
         {
@@ -458,7 +458,9 @@ public static partial class ModalView
             // Grupo novo: título e fio. Logo abaixo da grade sempre há o fio separando as duas partes; no topo de um menu
             // sem grade, só o título (se houver).
             var heading = i == quick ? quick > 0 || item.Section is not null : item.Section != section;
-            if (heading) stack.Children.Add(SectionHeading(item.Section, first: i == 0));
+            // Com grade, só o fio (como o menu de contexto do Windows 11): os títulos de grupo ficam para menus só de lista
+            // (ex.: Configurações), onde ajudam a achar o ajuste.
+            if (heading) stack.Children.Add(SectionHeading(quick > 0 ? null : item.Section, first: i == 0));
             section = item.Section;
             positions[i] = stack.Children.Count;
             stack.Children.Add(MenuRow(app, menu, i));
@@ -466,7 +468,7 @@ public static partial class ModalView
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
         Border? footer = null;
-        var width = quick > 0 ? 500 : 460;
+        var width = quick > 0 ? 540 : 460;
         var card = Panel(app, Header(menu, compact: true), stack, width, minWidth: Math.Min(width, 400), footerSink: f => footer = f, compact: true);
         if (caption is not null) caption.Text = TileCaption(menu);
         var shown = menu.FocusIndex;
@@ -497,7 +499,9 @@ public static partial class ModalView
         if (!menu.IsQuick(menu.FocusIndex)) return string.Empty;
         var item = menu.Items[menu.FocusIndex];
         var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
-        return item.Label + (about is { Length: > 0 } ? " · " + about : string.Empty);
+        // O nome só se o bloco mostra outro mais curto (ex.: "Colar 2 itens (mover)"); nada a dizer: linha vazia.
+        var name = item.Label.TrimEnd('…') == item.TileLabel ? null : item.Label;
+        return string.Join(" · ", new[] { name, about }.Where(t => t is { Length: > 0 }));
     }
 
     /// <summary>
@@ -541,8 +545,11 @@ public static partial class ModalView
             Child = content,
             Background = fill,
             CornerRadius = Theme.RowRadius,
-            Padding = new Thickness(Theme.Space(6), Theme.Space(10), Theme.Space(6), Theme.Space(8)),
+            Padding = new Thickness(Theme.Space(4), Theme.Space(10), Theme.Space(4), Theme.Space(8)),
             MinHeight = Theme.Scaled(78),
+            // Bloco indisponível focado: o preenchimento cinza é discreto, então o contorno ciano mostra onde está o foco.
+            BorderBrush = focused && !enabled ? Theme.Accent : null,
+            BorderThickness = focused && !enabled ? Theme.FocusRing : default,
         };
         Grid.SetRow(tile, index / menu.QuickColumns);
         Grid.SetColumn(tile, index % menu.QuickColumns);

@@ -195,14 +195,14 @@ public class ModalSystemJourneyTests : IDisposable
         await d.FocusItem("a.txt");
         d.Press(InputAction.OpenContextMenu);
         var menu = await d.WaitMenu();
-        // Arquivo comum: 6 blocos em 2 linhas de 3; Excluir no fim da grade. O foco abre na lista, onde sempre abriu.
-        Assert.Equal(["Abrir", "Recortar", "Copiar", "Renomear", "Propriedades", "Excluir"], menu.Items.Take(menu.QuickCount).Select(i => i.TileLabel));
-        Assert.Equal((3, 2), (menu.QuickColumns, menu.QuickRows));
+        // Arquivo comum: 7 blocos em 2 linhas de 4; Excluir no fim da grade. O foco abre na lista, onde sempre abriu.
+        Assert.Equal(["Abrir", "Recortar", "Copiar", "Renomear", "Compactar", "Propriedades", "Excluir"], menu.Items.Take(menu.QuickCount).Select(i => i.TileLabel));
+        Assert.Equal((4, 2), (menu.QuickColumns, menu.QuickRows));
         string Focused() => menu.Items[menu.FocusIndex].Label;
         Assert.Equal("Visualizar como texto", Focused());
 
         d.Press(InputAction.NavigateUp); // do topo da lista para a última linha da grade (coluna 1)
-        Assert.Equal("Renomear…", Focused());
+        Assert.Equal("Compactar…", Focused());
         d.Press(InputAction.NavigateRight);
         d.Press(InputAction.NavigateRight);
         d.Press(InputAction.NavigateRight); // borda: fica
@@ -211,7 +211,7 @@ public class ModalSystemJourneyTests : IDisposable
         app.TakeAnnouncement();
         d.Press(InputAction.NavigateLeft);
         d.Press(InputAction.NavigateRight);
-        Assert.Contains("Excluir…, ação perigosa, ação rápida 6 de 6", app.TakeAnnouncement(), StringComparison.Ordinal);
+        Assert.Contains("Excluir…, ação perigosa, ação rápida 7 de 7", app.TakeAnnouncement(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown); // última linha: entra na lista
         Assert.Equal("Visualizar como texto", Focused());
         d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
