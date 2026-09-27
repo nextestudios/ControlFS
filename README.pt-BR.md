@@ -68,6 +68,17 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 **Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: tema claro, dois painéis, pré-visualização de PDF, volumes divididos, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
+## Política de assinatura de código (Code signing policy)
+
+Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpath.io), certificado da [SignPath Foundation](https://signpath.org) (pedido em andamento: até a aprovação, as releases saem sem assinatura e o SmartScreen do Windows pode avisar na primeira execução).
+
+- **Autores e revisores:** [@nextestudios](https://github.com/nextestudios) (mantenedor; toda mudança passa por pull request e CI)
+- **Aprovadores:** [@nextestudios](https://github.com/nextestudios) (cada release é aprovada manualmente antes de assinar)
+- **Build:** as releases são geradas só pelo [workflow de release](.github/workflows/release.yml) público no GitHub Actions a partir de uma tag no `main`; o certificado nunca sai do serviço de assinatura.
+- **Privacidade:** este programa não transfere nenhuma informação para outros sistemas em rede, a menos que seja pedido especificamente pelo usuário ou por quem o instala ou opera. O único acesso à rede é a verificação opcional de atualizações no GitHub ([política de privacidade](docs/PRIVACY.md)).
+
+Detalhes: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
+
 ## Mais
 
 - [Guia](docs/GUIDE.pt-BR.md): controles, extração, privacidade, solução de problemas, compilar
