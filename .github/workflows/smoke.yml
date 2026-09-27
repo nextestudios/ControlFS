@@ -81,6 +81,16 @@ jobs:
         if: always()
         shell: pwsh
         run: .\build\Test-Installed.ps1 -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-installed
+      # UI Automation (#83): teclas na janela real e conferência pelo UIA do que o WinUI desenhou (foco, diálogos,
+      # escopo do modal, teclado virtual). Windows PowerShell: UIAutomationClient vem do .NET Framework.
+      - name: UI Automation (focus, dialogs, on-screen keyboard)
+        if: always()
+        shell: powershell
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "uia"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item dist\ControlFS-Portable-x64.exe $dir
+          .\build\Test-UiAutomation.ps1 -Exe (Join-Path $dir "ControlFS-Portable-x64.exe") -OutDir smoke-uia
       # Layout responsivo (#36) e glifos (#33): a tela do runner é pequena, então o app simula cada resolução/escala e
       # salva PNGs das telas reais (--render-screens, só para desenvolvimento; ver docs/TESTING.md).
       - name: Render screens at 720p/800p/1080p/4K and the glyph gallery
@@ -109,3 +119,4 @@ jobs:
           path: |
             smoke-portable
             smoke-installed
+            smoke-uia
