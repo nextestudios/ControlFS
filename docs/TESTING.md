@@ -31,6 +31,29 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
 
+## Layout responsivo (#36)
+
+A faixa de layout sai do tamanho **efetivo** da janela (pixels ÷ escala do Windows) e do tamanho do texto do Windows
+(`LayoutBreakpoints`, testado na CI): **compacta** abaixo de 900 de altura ou 1360 de largura "em texto" (portáteis
+1280×720/800, 1080p a 150%, 4K a 300%), **normal** (1080p a 100%, 4K a 200%) e **grande** a partir de 1300 de altura
+(4K a 100–125%: texto e espaços crescem até 2×, com as proporções de 1080p). O texto do Windows maior reduz o espaço
+"em texto" e pode deixar o layout compacto; o próprio WinUI aumenta cada texto.
+
+Evidência automática: o workflow **Smoke** (manual) roda `ControlFS-Portable-x64.exe --render-screens <pasta>`, que
+monta as telas reais (início, pasta, lista compacta, menu com foco abaixo da dobra, teclado virtual) em 1280×720,
+1280×800 (e com texto a 150%), 1920×1080 (100% e 150%) e 3840×2160 (100%, 200% e 300%), além da galeria de glifos
+(escuro/claro, 100/200/300%), e publica os PNGs no artefato `smoke-screens` com um `report.txt` das alturas medidas.
+A resolução é simulada (a tela do runner é pequena); o modo usa uma pasta temporária, não acessa a rede e fecha sozinho.
+
+Ainda manual, num aparelho real:
+
+- [ ] Portátil 1280×800 (e 1280×720) a 100% e 125%: cabeçalho, lista, rodapé e todos os menus visíveis; nenhuma
+      legenda do rodapé some (quebram linha); no menu principal o item focado sempre aparece ao descer até "Sair".
+- [ ] TV 1080p e TV 4K (100% e 300%) a ~3 m: nomes da lista, rodapé e teclado virtual legíveis; anel de foco visível.
+- [ ] Windows → Acessibilidade → Tamanho do texto em 150% e 200% com o app aberto: o layout se ajusta na hora, nada
+      essencial fica cortado (menus rolam até o item focado).
+- [ ] Arrastar a janela entre um monitor 100% e outro 150%/200%: textos e ícones nítidos, sem reiniciar.
+
 ## Barra de caminho (#30)
 
 - [ ] Com o controle: LB na lista leva o foco para a barra; esquerda/direita; Sul numa pasta de cima navega e foca a
@@ -157,6 +180,7 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
       glifos desenhados (não texto): faces, ombros/gatilhos (LB/RB/LT/RT, L1/R1/L2/R2, L/R/ZL/ZR), Menu/Exibir,
       Options/Create, +/−. Nintendo: A à direita e B embaixo.
 - [ ] Glifos nítidos e alinhados ao texto do rodapé em 1080p e 4K, com escala 100%, 150%, 200% e 300%.
+      Referência automática: galeria `glyphs/` no artefato `smoke-screens` do workflow Smoke (ver "Layout responsivo").
 - [ ] Narrador lê o nome do botão (ex.: "Botão cruz", "Botão A", "Botão Menu").
 
 ## Limpeza após queda

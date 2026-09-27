@@ -46,6 +46,10 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   `build/Test-Installed.ps1`: processo vivo, janela, eventos do Windows, logs e print). O workflow `smoke.yml` faz o
   mesmo em PRs, na `main` e sob demanda para uma release já publicada. Inclui também e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
   (`build/New-ReleaseManifest.ps1` confere a assinatura com a chave pública do app antes de publicar).
+- Capturas de layout: o `smoke.yml` (build do commit) também roda o portátil com `--render-screens <pasta>`, um modo
+  só de desenvolvimento que monta as telas reais em 1280×720, 1280×800, 1920×1080 e 3840×2160 (várias escalas), gera
+  a galeria dos glifos dos botões e fecha; os PNGs saem no artefato `smoke-screens` (ver `docs/TESTING.md`). Sem o
+  argumento o app se comporta normalmente; com ele usa só uma pasta temporária e não acessa a rede.
 - Velocidade: CI e smoke usam cache de pacotes NuGet (chave nos lock files) e não rodam em mudanças só de documentação
   (`**/*.md`, `docs/**`). A release não usa cache (pacotes sempre baixados na hora). O teste dos arquivos já
   publicados (`smoke.yml` com `release_tag`) roda em versões estáveis ou sob demanda — a release já abre o app antes
