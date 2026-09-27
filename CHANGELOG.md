@@ -8,6 +8,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - As legendas dos botões seguem automaticamente a família do controle em uso (Xbox, PlayStation, Nintendo ou genérico), detectada pelo tipo informado pelo SDL e pelo fabricante. Apertar um botão em outro controle passa o comando para ele e troca as legendas sem reiniciar. O menu ainda permite fixar um estilo. (#32)
 - **Tentar de novo** uma operação que falhou, terminou com avisos ou foi cancelada: Menu → Operações → escolha a operação → Tentar de novo. O pedido original é planejado outra vez do zero. (#18)
 - Legendas de controle com **glifos vetoriais originais** (faces, ombros, gatilhos, Menu/Options/+/−, direcional e analógicos) no lugar de letras soltas, nítidos em qualquer escala. Nenhuma imagem ou logotipo de terceiros. (#33)
+- O rodapé mostra os **botões do controle em uso** (ex.: `A Abrir` no Xbox, `✕ Abrir` no PlayStation) e troca na hora ao mudar de controle ou de convenção confirmar/voltar; ao usar o teclado, mostra as teclas. O Narrador lê o botão e a ação. (#34)
 
 ### Melhorias
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)

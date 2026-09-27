@@ -81,8 +81,13 @@ public sealed class InputHost : IInputSink, IDisposable
         Router.Tick(_clock.Elapsed);
     }
 
-    public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp) =>
+    public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp)
+    {
+        // Volta às legendas do controle quando ele é usado de novo depois do teclado (antes da ação, para o
+        // Render dela já sair com os glifos certos).
+        if (pressed && Router.ActiveDeviceKey == deviceKey && _devices.TryGetValue(deviceKey, out var device)) _app.SetActiveController(device.Family);
         Router.OnControl(deviceKey, control, pressed, _clock.Elapsed);
+    }
 
     public void OnDeviceAdded(InputDeviceInfo device)
     {
@@ -131,6 +136,7 @@ public sealed class InputHost : IInputSink, IDisposable
             VirtualKey.F when ctrl => InputAction.Search,
             _ => null,
         };
+        if (action is not null || (typing && key == VirtualKey.Back)) _app.SetActiveController(null); // teclado em uso: legendas de teclado
         if (typing && key == VirtualKey.Back)
         {
             _app.TypeBackspace();

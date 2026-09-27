@@ -1,4 +1,5 @@
 using ControlFS.Application.Operations;
+using ControlFS.Application.Prompts;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
@@ -45,6 +46,7 @@ public sealed partial class AppController
         _ui = SynchronizationContext.Current ?? throw new InvalidOperationException("AppController precisa de um SynchronizationContext de UI.");
         Operations.Completed += OnOperationCompleted;
         Operations.Changed += RaiseChanged;
+        PromptProvider = new ControllerPromptProvider(() => ActiveController is null ? null : PromptFamily, () => Settings.Convention, () => TopModal is KeyboardModal);
     }
 
     public Screen Screen { get; private set; } = Screen.Home;
@@ -113,7 +115,15 @@ public sealed partial class AppController
 
     public IReadOnlyList<Hint> Hints => BuildHints();
 
-    /// <summary>Publicado pela camada de entrada quando o controle ativo muda (inclusive troca a quente).</summary>
+    /// <summary>Legendas do rodapé para o dispositivo em uso (glifo do controle ativo ou tecla do teclado).</summary>
+    public IReadOnlyList<ControllerPrompt> Prompts => [.. BuildHints().Select(h => PromptProvider.For(h.Action, h.Label))];
+
+    public IControllerPromptProvider PromptProvider { get; }
+
+    /// <summary>
+    /// Publicado pela camada de entrada: a família do controle em uso (troca a quente incluída) ou null quando o
+    /// usuário passou a usar o teclado. As legendas mudam no próximo Render.
+    /// </summary>
     public void SetActiveController(ControllerFamily? family)
     {
         if (ActiveController == family) return;
