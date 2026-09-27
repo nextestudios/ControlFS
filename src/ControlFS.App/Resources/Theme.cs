@@ -9,7 +9,7 @@ namespace ControlFS.App.Resources;
 
 /// <summary>
 /// Tokens visuais do redesenho (docs/ui-redesign.md): escuro azul-marinho, destaque ciano. Perigo nunca é indicado só por
-/// cor: textos levam "⚠". Tema claro e cor de destaque configurável: pendentes (#37).
+/// cor: textos levam "⚠" (nos modais, o símbolo de alerta). Tema claro e cor de destaque configurável: pendentes (#37).
 /// </summary>
 public static class Theme
 {

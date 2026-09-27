@@ -156,7 +156,9 @@ public sealed class MainWindow : Window
         // Transparência, alto contraste e animações do Windows: o painel dos modais fica sólido e sem transição.
         UpdateVisualEffects(render: false);
         _uiSettings.AdvancedEffectsEnabledChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
-        _accessibility.HighContrastChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
+        // Alto contraste: o evento próprio (AccessibilitySettings.HighContrastChanged) não existe em apps de desktop; a
+        // troca de tema de contraste também muda as cores do sistema, e esse evento chega.
+        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
 
         Activated += (_, e) =>
         {
@@ -722,21 +724,25 @@ public sealed class MainWindow : Window
     private void UpdateVisualEffects(bool render = true)
     {
         if (_layoutPinned) return; // capturas: o gerador escolhe
-        bool solid, reduceMotion;
-        try
-        {
-            solid = !_uiSettings.AdvancedEffectsEnabled || _accessibility.HighContrast;
-            reduceMotion = !_uiSettings.AnimationsEnabled;
-        }
-        catch (System.Runtime.InteropServices.COMException)
-        {
-            solid = true; // sem como saber: o painel sólido é sempre legível
-            reduceMotion = true;
-        }
+        var solid = !Setting(() => _uiSettings.AdvancedEffectsEnabled, fallback: true) || Setting(() => _accessibility.HighContrast, fallback: false);
+        var reduceMotion = !Setting(() => _uiSettings.AnimationsEnabled, fallback: true);
         if (solid == Theme.SolidSurfaces && reduceMotion == Theme.ReduceMotion) return;
         Theme.SolidSurfaces = solid;
         Theme.ReduceMotion = reduceMotion;
         if (render) Render();
+    }
+
+    /// <summary>Lê uma configuração do Windows; se o sistema não responder, usa a reserva (o painel continua legível).</summary>
+    private static bool Setting(Func<bool> read, bool fallback)
+    {
+        try
+        {
+            return read();
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return fallback;
+        }
     }
 
     /// <summary>Gerador de capturas: força o painel sólido (transparência reduzida) para conferir a reserva.</summary>

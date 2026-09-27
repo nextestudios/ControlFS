@@ -29,6 +29,10 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 Every essential action is reachable through menus (Start / North). On a joystick mapped with only directions, Confirm and Back, **hold Confirm** (0.6 s) to open Actions and **hold Back** to open the Menu; short presses still confirm and go back, and the bottom bar shows "(segure)" ("hold") on those buttons.
 
+### Menus and dialogs
+
+Every menu and dialog opens in the same dark panel over the dimmed screen. The header says what it is about (for an item's actions: its icon, name and type). Options are full-width rows with an icon next to the text, grouped under small headings when that helps (e.g. **Organizar**, **Exibição**). The focused option is filled in cyan with dark bold text; D-pad/stick moves it, South chooses, East closes (or answers the dialog's safe choice). Options that delete data are red with a warning symbol and never start focused: sensitive confirmations start on **Cancel**. Unavailable options are dimmed; focusing one tells you why. The buttons you can press in the panel are shown at its bottom, with the glyphs of the controller in use. While a panel is open, nothing behind it reacts to the controller, keyboard or mouse. With Windows transparency effects off or high contrast on, the panel is solid instead of frosted.
+
 ### Controller test
 
 Menu → **Teste de controles…** (controller test) lists the connected controllers (name, type, family, VID:PID, gamepad or joystick without a profile, and which one is active) and shows, for every button you press, the physical control and the action it performs in ControlFS. Nothing runs on this screen: hold Confirm for 1 s to copy a report (no personal data) and hold Back for 1 s to leave; on the keyboard, Enter and Esc.

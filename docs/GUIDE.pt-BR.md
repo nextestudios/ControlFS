@@ -29,6 +29,10 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 Toda ação essencial está nos menus (Start / Norte). Num joystick mapeado só com direcional, Confirmar e Voltar, **segure Confirmar** (0,6 s) para abrir Ações e **segure Voltar** para abrir o Menu; pressões curtas continuam confirmando e voltando, e o rodapé mostra "(segure)" nesses botões.
 
+### Menus e diálogos
+
+Todo menu e diálogo abre no mesmo painel escuro sobre a tela escurecida. O cabeçalho diz do que se trata (nas ações de um item: ícone, nome e tipo). As opções são linhas de largura total com um ícone ao lado do texto, agrupadas sob pequenos títulos quando ajuda (ex.: **Organizar**, **Exibição**). A opção focada fica preenchida em ciano, com texto escuro em negrito; o direcional/analógico a move, Sul escolhe e Leste fecha (ou responde a opção segura do diálogo). Opções que apagam dados ficam em vermelho com o símbolo de alerta e nunca começam focadas: confirmações sensíveis começam em **Cancelar**. Opções indisponíveis ficam esmaecidas; focar uma diz o motivo. Os botões que funcionam no painel aparecem no rodapé dele, com os glifos do controle em uso. Com um painel aberto, nada atrás dele responde ao controle, ao teclado ou ao mouse. Com os efeitos de transparência do Windows desligados ou o alto contraste ligado, o painel fica sólido em vez de fosco.
+
 ### Teste de controles
 
 Menu → **Teste de controles…** lista os controles conectados (nome, tipo, família, VID:PID, se é gamepad ou joystick sem perfil e qual está ativo) e mostra, a cada botão apertado, o controle físico e a ação que ele faz no ControlFS. Nada é executado nessa tela: segure Confirmar 1 s para copiar um relatório (sem dados pessoais) e segure Voltar 1 s para sair; no teclado, Enter e Esc.
