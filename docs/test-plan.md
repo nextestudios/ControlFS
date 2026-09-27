@@ -8,7 +8,7 @@
 | Integração do extrator com arquivos reais | idem (`Archives/`) | qualquer SO | incluídos acima |
 | Jornadas ponta a ponta por ações semânticas | idem (`Application/JourneyTests`) | qualquer SO | incluídos acima; **não** substituem UI nem hardware |
 | Integração Windows (pastas conhecidas, junction, MOTW, nomes reservados, caminhos longos) | `tests/ControlFS.WindowsIntegrationTests` | Windows | 6 testes, **passaram** na CI `windows-latest`; pulados fora do Windows |
-| UI WinUI (foco, diálogos, teclado virtual na tela) | — | Windows | **não criado** (Etapa 2: WinAppDriver/UIA a avaliar para a versão do WinUI) |
+| UI WinUI (foco, diálogos, teclado virtual na tela) | `build/Test-UiAutomation.ps1` (UI Automation) | Windows (workflow Smoke, manual) | 16 verificações no app real: anel de foco no menu, confirmação com foco na opção segura, escopo do modal, teclado virtual desenhado e recebendo texto (ver `TESTING.md`) |
 | Hardware real | manual | Windows | matriz em `controller-compatibility.md`, tudo "não testado" |
 
 Comandos: `dotnet test ControlFS.slnx`.

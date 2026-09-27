@@ -49,6 +49,27 @@ Com o Narrador ligado (Ctrl+Win+Enter), usando só o controle:
       vibração ou cor.
 - [ ] Caps+Tab (ler o item atual) repete o último foco anunciado.
 
+## Testes de UI Automation (#83)
+
+As jornadas (`tests/ControlFS.UnitTests`) conduzem o `AppController`, mas não veem o que o WinUI desenha. O
+`build/Test-UiAutomation.ps1` abre o portátil de verdade, manda teclas para a janela (`SendKeys`) e confere pela
+**UI Automation** do Windows (`System.Windows.Automation`, do .NET Framework, no Windows PowerShell 5.1) o que está na
+tela. Escolha: UIA puro, sem WinAppDriver (parado e sem suporte ao WinUI 3 atual) nem dependências novas; roda no
+workflow **Smoke** (manual), no passo "UI Automation", e deixa `uia-results.json`, logs e prints de falha em
+`smoke-uia` no artefato `smoke-evidence`.
+
+O foco do ControlFS é lógico (o anel é desenhado; o foco do XAML fica na raiz para receber o teclado), então o
+`ModalView` marca o texto focado com AutomationIds estáveis: `ControlFS.ModalTitle`, `ControlFS.FocusedOption`,
+`ControlFS.FocusedKey` e `ControlFS.KeyboardField` (nome "Texto: …, cursor …", o mesmo que o Narrador lê). O que é
+conferido: F10 abre o Menu com uma opção focada; ↓ e PageDown movem o anel; **Sair abre a confirmação com o foco em
+Cancelar** (opção segura); F10 dentro dela não abre outro modal; → e ← movem o foco; Esc fecha sem sair; Ctrl+F numa
+pasta abre o teclado virtual com as teclas desenhadas e uma focada; ↓ move o foco; texto digitado aparece no campo; Esc
+fecha. Para rodar num Windows: `powershell -File build\Test-UiAutomation.ps1 -Exe <ControlFS.exe> -OutDir uia`
+(não mexa no mouse e no teclado enquanto roda; o script cria `ControlFS_Data` ao lado do .exe, sem verificar
+atualizações).
+
+Não cobre: controle físico (SDL), Narrador de verdade, TV/DPI reais (ver as outras seções).
+
 ## Layout responsivo (#36)
 
 A faixa de layout sai do tamanho **efetivo** da janela (pixels ÷ escala do Windows) e do tamanho do texto do Windows

@@ -51,6 +51,8 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   só de desenvolvimento que monta as telas reais em 1280×720, 1280×800, 1920×1080 e 3840×2160 (várias escalas), gera
   a galeria dos glifos dos botões e fecha; os PNGs saem no artefato `smoke-screens` (ver `docs/TESTING.md`). Sem o
   argumento o app se comporta normalmente; com ele usa só uma pasta temporária e não acessa a rede.
+- Testes de UI Automation: o `smoke.yml` também roda `build/Test-UiAutomation.ps1` no portátil (foco, confirmação com
+  foco na opção segura, escopo do modal, teclado virtual; ver `docs/TESTING.md`). Não há workflow novo nem gatilho novo.
 - Velocidade: CI e smoke usam cache de pacotes NuGet (chave nos lock files) e não rodam em mudanças só de documentação
   (`**/*.md`, `docs/**`). A release não usa cache (pacotes sempre baixados na hora). O teste dos arquivos já
   publicados (`smoke.yml` com `release_tag`) roda em versões estáveis ou sob demanda — a release já abre o app antes
