@@ -93,6 +93,14 @@ não é confiável.
 - A imagem é reduzida na decodificação para no máximo 4096 px no lado maior (~64 MB por imagem em memória).
 - A visualização de texto é somente leitura e lê no máximo 2 MB / 10.000 linhas (`TextPreview`, Core); arquivos binários
   são recusados; scripts podem ser lidos pelo menu sem nunca serem executados (`TextPreviewTests`, `TextPreviewJourneyTests`).
+- A visualização de PDF (#59) só desenha pixels com o `Windows.Data.Pdf`, uma página por vez, fora da thread de UI:
+  links, anexos, formulários e JavaScript do PDF nunca são abertos nem executados, e nada é entregue a outro programa.
+  Antes de abrir, `PdfPreviewPolicy` (Core) exige a assinatura `%PDF-` no primeiro 1 KB (um executável renomeado para
+  `.pdf` nunca chega ao renderizador) e o limite de 200 MB. Cada página é desenhada com no máximo 3072 px no lado maior
+  (~36 MB), só as primeiras 5.000 páginas são navegáveis e abrir ou desenhar tem prazo de 20 s: um PDF feito para
+  travar o renderizador vira erro na tela (`PdfPreviewJourneyTests`, `PdfRendererIntegrationTests`). A senha de um PDF
+  protegido é digitada no campo mascarado, sem sugestões, usada só para abrir e nunca guardada. O arquivo fica aberto
+  compartilhado (leitura, escrita, exclusão) enquanto a visualização durar e é fechado ao sair.
 - Arquivos dentro de compactados não são visualizados.
 
 ## Atualizações automáticas

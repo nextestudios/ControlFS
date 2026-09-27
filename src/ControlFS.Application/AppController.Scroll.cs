@@ -40,9 +40,9 @@ public sealed partial class AppController
                 if (dy != 0) text.ScrollBy(dy);
                 else text.ShiftColumns(dx * TextPreviewModal.ScrollColumns);
                 return text.Top != top || text.Column != column;
-            case ImagePreviewModal image when image.ZoomIndex > 0:
+            case ZoomablePreviewModal image when image.ZoomIndex > 0: // imagem ou PDF com zoom
                 var (x, y) = (image.CenterX, image.CenterY);
-                image.Pan(dx * ImagePreviewModal.ScrollPan, dy * ImagePreviewModal.ScrollPan);
+                image.Pan(dx * ZoomablePreviewModal.ScrollPan, dy * ZoomablePreviewModal.ScrollPan);
                 return image.CenterX != x || image.CenterY != y;
             case DialogModal or AboutModal when dy != 0:
                 ModalBodyScrollRequested?.Invoke(dy); // a tela rola o corpo no lugar, sem refazer o modal

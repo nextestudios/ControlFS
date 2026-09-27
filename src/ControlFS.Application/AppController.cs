@@ -373,6 +373,7 @@ public sealed partial class AppController
             case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
             case ControllerTestModal test: HandleControllerTest(test, action); break;
             case ImagePreviewModal preview: HandleImagePreview(preview, action); break;
+            case PdfPreviewModal pdf: HandlePdfPreview(pdf, action); break;
             case TextPreviewModal text: HandleTextPreview(text, action); break;
         }
     }

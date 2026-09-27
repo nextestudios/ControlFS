@@ -21,6 +21,18 @@ public sealed record PreviewLimits
     /// <summary>Linhas mostradas de um arquivo de texto.</summary>
     public int MaxTextLines { get; init; } = 10_000;
 
+    /// <summary>Tamanho máximo de um PDF.</summary>
+    public long MaxPdfBytes { get; init; } = 200L * 1024 * 1024;
+
+    /// <summary>Páginas navegáveis de um PDF (as demais não são desenhadas; a tela avisa).</summary>
+    public int MaxPdfPages { get; init; } = 5_000;
+
+    /// <summary>Lado maior de uma página desenhada: nítida com zoom numa TV 4K e ~36 MB por página no máximo.</summary>
+    public int PdfRenderSide { get; init; } = 3072;
+
+    /// <summary>Tempo máximo para abrir ou desenhar uma página: um PDF feito para travar o renderizador vira erro, não trava a tela.</summary>
+    public TimeSpan PdfTimeout { get; init; } = TimeSpan.FromSeconds(20);
+
     public static PreviewLimits Default { get; } = new();
 }
 

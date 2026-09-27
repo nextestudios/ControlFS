@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Visualizações de mídia com as APIs do próprio Windows (Windows.Data.Pdf, Windows.Graphics.Imaging): tudo local, fora
+    da thread de UI e com limites. Alvo -windows para usar as projeções WinRT; compila fora do Windows, só roda nele.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>ControlFS.Infrastructure.Media</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+  </ItemGroup>
+</Project>
