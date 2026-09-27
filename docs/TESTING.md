@@ -95,6 +95,12 @@ Ainda manual, num aparelho real:
 - [ ] Caminho inexistente mostra "Pasta não encontrada" no teclado, sem fechá-lo; corrigir e Concluir navega.
 - [ ] Teclado físico: colar com Ctrl+V um caminho copiado com "Copiar como caminho" do Explorador (com aspas) funciona.
 
+## Tamanho de pasta (#55)
+
+- [ ] Propriedades → Calcular tamanho numa pasta grande (ex.: C:\Windows\WinSxS): a lista e o controle continuam
+      respondendo; Leste cancela em menos de um segundo e mostra o parcial.
+- [ ] O total bate com Propriedades do Explorador ("Tamanho", não "Tamanho em disco") para uma pasta comum.
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item

@@ -53,6 +53,20 @@ public sealed class TestFileSystem(string root) : IFileSystemProvider
         }
     }
 
+    /// <summary>Segura o cálculo de tamanho até ser cancelado: torna observável o cancelamento.</summary>
+    public bool HoldMeasureUntilCancelled { get; set; }
+
+    public FolderSize MeasureFolder(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken)
+    {
+        if (HoldMeasureUntilCancelled)
+        {
+            progress?.Report(new FolderSize(1, 1, 0, [], 0));
+            cancellationToken.WaitHandle.WaitOne();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        return _real.MeasureFolder(path, progress, cancellationToken);
+    }
+
     public string? GetParent(string path) => _real.GetParent(path);
 
     public bool DirectoryExists(string path) => _real.DirectoryExists(path);

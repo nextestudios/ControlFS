@@ -65,67 +65,56 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
 
     public IEnumerable<SearchResult> Search(SearchRequest request, CancellationToken cancellationToken)
     {
-        // Uma pasta por vez, em largura (resultados mais rasos primeiro). Sem RecurseSubdirectories: a descida é
-        // decidida aqui, para nunca atravessar junções, links simbólicos ou outros pontos de nova análise.
-        var options = new EnumerationOptions
-        {
-            IgnoreInaccessible = false,
-            RecurseSubdirectories = false,
-            AttributesToSkip = 0,
-            ReturnSpecialDirectories = false,
-        };
+        // Resultados mais rasos primeiro; a descida (nunca em junções ou links) é decidida pelo TreeWalker.
         var root = Path.GetFullPath(request.RootPath);
         var rootName = Path.GetFileName(Path.TrimEndingDirectorySeparator(root)) is { Length: > 0 } name ? name : root;
-        var pending = new Queue<string>();
-        pending.Enqueue(root);
-        while (pending.Count > 0)
+        foreach (var step in TreeWalker.Walk(root, request.IncludeSubfolders, cancellationToken,
+            (info, attrs) => request.IncludeHidden || !(IsHidden(info, attrs) || (attrs & FileAttributes.System) != 0)))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var folder = pending.Dequeue();
-            var relative = Path.GetRelativePath(root, folder);
-            var foundIn = relative == "." ? rootName : Path.Join(rootName, relative);
-            IEnumerator<FileSystemInfo>? items = null;
-            try { items = new DirectoryInfo(folder).EnumerateFileSystemInfos("*", options).GetEnumerator(); }
-            catch (Exception ex) when (IsUnreadable(ex)) { }
-            if (items is null)
+            if (step.Info is not { } info)
             {
-                yield return SearchResult.Skipped(folder);
+                yield return SearchResult.Skipped(step.Folder);
                 continue;
             }
-            var unreadable = false;
-            using (items)
-            {
-                while (true)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    FileSystemInfo info;
-                    FileAttributes attrs;
-                    try
-                    {
-                        if (!items.MoveNext()) break;
-                        info = items.Current;
-                        attrs = info.Attributes;
-                    }
-                    catch (Exception ex) when (IsUnreadable(ex))
-                    {
-                        unreadable = true;
-                        break;
-                    }
-                    var hidden = IsHidden(info, attrs);
-                    var system = (attrs & FileAttributes.System) != 0;
-                    if (!request.IncludeHidden && (hidden || system)) continue;
-                    var isDir = (attrs & FileAttributes.Directory) != 0;
-                    var isLink = (attrs & FileAttributes.ReparsePoint) != 0;
-                    if (SearchQuery.Matches(info.Name, request.Query))
-                        yield return SearchResult.Found(ToEntry(info, attrs, info.FullName, hidden, system) with { FoundIn = foundIn });
-                    if (isDir && !isLink && request.IncludeSubfolders) pending.Enqueue(info.FullName);
-                }
-            }
-            if (unreadable) yield return SearchResult.Skipped(folder);
+            if (!SearchQuery.Matches(info.Name, request.Query)) continue;
+            var relative = Path.GetRelativePath(root, step.Folder);
+            var foundIn = relative == "." ? rootName : Path.Join(rootName, relative);
+            var hidden = IsHidden(info, step.Attributes);
+            var system = (step.Attributes & FileAttributes.System) != 0;
+            yield return SearchResult.Found(ToEntry(info, step.Attributes, info.FullName, hidden, system) with { FoundIn = foundIn });
         }
     }
 
-    private static bool IsUnreadable(Exception ex) => ex is UnauthorizedAccessException or IOException;
+    public FolderSize MeasureFolder(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken)
+    {
+        var root = Path.GetFullPath(path);
+        if (!Directory.Exists(root)) throw new FileOperationException(OperationErrorKind.DestinationUnavailable, "A pasta não existe ou não está acessível.");
+        long bytes = 0, files = 0, folders = 0;
+        var links = 0;
+        var inaccessible = new List<string>();
+        var lastReport = Environment.TickCount64;
+        foreach (var step in TreeWalker.Walk(root, recurse: true, cancellationToken))
+        {
+            if (step.Info is not { } info)
+            {
+                inaccessible.Add(step.Folder);
+                continue;
+            }
+            if ((step.Attributes & FileAttributes.ReparsePoint) != 0 && step.IsDirectory) links++;
+            else if (step.IsDirectory) folders++;
+            else
+            {
+                files++;
+                bytes += SafeLength(info as FileInfo) ?? 0;
+            }
+            if (progress is not null && Environment.TickCount64 - lastReport >= 100)
+            {
+                lastReport = Environment.TickCount64;
+                progress.Report(new FolderSize(bytes, files, folders, [.. inaccessible], links));
+            }
+        }
+        return new FolderSize(bytes, files, folders, inaccessible, links);
+    }
 
     private static bool IsHidden(FileSystemInfo info, FileAttributes attrs) =>
         (attrs & FileAttributes.Hidden) != 0 || (!OperatingSystem.IsWindows() && info.Name.StartsWith('.'));

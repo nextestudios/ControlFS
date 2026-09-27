@@ -18,6 +18,12 @@ public interface IFileSystemProvider
     /// </summary>
     IEnumerable<SearchResult> Search(SearchRequest request, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Tamanho recursivo de <paramref name="path"/>. Síncrono (quem chama roda fora da thread de UI), cancelável e com
+    /// parciais em <paramref name="progress"/>. Mesmas regras de descida da busca: nunca segue junções nem links.
+    /// </summary>
+    FolderSize MeasureFolder(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken);
+
     string? GetParent(string path);
 
     bool DirectoryExists(string path);

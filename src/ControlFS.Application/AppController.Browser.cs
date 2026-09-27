@@ -621,7 +621,9 @@ public sealed partial class AppController
         if (entry.IsReparsePoint) attributes.Add("link/ponto de nova análise");
         if (attributes.Count > 0) lines.Add(("Atributos", string.Join(", ", attributes)));
         if (entry.Detail is { } detail) lines.Add(("Detalhes", detail));
-        ShowMessage("Propriedades", lines);
+        var dialog = ShowMessage("Propriedades", lines);
+        if (entry is { IsContainer: true, Kind: not EntryKind.ArchiveDirectory, FullPath: { } folder })
+            dialog.Options.Insert(0, new DialogOption("Calcular tamanho", DialogOptionKind.Primary, () => StartFolderSize(dialog, lines, folder)));
     }
 
     private void ShowArchiveEntryInfo(FileEntry entry)
