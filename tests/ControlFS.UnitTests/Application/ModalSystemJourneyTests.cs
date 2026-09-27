@@ -208,8 +208,8 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.NavigateRight); // borda: fica
         Assert.Equal("Excluir…", Focused());
         Assert.Same(menu, app.TopModal); // Direita num bloco nunca escolhe
-        app.TakeAnnouncement();
         d.Press(InputAction.NavigateLeft);
+        app.TakeAnnouncement();
         d.Press(InputAction.NavigateRight);
         Assert.Contains("Excluir…, ação perigosa, ação rápida 7 de 7", app.TakeAnnouncement(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown); // última linha: entra na lista
