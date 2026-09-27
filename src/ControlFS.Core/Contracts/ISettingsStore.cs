@@ -2,6 +2,13 @@ using ControlFS.Core.Actions;
 
 namespace ControlFS.Core.Contracts;
 
+/// <summary>Densidade da lista: confortável (duas linhas, para TV) ou compacta (uma linha com colunas).</summary>
+public enum ListDensity
+{
+    Comfortable,
+    Compact,
+}
+
 public sealed record AppSettings
 {
     /// <summary>2: <see cref="ButtonLabelStyle.Automatic"/> passou a ser o padrão (antes era Generic).</summary>
@@ -12,6 +19,7 @@ public sealed record AppSettings
     public ButtonLabelStyle LabelStyle { get; init; } = ButtonLabelStyle.Automatic;
     public bool ShowHidden { get; init; }
     public bool ReducedMotion { get; init; }
+    public ListDensity Density { get; init; } = ListDensity.Comfortable;
     public string? LastLocation { get; init; }
     public IReadOnlyList<string> Favorites { get; init; } = [];
 

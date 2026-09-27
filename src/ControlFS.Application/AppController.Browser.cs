@@ -42,8 +42,18 @@ public sealed partial class AppController
                 if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
                 else ShowAppMenu();
                 break;
+            case InputAction.ChangeView: ToggleDensity(); break;
         }
     }
+
+    /// <summary>Alterna a densidade da lista (preferência salva): confortável para TV, compacta para ver mais itens.</summary>
+    internal void ToggleDensity()
+    {
+        UpdateSettings(s => s with { Density = s.Density == ListDensity.Compact ? ListDensity.Comfortable : ListDensity.Compact });
+        StatusMessage = $"Lista {DensityName(Settings.Density)}.";
+    }
+
+    private static string DensityName(ListDensity density) => density == ListDensity.Compact ? "compacta" : "confortável";
 
     private void OpenEntry(PaneState pane, FileEntry entry)
     {
@@ -368,6 +378,8 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
             }),
+            new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
+                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data."),
             new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 ? "Nenhuma operação nesta sessão." : null),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),

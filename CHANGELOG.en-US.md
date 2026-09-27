@@ -18,6 +18,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ### Improvements
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)
+- **Clearer list:** focused, marked and cut items each have their own shape (ring; stripe + checked box + "Marked"; scissors + "Cut"), readable without relying on color. Type, size and date always appear in the same order, and the focused item shows its full name. New **list density** in the menu (comfortable, or compact with columns), saved between sessions. (#28)
 
 ## [0.3.0-alpha.1]
 ### What's new

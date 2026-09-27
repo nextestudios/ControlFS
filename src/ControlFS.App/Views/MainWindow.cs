@@ -3,6 +3,7 @@ using ControlFS.App.Navigation;
 using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Updates;
@@ -32,6 +33,7 @@ public sealed class MainWindow : Window
     private readonly IconLoader _icons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
     private HashSet<string> _specialFolders = new(StringComparer.OrdinalIgnoreCase);
+    private ListDensity _density = ListDensity.Comfortable;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
@@ -99,6 +101,13 @@ public sealed class MainWindow : Window
         _app.Changed += Render;
         _app.ExitRequested += Close;
         _input.StatusChanged += Render;
+        _app.SettingsChanged += settings =>
+        {
+            if (settings.Density == _density) return;
+            _density = settings.Density;
+            _list.ItemTemplate = EntryRowTemplate.Create(_density);
+            _shownItems = null; // recria as linhas no novo modelo
+        };
         _app.Start();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
         AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
@@ -130,7 +139,7 @@ public sealed class MainWindow : Window
         layout.Children.Add(header);
 
         // Lista
-        _list.ItemTemplate = EntryRowTemplate.Create();
+        _list.ItemTemplate = EntryRowTemplate.Create(_density);
         _list.SelectionMode = ListViewSelectionMode.None; // o foco é desenhado pelo anel da linha (mesmo token dos menus)
         _list.IsItemClickEnabled = true;
         _list.IsTabStop = false;

@@ -28,6 +28,12 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 
+## A lista
+
+O item focado tem um anel de destaque e mostra o nome inteiro (até três linhas); os outros nomes longos terminam em "…". Itens marcados ganham uma faixa à esquerda, uma caixa marcada e "Marcado"; recortados ganham uma tesoura e "Recortado" e ficam esmaecidos até serem colados; entradas de compactados com senha mostram um cadeado. Nada disso depende só de cor.
+
+Menu → **Densidade da lista** alterna entre **confortável** (duas linhas por item, para a TV) e **compacta** (uma linha com colunas de tipo, tamanho e data). A escolha fica salva.
+
 ## Favoritos
 
 Aperte **Norte** numa pasta (ou em qualquer lugar dentro dela, para "esta pasta") e escolha **Adicionar aos favoritos**. Os favoritos aparecem primeiro na tela inicial e no seletor de pastas (Start → "Ir para outro local"), a um botão de distância ao copiar, mover ou extrair. Na tela inicial, Norte num favorito oferece **Mover favorito para cima/baixo** e **Remover dos favoritos**. Um favorito cuja pasta sumiu (por exemplo, pendrive desconectado) aparece como indisponível e continua na lista até você removê-lo.

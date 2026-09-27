@@ -31,6 +31,16 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
 
+## Lista: estados e densidade (#28)
+
+- [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item
+      recortado e entrada com senha são distinguíveis.
+- [ ] Nome longo: com reticências fora do foco; no foco aparece inteiro (até três linhas) sem sobrepor a linha seguinte.
+- [ ] Menu → Densidade da lista: compacta mostra colunas de tipo, tamanho e data alinhadas; confortável volta às duas
+      linhas. Fechar e abrir o app mantém a escolha.
+- [ ] 1280×720, 1920×1080 e 4K (100–200%) nas duas densidades: colunas não se sobrepõem e o texto fica legível a 3 m
+      no modo confortável.
+
 ## Ícones do Windows (#24)
 
 - [ ] Início: Downloads, Documentos, Área de trabalho, Imagens, Vídeos e Músicas com o ícone próprio; unidade fixa, pendrive,

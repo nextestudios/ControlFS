@@ -18,6 +18,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ### Melhorias
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)
+- **Lista mais clara:** focado, marcado e recortado têm formas próprias (anel; faixa + caixa marcada + "Marcado"; tesoura + "Recortado"), legíveis sem depender de cor. Tipo, tamanho e data aparecem sempre na mesma ordem, e o item focado mostra o nome inteiro. Nova **densidade da lista** no menu (confortável ou compacta com colunas), salva entre sessões. (#28)
 
 ## [0.3.0-alpha.1]
 ### Novidades
