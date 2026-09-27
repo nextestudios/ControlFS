@@ -6,6 +6,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 ### What's new
 - **New on-screen keyboard layout**: text field on top, four character rows, a function row (`⇧`, `ABC`, `@#:`, space, `⌫`) and a bottom row with the cursor, `…` (accents, language and clear) and a wide **Done**. (#41)
 - Button labels automatically follow the family of the controller in use (Xbox, PlayStation, Nintendo or generic), detected from the type SDL reports and the vendor. Pressing a button on another controller hands control to it and switches the labels without restarting. The menu still lets you pin a style. (#32)
+- **Retry** an operation that failed, finished with warnings or was cancelled: Menu → Operations → pick the operation → Retry. The original request is planned again from scratch. (#18)
 
 ## [0.3.0-alpha.1]
 ### What's new

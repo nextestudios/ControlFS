@@ -130,6 +130,8 @@ public sealed partial class AppController
             var interaction = new UiConflictInteraction(this, op);
             return await _archives.ExtractAsync(request, interaction, progress, ct);
         });
+        // A senha nunca é guardada: tentar de novo pergunta outra vez, se for preciso.
+        item.RetryAction = () => Track(StartExtractionAsync(plan));
         _extractions[item.Id] = plan;
         StatusMessage = "Extração iniciada. Você pode continuar navegando.";
         RaiseChanged();

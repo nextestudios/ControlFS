@@ -110,6 +110,7 @@ public sealed partial class AppController
             var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
             return await _archives.CompressAsync(request, progress, ct);
         });
+        item.RetryAction = () => EnqueueCompression(plan, UniqueNames.Next(fileName, n => File.Exists(Path.Join(plan.Folder, n)) || Directory.Exists(Path.Join(plan.Folder, n))));
         _compressions[item.Id] = plan;
         StatusMessage = "Compactação iniciada. Você pode continuar navegando.";
         RaiseChanged();

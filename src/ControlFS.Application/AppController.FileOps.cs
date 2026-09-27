@@ -66,9 +66,25 @@ public sealed partial class AppController
                 var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
                 return await _fileOps.RunAsync(request, new UiConflictInteraction(this, op), progress, ct);
             });
+        item.RetryAction = () => RetryFileOperation(plan);
         _fileOperations[item.Id] = plan;
         StatusMessage = $"{title}: iniciado. Você pode continuar navegando.";
         RaiseChanged();
+    }
+
+    /// <summary>
+    /// Tentar de novo: o motor replaneja o pedido original do zero. Itens que já não existem na origem (ex.: movidos ou
+    /// excluídos na tentativa anterior) ficam de fora; o que já está no destino passa pelo fluxo normal de conflitos.
+    /// </summary>
+    private void RetryFileOperation(FileOperationPlan plan)
+    {
+        var remaining = plan.Sources.Where(p => File.Exists(p) || Directory.Exists(p)).ToList();
+        if (remaining.Count == 0)
+        {
+            ShowMessage("Nada para tentar de novo", [], "Os itens da operação não existem mais na origem.");
+            return;
+        }
+        EnqueueFileOperation(plan with { Sources = remaining });
     }
 
     private void OnFileOperationCompleted(FileOperationPlan plan, OperationResult result)

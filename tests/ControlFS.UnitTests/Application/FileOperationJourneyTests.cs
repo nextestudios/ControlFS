@@ -1,6 +1,7 @@
 using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Windows.FileSystem;
@@ -80,5 +81,39 @@ public class FileOperationJourneyTests : IDisposable
         Assert.False(File.Exists(_tmp.Sub("a.txt")));
         Assert.Equal("b", File.ReadAllText(_tmp.Sub("Destino", "b.txt")));
         Assert.DoesNotContain(d.App.Browser.List.Items, i => i.Name is "a.txt" or "b.txt"); // lista atualizada
+    });
+
+    [Fact]
+    public void Retry_a_copy_that_failed_on_a_locked_file_after_unlocking_it() => UiContext.Run(async () =>
+    {
+        File.WriteAllText(_tmp.Sub("travado.txt"), "conteúdo");
+        _tmp.MakeDir("Destino");
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        var locked = new FileStream(_tmp.Sub("travado.txt"), FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("travado.txt")], _tmp.Sub("Destino"), _tmp.Path);
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        var failed = await d.WaitDialog("Copiar: concluído com avisos");
+        Assert.False(File.Exists(_tmp.Sub("Destino", "travado.txt")));
+        d.ChooseOption(failed, "Fechar");
+        locked.Dispose();
+
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Operações");
+        await d.ChooseMenu("Copiar 1 item(ns)");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)"), "Tentar de novo");
+        await d.WaitDialog("Copiar: concluído");
+        Assert.Equal("conteúdo", File.ReadAllText(_tmp.Sub("Destino", "travado.txt")));
+
+        // Concluída sem avisos: não há o que tentar de novo.
+        var retried = d.App.Operations.Items[^1];
+        Assert.Equal(OperationState.Completed, retried.State);
+        Assert.False(retried.CanRetry);
+        d.ChooseOption((DialogModal)d.App.TopModal!, "Fechar");
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Operações");
+        await d.ChooseMenu("Copiar 1 item(ns) — concluída");
+        Assert.DoesNotContain((await d.WaitDialog("Copiar 1 item(ns)")).Options, o => o.Label == "Tentar de novo");
     });
 }
