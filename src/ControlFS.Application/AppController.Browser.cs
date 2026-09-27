@@ -413,6 +413,7 @@ public sealed partial class AppController
                 Operations.Cancel(op);
                 CloseModal(dialog);
             }));
+        AddRetryFailedOption(dialog, op);
         if (op.CanRetry)
             dialog.Options.Add(new DialogOption("Tentar de novo", DialogOptionKind.Primary, () =>
             {

@@ -31,6 +31,15 @@ public sealed class OperationItem
     /// <summary>Tentar de novo só vale para operações encerradas que não terminaram limpas.</summary>
     public bool CanRetry => RetryAction is not null && State is OperationState.Failed or OperationState.CompletedWithWarnings or OperationState.Cancelled;
 
+    /// <summary>Refaz só os itens que falharam ou não foram processados. Definido ao concluir, a partir do resultado por item.</summary>
+    internal Action? RetryFailedAction { get; set; }
+
+    /// <summary>Quantos itens a opção "tentar de novo só as falhas" refaria.</summary>
+    public int RetryableItemCount { get; internal set; }
+
+    public bool CanRetryFailed => RetryFailedAction is not null && RetryableItemCount > 0 &&
+        State is OperationState.Failed or OperationState.CompletedWithWarnings or OperationState.Cancelled;
+
     internal bool TryTransition(OperationState to)
     {
         if (!OperationStateMachine.CanTransition(State, to)) return false;
@@ -95,6 +104,14 @@ public sealed class OperationQueue
     {
         if (!item.CanRetry) return false;
         item.RetryAction!();
+        return true;
+    }
+
+    /// <summary>Refaz só os itens com falha ou não processados, como uma nova operação.</summary>
+    public bool RetryFailed(OperationItem item)
+    {
+        if (!item.CanRetryFailed) return false;
+        item.RetryFailedAction!();
         return true;
     }
 

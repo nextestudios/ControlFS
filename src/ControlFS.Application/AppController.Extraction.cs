@@ -141,7 +141,7 @@ public sealed partial class AppController
     {
         if (item.Result is { } fileResult && _fileOperations.Remove(item.Id, out var fileOp))
         {
-            OnFileOperationCompleted(fileOp, fileResult);
+            OnFileOperationCompleted(item, fileOp, fileResult);
             return;
         }
         if (item.Result is { } compressed && _compressions.Remove(item.Id, out var compressPlan))
@@ -155,10 +155,28 @@ public sealed partial class AppController
             AskPassword(plan, result.Error == OperationErrorKind.WrongPassword ? "Senha incorreta. Tente novamente." : null);
             return;
         }
+        SetExtractionRetryFailed(item, plan, result);
         ShowExtractionResult(item, plan, result);
         if (Browser.Location is PhysicalLocation here && result.Destination is { } dest &&
             (string.Equals(Path.GetDirectoryName(dest), here.FullPath, StringComparison.OrdinalIgnoreCase) || string.Equals(dest, here.FullPath, StringComparison.OrdinalIgnoreCase)))
             Refresh(Browser);
+    }
+
+    /// <summary>
+    /// Refazer só as entradas que falharam ou não foram processadas, na mesma pasta onde a extração gravou (sem criar
+    /// outra pasta dedicada). Entradas bloqueadas por segurança nunca entram.
+    /// </summary>
+    private void SetExtractionRetryFailed(OperationItem item, ExtractionPlan plan, OperationResult result)
+    {
+        var entries = result.Items.Where(i => i.NeedsRetry)
+            .Select(i => plan.BasePath.Length > 0 ? plan.BasePath.TrimEnd('/') + "/" + i.Name : i.Name)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        var retryPlan = result.Destination is { } root
+            ? plan with { Destination = root, Dedicated = false, Selected = entries }
+            : plan with { Selected = entries };
+        item.RetryableItemCount = entries.Count;
+        item.RetryFailedAction = () => Track(StartExtractionAsync(retryPlan));
     }
 
     private void ShowExtractionResult(OperationItem item, ExtractionPlan plan, OperationResult result)
@@ -189,6 +207,7 @@ public sealed partial class AppController
 
         var dialog = new DialogModal(title, lines) { Message = result.Message };
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        AddRetryFailedOption(dialog, item);
         if (result.Destination is { } dest && Directory.Exists(dest))
         {
             dialog.Options.Add(new DialogOption("Abrir pasta extraída", DialogOptionKind.Primary, () =>

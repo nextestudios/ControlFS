@@ -10,7 +10,8 @@ public sealed partial class AppController
     private readonly IFileOperationService? _fileOps;
     private readonly Dictionary<int, FileOperationPlan> _fileOperations = [];
 
-    internal sealed record FileOperationPlan(FileOperationKind Kind, IReadOnlyList<string> Sources, string? Destination, bool Permanent, string SourceFolder);
+    internal sealed record FileOperationPlan(FileOperationKind Kind, IReadOnlyList<string> Sources, string? Destination, bool Permanent, string SourceFolder,
+        IReadOnlyList<string>? LeftoverSourceFolders = null);
 
     private string? FileOpsUnavailable => _fileOps is null ? "Operações de arquivo indisponíveis nesta compilação." : null;
 
@@ -55,40 +56,128 @@ public sealed partial class AppController
         PushModal(dialog);
     }
 
-    internal void EnqueueFileOperation(FileOperationPlan plan)
+    internal void EnqueueFileOperation(FileOperationPlan plan) => EnqueueFileOperation(plan, [plan], retryOfFailed: false);
+
+    /// <summary>
+    /// Enfileira uma operação. <paramref name="parts"/> tem mais de um pedido só ao refazer itens com falha que iam para
+    /// pastas diferentes (ex.: subpastas do destino); eles rodam em sequência como uma única operação.
+    /// </summary>
+    private void EnqueueFileOperation(FileOperationPlan summary, List<FileOperationPlan> parts, bool retryOfFailed)
     {
         if (_fileOps is null) return;
-        var request = new FileOperationRequest { Kind = plan.Kind, Sources = plan.Sources, DestinationFolder = plan.Destination, Permanent = plan.Permanent };
-        var title = $"{Verb(plan.Kind, plan.Permanent)} {plan.Sources.Count} item(ns)";
-        var item = Operations.Enqueue(title, plan.Kind == FileOperationKind.Copy ? OperationKind.Copy : plan.Kind == FileOperationKind.Move ? OperationKind.Move : OperationKind.Delete,
-            async (op, ct) =>
+        var count = parts.Sum(p => p.Sources.Count);
+        var title = retryOfFailed
+            ? $"{Verb(summary.Kind, summary.Permanent)} {count} item(ns) com falha"
+            : $"{Verb(summary.Kind, summary.Permanent)} {count} item(ns)";
+        var kind = summary.Kind switch
+        {
+            FileOperationKind.Copy => OperationKind.Copy,
+            FileOperationKind.Move => OperationKind.Move,
+            _ => OperationKind.Delete,
+        };
+        var item = Operations.Enqueue(title, kind, async (op, ct) =>
+        {
+            var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
+            var interaction = new UiConflictInteraction(this, op);
+            if (parts.Count == 1) return await _fileOps.RunAsync(ToRequest(parts[0]), interaction, progress, ct);
+            var results = new List<OperationResult>();
+            foreach (var part in parts)
             {
-                var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
-                return await _fileOps.RunAsync(request, new UiConflictInteraction(this, op), progress, ct);
-            });
-        item.RetryAction = () => RetryFileOperation(plan);
-        _fileOperations[item.Id] = plan;
+                if (results.LastOrDefault() is { FinalState: OperationState.Cancelled } or { FinalState: OperationState.Failed, Items.Count: > 0 })
+                {
+                    results.Add(new OperationResult(OperationState.Cancelled, part.Sources.Select(s => NotProcessed(s, part.Destination)).ToList()));
+                    continue;
+                }
+                results.Add(await _fileOps.RunAsync(ToRequest(part), interaction, progress, ct));
+            }
+            return Merge(results, parts);
+        });
+        item.RetryAction = () => RetryFileOperation(summary, parts, retryOfFailed);
+        _fileOperations[item.Id] = summary with { Sources = parts.SelectMany(p => p.Sources).ToList() };
         StatusMessage = $"{title}: iniciado. Você pode continuar navegando.";
         RaiseChanged();
+    }
+
+    private static FileOperationRequest ToRequest(FileOperationPlan plan) => new()
+    {
+        Kind = plan.Kind,
+        Sources = plan.Sources,
+        DestinationFolder = plan.Destination,
+        Permanent = plan.Permanent,
+        LeftoverSourceFolders = plan.LeftoverSourceFolders,
+    };
+
+    private static ItemResult NotProcessed(string source, string? target) =>
+        new(Path.GetFileName(source), ItemOutcome.NotProcessed, Message: "Não processado.") { SourcePath = source, TargetFolder = target };
+
+    /// <summary>Junta os resultados das partes num resultado único e honesto (o pior estado prevalece).</summary>
+    private static OperationResult Merge(List<OperationResult> results, List<FileOperationPlan> parts)
+    {
+        var items = new List<ItemResult>();
+        for (var i = 0; i < results.Count; i++)
+        {
+            var r = results[i];
+            // Falha no planejamento (ex.: a origem sumiu): os itens da parte aparecem como falha, com o motivo.
+            if (r.Items.Count == 0 && r.FinalState == OperationState.Failed)
+                items.AddRange(parts[i].Sources.Select(s => new ItemResult(Path.GetFileName(s), ItemOutcome.Failed, r.Error, r.Message) { SourcePath = s, TargetFolder = parts[i].Destination }));
+            else items.AddRange(r.Items);
+        }
+        var stop = results.FirstOrDefault(r => r.FinalState is OperationState.Cancelled || (r.FinalState is OperationState.Failed && r.Items.Count > 0));
+        if (stop is not null) return new OperationResult(stop.FinalState, items, stop.Error, stop.Message);
+        var warnings = items.Any(i => i.Outcome is ItemOutcome.Failed or ItemOutcome.Blocked or ItemOutcome.NotProcessed);
+        return new OperationResult(warnings ? OperationState.CompletedWithWarnings : OperationState.Completed, items);
     }
 
     /// <summary>
     /// Tentar de novo: o motor replaneja o pedido original do zero. Itens que já não existem na origem (ex.: movidos ou
     /// excluídos na tentativa anterior) ficam de fora; o que já está no destino passa pelo fluxo normal de conflitos.
     /// </summary>
-    private void RetryFileOperation(FileOperationPlan plan)
+    private void RetryFileOperation(FileOperationPlan summary, IReadOnlyList<FileOperationPlan> parts, bool retryOfFailed)
     {
-        var remaining = plan.Sources.Where(p => File.Exists(p) || Directory.Exists(p)).ToList();
+        var remaining = parts
+            .Select(p => p with { Sources = p.Sources.Where(s => File.Exists(s) || Directory.Exists(s)).ToList() })
+            .Where(p => p.Sources.Count > 0)
+            .ToList();
         if (remaining.Count == 0)
         {
             ShowMessage("Nada para tentar de novo", [], "Os itens da operação não existem mais na origem.");
             return;
         }
-        EnqueueFileOperation(plan with { Sources = remaining });
+        EnqueueFileOperation(summary, remaining, retryOfFailed);
     }
 
-    private void OnFileOperationCompleted(FileOperationPlan plan, OperationResult result)
+    /// <summary>
+    /// Pedidos para refazer só o que falhou ou não foi processado, a partir do resultado por item. O que já deu certo
+    /// nunca é refeito. Uma pasta que só falhou porque algo dentro dela falhou (mover) não é refeita inteira: refazem-se
+    /// os itens de dentro, e ela é removida no fim se tiver ficado vazia.
+    /// </summary>
+    internal static List<FileOperationPlan> FailedItemsPlans(FileOperationPlan plan, OperationResult result)
     {
+        var comparison = StringComparison.OrdinalIgnoreCase;
+        var failed = result.Items.Where(i => i.NeedsRetry && i.SourcePath is not null).ToList();
+        bool Contains(string folder, string path) => path.StartsWith(Path.TrimEndingDirectorySeparator(folder) + Path.DirectorySeparatorChar, comparison);
+        var leftovers = failed.Where(f => failed.Any(o => Contains(f.SourcePath!, o.SourcePath!))).Select(f => f.SourcePath!).ToList();
+        var parts = failed
+            .Where(f => !leftovers.Contains(f.SourcePath!, StringComparer.OrdinalIgnoreCase))
+            .GroupBy(f => plan.Kind == FileOperationKind.Delete ? string.Empty : f.TargetFolder ?? plan.Destination ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            .Select(g => plan with
+            {
+                Sources = g.Select(f => f.SourcePath!).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                Destination = plan.Kind == FileOperationKind.Delete ? null : g.Key,
+                LeftoverSourceFolders = null,
+            })
+            .ToList();
+        if (parts.Count > 0 && plan.Kind == FileOperationKind.Move && leftovers.Count > 0)
+            parts[^1] = parts[^1] with { LeftoverSourceFolders = leftovers.OrderByDescending(l => l.Length).ToList() };
+        return parts;
+    }
+
+    private void OnFileOperationCompleted(OperationItem item, FileOperationPlan plan, OperationResult result)
+    {
+        var retryParts = FailedItemsPlans(plan, result);
+        item.RetryableItemCount = retryParts.Sum(p => p.Sources.Count);
+        item.RetryFailedAction = () => RetryFileOperation(plan, retryParts, retryOfFailed: true);
+
         var verb = Verb(plan.Kind, plan.Permanent);
         var title = result.FinalState switch
         {
@@ -110,6 +199,7 @@ public sealed partial class AppController
         Count("Ignorados", ItemOutcome.Skipped);
         Count("Bloqueados", ItemOutcome.Blocked);
         Count("Falhas", ItemOutcome.Failed);
+        Count("Não processados", ItemOutcome.NotProcessed);
         foreach (var problem in result.Items.Where(i => i.Outcome is ItemOutcome.Failed or ItemOutcome.Blocked).Take(6))
             lines.Add(("• " + problem.Name, problem.Message ?? problem.Error.ToString()));
         foreach (var skipped in result.Items.Where(i => i.Outcome == ItemOutcome.Skipped && i.Error == OperationErrorKind.LinkOrSpecialBlocked).Take(3))
@@ -117,6 +207,7 @@ public sealed partial class AppController
 
         var dialog = new DialogModal(title, lines) { Message = result.Message };
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        AddRetryFailedOption(dialog, item);
         if (plan.Destination is { } dest && Directory.Exists(dest) && plan.Kind != FileOperationKind.Delete &&
             !(Browser.Location is PhysicalLocation current && string.Equals(current.FullPath, dest, StringComparison.OrdinalIgnoreCase)))
         {
@@ -142,4 +233,15 @@ public sealed partial class AppController
 
     /// <summary>Gancho para estados que dependem do fim de uma operação (ex.: área de transferência).</summary>
     partial void OnFileOperationFinished(FileOperationPlan plan, OperationResult result);
+
+    /// <summary>"Tentar de novo só as falhas" no resultado de uma operação, quando há itens para refazer.</summary>
+    private void AddRetryFailedOption(DialogModal dialog, OperationItem item)
+    {
+        if (!item.CanRetryFailed) return;
+        dialog.Options.Add(new DialogOption($"Tentar de novo só as falhas ({item.RetryableItemCount})", DialogOptionKind.Primary, () =>
+        {
+            CloseModal(dialog);
+            Operations.RetryFailed(item);
+        }));
+    }
 }

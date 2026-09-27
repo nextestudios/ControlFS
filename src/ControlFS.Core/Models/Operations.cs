@@ -60,7 +60,18 @@ public enum ItemOutcome
     NotProcessed,
 }
 
-public sealed record ItemResult(string Name, ItemOutcome Outcome, OperationErrorKind Error = OperationErrorKind.None, string? Message = null, string? FinalPath = null);
+public sealed record ItemResult(string Name, ItemOutcome Outcome, OperationErrorKind Error = OperationErrorKind.None, string? Message = null, string? FinalPath = null)
+{
+    /// <summary>Item físico de origem (operações de arquivo). Base para "tentar de novo só as falhas".</summary>
+    public string? SourcePath { get; init; }
+
+    /// <summary>Pasta onde o item deveria chegar (operações de arquivo com destino; pode ser uma subpasta do destino).</summary>
+    public string? TargetFolder { get; init; }
+
+    /// <summary>Não chegou ao fim: falhou, não foi processado ou foi interrompido no diálogo de conflito.</summary>
+    public bool NeedsRetry => Outcome is ItemOutcome.Failed or ItemOutcome.NotProcessed ||
+        (Outcome == ItemOutcome.Skipped && Error == OperationErrorKind.Cancelled);
+}
 
 public sealed record OperationProgress(
     string? CurrentItem,

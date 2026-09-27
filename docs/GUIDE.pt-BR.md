@@ -53,6 +53,8 @@ Marque itens com Oeste (ou foque um) → Norte → **Compactar…**. Escolha o n
 
 Menu → **Operações** lista cada cópia, movimentação, exclusão, extração e compactação da sessão. Selecione uma para ver o progresso ou o resultado, ou para cancelá-la enquanto roda. Uma operação que **falhou**, **terminou com avisos** ou foi **cancelada** oferece **Tentar de novo**: o ControlFS planeja o pedido original do zero (itens que não existem mais na origem ficam de fora; o que já chegou ao destino passa pelas perguntas de conflito de sempre). Compactados com senha pedem a senha outra vez.
 
+Quando só alguns itens falharam ou não foram processados (por exemplo, depois de cancelar ou com um arquivo em uso), o diálogo de resultado e os detalhes da operação também oferecem **Tentar de novo só as falhas (N)**: só esses itens rodam de novo, cada um para a pasta aonde deveria chegar; o que já deu certo nunca é copiado, movido ou extraído outra vez, e o novo resultado lista apenas os itens refeitos. Entradas bloqueadas por segurança nunca são refeitas.
+
 ## Abrindo arquivos com o Windows
 
 **Sul** num arquivo que não é compactado abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.

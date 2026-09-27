@@ -118,6 +118,33 @@ public class JourneyTests : IDisposable
     });
 
     [Fact]
+    public void Retry_failed_items_of_a_cancelled_extraction_only_extracts_what_was_left() => UiContext.Run(async () =>
+    {
+        Create(_tmp.Sub("dados.zip"), Text("a.txt", "A"), Text("b.txt", "B"), Text("c.txt", "C"));
+        File.WriteAllText(_tmp.Sub("b.txt"), "existente");
+        var (d, _) = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("dados.zip");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Extrair aqui");
+        d.ChooseOption(await d.WaitDialog("Extrair"), "Extrair");
+        d.ChooseOption(await d.WaitDialog("Já existe"), "Cancelar operação");
+        var cancelled = await d.WaitDialog("Extração cancelada");
+        File.WriteAllText(_tmp.Sub("a.txt"), "editado depois"); // já extraído: não pode ser tocado de novo
+
+        d.ChooseOption(cancelled, "Tentar de novo só as falhas (2)");
+        d.ChooseOption(await d.WaitDialog("Já existe"), "Manter ambos");
+        await d.WaitDialog("Extração concluída");
+
+        var retried = d.App.Operations.Items[^1].Result!;
+        Assert.Equal(["b.txt", "c.txt"], retried.Items.Select(i => i.Name).Order(StringComparer.Ordinal));
+        Assert.Equal("editado depois", File.ReadAllText(_tmp.Sub("a.txt")));
+        Assert.Equal("existente", File.ReadAllText(_tmp.Sub("b.txt")));
+        Assert.Equal("B", File.ReadAllText(_tmp.Sub("b (2).txt")));
+        Assert.Equal("C", File.ReadAllText(_tmp.Sub("c.txt")));
+    });
+
+    [Fact]
     public void Conflict_dialog_back_skips_and_replace_requires_second_confirmation() => UiContext.Run(async () =>
     {
         Create(_tmp.Sub("d.zip"), Text("a.txt", "NOVO"), Text("b.txt", "NOVO"));

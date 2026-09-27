@@ -155,4 +155,23 @@ public class FileOperationServiceTests : IDisposable
         Assert.Equal(OperationState.Cancelled, result.FinalState);
         Assert.Empty(Directory.EnumerateFiles(dest, "*", SearchOption.AllDirectories));
     }
+
+    [Fact]
+    public async Task Cancelling_at_a_conflict_reports_the_remaining_items_as_not_processed_with_their_sources()
+    {
+        var src = _tmp.MakeDir("origem");
+        var dest = _tmp.MakeDir("destino");
+        foreach (var name in new[] { "a.txt", "b.txt", "c.txt" }) File.WriteAllText(Path.Join(src, name), name);
+        File.WriteAllText(Path.Join(dest, "a.txt"), "existente");
+
+        var result = await Run(FileOperationKind.Copy, dest, new Scripted(new ConflictDecision(ConflictChoice.Cancel)), default,
+            Path.Join(src, "a.txt"), Path.Join(src, "b.txt"), Path.Join(src, "c.txt"));
+
+        Assert.Equal(OperationState.Cancelled, result.FinalState);
+        Assert.True(result.Items[0].NeedsRetry, "o item interrompido no conflito também deve ser refeito");
+        Assert.All(result.Items.Skip(1), i => Assert.Equal(ItemOutcome.NotProcessed, i.Outcome));
+        Assert.Equal([Path.Join(src, "a.txt"), Path.Join(src, "b.txt"), Path.Join(src, "c.txt")], result.Items.Select(i => i.SourcePath));
+        Assert.All(result.Items, i => Assert.Equal(dest, i.TargetFolder));
+        Assert.False(File.Exists(Path.Join(dest, "b.txt")));
+    }
 }
