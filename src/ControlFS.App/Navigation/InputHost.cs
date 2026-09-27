@@ -34,6 +34,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly Dictionary<string, InputDeviceInfo> _devices = [];
     private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
     private readonly Dictionary<string, LongPressTranslator> _longPress = [];
+    private readonly Dictionary<string, AnalogScroller> _scrollers = [];
 
     public InputHost(AppController app, DispatcherQueue queue)
     {
@@ -49,6 +50,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         app.ModalContextChanged += () =>
         {
             Router.LatchHeld();
+            foreach (var scroller in _scrollers.Values) scroller.Latch(); // a rolagem não passa para o modal novo
             Router.AllowAutomaticActivation = app.TopModal?.IsSensitive != true;
         };
         app.SettingsChanged += s =>
@@ -120,7 +122,8 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     {
         _active = active;
         if (active) Router.Resume();
-        else Router.Suspend(); // o temporizador lento continua detectando conexão/desconexão
+        else Router.Suspend();
+        foreach (var scroller in _scrollers.Values) scroller.Reset(); // o temporizador lento continua detectando conexão/desconexão
         UpdateCadence();
     }
 
@@ -132,16 +135,30 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
             _app.TickControllers();
             foreach (var (key, longPress) in _longPress.ToArray())
                 longPress.Tick(_clock.Elapsed, (control, pressed) => OnControl(key, control, pressed, _clock.Elapsed));
+            foreach (var (key, scroller) in _scrollers.ToArray())
+                scroller.Tick(_clock.Elapsed, action => Router.OnScroll(key, action));
         }
         Router.Tick(_clock.Elapsed);
     }
 
     public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp) => Route(deviceKey, control, pressed, null);
 
+    /// <summary>
+    /// Analógico direito (#175): rola a superfície ativa. Pressionar o analógico (R3, lista ↔ grade) trava a rolagem até
+    /// ele voltar ao centro, então apertar com uma leve inclinação não rola.
+    /// </summary>
+    public void OnScrollStick(string deviceKey, double x, double y, TimeSpan timestamp)
+    {
+        if (Router.IsSuspended || !_devices.ContainsKey(deviceKey)) return;
+        if (!_scrollers.TryGetValue(deviceKey, out var scroller)) _scrollers[deviceKey] = scroller = new AnalogScroller(InputSettings.Default);
+        scroller.Update(x, y, _clock.Elapsed);
+    }
+
     /// <summary><paramref name="raw"/>: a entrada crua que um perfil traduziu neste controle (só para a tela de teste).</summary>
     private void Route(string deviceKey, PhysicalControl control, bool pressed, RawInputEvent? raw)
     {
         _devices.TryGetValue(deviceKey, out var device);
+        if (control == PhysicalControl.RightStickClick && pressed && _scrollers.TryGetValue(deviceKey, out var scroller)) scroller.Latch();
         // Volta às legendas do controle quando ele é usado de novo depois do teclado (antes da ação, para o
         // Render dela já sair com os glifos certos).
         if (pressed && Router.ActiveDeviceKey == deviceKey && device is not null) _app.SetActiveController(device.Family);
@@ -208,6 +225,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _devices.Remove(deviceKey);
         _translators.Remove(deviceKey);
         _longPress.Remove(deviceKey);
+        _scrollers.Remove(deviceKey);
         _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
         _app.OnControllersChanged();

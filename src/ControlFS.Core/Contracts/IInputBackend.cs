@@ -29,6 +29,14 @@ public interface IInputSink
 
     void OnDeviceRemoved(string deviceKey);
 
+    /// <summary>
+    /// Posição do analógico direito de um gamepad (x, y em -1..1; y negativo = para cima), para a rolagem contínua (#175).
+    /// Enviada a cada mudança; a zona morta e a taxa ficam com o <see cref="AnalogScroller"/>.
+    /// </summary>
+    void OnScrollStick(string deviceKey, double x, double y, TimeSpan timestamp)
+    {
+    }
+
     /// <summary>Entrada crua de um joystick sem perfil de gamepad (botões, hats e eixos), para o assistente e perfis salvos.</summary>
     void OnRawInput(string deviceKey, RawInputEvent input, TimeSpan timestamp)
     {

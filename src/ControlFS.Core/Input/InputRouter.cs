@@ -53,20 +53,7 @@ public sealed class InputRouter
     {
         if (IsSuspended) return;
 
-        if (IsActiveDeviceLocked && !string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return;
-
-        if (ActiveDeviceKey is null)
-        {
-            if (!pressed || !AllowAutomaticActivation) return;
-            SetActive(deviceKey);
-        }
-        else if (!string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal))
-        {
-            // Somente um controle comanda a UI. Outro assume com uma nova pressão, desde que o ativo não esteja
-            // segurando nada: evita disputa entre dois controles e ação dupla de um par físico+virtual.
-            if (!pressed || !AllowAutomaticActivation || _held.Count > 0 || _latched.Count > 0) return;
-            SetActive(deviceKey);
-        }
+        if (!Arbitrate(deviceKey, pressed)) return;
 
         if (!pressed)
         {
@@ -81,6 +68,39 @@ public sealed class InputRouter
         if (action is null) return;
         _held[control] = new HeldState(action.Value, now + _settings.RepeatInitialDelay, _settings.RepeatStartInterval);
         _emit(action.Value);
+    }
+
+    /// <summary>
+    /// Passo de rolagem do analógico direito (<see cref="AnalogScroller"/>): não passa pelo mapa nem repete (a taxa já vem
+    /// do analógico). Inclinar nunca tira o comando de outro controle (um analógico apoiado ou com drift não "rouba" a UI);
+    /// sem controle ativo, assume como uma pressão.
+    /// </summary>
+    public void OnScroll(string deviceKey, InputAction action)
+    {
+        if (IsSuspended || !action.IsScroll()) return;
+        if (ActiveDeviceKey is not null && !string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return;
+        if (!Arbitrate(deviceKey, pressed: true)) return;
+        _emit(action);
+    }
+
+    /// <summary>
+    /// Só um controle comanda a UI. Outro assume com uma nova pressão, desde que o ativo não esteja segurando nada: evita
+    /// disputa entre dois controles e ação dupla de um par físico+virtual. Falso: o evento deste dispositivo é ignorado.
+    /// </summary>
+    private bool Arbitrate(string deviceKey, bool pressed)
+    {
+        if (IsActiveDeviceLocked && !string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return false;
+        if (ActiveDeviceKey is null)
+        {
+            if (!pressed || !AllowAutomaticActivation) return false;
+            SetActive(deviceKey);
+        }
+        else if (!string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal))
+        {
+            if (!pressed || !AllowAutomaticActivation || _held.Count > 0 || _latched.Count > 0) return false;
+            SetActive(deviceKey);
+        }
+        return true;
     }
 
     /// <summary>Chamado periodicamente pelo laço de entrada; gera repetições de navegação.</summary>

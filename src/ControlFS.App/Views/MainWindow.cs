@@ -177,6 +177,7 @@ public sealed class MainWindow : Window
 
         _app.Changed += Render;
         _app.ExitRequested += Close;
+        _app.ModalBodyScrollRequested += ModalView.ScrollBody;
         _app.CopyText = CopyToClipboard;
         _input.StatusChanged += Render;
         _app.SettingsChanged += settings =>

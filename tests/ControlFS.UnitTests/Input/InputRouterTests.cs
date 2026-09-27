@@ -175,4 +175,20 @@ public class InputRouterTests
         Assert.Equal("✕", ButtonGlyphs.For(PhysicalControl.South, ControllerFamily.PlayStation));
         Assert.Equal(PhysicalControl.East, new ActionMap(ConfirmBackConvention.EastConfirms).ControlFor(InputAction.Confirm));
     }
+
+    [Fact]
+    public void Right_stick_scroll_never_takes_over_from_the_active_controller_and_stops_when_suspended()
+    {
+        var r = Router();
+        r.OnScroll("p2", InputAction.ScrollDown); // sem controle ativo: assume como uma pressão
+        Assert.Equal("p2", r.ActiveDeviceKey);
+        r.OnControl("p2", PhysicalControl.South, true, Ms(0));
+        r.OnControl("p2", PhysicalControl.South, false, Ms(10));
+        r.OnControl("p1", PhysicalControl.South, true, Ms(20)); // p1 assume com uma pressão
+        r.OnScroll("p2", InputAction.ScrollUp); // analógico apoiado/drift no outro controle: ignorado
+        r.Suspend();
+        r.OnScroll("p1", InputAction.ScrollDown);
+        Assert.Equal([InputAction.ScrollDown, InputAction.Confirm, InputAction.Confirm], _actions);
+        Assert.Equal("p1", r.ActiveDeviceKey);
+    }
 }
