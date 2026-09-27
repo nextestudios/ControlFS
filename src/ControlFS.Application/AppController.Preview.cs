@@ -11,7 +11,10 @@ public sealed partial class AppController
 {
     public PreviewLimits PreviewLimits { get; set; } = PreviewLimits.Default;
 
-    /// <summary>Tempo sem entrada até as legendas da visualização de imagem se recolherem (#171).</summary>
+    /// <summary>Renderizador de PDF (#59); null: a visualização de PDF não existe nesta compilação.</summary>
+    public IPdfRenderer? PdfRenderer { get; init; }
+
+    /// <summary>Tempo sem entrada até as legendas das visualizações com zoom se recolherem (#171).</summary>
     public static readonly TimeSpan PreviewHintsFadeAfter = TimeSpan.FromSeconds(4);
 
     internal static bool IsPreviewableImage(FileEntry entry) =>
@@ -122,10 +125,10 @@ public sealed partial class AppController
         LoadPreviewImage(modal);
     }
 
-    /// <summary>Chamado pelo laço de entrada: recolhe as legendas da imagem depois de um tempo sem entrada.</summary>
+    /// <summary>Chamado pelo laço de entrada: recolhe as legendas da imagem/PDF depois de um tempo sem entrada.</summary>
     private void TickPreviews()
     {
-        if (TopModal is ImagePreviewModal { HintsFaded: false } preview && Clock() - preview.LastInput >= PreviewHintsFadeAfter)
+        if (TopModal is ZoomablePreviewModal { HintsFaded: false } preview && Clock() - preview.LastInput >= PreviewHintsFadeAfter)
         {
             preview.HintsFaded = true;
             RaiseChanged();
@@ -209,5 +212,220 @@ public sealed partial class AppController
             case InputAction.NavigateRight: modal.ShiftColumns(TextPreviewModal.ColumnStep); break;
             case InputAction.Confirm: modal.Monospace = !modal.Monospace; break;
         }
+    }
+
+    // ---------- PDF (#59) ----------
+
+    internal static bool IsPdf(FileEntry entry) =>
+        entry is { Kind: EntryKind.File, FullPath: not null, IsBlocked: false } && PdfPreviewPolicy.IsPdfExtension(entry.Extension);
+
+    private string? PdfPreviewUnavailable => PdfRenderer is null ? "Visualização de PDF indisponível nesta compilação." : null;
+
+    internal void OpenPdfPreview(PaneState pane, FileEntry entry)
+    {
+        if (PdfRenderer is null || entry.FullPath is null) return;
+        var modal = new PdfPreviewModal(pane, entry) { LastInput = Clock() };
+        PushModal(modal);
+        LoadPdf(modal, null);
+    }
+
+    /// <summary>Confere o arquivo, abre o documento (com a senha digitada, se houver) e desenha a primeira página.</summary>
+    private void LoadPdf(PdfPreviewModal modal, string? password)
+    {
+        var cts = BeginPdfWork(modal);
+        modal.IsLoading = true;
+        modal.NeedsPassword = false;
+        Track(LoadPdfAsync(modal, modal.Entry.FullPath!, password, modal.Generation, cts.Token));
+    }
+
+    private CancellationTokenSource BeginPdfWork(PdfPreviewModal modal)
+    {
+        modal.Loading?.Cancel();
+        modal.Loading?.Dispose();
+        var cts = modal.Loading = new CancellationTokenSource(PreviewLimits.PdfTimeout);
+        modal.Generation++;
+        modal.Error = null;
+        return cts;
+    }
+
+    private async Task LoadPdfAsync(PdfPreviewModal modal, string path, string? password, int generation, CancellationToken cancellationToken)
+    {
+        var limits = PreviewLimits;
+        try
+        {
+            await Task.Run(() =>
+            {
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 4096);
+                PdfPreviewPolicy.Inspect(stream, limits);
+            }, cancellationToken);
+            var document = await PdfRenderer!.OpenAsync(path, password, cancellationToken);
+            if (generation != modal.Generation || modal.IsClosed)
+            {
+                document.Dispose();
+                return;
+            }
+            modal.Document?.Dispose();
+            modal.Document = document;
+            modal.TotalPages = document.PageCount;
+            modal.PageCount = Math.Min(document.PageCount, limits.MaxPdfPages);
+            modal.PageIndex = 0;
+            if (modal.PageCount == 0)
+            {
+                modal.Error = "Este PDF não tem páginas.";
+                modal.IsLoading = false;
+                RaiseChanged();
+                return;
+            }
+        }
+        catch (Exception ex) when (generation == modal.Generation && !modal.IsClosed && PdfError(modal, ex, cancellationToken))
+        {
+            modal.IsLoading = false;
+            RaiseChanged();
+            return;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        RenderPdfPage(modal);
+    }
+
+    /// <summary>Traduz a falha para a tela; false quando é só um cancelamento pedido (fechar, trocar de página).</summary>
+    private bool PdfError(PdfPreviewModal modal, Exception ex, CancellationToken cancellationToken)
+    {
+        switch (ex)
+        {
+            case OperationCanceledException when cancellationToken.IsCancellationRequested:
+                // Mesma geração e aberto: foi o prazo (PdfTimeout) que venceu. O arquivo não trava a tela, vira erro.
+                modal.Error = "O PDF demorou demais para abrir ou desenhar esta página.";
+                return true;
+            case OperationCanceledException:
+                return false;
+            case PdfPasswordException password:
+                modal.NeedsPassword = true;
+                modal.Error = password.Message;
+                return true;
+            case PreviewException preview:
+                modal.Error = preview.Message;
+                return true;
+            case IOException or UnauthorizedAccessException:
+                modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+                return true;
+            default:
+                modal.Error = "Não foi possível mostrar este PDF.";
+                return true;
+        }
+    }
+
+    private void RenderPdfPage(PdfPreviewModal modal)
+    {
+        if (modal.Document is not { } document) return;
+        var cts = BeginPdfWork(modal);
+        modal.Page = null;
+        modal.IsLoading = true;
+        modal.ResetView();
+        Track(RenderPdfPageAsync(modal, document, modal.PageIndex, modal.Generation, cts.Token));
+    }
+
+    private async Task RenderPdfPageAsync(PdfPreviewModal modal, IPdfDocument document, int index, int generation, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var page = await document.RenderPageAsync(index, PreviewLimits.PdfRenderSide, cancellationToken);
+            if (generation != modal.Generation || modal.IsClosed) return;
+            modal.Page = page;
+        }
+        catch (Exception ex) when (generation == modal.Generation && !modal.IsClosed && PdfError(modal, ex, cancellationToken))
+        {
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        if (generation != modal.Generation || modal.IsClosed) return;
+        modal.IsLoading = false;
+        RaiseChanged();
+    }
+
+    private void HandlePdfPreview(PdfPreviewModal modal, InputAction action)
+    {
+        modal.LastInput = Clock();
+        modal.HintsFaded = false;
+        if (modal.NeedsPassword)
+        {
+            if (action == InputAction.Confirm) AskPdfPassword(modal);
+            else if (action == InputAction.Back) ClosePdfPreview(modal);
+            return;
+        }
+        var zoomed = modal.ZoomIndex > 0;
+        switch (action)
+        {
+            case InputAction.Back:
+                ClosePdfPreview(modal);
+                break;
+            case InputAction.PreviousRegion:
+            case InputAction.NavigateLeft when !zoomed:
+                StepPdfPage(modal, -1);
+                break;
+            case InputAction.NextRegion:
+            case InputAction.NavigateRight when !zoomed:
+                StepPdfPage(modal, 1);
+                break;
+            case InputAction.NavigateLeft: modal.Pan(-1, 0); break;
+            case InputAction.NavigateRight: modal.Pan(1, 0); break;
+            case InputAction.NavigateUp: modal.Pan(0, -1); break;
+            case InputAction.NavigateDown: modal.Pan(0, 1); break;
+            case InputAction.PageDown: if (modal.Page is not null) modal.ChangeZoom(1); break;
+            case InputAction.PageUp: modal.ChangeZoom(-1); break;
+            case InputAction.Confirm: modal.ResetView(); break;
+        }
+    }
+
+    private void StepPdfPage(PdfPreviewModal modal, int delta)
+    {
+        if (modal.Document is null) return;
+        var target = modal.PageIndex + delta;
+        if (target < 0 || target >= modal.PageCount)
+        {
+            StatusMessage = delta < 0 ? "Esta é a primeira página."
+                : modal.TotalPages > modal.PageCount ? $"Limite de {modal.PageCount} páginas nesta visualização; abra no aplicativo padrão para ver o resto."
+                : "Esta é a última página.";
+            return;
+        }
+        modal.PageIndex = target;
+        RenderPdfPage(modal);
+    }
+
+    /// <summary>Senha pelo teclado virtual (campo mascarado, sem sugestões); nunca é guardada.</summary>
+    private void AskPdfPassword(PdfPreviewModal modal)
+    {
+        var keyboard = new Core.Text.VirtualKeyboard(Core.Text.TextFieldKind.Password, $"Senha de {modal.Entry.Name}");
+        KeyboardModal? prompt = null;
+        prompt = new KeyboardModal(keyboard, k =>
+        {
+            if (k.Length == 0)
+            {
+                k.Reopen("Digite a senha ou cancele.");
+                return Task.CompletedTask;
+            }
+            var secret = k.TakeSecret();
+            CloseModal(prompt!);
+            LoadPdf(modal, secret);
+            return Task.CompletedTask;
+        });
+        PushModal(prompt);
+    }
+
+    /// <summary>Fecha, libera o arquivo e deixa o foco da lista no PDF.</summary>
+    private void ClosePdfPreview(PdfPreviewModal modal)
+    {
+        modal.IsClosed = true;
+        modal.Loading?.Cancel();
+        modal.Generation++;
+        modal.Document?.Dispose();
+        modal.Document = null;
+        modal.Page = null;
+        CloseModal(modal);
+        modal.Pane.List.FocusById(modal.Entry.Id);
     }
 }

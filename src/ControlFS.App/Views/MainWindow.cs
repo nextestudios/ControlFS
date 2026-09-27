@@ -104,7 +104,10 @@ public sealed class MainWindow : Window
         var temporaries = new TemporaryJournal(Path.Join(data, "operations"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(temporaries), settingsStore, _updates, new WindowsShellService(),
             new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries, new JsonOperationHistoryStore(data),
-            new Preview.WicImageDecoder(), new WindowsRecycleBin());
+            new Preview.WicImageDecoder(), new WindowsRecycleBin())
+        {
+            PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
+        };
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);

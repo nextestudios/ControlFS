@@ -21,6 +21,7 @@ Monólito modular desktop. O núcleo não depende de WinUI, SDL3 nem SharpCompre
 | `Infrastructure.Windows` | `LocalFileSystemProvider`, `KnownFolders` (SHGetKnownFolderPath), `JsonSettingsStore`, `FileOperationService`, `PinnedDirectory` (destino preso por handle), `TemporaryJournal` (registro de temporários para limpeza após queda). | Core |
 | `Infrastructure.Archives` | `FormatDetector`, `SharpCompressZipEngine`, `SafeExtractor`, `DestinationGuard`, `Crc32`, `MarkOfTheWeb`, `ArchiveService`. | Core, Infrastructure.Windows (`PinnedDirectory`), SharpCompress |
 | `Infrastructure.Input.Sdl3` | `Sdl3InputBackend` (sem janela SDL). | Core, ppy.SDL3-CS |
+| `Infrastructure.Media` | Visualizações com APIs do Windows (alvo `-windows`): `WindowsPdfRenderer` (Windows.Data.Pdf → pixels). | Core |
 | `App` | Janela WinUI, `InputHost`, views em C#. | todos |
 
 ## Princípios aplicados

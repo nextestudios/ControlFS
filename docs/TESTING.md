@@ -514,6 +514,18 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Legíveis a ~3 m em 1080p e 4K e num portátil 1280×720/800, abrindo a imagem pela grade e pela lista.
 - [ ] Imagem com erro (ex.: bomba de 80+ MP): a mensagem continua inteira visível; Fechar volta à lista.
 
+## Visualização de PDF (#59) — não validado em hardware
+
+- [ ] Sul num PDF real de várias páginas (manual, nota fiscal): a página 1 aparece nítida em 1080p e 4K; LB/RB e
+      Esquerda/Direita trocam de página sem travar; o topo mostra "página N de M".
+- [ ] RT/LT dão zoom até 800% com texto legível a ~3 m; com zoom, o direcional percorre a página; Sul volta a ajustar.
+- [ ] PDF com senha: aparece o aviso, Sul abre o teclado mascarado, senha errada mostra "Senha incorreta." e deixa tentar
+      de novo; a certa abre. A senha não aparece nas sugestões do teclado depois.
+- [ ] PDF com links e anexos: nada abre ao navegar; Leste/B fecha e o foco volta ao PDF na lista.
+- [ ] PDF de 150 MB ou com milhares de páginas: a tela continua respondendo; um `.exe` renomeado para `.pdf` mostra
+      "O conteúdo não é um PDF válido.".
+- [ ] Com o PDF aberto na visualização, dá para renomear/apagar o arquivo no Explorador (o ControlFS não o trava).
+
 ## Visualização de texto (#58)
 
 - [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem

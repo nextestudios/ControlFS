@@ -258,14 +258,62 @@ internal sealed record PendingTestInput(string DeviceKey, int Device, PhysicalCo
 }
 
 /// <summary>
-/// Visualização de imagens da pasta (#57). A decodificação acontece fora da thread de UI e só depois de conferir tamanho e
-/// resolução; nada é executado. Zoom e posição são lógicos: a tela só desenha.
+/// Base das visualizações com zoom (imagem, PDF): zoom e posição são lógicos, a tela só desenha. As legendas se recolhem
+/// depois de um tempo sem entrada (#171).
 /// </summary>
-public sealed class ImagePreviewModal : Modal
+public abstract class ZoomablePreviewModal(string title) : Modal(title)
 {
-    /// <summary>Níveis de zoom sobre a imagem ajustada à tela (1 = inteira na tela).</summary>
+    /// <summary>Níveis de zoom sobre o conteúdo ajustado à tela (1 = inteiro na tela).</summary>
     public static IReadOnlyList<double> ZoomLevels { get; } = [1, 1.5, 2, 3, 4, 6, 8];
 
+    public int ZoomIndex { get; private set; }
+    public double Zoom => ZoomLevels[ZoomIndex];
+
+    /// <summary>Centro da área visível, em frações do conteúdo (0–1). Sempre dentro dele para o zoom atual.</summary>
+    public double CenterX { get; private set; } = 0.5;
+    public double CenterY { get; private set; } = 0.5;
+
+    /// <summary>
+    /// Legendas recolhidas depois de um tempo sem entrada (#171): a tela as esmaece e deixa só Fechar em destaque; qualquer
+    /// entrada as mostra de novo (e ainda faz o que o botão faz).
+    /// </summary>
+    public bool HintsFaded { get; internal set; }
+
+    internal TimeSpan LastInput { get; set; }
+
+    internal int Generation { get; set; }
+    internal CancellationTokenSource? Loading { get; set; }
+
+    internal void ChangeZoom(int delta)
+    {
+        ZoomIndex = Math.Clamp(ZoomIndex + delta, 0, ZoomLevels.Count - 1);
+        Pan(0, 0);
+    }
+
+    /// <summary>Deslize de um passo do analógico direito, em quartos de tela (um passo do D-pad é 1).</summary>
+    public const double ScrollPan = 0.125;
+
+    /// <summary>Move a área visível em passos de 1/4 da tela; nunca sai do conteúdo.</summary>
+    internal void Pan(double dx, double dy)
+    {
+        var half = 0.5 / Zoom;
+        CenterX = Math.Clamp(CenterX + dx * 0.25 / Zoom, half, 1 - half);
+        CenterY = Math.Clamp(CenterY + dy * 0.25 / Zoom, half, 1 - half);
+    }
+
+    internal void ResetView()
+    {
+        ZoomIndex = 0;
+        CenterX = CenterY = 0.5;
+    }
+}
+
+/// <summary>
+/// Visualização de imagens da pasta (#57). A decodificação acontece fora da thread de UI e só depois de conferir tamanho e
+/// resolução; nada é executado.
+/// </summary>
+public sealed class ImagePreviewModal : ZoomablePreviewModal
+{
     internal ImagePreviewModal(PaneState pane, IReadOnlyList<Core.Models.FileEntry> images, int index) : base("Visualizar imagem")
     {
         Icon = ActionIcon.Image;
@@ -285,47 +333,40 @@ public sealed class ImagePreviewModal : Modal
     public Core.Contracts.PreviewImage? Image { get; internal set; }
     public Core.Preview.ImageHeaderInfo? Info { get; internal set; }
     public string? Error { get; internal set; }
+}
 
-    public int ZoomIndex { get; private set; }
-    public double Zoom => ZoomLevels[ZoomIndex];
-
-    /// <summary>Centro da área visível, em frações da imagem (0–1). Sempre dentro da imagem para o zoom atual.</summary>
-    public double CenterX { get; private set; } = 0.5;
-    public double CenterY { get; private set; } = 0.5;
-
-    internal int Generation { get; set; }
-    internal CancellationTokenSource? Loading { get; set; }
-
-    /// <summary>
-    /// Legendas recolhidas depois de um tempo sem entrada (#171): a tela as esmaece e deixa só Fechar em destaque; qualquer
-    /// entrada as mostra de novo (e ainda faz o que o botão faz).
-    /// </summary>
-    public bool HintsFaded { get; internal set; }
-
-    internal TimeSpan LastInput { get; set; }
-
-    internal void ChangeZoom(int delta)
+/// <summary>
+/// Visualização de PDF (#59): uma página por vez, desenhada em pixels pelo Windows fora da thread de UI. Links, anexos,
+/// formulários e scripts nunca são abertos nem executados.
+/// </summary>
+public sealed class PdfPreviewModal : ZoomablePreviewModal
+{
+    internal PdfPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Visualizar PDF")
     {
-        ZoomIndex = Math.Clamp(ZoomIndex + delta, 0, ZoomLevels.Count - 1);
-        Pan(0, 0);
+        Icon = ActionIcon.Pdf;
+        Pane = pane;
+        Entry = entry;
     }
 
-    /// <summary>Deslize de um passo do analógico direito, em quartos de tela (um passo do D-pad é 1).</summary>
-    public const double ScrollPan = 0.125;
+    internal PaneState Pane { get; }
+    public Core.Models.FileEntry Entry { get; }
+    internal Core.Contracts.IPdfDocument? Document { get; set; }
 
-    /// <summary>Move a área visível em passos de 1/4 da tela; nunca sai da imagem.</summary>
-    internal void Pan(double dx, double dy)
-    {
-        var half = 0.5 / Zoom;
-        CenterX = Math.Clamp(CenterX + dx * 0.25 / Zoom, half, 1 - half);
-        CenterY = Math.Clamp(CenterY + dy * 0.25 / Zoom, half, 1 - half);
-    }
+    /// <summary>Páginas navegáveis (limitadas por <see cref="Core.Preview.PreviewLimits.MaxPdfPages"/>).</summary>
+    public int PageCount { get; internal set; }
 
-    internal void ResetView()
-    {
-        ZoomIndex = 0;
-        CenterX = CenterY = 0.5;
-    }
+    /// <summary>Páginas do documento (maior que <see cref="PageCount"/> quando o limite cortou).</summary>
+    public int TotalPages { get; internal set; }
+
+    public int PageIndex { get; internal set; }
+    public bool IsLoading { get; internal set; } = true;
+    public Core.Contracts.PreviewImage? Page { get; internal set; }
+    public string? Error { get; internal set; }
+
+    /// <summary>O PDF pede senha: Confirmar abre o teclado (a senha nunca é guardada).</summary>
+    public bool NeedsPassword { get; internal set; }
+
+    internal bool IsClosed { get; set; }
 }
 
 /// <summary>

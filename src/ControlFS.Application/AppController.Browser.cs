@@ -129,6 +129,7 @@ public sealed partial class AppController
         var format = await Task.Run(() => _archives.Detect(path));
         if (ArchiveFormats.CanExtract(format)) await OpenArchiveAsync(pane, path);
         else if (IsPreviewableImage(entry) && _imageDecoder is not null) OpenImagePreview(pane, entry);
+        else if (IsPdf(entry) && PdfRenderer is not null) OpenPdfPreview(pane, entry);
         else if (OpensAsText(entry)) OpenTextPreview(pane, entry);
         else OpenExternally(entry, path);
     }
@@ -449,6 +450,7 @@ public sealed partial class AppController
             items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable, Icon: ActionIcon.Image, Section: "Abrir"));
+        else if (IsPdf(entry)) items.Add(new MenuItem("Visualizar PDF", () => OpenPdfPreview(pane, entry), PdfPreviewUnavailable, Detail: "Só as páginas; links e anexos nunca abrem.", Icon: ActionIcon.Pdf, Section: "Abrir"));
         else if (!ArchiveFormats.CanExtract(format))
             items.Add(new MenuItem("Visualizar como texto", () => OpenTextPreview(pane, entry), Detail: "Somente leitura; nada é executado.", Icon: ActionIcon.Text, Section: "Abrir"));
         items.Add(new MenuItem(entry.IsSteamGame ? "Jogar…" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
@@ -649,6 +651,7 @@ public sealed partial class AppController
         { IsContainer: true } => ActionIcon.Folder,
         _ when ArchiveFormats.CanExtract(format) => ActionIcon.Archive,
         _ when IsPreviewableImage(entry) => ActionIcon.Image,
+        _ when IsPdf(entry) => ActionIcon.Pdf,
         _ => ActionIcon.File,
     };
 

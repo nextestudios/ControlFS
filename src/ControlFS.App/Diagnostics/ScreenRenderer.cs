@@ -336,6 +336,20 @@ internal static class ScreenRenderer
         ChooseAppMenu(app, "Sobre");
         await CaptureAsync(stage, target, dir, "m9-about", window);
         CloseModals(app);
+
+        // PDF de verdade desenhado pelo Windows.Data.Pdf (#59): página 2 de 2.
+        if (Wanted("mp"))
+        {
+            await FocusAsync(app, stage, "manual.pdf");
+            app.Handle(InputAction.Confirm);
+            if (await WaitForAsync(() => app.TopModal is Application.State.PdfPreviewModal { IsLoading: false }))
+            {
+                app.Handle(InputAction.NextRegion);
+                await WaitForAsync(() => app.TopModal is Application.State.PdfPreviewModal { IsLoading: false });
+                await CaptureAsync(stage, target, dir, "mp-pdf-preview", window);
+            }
+            CloseModals(app);
+        }
         app.GoHome();
     }
 
@@ -376,7 +390,39 @@ internal static class ScreenRenderer
         File.WriteAllText(Path.Join(folder, "relatório.txt"), "Relatório de exemplo.");
         Directory.CreateDirectory(Path.Join(folder, "Pasta removida"));
         File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
+        File.WriteAllBytes(Path.Join(folder, "manual.pdf"), SamplePdf());
         return folder;
+    }
+
+    /// <summary>PDF de duas páginas A4 com texto (Helvetica, fonte padrão de todo leitor) e um retângulo colorido.</summary>
+    private static byte[] SamplePdf()
+    {
+        static string Page(string title, string body, string color) =>
+            $"BT /F1 36 Tf 72 740 Td ({title}) Tj ET BT /F1 16 Tf 72 700 Td ({body}) Tj ET {color} rg 72 360 451 300 re f";
+        string[] contents = [Page("ControlFS", "Pagina 1 de 2", "0 0.6 0.8"), Page("Manual", "Pagina 2 de 2: desenhada pelo Windows.Data.Pdf", "0.9 0.4 0.1")];
+        var objects = new List<string>
+        {
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        };
+        foreach (var content in contents)
+        {
+            objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents {objects.Count + 2} 0 R >>");
+            objects.Add($"<< /Length {content.Length} >>\nstream\n{content}\nendstream");
+        }
+        var pdf = new System.Text.StringBuilder("%PDF-1.4\n");
+        var offsets = new List<int>();
+        for (var i = 0; i < objects.Count; i++)
+        {
+            offsets.Add(pdf.Length);
+            pdf.Append(System.Globalization.CultureInfo.InvariantCulture, $"{i + 1} 0 obj\n{objects[i]}\nendobj\n");
+        }
+        var xref = pdf.Length;
+        pdf.Append(System.Globalization.CultureInfo.InvariantCulture, $"xref\n0 {objects.Count + 1}\n0000000000 65535 f \n");
+        foreach (var offset in offsets) pdf.Append(System.Globalization.CultureInfo.InvariantCulture, $"{offset:D10} 00000 n \n");
+        pdf.Append(System.Globalization.CultureInfo.InvariantCulture, $"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n");
+        return System.Text.Encoding.ASCII.GetBytes(pdf.ToString());
     }
 
     private const string ProtectedZip =

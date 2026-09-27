@@ -91,6 +91,7 @@ public static partial class ModalView
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             ControllerTestModal test => BuildControllerTest(app, test),
             ImagePreviewModal preview => BuildImagePreview(app, preview),
+            PdfPreviewModal pdf => BuildPdfPreview(app, pdf),
             TextPreviewModal text => BuildTextPreview(app, text),
             _ => null,
         };

@@ -107,7 +107,23 @@ public sealed partial class AppController
                 if (preview.Index > 0) hints.Add(new(InputAction.PreviousRegion, "Anterior"));
                 if (preview.Index < preview.Images.Count - 1) hints.Add(new(InputAction.NextRegion, "Próxima"));
                 if (preview.ZoomIndex > 0) hints.Add(new(InputAction.PageUp, "Menos zoom"));
-                if (preview.Image is not null && preview.ZoomIndex < ImagePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
+                if (preview.Image is not null && preview.ZoomIndex < ZoomablePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
+            case PdfPreviewModal { NeedsPassword: true }:
+                hints.Add(new(InputAction.Confirm, "Digitar senha"));
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
+            case PdfPreviewModal pdf:
+                if (pdf.ZoomIndex > 0)
+                {
+                    hints.Add(new(InputAction.NavigateLeft, "Mover"));
+                    hints.Add(new(InputAction.Confirm, "Ajustar à tela"));
+                }
+                if (pdf.Document is not null && pdf.PageIndex > 0) hints.Add(new(InputAction.PreviousRegion, "Página anterior"));
+                if (pdf.Document is not null && pdf.PageIndex < pdf.PageCount - 1) hints.Add(new(InputAction.NextRegion, "Próxima página"));
+                if (pdf.ZoomIndex > 0) hints.Add(new(InputAction.PageUp, "Menos zoom"));
+                if (pdf.Page is not null && pdf.ZoomIndex < ZoomablePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
             case DialogModal dialog:

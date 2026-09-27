@@ -45,65 +45,101 @@ public static partial class ModalView
         if (modal.HintsFaded) details.Add("qualquer botão mostra os comandos");
         var header = Header(entry.Name, modal.Icon, string.Join(" · ", details));
         var (boxWidth, boxHeight) = PreviewBox(app, header);
-        var area = new Grid
-        {
-            Width = boxWidth,
-            Height = boxHeight,
-            Background = new SolidColorBrush(Microsoft.UI.Colors.Black),
-            Clip = new RectangleGeometry { Rect = new Rect(0, 0, boxWidth, boxHeight) },
-            CornerRadius = Theme.RowRadius,
-        };
+        var area = PreviewArea(boxWidth, boxHeight);
         if (modal.Image is { } image)
         {
-            if (!Bitmaps.TryGetValue(image, out var bitmap))
-            {
-                bitmap = new WriteableBitmap(image.Width, image.Height);
-                using (var pixels = bitmap.PixelBuffer.AsStream()) pixels.Write(image.Pixels.Span);
-                bitmap.Invalidate();
-                Bitmaps.AddOrUpdate(image, bitmap);
-            }
-            // Ajusta à área sem ampliar além do tamanho real; o zoom amplia a partir daí, em torno do centro escolhido.
-            var fit = Math.Min(1, Math.Min(boxWidth / image.Width, boxHeight / image.Height));
-            var width = image.Width * fit;
-            var height = image.Height * fit;
-            var view = new Image
-            {
-                Source = bitmap,
-                Width = width,
-                Height = height,
-                Stretch = Stretch.Fill,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                RenderTransform = new CompositeTransform
-                {
-                    CenterX = width / 2,
-                    CenterY = height / 2,
-                    ScaleX = modal.Zoom,
-                    ScaleY = modal.Zoom,
-                    TranslateX = (0.5 - modal.CenterX) * width * modal.Zoom,
-                    TranslateY = (0.5 - modal.CenterY) * height * modal.Zoom,
-                },
-            };
             var described = modal.Info is { } i ? $"{i.Width} por {i.Height} pixels" : string.Empty;
-            AutomationProperties.SetName(view, $"Imagem {entry.Name}, {described}, {modal.Index + 1} de {modal.Images.Count}");
-            area.Children.Add(view);
+            area.Children.Add(ZoomedImage(image, modal, boxWidth, boxHeight, $"Imagem {entry.Name}, {described}, {modal.Index + 1} de {modal.Images.Count}"));
         }
         else
         {
-            var message = modal.IsLoading ? "Carregando imagem…" : "⚠ " + (modal.Error ?? "Não foi possível mostrar esta imagem.");
-            var text = new TextBlock
-            {
-                Text = message,
-                FontSize = Theme.FontBody,
-                Foreground = modal.IsLoading ? Theme.TextMuted : Theme.Danger,
-                TextWrapping = TextWrapping.Wrap,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(Theme.SpaceL),
-            };
-            AutomationProperties.SetLiveSetting(text, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
-            area.Children.Add(text);
+            area.Children.Add(modal.IsLoading ? PreviewMessage("Carregando imagem…", error: false) : PreviewMessage(modal.Error ?? "Não foi possível mostrar esta imagem.", error: true));
         }
+        return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
+    }
+
+    /// <summary>
+    /// Conteúdo decodificado ajustado à área sem ampliar além do tamanho real; o zoom amplia a partir daí, em torno do
+    /// centro escolhido. O bitmap de cada imagem é criado uma vez só (o modal é refeito a cada quadro).
+    /// </summary>
+    private static Image ZoomedImage(PreviewImage image, ZoomablePreviewModal modal, double boxWidth, double boxHeight, string name)
+    {
+        if (!Bitmaps.TryGetValue(image, out var bitmap))
+        {
+            bitmap = new WriteableBitmap(image.Width, image.Height);
+            using (var pixels = bitmap.PixelBuffer.AsStream()) pixels.Write(image.Pixels.Span);
+            bitmap.Invalidate();
+            Bitmaps.AddOrUpdate(image, bitmap);
+        }
+        var fit = Math.Min(1, Math.Min(boxWidth / image.Width, boxHeight / image.Height));
+        var width = image.Width * fit;
+        var height = image.Height * fit;
+        var view = new Image
+        {
+            Source = bitmap,
+            Width = width,
+            Height = height,
+            Stretch = Stretch.Fill,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            RenderTransform = new CompositeTransform
+            {
+                CenterX = width / 2,
+                CenterY = height / 2,
+                ScaleX = modal.Zoom,
+                ScaleY = modal.Zoom,
+                TranslateX = (0.5 - modal.CenterX) * width * modal.Zoom,
+                TranslateY = (0.5 - modal.CenterY) * height * modal.Zoom,
+            },
+        };
+        AutomationProperties.SetName(view, name);
+        return view;
+    }
+
+    /// <summary>Área escura da visualização, recortada nos cantos (o zoom nunca vaza para fora dela).</summary>
+    private static Grid PreviewArea(double width, double height) => new()
+    {
+        Width = width,
+        Height = height,
+        Background = new SolidColorBrush(Microsoft.UI.Colors.Black),
+        Clip = new RectangleGeometry { Rect = new Rect(0, 0, width, height) },
+        CornerRadius = Theme.RowRadius,
+    };
+
+    /// <summary>Aviso no centro da área (carregando, erro); lido pelo Narrador quando muda.</summary>
+    private static TextBlock PreviewMessage(string message, bool error)
+    {
+        var text = new TextBlock
+        {
+            Text = error ? "⚠ " + message : message,
+            FontSize = Theme.FontBody,
+            Foreground = error ? Theme.Danger : Theme.TextMuted,
+            TextWrapping = TextWrapping.Wrap,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(Theme.SpaceL),
+        };
+        AutomationProperties.SetLiveSetting(text, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
+        return text;
+    }
+
+    private static Border BuildPdfPreview(AppController app, PdfPreviewModal modal)
+    {
+        var details = new List<string>();
+        if (modal.PageCount > 0)
+            details.Add(string.Create(CultureInfo.CurrentCulture, $"página {modal.PageIndex + 1} de {modal.PageCount}") +
+                (modal.TotalPages > modal.PageCount ? string.Create(CultureInfo.CurrentCulture, $" (o PDF tem {modal.TotalPages})") : string.Empty));
+        if (modal.Page is not null) details.Add(string.Create(CultureInfo.CurrentCulture, $"zoom {modal.Zoom * 100:0}%"));
+        if (modal.HintsFaded) details.Add("qualquer botão mostra os comandos");
+        var header = Header(modal.Entry.Name, modal.Icon, details.Count > 0 ? string.Join(" · ", details) : null);
+        var (boxWidth, boxHeight) = PreviewBox(app, header);
+        var area = PreviewArea(boxWidth, boxHeight);
+        if (modal.Page is { } page)
+            area.Children.Add(ZoomedImage(page, modal, boxWidth, boxHeight, string.Create(CultureInfo.CurrentCulture, $"PDF {modal.Entry.Name}, página {modal.PageIndex + 1} de {modal.PageCount}")));
+        else if (modal.Error is { } error)
+            area.Children.Add(PreviewMessage(modal.NeedsPassword ? error + " Confirme para digitar a senha." : error, error: true));
+        else
+            area.Children.Add(PreviewMessage(modal.PageCount > 0 ? "Desenhando a página…" : "Abrindo PDF…", error: false));
         return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
     }
 
