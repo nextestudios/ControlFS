@@ -67,7 +67,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** validação com controles reais (#78) e assinatura de código (#84) antes da 1.0 ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** validação com controles reais (#78) e assinatura de código (#84) antes da 1.0 ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Política de assinatura de código (Code signing policy)
 

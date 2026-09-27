@@ -67,7 +67,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** validation on real controllers (#78) and code signing (#84) before 1.0 ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** validation on real controllers (#78) and code signing (#84) before 1.0 ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## Code signing policy
 
