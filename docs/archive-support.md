@@ -20,7 +20,8 @@ SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 | RAR | RAR4, RAR5 | — | `rar/Rar4.rar`, `rar/Rar5.rar` | **validado** | — |
 | RAR | sólido (RAR4 e RAR5) | — | `rar/Rar.solid.rar`, `rar/Rar5.solid.rar` | **validado** | — |
 | RAR | RAR5, arquivos criptografados | `test` | `rar/Rar5.encrypted_filesOnly.rar` | **validado** (sem → pede; errada → recusa; certa → conteúdo correto) | RAR5 criptografado guarda o CRC transformado pela chave: a verificação CRC própria não se aplica. |
-| RAR/7z | lista protegida (cabeçalhos criptografados) | — | nenhuma | implementado (o app pede a senha para listar), **não validado por fixture** | — |
+| RAR | RAR5, lista protegida (cabeçalhos e arquivos criptografados) | `test` | `rar/Rar5.encrypted_filesAndHeader.rar` | **validado** (listar sem senha → pede; errada → "Senha incorreta"; certa → lista e extrai com SHA-256 idêntico aos originais) | RAR4 com cabeçalhos criptografados não tem fixture: não validado. |
+| 7z | LZMA2 + AES, lista protegida (`-mhe=on`) | `certa` | `7z/cabecalho-protegido.7z` | **validado** (listar sem senha → pede; errada → "Senha incorreta" e pede de novo; certa → lista e extrai com conteúdo idêntico) | 7z não tem verificador de senha: uma lista criptografada corrompida também aparece como senha incorreta. |
 | TAR | ustar/PAX/GNU | — | gerada no teste | **validado** (links bloqueados pelo tipo, `../` recusado, nomes acentuados) | Sem CRC por entrada. |
 | TAR.GZ | PAX | — | gerada no teste | **validado** (inclui extração de seleção em uma passada) | Leitura sequencial: listar descomprime o arquivo inteiro. |
 | GZ | arquivo único | — | gerada no teste | **validado** (vira um arquivo, não uma pasta) | Tamanho declarado não é usado (módulo 2³²). |

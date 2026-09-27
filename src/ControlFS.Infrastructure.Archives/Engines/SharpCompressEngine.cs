@@ -38,7 +38,30 @@ public sealed class SharpCompressEngine : IArchiveEngine
         }
         catch (Exception ex) when (ex is not ArchiveAccessException and not OperationCanceledException)
         {
+            // 7z com a lista criptografada não tem verificador de senha: a senha errada só aparece como uma lista ilegível
+            // (CRC do cabeçalho, dados LZMA inválidos). Se sem senha o motor pede uma, o problema é a senha informada.
+            if (password is not null && ex is not CryptographicException && HeadersNeedPassword(archivePath))
+                throw new ArchiveAccessException(OperationErrorKind.WrongPassword, "Senha incorreta (ou lista de arquivos corrompida).", ex);
             throw Translate(ex, password);
+        }
+    }
+
+    /// <summary>A lista de arquivos (cabeçalhos) só pode ser lida com senha?</summary>
+    private static bool HeadersNeedPassword(string archivePath)
+    {
+        try
+        {
+            using var archive = ArchiveFactory.Open(archivePath, new ReaderOptions { LookForHeader = false });
+            _ = archive.Entries.FirstOrDefault();
+            return false;
+        }
+        catch (CryptographicException)
+        {
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return false;
         }
     }
 
@@ -116,7 +139,7 @@ public sealed class SharpCompressEngine : IArchiveEngine
             CanExtractAll: true,
             CanExtractSelection: true,
             CanReadEncryptedPayload: format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar,
-            CanReadEncryptedHeaders: false,
+            CanReadEncryptedHeaders: format is ArchiveFormat.SevenZip or ArchiveFormat.Rar,
             CanReadMultiVolume: false,
             CanVerifyIntegrity: format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar,
             CanCancelCooperatively: true,
