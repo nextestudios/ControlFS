@@ -102,10 +102,15 @@ public sealed class FileListState
         return true;
     }
 
+    /// <summary>Itens que "Marcar todos" marcaria: nunca unidades, pastas especiais ou entradas bloqueadas.</summary>
+    public int SelectableCount => _items.Count(IsSelectable);
+
+    private static bool IsSelectable(FileEntry entry) => entry.Kind is not (EntryKind.Drive or EntryKind.KnownFolder) && !entry.IsBlocked;
+
     public void SelectAll()
     {
         foreach (var i in _items)
-            if (i.Kind is not (EntryKind.Drive or EntryKind.KnownFolder) && !i.IsBlocked) _selected.Add(i.Id);
+            if (IsSelectable(i)) _selected.Add(i.Id);
     }
 
     public void ClearSelection() => _selected.Clear();
