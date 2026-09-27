@@ -339,8 +339,13 @@ public sealed partial class AppController
         {
             case MenuModal menu when menu.Items.Count > 0:
                 menu.FocusIndex = Math.Clamp(menu.FocusIndex, 0, menu.Items.Count - 1);
-                if (!menu.Items[menu.FocusIndex].IsDestructive) return;
-                var safe = menu.Items.ToList().FindIndex(i => !i.IsDestructive);
+                // Nunca começa numa opção perigosa nem numa indisponível (ex.: Colar sem nada copiado): a primeira que
+                // funciona e não apaga nada; sem nenhuma assim, a primeira que não é perigosa.
+                var current = menu.Items[menu.FocusIndex];
+                if (!current.IsDestructive && current.IsEnabled) return;
+                var items = menu.Items.ToList();
+                var safe = items.FindIndex(i => i.IsEnabled && !i.IsDestructive);
+                if (safe < 0 && current.IsDestructive) safe = items.FindIndex(i => !i.IsDestructive);
                 if (safe >= 0) menu.FocusIndex = safe;
                 break;
             case DialogModal dialog when dialog.Options.Count > 0:
