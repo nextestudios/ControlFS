@@ -69,6 +69,7 @@ public enum ActionIcon
     Hidden,
     View,
     Density,
+    DetailsPane,
     Subfolders,
 
     // Operações, histórico e desfazer
@@ -181,6 +182,7 @@ public static class ActionIcons
         ActionIcon.Hidden => "\uE890",
         ActionIcon.View => "\uECA5",
         ActionIcon.Density => "\uE8FD",
+        ActionIcon.DetailsPane => "\uE90D",
         ActionIcon.Subfolders => "\uE8B7",
         ActionIcon.Operations => "\uE895",
         ActionIcon.Undo => "\uE7A7",

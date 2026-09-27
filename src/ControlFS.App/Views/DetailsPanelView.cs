@@ -147,6 +147,7 @@ internal sealed class DetailsPanelView
         {
             Text = entry.IsBlocked ? "" : entry.IsSteamGame ? "\uE7FC" : details.Kind switch
             {
+                DetailsKind.Selection => "\uE762",
                 DetailsKind.Drive => "",
                 DetailsKind.Place when entry.Id == RecycleBinLocation.PlaceId => "",
                 DetailsKind.Place => "",
@@ -157,7 +158,7 @@ internal sealed class DetailsPanelView
             },
             FontFamily = new FontFamily(IconFont),
             FontSize = Math.Round(size * 0.6),
-            Foreground = entry.IsBlocked ? Theme.Danger : details.Kind == DetailsKind.Place ? Theme.Accent : Theme.TextMuted,
+            Foreground = entry.IsBlocked ? Theme.Danger : details.Kind == DetailsKind.Selection ? Theme.Selected : details.Kind == DetailsKind.Place ? Theme.Accent : Theme.TextMuted,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -165,7 +166,7 @@ internal sealed class DetailsPanelView
         cell.Children.Add(fallback);
         cell.Children.Add(image);
         _iconImage = image;
-        _icons.Load(image, fallback, entry.Id == AppController.RecentPlaceId || details.Kind == DetailsKind.ArchiveEntry ? null : IconRequest.For(entry, specialFolders));
+        _icons.Load(image, fallback, entry.Id == AppController.RecentPlaceId || details.Kind is DetailsKind.ArchiveEntry or DetailsKind.Selection ? null : IconRequest.For(entry, specialFolders));
         return cell;
     }
 

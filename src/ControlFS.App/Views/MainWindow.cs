@@ -66,6 +66,7 @@ public sealed class MainWindow : Window
     private readonly IconLoader _detailIcons;
     private readonly DetailsPanelView _details;
     private bool _detailsShown;
+    private bool _detailsFit = true;
     private EntryRowTemplate.ListColumns? _columns;
     private int _shownStatsVersion = -1;
     private readonly GridView _grid = new();
@@ -382,9 +383,16 @@ public sealed class MainWindow : Window
         var rows = _grid.ActualHeight > 0 ? Math.Max(1, (int)Math.Floor(_grid.ActualHeight / height)) : 1;
         if (_grid.ItemsPanelRoot is ItemsWrapGrid panel)
         {
+            var reflow = panel.MaximumRowsOrColumns != columns;
             panel.ItemWidth = width;
             panel.ItemHeight = height;
             panel.MaximumRowsOrColumns = columns;
+            // Colunas mudaram (painel de detalhes entrou/saiu, janela redimensionada): o item focado continua à vista.
+            if (reflow && _shownItems is { } items && _shownFocus >= 0 && _shownFocus < items.Count)
+            {
+                var focused = items[_shownFocus];
+                DispatcherQueue.TryEnqueue(() => _grid.ScrollIntoView(focused));
+            }
         }
         _app.SetGridLayout(columns, rows);
     }
@@ -517,40 +525,82 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// Painel de detalhes: na lista, quando cabe sem espremer a lista (o nome continua legível com as colunas); em
-    /// portáteis e janelas estreitas ele sai e a lista usa a largura toda. A visibilidade é publicada no AppController,
-    /// que só mede/decodifica o item focado com o painel à mostra.
+    /// Painel de detalhes ao lado da lista e da grade (também no início e em Meu computador em cartões). Cada exibição
+    /// tem a sua escolha (Menu → Mostrar/Ocultar painel de detalhes); sem escolha, ele aparece onde cabe sem apertar o
+    /// conteúdo (a lista com o nome legível, a grade com pelo menos duas colunas) e sai em portáteis e janelas estreitas.
+    /// Mostrado pelo menu num espaço apertado, ele estreita e a grade recalcula as colunas com a largura que sobra. A
+    /// visibilidade é publicada no AppController, que só mede/decodifica o item focado com o painel à mostra.
     /// </summary>
     private void RenderDetails()
     {
-        var width = DetailsWidth();
-        var show = _view == ViewMode.List && _listCard.Visibility == Visibility.Visible && width > 0;
-        if (show != _detailsShown)
+        var content = _home.Root.Visibility == Visibility.Visible || ActiveList.Visibility == Visibility.Visible;
+        var (width, fits) = DetailsLayout();
+        var show = content && (_app.DetailsPanelPreference ?? fits);
+        if (show != _detailsShown || fits != _detailsFit)
         {
-            _detailsShown = show;
-            _details.Root.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-            _listCard.Margin = ListCardMargin;
-            DispatcherQueue.TryEnqueue(() => _app.SetDetailsPanelVisible(show)); // fora do Render (o aviso refaz a tela)
+            if (show != _detailsShown)
+            {
+                _detailsShown = show;
+                _details.Root.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                ApplyDetailsSpace();
+            }
+            _detailsFit = fits;
+            DispatcherQueue.TryEnqueue(() => _app.SetDetailsPanelVisible(show, fits)); // fora do Render (o aviso refaz a tela)
         }
         if (!show) return;
-        ((FrameworkElement)_details.Root).Width = width;
+        _details.Root.Width = width;
         _details.Render(_app.Details, _specialFolders);
     }
 
     /// <summary>
-    /// Largura do painel (≈ um quarto da tela, como na referência) ou 0 quando a lista ficaria estreita demais: o nome
-    /// precisa de espaço mesmo sem a coluna de tipo.
+    /// Largura do painel (≈ um quarto da tela, como na referência) e se ele cabe sem apertar o conteúdo: na lista o nome
+    /// precisa de espaço mesmo sem a coluna de tipo; na grade ficam pelo menos duas colunas. Quando não cabe (e o menu
+    /// pediu o painel), ele estreita até o mínimo, deixando uma coluna inteira da grade ou o nome legível na lista.
     /// </summary>
-    private double DetailsWidth()
+    private (double Width, bool Fits) DetailsLayout()
     {
-        var available = Theme.Viewport.Width - (2 * Theme.SpaceL);
         var width = Math.Clamp(Math.Round(Theme.Viewport.Width * 0.24), Theme.Scaled(360), Theme.Scaled(560));
-        var list = available - width - DetailsGap - _list.Padding.Left - _list.Padding.Right;
-        var columns = EntryRowTemplate.Columns(_density, list, mark: true) with { Type = false };
-        return list - columns.FixedWidth >= Theme.Scaled(340) ? width : 0;
+        double room; // largura do conteúdo com o painel à mostra, além do próprio painel
+        double needed; // o mínimo que o conteúdo precisa para não cortar nada essencial
+        bool fits;
+        if (_view == ViewMode.Grid)
+        {
+            var tile = EntryRowTemplate.TileSize(_density).MinWidth + EntryRowTemplate.TileGap;
+            room = Theme.Viewport.Width - Theme.SpaceL - _grid.Padding.Left - GridTrailingGutter(true);
+            fits = room - width >= (2 * tile) - 0.5;
+            needed = tile;
+        }
+        else
+        {
+            room = Theme.Viewport.Width - (2 * Theme.SpaceL) - DetailsGap - _list.Padding.Left - _list.Padding.Right;
+            var columns = EntryRowTemplate.Columns(_density, room - width, mark: true) with { Type = false };
+            fits = room - width - columns.FixedWidth >= Theme.Scaled(340);
+            needed = columns.FixedWidth + Theme.Scaled(340);
+        }
+        if (!fits) width = Math.Max(Theme.Scaled(280), Math.Min(width, Math.Floor(room - needed)));
+        return (width, fits);
     }
 
     private static double DetailsGap => Theme.Space(28);
+
+    /// <summary>Margem direita da grade: a mesma do início, ou só a distância até o painel quando ele está à mostra.</summary>
+    private static double GridTrailingGutter(bool details) =>
+        details ? DetailsGap - (EntryRowTemplate.TileGap / 2) : Theme.SpaceL + Theme.Space(28) - (EntryRowTemplate.TileGap / 2);
+
+    /// <summary>
+    /// O conteúdo cede a coluna do painel: a lista e a grade encolhem (a grade recalcula as colunas ao medir a nova
+    /// largura) e os cartões do início refazem as colunas. Foco, marcação e item em foco continuam os mesmos.
+    /// </summary>
+    private void ApplyDetailsSpace()
+    {
+        _listCard.Margin = ListCardMargin;
+        var span = _detailsShown ? 1 : 2;
+        Grid.SetColumnSpan(_grid, span);
+        Grid.SetColumnSpan(_home.Root, span);
+        var padding = _grid.Padding;
+        _grid.Padding = new Thickness(padding.Left, padding.Top, GridTrailingGutter(_detailsShown), padding.Bottom);
+        _home.SetTrailingGutter(_detailsShown ? DetailsGap : null);
+    }
 
     /// <summary>Margens do cartão da lista (à direita, o espaço até o painel quando ele aparece).</summary>
     private Thickness ListCardMargin => new(Theme.SpaceL, Theme.Space(20), _detailsShown ? DetailsGap : Theme.SpaceL, Theme.Space(24));
@@ -795,6 +845,7 @@ public sealed class MainWindow : Window
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);
         _topBar.ApplyLayout();
         _home.ApplyLayout();
+        _home.SetTrailingGutter(_detailsShown ? DetailsGap : null);
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
         // Lista (fase C): cartão escuro com cantos arredondados, recuado como na referência; linhas quase até a borda.
@@ -806,8 +857,8 @@ public sealed class MainWindow : Window
         _listCard.Padding = new Thickness(0, Theme.Space(6), 0, Theme.Space(10));
         _list.Padding = new Thickness(Theme.Space(10), Theme.Space(6), Theme.Space(10), 0);
         // Grade: cartões alinhados com os do início (margem lateral igual, meia distância entre cartões de cada lado).
-        var gutter = Theme.SpaceL + Theme.Space(28) - (EntryRowTemplate.TileGap / 2);
-        _grid.Padding = new Thickness(gutter, Theme.Space(16), gutter, Theme.Space(16));
+        var gutter = GridTrailingGutter(false);
+        _grid.Padding = new Thickness(gutter, Theme.Space(16), GridTrailingGutter(_detailsShown), Theme.Space(16));
         UpdateListColumns(force: true);
         _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
         _footerBar.BorderThickness = new Thickness(0, Theme.Hairline.Top, 0, 0);

@@ -3,6 +3,7 @@ using ControlFS.Core.Contracts;
 using ControlFS.Core.Icons;
 using ControlFS.Core.Models;
 using ControlFS.Core.Preview;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -16,6 +17,9 @@ public enum DetailsKind
     ArchiveEntry,
     Drive,
     Place,
+
+    /// <summary>Resumo dos itens marcados quando nenhum item está em foco (foco na barra superior ou nas abas).</summary>
+    Selection,
 }
 
 /// <summary>Símbolo de cada linha do painel (a view escolhe o glifo; nunca emoji).</summary>
@@ -62,16 +66,42 @@ public sealed partial class AppController
     private sealed record ArchiveFacts(ArchiveFormat Format, int? Files, bool Encrypted);
 
     /// <summary>
-    /// Publicado pela view: o painel está à mostra (lista com espaço para ele). Só então o item focado é medido, lido ou
-    /// decodificado; com o painel escondido (grade, janela estreita) nada roda.
+    /// Publicado pela view: o painel está à mostra (lista ou grade, com espaço para ele ou escolhido no menu). Só então o
+    /// item focado é medido, lido ou decodificado; com o painel escondido nada roda.
     /// </summary>
     public bool DetailsPanelVisible { get; private set; }
 
-    public void SetDetailsPanelVisible(bool visible)
+    /// <summary>Publicado pela view: o painel cabe ao lado do conteúdo sem apertá-lo (o que o modo automático mostraria).</summary>
+    public bool DetailsPanelFits { get; private set; } = true;
+
+    public void SetDetailsPanelVisible(bool visible, bool? fits = null)
     {
+        if (fits is bool fit) DetailsPanelFits = fit;
         if (DetailsPanelVisible == visible) return;
         DetailsPanelVisible = visible;
         RaiseChanged();
+    }
+
+    /// <summary>
+    /// Escolha do painel para a exibição atual (lista e grade têm a sua, salvas com as preferências). Null = automático:
+    /// a view mostra o painel onde ele cabe sem apertar o conteúdo.
+    /// </summary>
+    public bool? DetailsPanelPreference => IsGrid ? Settings.GridDetails : Settings.ListDetails;
+
+    private string DetailsPanelMenuLabel => DetailsPanelVisible ? "Ocultar painel de detalhes" : "Mostrar painel de detalhes";
+
+    /// <summary>
+    /// Menu → Mostrar/Ocultar painel de detalhes: inverte o que está na tela e guarda a escolha da exibição atual (voltar
+    /// ao que o modo automático mostraria volta ao automático). Foco, marcação e rolagem ficam como estão (só a largura do
+    /// conteúdo muda).
+    /// </summary>
+    internal void ToggleDetailsPanel()
+    {
+        var show = !DetailsPanelVisible;
+        bool? choice = show == DetailsPanelFits ? null : show;
+        UpdateSettings(s => IsGrid ? s with { GridDetails = choice } : s with { ListDetails = choice });
+        StatusMessage = show ? "Painel de detalhes à mostra." : "Painel de detalhes escondido.";
+        SetDetailsPanelVisible(show);
     }
 
     /// <summary>Espera antes de medir/ler o item focado: percorrer a lista rápido não dispara trabalho em cada item.</summary>
@@ -88,8 +118,33 @@ public sealed partial class AppController
         ? PlacesFocus >= 0 && PlacesFocus < Places.Count ? Places[PlacesFocus] : null
         : ActivePane is { IsLoading: false } pane ? pane.List.Focused : null;
 
-    /// <summary>Detalhes do item focado (null: nada focado ou pasta carregando).</summary>
-    public ItemDetails? Details => DetailsTarget is { } entry ? BuildDetails(entry) : null;
+    /// <summary>
+    /// Detalhes do item focado (null: nada focado ou pasta carregando). Com o foco fora da lista (barra superior, abas) e
+    /// itens marcados, o painel resume os marcados sem apontar nenhum como focado.
+    /// </summary>
+    public ItemDetails? Details => Screen != Screen.Home && FocusRegion != PaneRegion.List && ActivePane is { IsLoading: false, List.SelectionCount: > 0 }
+        ? BuildSelectionSummary()
+        : DetailsTarget is { } entry ? BuildDetails(entry) : null;
+
+    /// <summary>Id do item fictício do resumo dos marcados (não existe na lista).</summary>
+    public const string SelectionDetailsId = "controlfs:selection";
+
+    private ItemDetails BuildSelectionSummary()
+    {
+        var marked = ActivePane.List.SelectedEntries;
+        var folders = marked.Count(e => e.IsContainer);
+        var files = marked.Count - folders;
+        var title = Plural.Of(marked.Count, "item marcado", "itens marcados");
+        var lines = new List<DetailsLine>();
+        if (ActivePane.Location is PhysicalLocation { FullPath: var folder }) lines.Add(new DetailsLine(DetailsIcon.Location, "Em", folder));
+        var parts = new List<string>();
+        if (folders > 0) parts.Add(Plural.Of(folders, "pasta", "pastas"));
+        if (files > 0) parts.Add(Plural.Of(files, "arquivo", "arquivos"));
+        lines.Add(new DetailsLine(DetailsIcon.Items, null, string.Join(" e ", parts)));
+        if (files > 0)
+            lines.Add(new DetailsLine(DetailsIcon.Size, folders > 0 ? "Soma dos arquivos" : null, EntryText.Size(marked.Where(e => !e.IsContainer).Sum(e => e.Size ?? 0))));
+        return new ItemDetails(new FileEntry(SelectionDetailsId, title, EntryKind.File), DetailsKind.Selection, title, "Nenhum item em foco", lines);
+    }
 
     private ItemDetails BuildDetails(FileEntry entry)
     {
@@ -97,7 +152,7 @@ public sealed partial class AppController
         var inRecycleBin = Screen != Screen.Home && ActivePane.Location is RecycleBinLocation;
         ItemDetails Done(DetailsKind kind, string subtitle, VolumeInfo? volume = null, PreviewImage? thumbnail = null, string? note = null)
         {
-            AddMarkedSummary(lines);
+            AddMarkedSummary(lines, entry);
             return new ItemDetails(entry, kind, entry.Name, subtitle, lines, volume, thumbnail, note);
         }
 
@@ -238,15 +293,19 @@ public sealed partial class AppController
         if (entry.Modified is { } modified) lines.Add(new DetailsLine(DetailsIcon.Date, "Modificado em", EntryText.FriendlyDate(modified)));
     }
 
-    /// <summary>Itens marcados na pasta: quantos e quanto somam os arquivos (as pastas não são somadas aqui).</summary>
-    private void AddMarkedSummary(List<DetailsLine> lines)
+    /// <summary>
+    /// Itens marcados na pasta: quantos e quanto somam os arquivos (as pastas não são somadas aqui), dizendo se o item em
+    /// foco está entre eles (foco e marcação são coisas diferentes).
+    /// </summary>
+    private void AddMarkedSummary(List<DetailsLine> lines, FileEntry focused)
     {
         if (Screen == Screen.Home || ActivePane.List.SelectionCount == 0) return;
         var marked = ActivePane.List.SelectedEntries;
         var bytes = marked.Where(e => !e.IsContainer).Sum(e => e.Size ?? 0);
         var text = marked.Count == 1 ? "1 item marcado" : string.Create(EntryText.Culture, $"{marked.Count:N0} itens marcados");
         if (bytes > 0) text += " · " + EntryText.Size(bytes) + (marked.Any(e => e.IsContainer) ? " em arquivos" : string.Empty);
-        lines.Add(new DetailsLine(DetailsIcon.Marked, null, text));
+        var focusedMarked = marked.Any(e => e.Id == focused.Id);
+        lines.Add(new DetailsLine(DetailsIcon.Marked, focusedMarked ? "Este item está marcado" : "Este item não está marcado", text));
     }
 
     /// <summary>Arquivos, pastas e bytes declarados sob uma pasta do compactado (a árvore já está na memória).</summary>
@@ -284,7 +343,7 @@ public sealed partial class AppController
     /// </summary>
     private void UpdateDetailsWork()
     {
-        var target = DetailsPanelVisible && !IsGrid ? DetailsTarget : null;
+        var target = DetailsPanelVisible ? DetailsTarget : null;
         var key = target is null ? null : DetailsWorkKey(target);
         if (key == _detailsKey) return;
         _detailsKey = key;

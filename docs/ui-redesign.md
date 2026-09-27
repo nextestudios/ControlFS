@@ -30,7 +30,7 @@ hardware, visual or timing checks that CI can't prove.
 ┌ [ControlFS logo with text] [tabs · RB]                         [controller · operation] ┐  (system title bar above)
 ├ [LB] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira
 ├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
-├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List (+ details panel, C)
+├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List, each + details panel (C; grid #177)
 └ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Lista/Grade
 ```
 
@@ -159,7 +159,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
 | Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |
 | Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem; list column header shows the arrow and sorts on click (C1) | Start; mouse on a column title | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity`, `ListModeJourneyTests::Column_header_follows_…`; Screens `2c` |
-| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List, right side (C2); hidden in grid and on handheld/narrow widths (`MainWindow.DetailsWidth`) | — | `DetailsPanelJourneyTests` (3); Screens `1-home`, `2d`, `2e`, `2f`; Manual "Painel de detalhes (redesenho, fase C2)" |
+| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List and grid (incl. Home/This PC cards), right side (C2, grid #177); automatic = shown where it fits (list: name stays legible; grid: ≥ 2 columns), hidden on handheld/narrow (`MainWindow.DetailsLayout`) | Menu → Mostrar/Ocultar painel de detalhes (per view, `AppSettings.ListDetails`/`GridDetails`, null = automatic) | — | `DetailsPanelJourneyTests` (4); Screens `1-home`, `1c`, `2d`, `2e`, `2f`, `3c`, `3d`; Manual "Painel de detalhes (redesenho, fase C2)", "Painel de detalhes na grade (#177)" |
 | List rows: mark box (focus ≠ marking), icon, name, type ("Pasta do sistema" for Windows folders), size (real sums on Home), friendly date, chevron; compact density with the same columns | content, List (C1) | X marks; mouse on the header box = Marcar todos / Limpar | `ListModeJourneyTests::Friendly_dates_…`, `::Column_header_…`; Screens `1-home`, `2-folder`, `3-folder-compact`; Manual "Lista em colunas (redesenho, fase C1)" |
 | Opening another location focuses its first item; back/up/refresh restore the item | content | South, Right, East, Left | `ListModeJourneyTests::Opening_another_location_…`, `JourneyTests::Back_semantics_…` |
 | Hidden items show/hide (persisted) | Menu → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
@@ -178,7 +178,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Home place: Abrir, favoritos, Mover favorito para cima/baixo; Recentes: Abrir, Limpar, Desligar | Y Ações on Home | `FavoritesJourneyTests`, `RecentsJourneyTests` |
 | Recycle Bin: Restaurar, Excluir permanentemente…, Propriedades, Marcar todos, Atualizar | Y Ações in Lixeira | `RecycleBinJourneyTests` |
 | Search: filters, Outras ações (Mostrar na pasta, Nova busca, Subpastas, Pastas puladas, Cancelar busca, Propriedades) | Y Filtros | `SearchFilterJourneyTests`, `SearchJourneyTests` |
-| Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
+| Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
 | Tab strip: Nova aba, Fechar aba | North on the strip | `TabsJourneyTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |
 

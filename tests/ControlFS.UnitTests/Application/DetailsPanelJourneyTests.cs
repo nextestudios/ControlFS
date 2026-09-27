@@ -82,7 +82,7 @@ public class DetailsPanelJourneyTests : IDisposable
         Assert.Equal("1,2 KB", Value(ready, DetailsIcon.Size));
         Assert.NotNull(Value(ready, DetailsIcon.Date, "Modificado em"));
 
-        // Guardado: voltar ao item não relê o disco; com o painel escondido (ou na grade) nada é medido.
+        // Guardado: voltar ao item não relê o disco; com o painel escondido nada é medido.
         var calls = fs.MeasureCalls;
         await d.FocusItem("A-vazia");
         await d.Idle();
@@ -196,5 +196,81 @@ public class DetailsPanelJourneyTests : IDisposable
         Assert.Equal("1000 GB", Value(drive, DetailsIcon.Size, "Capacidade"));
         Assert.Equal("250 GB (25%)", Value(drive, DetailsIcon.Free, "Livre"));
         Assert.Equal(0.75, drive.Volume!.UsedFraction, 3);
+    });
+
+    [Fact]
+    public void Grid_panel_follows_focus_summarizes_marks_without_a_focused_item_and_the_menu_toggle_is_saved_per_view() => UiContext.Run(async () =>
+    {
+        _tmp.MakeDir("Jogos");
+        File.WriteAllBytes(_tmp.Sub("Jogos", "a.bin"), new byte[1000]);
+        File.WriteAllBytes(_tmp.Sub("b.bin"), new byte[2048]);
+        File.WriteAllBytes(_tmp.Sub("c.bin"), new byte[1024]);
+        var fs = new TestFileSystem(_tmp.Path);
+        var store = new JsonSettingsStore(_data.Path);
+        store.Save(new AppSettings { RememberRecents = false });
+        var app = new AppController(fs, new ArchiveService(), store) { DetailsDelay = TimeSpan.Zero };
+        app.Start();
+        var d = new Driver(app);
+        await d.Idle();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.ChangeView);
+        app.SetGridLayout(2, 3);
+        app.SetDetailsPanelVisible(true, fits: true); // a view: grade com espaço para o painel ao lado
+        await d.Idle();
+
+        // Grade: o item focado é descrito (a pasta medida em segundo plano, como na lista) e o painel segue as setas 2D.
+        Assert.True(app.IsGrid);
+        var folder = app.Details!;
+        Assert.Equal((DetailsKind.Folder, "Jogos"), (folder.Kind, folder.Title));
+        Assert.Equal("1 item", Value(folder, DetailsIcon.Items));
+        Assert.Equal("1000 B", Value(folder, DetailsIcon.Size));
+        d.Press(InputAction.NavigateRight);
+        Assert.Equal(("b.bin", "2 KB"), (app.Details!.Title, Value(app.Details!, DetailsIcon.Size)));
+        Assert.Equal(PaneRegion.List, app.FocusRegion); // o painel nunca tira o foco da grade
+
+        // Marcados: o painel diz se o item em foco está entre eles.
+        d.Press(InputAction.ToggleSelection);
+        d.Press(InputAction.NavigateDown); // c.bin, na linha de baixo
+        d.Press(InputAction.ToggleSelection);
+        var marked = app.Details!.Lines.Single(l => l.Icon == DetailsIcon.Marked);
+        Assert.Equal(("c.bin", "Este item está marcado", "2 itens marcados · 3 KB"), (app.Details!.Title, marked.Label, marked.Value));
+        await d.FocusItem("Jogos");
+        Assert.Equal("Este item não está marcado", app.Details!.Lines.Single(l => l.Icon == DetailsIcon.Marked).Label);
+
+        // Foco fora da grade (barra superior): só o resumo dos marcados, sem apontar nenhum item como focado.
+        d.Press(InputAction.PreviousRegion);
+        Assert.NotEqual(PaneRegion.List, app.FocusRegion);
+        var summary = app.Details!;
+        Assert.Equal((DetailsKind.Selection, "2 itens marcados", "Nenhum item em foco"), (summary.Kind, summary.Title, summary.Subtitle));
+        Assert.Equal(("2 arquivos", "3 KB"), (Value(summary, DetailsIcon.Items), Value(summary, DetailsIcon.Size)));
+        for (var i = 0; i < 5 && app.FocusRegion != PaneRegion.List; i++) d.Press(InputAction.Back);
+        Assert.Equal(PaneRegion.List, app.FocusRegion);
+
+        // Menu: o rótulo segue o estado; esconder guarda a escolha da grade sem mexer no foco nem nas marcas.
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Ocultar painel de detalhes");
+        Assert.False(app.DetailsPanelVisible);
+        Assert.Equal(("Jogos", 2), (app.Browser.List.Focused!.Name, app.Browser.List.SelectionCount));
+        Assert.Equal((false, (bool?)null), (store.Load().Settings.GridDetails, store.Load().Settings.ListDetails));
+        d.Press(InputAction.OpenAppMenu);
+        Assert.Contains((await d.WaitMenu()).Items, i => i.Label == "Mostrar painel de detalhes");
+        await d.ChooseMenu("Mostrar painel de detalhes"); // de volta ao que cabe: automático
+        Assert.True(app.DetailsPanelVisible);
+        Assert.Null(store.Load().Settings.GridDetails);
+
+        // Portátil/janela estreita (sem espaço: escondido por padrão): mostrar pelo menu fica salvo e vale ao reabrir.
+        app.SetDetailsPanelVisible(false, fits: false);
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Mostrar painel de detalhes");
+        Assert.True(app.DetailsPanelVisible);
+        Assert.Equal("Jogos", app.Browser.List.Focused!.Name);
+        var reopened = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store);
+        reopened.Start();
+        Assert.True(reopened.DetailsPanelPreference);
+
+        // A lista tem a própria escolha (automática aqui).
+        d.Press(InputAction.ChangeView);
+        Assert.Null(app.DetailsPanelPreference);
     });
 }

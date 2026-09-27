@@ -226,6 +226,19 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
 - [ ] Unidade (Meu computador em lista, início): sistema de arquivos, capacidade, livre, usado e barra de uso reais.
 - [ ] Narrador: o painel tem nome "Detalhes: …" com as linhas.
 
+## Painel de detalhes na grade (#177)
+
+Não validado em hardware (controle real, TV a ~3 m, DPI real).
+- [ ] 1920×1080 e 4K (100/200%): grade com o painel à direita, cartões inteiros (sem cortar nome, tipo ou seta) nas
+      colunas que sobram; capturas `1c-home-grid`, `3c-folder-grid` e `3d-folder-grid-details-toggled` conferem.
+- [ ] 1280×720/800: sem painel por padrão; Menu → Mostrar painel de detalhes abre o painel mais estreito e a grade fica
+      com uma coluna inteira (captura `3d` em 1280x720); Ocultar devolve as colunas.
+- [ ] Controle real: segurar o direcional pela grade com o painel à mostra não trava; só a pasta em que o foco parar é
+      somada; o foco nunca vai para o painel.
+- [ ] Mostrar/Ocultar no meio de uma pasta longa rolada: o mesmo cartão continua focado e à vista, com as marcas.
+- [ ] Marcar itens e subir para a barra superior (LB): o painel mostra "N itens marcados · Nenhum item em foco".
+- [ ] Fechar e abrir o app: lista e grade mantêm cada uma a sua escolha do painel.
+
 ## Grade (#29)
 
 - [ ] Menu → Exibição: grade (e Ctrl+G): o item focado continua o mesmo nas duas direções; fechar e abrir o app mantém.
