@@ -59,10 +59,9 @@ public sealed class CompressionRequest
     public static string Extension(CompressionFormat format) => format == CompressionFormat.TarGZip ? ".tar.gz" : ".zip";
 }
 
-public interface IExtractionInteraction
+/// <summary>Conflitos durante a extração (mesmo contrato das demais operações de arquivo).</summary>
+public interface IExtractionInteraction : IConflictInteraction
 {
-    /// <summary>Chamado para cada conflito sem decisão "aplicar aos demais". A escolha inicial deve preservar o existente.</summary>
-    Task<ConflictDecision> ResolveConflictAsync(ConflictInfo conflict, CancellationToken cancellationToken);
 }
 
 public interface IArchiveService

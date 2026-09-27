@@ -257,6 +257,8 @@ public sealed partial class AppController
         {
             PushModal(new MenuModal($"{marked.Count} item(ns) marcado(s)",
             [
+                new MenuItem($"Copiar {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
+                new MenuItem($"Mover {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
                 new MenuItem($"Compactar {marked.Count} item(ns)…", () => BeginCompress(pane, marked)),
                 new MenuItem("Limpar marcação", () => pane.List.ClearSelection()),
             ]));
@@ -273,7 +275,11 @@ public sealed partial class AppController
         if (entry is { IsContainer: true, FullPath: { } folderPath })
             items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(folderPath), external: true), ShellUnavailable));
         if (entry is { Kind: EntryKind.Directory, FullPath: not null } && pane.Location is PhysicalLocation)
+        {
+            items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable));
+            items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable));
             items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
+        }
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco."));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items));
@@ -297,6 +303,8 @@ public sealed partial class AppController
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,
             Detail: "Escolher o programa na caixa do Windows."));
         items.Add(new MenuItem("Mostrar no Explorador de Arquivos", () => RunShell(s => s.RevealInExplorer(file), external: true), ShellUnavailable));
+        items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable));
+        items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable));
         items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));

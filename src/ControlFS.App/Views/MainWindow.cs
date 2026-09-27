@@ -48,7 +48,7 @@ public sealed class MainWindow : Window
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
         var settingsStore = new JsonSettingsStore(AppPaths.DataDirectory);
         _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
-        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService());
+        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService(), new FileOperationService());
         _input = new InputHost(_app, DispatcherQueue);
 
         AppLog.Info("MainWindow: serviços criados; montando layout");
