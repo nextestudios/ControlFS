@@ -51,7 +51,8 @@ public sealed record ThemePalette(
     uint FocusText,
     uint DangerFill,
     uint DisabledFill,
-    uint DetailsGlow)
+    uint DetailsGlow,
+    uint LogoPlate)
 {
     /// <summary>Halo translúcido em volta do anel de foco: o destaque com 1/3 de opacidade.</summary>
     public uint FocusGlow => (Accent & 0x00FFFFFF) | 0x55000000;
@@ -84,7 +85,7 @@ public static class ThemePalettes
                 Selected: 0xFFF2C14E, Danger: 0xFFFF7A6E, Success: 0xFF4CD98A, Scrim: 0xC802070C,
                 ModalTint: 0xFF0C1B2A, ModalSolid: 0xFF0D1C2B, ModalScrimGlass: 0xB402070C, ModalScrimSolid: 0xE602070C,
                 ModalEdge: 0x38FFFFFF, ModalDivider: 0x24FFFFFF, ModalInset: 0x1AFFFFFF,
-                FocusText: 0xFF03101A, DangerFill: 0xFFFF8A7F, DisabledFill: 0xFF2A3E52, DetailsGlow: 0xFF0E2A45)
+                FocusText: 0xFF03101A, DangerFill: 0xFFFF8A7F, DisabledFill: 0xFF2A3E52, DetailsGlow: 0xFF0E2A45, LogoPlate: 0x00000000)
             : new ThemePalette(false, accent,
                 Background: 0xFFF3F6FA, Surface: 0xFFE8EEF5, SurfaceRaised: 0xFFFFFFFF, Border: 0xFFC9D6E3,
                 Text: 0xFF0B1724, TextMuted: 0xFF4A5A6C, TextDisabled: 0xFF8595A6,
@@ -92,7 +93,7 @@ public static class ThemePalettes
                 Selected: 0xFF8A5A00, Danger: 0xFFB42318, Success: 0xFF1A7F37, Scrim: 0x990B1724,
                 ModalTint: 0xFFF7FAFD, ModalSolid: 0xFFFFFFFF, ModalScrimGlass: 0x800B1724, ModalScrimSolid: 0xB00B1724,
                 ModalEdge: 0x330B1724, ModalDivider: 0x1F0B1724, ModalInset: 0x0F0B1724,
-                FocusText: 0xFFFFFFFF, DangerFill: 0xFFC42B1C, DisabledFill: 0xFFDCE3EA, DetailsGlow: 0xFFDCE8F5);
+                FocusText: 0xFFFFFFFF, DangerFill: 0xFFC42B1C, DisabledFill: 0xFFDCE3EA, DetailsGlow: 0xFFDCE8F5, LogoPlate: 0xFF0B1724);
     }
 
     /// <summary>Tema efetivo: <see cref="ThemeMode.System"/> segue o Windows (<paramref name="systemIsDark"/>).</summary>

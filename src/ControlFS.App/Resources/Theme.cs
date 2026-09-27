@@ -55,6 +55,9 @@ public static class Theme
     public static readonly SolidColorBrush Scrim = new(ToColor(Palette.Scrim));
     public static readonly SolidColorBrush Transparent = new(Colors.Transparent);
 
+    /// <summary>Placa atrás do logo (o nome no logo é claro): transparente no escuro, azul-marinho no claro.</summary>
+    public static readonly SolidColorBrush LogoPlate = new(ToColor(Palette.LogoPlate));
+
     /// <summary>Brilho no alto do painel de detalhes (degradê).</summary>
     public static Color DetailsGlowColor => ToColor(Palette.DetailsGlow);
 
@@ -93,6 +96,7 @@ public static class Theme
         Set(DangerFill, palette.DangerFill);
         Set(DisabledFill, palette.DisabledFill);
         Set(Success, palette.Success);
+        Set(LogoPlate, palette.LogoPlate);
         return true;
     }
 

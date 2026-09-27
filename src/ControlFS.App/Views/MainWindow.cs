@@ -51,6 +51,8 @@ public sealed class MainWindow : Window
     private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
+    /// <summary>Placa atrás do logo: transparente no tema escuro; escura no claro (o nome no logo é claro, #37).</summary>
+    private readonly Border _logoPlate = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Background = Theme.LogoPlate };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
     private readonly IconLoader _navIcons;
     private readonly IconLoader _cardIcons;
@@ -227,7 +229,8 @@ public sealed class MainWindow : Window
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _logo.Source = Branding.Logo;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
-        header.Children.Add(_logo);
+        _logoPlate.Child = _logo;
+        header.Children.Add(_logoPlate);
         _tabs.Children.Add(_tabStrip);
         Grid.SetColumn(_tabs, 1);
         header.Children.Add(_tabs);
@@ -440,7 +443,7 @@ public sealed class MainWindow : Window
             _ => string.Empty,
         };
         _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        _logo.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
+        _logoPlate.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
         _topBar.Render();
         RenderTabs(_app.Screen == Screen.Browser && _app.Tabs.Count > 1, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
         var device = _input.ActiveDevice;
@@ -906,6 +909,8 @@ public sealed class MainWindow : Window
         _header.ColumnSpacing = Theme.SpaceXl;
         _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
         _logo.Height = Theme.Layout.LogoHeight;
+        _logoPlate.CornerRadius = new CornerRadius(Theme.Scaled(12));
+        _logoPlate.Padding = Theme.IsDark ? new Thickness(0) : new Thickness(Theme.SpaceS, Theme.SpaceXs, Theme.SpaceM, Theme.SpaceXs);
         _tabStrip.Spacing = Theme.SpaceXs;
         _tabs.Spacing = Theme.SpaceS;
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);
