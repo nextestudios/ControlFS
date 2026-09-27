@@ -134,6 +134,15 @@ internal static class ScreenRenderer
                 ChooseAppMenu(app, "Ordenar por"); // data
                 ChooseAppMenu(app, "Ordenar por"); // nome
                 ChooseAppMenu(app, "Ordem");
+
+                // Painel de detalhes (fase C): pasta, imagem (miniatura real) e compactado (formato e arquivos contados).
+                await FocusAsync(app, stage, "Fotos da viagem");
+                await CaptureAsync(stage, target, dir, "2d-details-folder", window);
+                await FocusAsync(app, stage, "logo.png");
+                await CaptureAsync(stage, target, dir, "2e-details-image", window);
+                await FocusAsync(app, stage, "backup-2026-09.zip");
+                await CaptureAsync(stage, target, dir, "2f-details-archive", window);
+                await FocusAsync(app, stage, "arquivo sem extensão");
                 app.Handle(InputAction.PreviousRegion); // LB: pasta de cima na barra de caminho
                 await CaptureAsync(stage, target, dir, "2b-folder-path-bar", window);
                 app.Handle(InputAction.Back);
@@ -194,6 +203,17 @@ internal static class ScreenRenderer
         app.Handle(InputAction.Confirm);
     }
 
+    /// <summary>Foco no item pelo nome (setas, como no controle) e espera o painel de detalhes terminar de ler/medir.</summary>
+    private static async Task FocusAsync(AppController app, FrameworkElement stage, string name)
+    {
+        var list = app.ActivePane.List;
+        var target = list.Items.ToList().FindIndex(i => i.Name == name);
+        if (target < 0) return;
+        while (list.FocusIndex != target) app.Handle(list.FocusIndex < target ? InputAction.NavigateDown : InputAction.NavigateUp);
+        await SettleAsync(stage); // o painel é publicado no AppController depois do Render
+        await app.WhenIdleAsync();
+    }
+
     /// <summary>LB e direita até o atalho <paramref name="label"/> da barra superior, e Confirmar.</summary>
     private static void ChooseQuickAccess(AppController app, string label)
     {
@@ -236,6 +256,15 @@ internal static class ScreenRenderer
             // Datas variadas para as datas amigáveis da lista: hoje, ontem e dias anteriores.
             File.SetLastWriteTime(file, (i % 3) switch { 0 => now.AddMinutes(-7 * i), 1 => now.Date.AddDays(-1).AddHours(18).AddMinutes(i), _ => now.Date.AddDays(-2 - i).AddHours(9).AddMinutes(45) });
         }
+        // Uma imagem e um compactado de verdade para o painel de detalhes (miniatura, formato e arquivos contados).
+        var logo = Path.Join(AppContext.BaseDirectory, "controlfs-logo.png");
+        if (File.Exists(logo)) File.Copy(logo, Path.Join(folder, "logo.png"), overwrite: true);
+        var zip = Path.Join(folder, "backup-2026-09.zip");
+        File.Delete(zip);
+        using (var archive = System.IO.Compression.ZipFile.Open(zip, System.IO.Compression.ZipArchiveMode.Create))
+            foreach (var name in new[] { "contrato.docx", "notas.txt", "fotos/praia.jpg", "fotos/montanha.jpg" })
+                using (var writer = new StreamWriter(archive.CreateEntry(name).Open())) writer.Write(new string('x', 4096));
+        File.SetLastWriteTime(zip, DateTime.Now.Date.AddDays(-1).AddHours(18).AddMinutes(5));
         return folder;
     }
 

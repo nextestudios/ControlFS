@@ -61,6 +61,9 @@ public sealed class MainWindow : Window
     /// <summary>Lista (fase C): cartão com o cabeçalho das colunas e as linhas.</summary>
     private readonly Border _listCard = new();
     private readonly ListHeaderView _listHeader;
+    private readonly IconLoader _detailIcons;
+    private readonly DetailsPanelView _details;
+    private bool _detailsShown;
     private EntryRowTemplate.ListColumns? _columns;
     private int _shownStatsVersion = -1;
     private readonly GridView _grid = new();
@@ -108,6 +111,13 @@ public sealed class MainWindow : Window
         _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
         _home = new HomeView(_app, _cardIcons);
         _listHeader = new ListHeaderView(_app);
+        _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
+        _details = new DetailsPanelView(_detailIcons);
+        _detailIcons.Invalidated += () =>
+        {
+            _details.ApplyLayout(); // refaz o ícone grande no novo tamanho
+            Render();
+        };
         _home.SizeChanged += Render;
         _cardIcons.Invalidated += () =>
         {
@@ -231,8 +241,16 @@ public sealed class MainWindow : Window
         {
             if (e.NewSize.Width != e.PreviousSize.Width && UpdateListColumns(force: false)) Render();
         };
+        // Painel de detalhes à direita da lista (fase C); grade e início em cartões ocupam as duas colunas.
         var content = new Grid();
+        content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         content.Children.Add(_listCard);
+        Grid.SetColumn(_details.Root, 1);
+        _details.Root.Visibility = Visibility.Collapsed;
+        content.Children.Add(_details.Root);
+        Grid.SetColumnSpan(_grid, 2);
+        Grid.SetColumnSpan(_home.Root, 2);
         content.Children.Add(_grid);
         content.Children.Add(_home.Root);
         content.Children.Add(_empty);
@@ -409,6 +427,7 @@ public sealed class MainWindow : Window
         }
         else
             RenderItems(pane);
+        RenderDetails();
         RenderFooter();
     }
 
@@ -488,6 +507,45 @@ public sealed class MainWindow : Window
             : search is null ? "Pasta vazia"
             : search.IsRunning ? "Buscando…" : "Nenhum resultado";
     }
+
+    /// <summary>
+    /// Painel de detalhes: na lista, quando cabe sem espremer a lista (o nome continua legível com as colunas); em
+    /// portáteis e janelas estreitas ele sai e a lista usa a largura toda. A visibilidade é publicada no AppController,
+    /// que só mede/decodifica o item focado com o painel à mostra.
+    /// </summary>
+    private void RenderDetails()
+    {
+        var width = DetailsWidth();
+        var show = _view == ViewMode.List && _listCard.Visibility == Visibility.Visible && width > 0;
+        if (show != _detailsShown)
+        {
+            _detailsShown = show;
+            _details.Root.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            _listCard.Margin = ListCardMargin;
+            DispatcherQueue.TryEnqueue(() => _app.SetDetailsPanelVisible(show)); // fora do Render (o aviso refaz a tela)
+        }
+        if (!show) return;
+        ((FrameworkElement)_details.Root).Width = width;
+        _details.Render(_app.Details, _specialFolders);
+    }
+
+    /// <summary>
+    /// Largura do painel (≈ um quarto da tela, como na referência) ou 0 quando a lista ficaria estreita demais: o nome
+    /// precisa de espaço mesmo sem a coluna de tipo.
+    /// </summary>
+    private double DetailsWidth()
+    {
+        var available = Theme.Viewport.Width - (2 * Theme.SpaceL);
+        var width = Math.Clamp(Math.Round(Theme.Viewport.Width * 0.24), Theme.Scaled(360), Theme.Scaled(560));
+        var list = available - width - DetailsGap - _list.Padding.Left - _list.Padding.Right;
+        var columns = EntryRowTemplate.Columns(_density, list, mark: true) with { Type = false };
+        return list - columns.FixedWidth >= Theme.Scaled(340) ? width : 0;
+    }
+
+    private static double DetailsGap => Theme.Space(28);
+
+    /// <summary>Margens do cartão da lista (à direita, o espaço até o painel quando ele aparece).</summary>
+    private Thickness ListCardMargin => new(Theme.SpaceL, Theme.Space(20), _detailsShown ? DetailsGap : Theme.SpaceL, Theme.Space(24));
 
     private void RenderFooter()
     {
@@ -713,7 +771,9 @@ public sealed class MainWindow : Window
         // Lista (fase C): cartão escuro com cantos arredondados, recuado como na referência; linhas quase até a borda.
         _listCard.Background = Theme.SurfaceRaised;
         _listCard.CornerRadius = new CornerRadius(Theme.Scaled(14));
-        _listCard.Margin = new Thickness(Theme.SpaceL, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
+        _listCard.Margin = ListCardMargin;
+        _details.Root.Margin = new Thickness(0, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
+        _details.ApplyLayout();
         _listCard.Padding = new Thickness(0, Theme.Space(6), 0, Theme.Space(10));
         _list.Padding = new Thickness(Theme.Space(10), Theme.Space(6), Theme.Space(10), 0);
         // Grade: cartões alinhados com os do início (margem lateral igual, meia distância entre cartões de cada lado).
@@ -735,6 +795,7 @@ public sealed class MainWindow : Window
         _tileIcons.SetScale(iconScale);
         _navIcons.SetScale(iconScale);
         _cardIcons.SetScale(iconScale);
+        _detailIcons.SetScale(iconScale);
         UpdateGridMetrics();
         _shownItems = null; // recria as linhas com as novas medidas
         Render();
