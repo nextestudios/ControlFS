@@ -517,7 +517,7 @@ public static partial class ModalView
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
         Border? footer = null;
         var width = quick > 0 ? 540 : 460;
-        var card = Panel(app, Header(menu, compact: true), stack, width, minWidth: Math.Min(width, 400), footerSink: f => footer = f, compact: true);
+        var card = Panel(app, Header(menu, compact: true), stack, width, minWidth: quick > 0 ? width : Math.Min(width, 400), footerSink: f => footer = f, compact: true);
         if (caption is not null) caption.Text = TileCaption(menu);
         var shown = menu.FocusIndex;
         void Replace(int index)

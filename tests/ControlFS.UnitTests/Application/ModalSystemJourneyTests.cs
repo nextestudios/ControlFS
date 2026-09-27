@@ -253,4 +253,17 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.Back);
         Assert.Null(app.TopModal);
     });
+
+    [Fact]
+    public void Menus_never_open_focused_on_an_unavailable_option() => UiContext.Run(async () =>
+    {
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.OpenAppMenu); // nada copiado: "Colar", o primeiro bloco, está indisponível
+        var menu = Assert.IsType<MenuModal>(d.App.TopModal);
+        Assert.False(menu.Items[0].IsEnabled);
+        Assert.True(menu.Items[menu.FocusIndex].IsEnabled);
+        Assert.False(menu.Items[menu.FocusIndex].IsDestructive);
+    });
 }

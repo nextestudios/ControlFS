@@ -98,6 +98,8 @@ public class HintJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu); // na tela inicial, o primeiro item (Colar) está indisponível
         var menu = await d.WaitMenu();
+        Assert.True(menu.Items[menu.FocusIndex].IsEnabled); // o menu nunca abre numa opção indisponível
+        d.Press(InputAction.PageUp); // leva o foco até Colar
         Assert.False(menu.Items[menu.FocusIndex].IsEnabled);
         Assert.Null(Label(app, InputAction.Confirm));
         while (!menu.Items[menu.FocusIndex].IsEnabled) d.Press(InputAction.NavigateDown);
