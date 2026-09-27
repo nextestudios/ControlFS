@@ -16,6 +16,7 @@ public static class EntryRowTemplate
 {
     private const string Xaml =
         "<DataTemplate xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\">" +
+        "<Border x:Name=\"Ring\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" BorderThickness=\"3\" CornerRadius=\"6\">" +
         "<Grid Padding=\"12,8\" ColumnSpacing=\"12\">" +
         "<Grid.ColumnDefinitions><ColumnDefinition Width=\"36\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
         "<TextBlock x:Name=\"Icon\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" FontSize=\"22\" VerticalAlignment=\"Center\"/>" +
@@ -24,13 +25,14 @@ public static class EntryRowTemplate
         "<TextBlock x:Name=\"Detail\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" FontSize=\"14\" TextTrimming=\"CharacterEllipsis\"/>" +
         "</StackPanel>" +
         "<TextBlock x:Name=\"Mark\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" Grid.Column=\"2\" FontSize=\"18\" VerticalAlignment=\"Center\"/>" +
-        "</Grid></DataTemplate>";
+        "</Grid></Border></DataTemplate>";
 
     public static DataTemplate Create() => (DataTemplate)XamlReader.Load(Xaml);
 
-    public static void Fill(SelectorItem container, FileEntry entry, bool selected, bool cut = false)
+    public static void Fill(SelectorItem container, FileEntry entry, bool focused, bool selected, bool cut = false)
     {
         if (container.ContentTemplateRoot is not FrameworkElement root) return;
+        SetFocused(container, focused);
         var icon = (TextBlock)root.FindName("Icon");
         var title = (TextBlock)root.FindName("Title");
         var detail = (TextBlock)root.FindName("Detail");
@@ -48,10 +50,17 @@ public static class EntryRowTemplate
         detail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason : Describe(entry);
         detail.Foreground = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
         mark.Text = selected ? "✔ marcado" : cut ? "✂ recortado" : entry.IsEncrypted ? "🔒" : string.Empty;
-        root.Opacity = cut ? 0.5 : 1.0; // recortado: esmaecido (e indicado em texto, não só visualmente)
+        // Recortado: conteúdo esmaecido (e indicado em texto, não só visualmente); o anel de foco continua nítido.
+        if (root is Border { Child: UIElement content }) content.Opacity = cut ? 0.5 : 1.0;
         mark.Foreground = selected ? Theme.Selected : Theme.TextMuted;
         var state = (selected ? ", marcado" : string.Empty) + (cut ? ", recortado" : string.Empty);
         AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{state}");
+    }
+
+    /// <summary>Liga/desliga o anel de foco de uma linha já preenchida (sem refazer o conteúdo).</summary>
+    public static void SetFocused(SelectorItem container, bool focused)
+    {
+        if (container.ContentTemplateRoot is Border ring) Theme.ApplyFocus(ring, focused);
     }
 
     private static bool IsArchiveName(string name) =>

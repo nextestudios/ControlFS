@@ -72,10 +72,8 @@ public static class ModalView
             Padding = new Thickness(Theme.SpaceM, Theme.SpaceS, Theme.SpaceM, Theme.SpaceS),
             Margin = new Thickness(0, 2, 0, 2),
             CornerRadius = Theme.Radius,
-            Background = focused ? Theme.AccentSoft : Theme.Transparent,
-            BorderBrush = focused ? Theme.Accent : Theme.Transparent,
-            BorderThickness = Theme.FocusRing,
         };
+        Theme.ApplyFocus(border, focused);
         AutomationProperties.SetName(border, text + (enabled ? string.Empty : ", indisponível"));
         border.Tapped += (_, _) => onTap();
         return border;

@@ -8,6 +8,9 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - Button labels automatically follow the family of the controller in use (Xbox, PlayStation, Nintendo or generic), detected from the type SDL reports and the vendor. Pressing a button on another controller hands control to it and switches the labels without restarting. The menu still lets you pin a style. (#32)
 - **Retry** an operation that failed, finished with warnings or was cancelled: Menu → Operations → pick the operation → Retry. The original request is planned again from scratch. (#18)
 
+### Improvements
+- **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)
+
 ## [0.3.0-alpha.1]
 ### What's new
 - **Rename** files and folders with the on-screen keyboard: the cursor starts before the extension, changing the extension asks first, and invalid or duplicate names are refused without touching the disk. (#103)

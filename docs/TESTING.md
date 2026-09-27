@@ -20,6 +20,13 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Narrador lê o nome dos itens e das teclas do teclado virtual.
 - [ ] Teclado virtual em 1920×1080 e num portátil (1280×800): as seis linhas cabem sem rolagem, a tecla focada é clara a 3 m e `Concluir`/página atual/Maiúsculas se destacam.
 - [ ] Digitar "Relatório ação 2026" só com direcional e Sul, em cada campo: nova pasta, renomear, senha de arquivo, nome do compactado.
+- [ ] Foco (#31): o anel de destaque da lista é igual ao dos menus e diálogos, visível a 3 m da TV e em 4K; itens
+      recortados ficam esmaecidos mas o anel continua nítido.
+- [ ] Foco (#31): abrir e fechar menus/diálogos com o teclado físico e com o controle; as setas continuam funcionando
+      logo depois (inclusive após clicar numa opção com o mouse).
+- [ ] Foco (#31): marcar vários itens no meio de uma pasta grande, excluir; o foco vai para o item seguinte e fica
+      visível sem rolar manualmente. Voltar de uma subpasta numa pasta com milhares de itens: o item de origem aparece
+      focado já no primeiro quadro.
 
 ## Formatos, compactar e abrir com o Windows
 

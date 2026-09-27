@@ -8,6 +8,9 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - As legendas dos botões seguem automaticamente a família do controle em uso (Xbox, PlayStation, Nintendo ou genérico), detectada pelo tipo informado pelo SDL e pelo fabricante. Apertar um botão em outro controle passa o comando para ele e troca as legendas sem reiniciar. O menu ainda permite fixar um estilo. (#32)
 - **Tentar de novo** uma operação que falhou, terminou com avisos ou foi cancelada: Menu → Operações → escolha a operação → Tentar de novo. O pedido original é planejado outra vez do zero. (#18)
 
+### Melhorias
+- **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)
+
 ## [0.3.0-alpha.1]
 ### Novidades
 - **Renomear** arquivos e pastas pelo teclado virtual: o cursor começa antes da extensão, mudar a extensão pede confirmação e nomes inválidos ou repetidos são recusados sem tocar no disco. (#103)

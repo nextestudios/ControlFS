@@ -41,6 +41,7 @@ public sealed class MainWindow : Window
     private readonly Grid _overlay = new();
     private IReadOnlyList<FileEntry>? _shownItems;
     private HashSet<string> _shownSelection = [];
+    private int _shownFocus = -1;
     private object? _shownClipboard;
     private bool _fullScreen;
 
@@ -114,7 +115,7 @@ public sealed class MainWindow : Window
 
         // Lista
         _list.ItemTemplate = EntryRowTemplate.Create();
-        _list.SelectionMode = ListViewSelectionMode.Single;
+        _list.SelectionMode = ListViewSelectionMode.None; // o foco é desenhado pelo anel da linha (mesmo token dos menus)
         _list.IsItemClickEnabled = true;
         _list.IsTabStop = false;
         _list.AllowFocusOnInteraction = false;
@@ -123,7 +124,7 @@ public sealed class MainWindow : Window
         _list.ContainerContentChanging += (_, args) =>
         {
             if (args.InRecycleQueue || args.Item is not FileEntry entry) return;
-            EntryRowTemplate.Fill(args.ItemContainer, entry, _shownSelection.Contains(entry.Id), _app.IsCut(entry));
+            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry));
         };
         _list.ItemClick += (_, e) =>
         {
@@ -190,17 +191,28 @@ public sealed class MainWindow : Window
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
-        if (!ReferenceEquals(items, _shownItems) || !selection.SetEquals(_shownSelection) || !ReferenceEquals(_app.Clipboard, _shownClipboard))
+        if (focus >= items.Count) focus = -1;
+        var sourceChanged = !ReferenceEquals(items, _shownItems);
+        if (sourceChanged || !selection.SetEquals(_shownSelection) || !ReferenceEquals(_app.Clipboard, _shownClipboard))
         {
             _shownClipboard = _app.Clipboard;
             _shownItems = items;
             _shownSelection = selection;
+            _shownFocus = focus;
             _list.ItemsSource = items.ToList();
+            // Pasta nova: mede a lista antes de rolar, para o item focado já aparecer no primeiro quadro.
+            if (sourceChanged && focus >= 0) _list.UpdateLayout();
+            if (focus >= 0) _list.ScrollIntoView(items[focus]);
         }
-        if (focus >= 0 && focus < items.Count)
+        else if (focus != _shownFocus)
         {
-            _list.SelectedIndex = focus;
-            _list.ScrollIntoView(items[focus]);
+            if (_shownFocus >= 0 && _list.ContainerFromIndex(_shownFocus) is ListViewItem previous) EntryRowTemplate.SetFocused(previous, false);
+            _shownFocus = focus;
+            if (focus >= 0)
+            {
+                _list.ScrollIntoView(items[focus]);
+                if (_list.ContainerFromIndex(focus) is ListViewItem current) EntryRowTemplate.SetFocused(current, true);
+            }
         }
         _empty.Text = pane.IsLoading && _app.Screen != Screen.Home ? "Carregando…" : items.Count == 0 ? "Pasta vazia" : string.Empty;
         if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
@@ -233,6 +245,25 @@ public sealed class MainWindow : Window
         // Camada modal
         _overlay.Children.Clear();
         if (ModalView.Build(_app) is { } modal) _overlay.Children.Add(modal);
+        RestoreKeyboardFocus();
+    }
+
+    /// <summary>
+    /// Ao fechar um modal, o elemento que tinha o foco do XAML pode sair da árvore e o teclado ficaria sem destino.
+    /// A raiz volta a receber o foco (o foco lógico continua no AppController).
+    /// </summary>
+    private void RestoreKeyboardFocus()
+    {
+        if (_root.XamlRoot is not { } xamlRoot) return;
+        if (Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(xamlRoot) is not DependencyObject focused || !IsInsideRoot(focused))
+            _root.Focus(FocusState.Programmatic);
+    }
+
+    private bool IsInsideRoot(DependencyObject element)
+    {
+        for (var current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (ReferenceEquals(current, _root)) return true;
+        return false;
     }
 
     private void ToggleFullScreen()
