@@ -33,8 +33,10 @@ public enum ConfirmBackConvention
     EastConfirms,
 }
 
+/// <summary>Preferência de legendas: <see cref="Automatic"/> segue a família do controle ativo; as demais a fixam.</summary>
 public enum ButtonLabelStyle
 {
+    Automatic,
     Generic,
     Xbox,
     PlayStation,

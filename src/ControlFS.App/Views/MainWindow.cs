@@ -214,7 +214,7 @@ public sealed class MainWindow : Window
         foreach (var hint in _app.Hints)
         {
             var glyph = device is not null && map.ControlFor(hint.Action) is { } control
-                ? ButtonGlyphs.For(control, _app.Settings.LabelStyle)
+                ? ButtonGlyphs.For(control, _app.PromptFamily)
                 : ButtonGlyphs.KeyboardFor(hint.Action);
             var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
             chip.Children.Add(new Border

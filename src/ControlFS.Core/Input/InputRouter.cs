@@ -4,7 +4,7 @@ namespace ControlFS.Core.Input;
 
 /// <summary>
 /// Roteia eventos de controles físicos para ações semânticas:
-/// arbitra o dispositivo ativo, aplica o mapeamento, repete somente navegação, e suprime
+/// arbitra o dispositivo ativo (outro controle assume ao apertar um botão enquanto o ativo está solto), aplica o mapeamento, repete somente navegação, e suprime
 /// botões mantidos durante trocas de contexto (um botão que abriu um diálogo não o aceita).
 /// Não é thread-safe: deve ser usado na mesma thread que processa eventos de entrada (UI).
 /// </summary>
@@ -48,7 +48,10 @@ public sealed class InputRouter
         }
         else if (!string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal))
         {
-            return; // somente um controle comanda a UI
+            // Somente um controle comanda a UI. Outro assume com uma nova pressão, desde que o ativo não esteja
+            // segurando nada: evita disputa entre dois controles e ação dupla de um par físico+virtual.
+            if (!pressed || !AllowAutomaticActivation || _held.Count > 0 || _latched.Count > 0) return;
+            SetActive(deviceKey);
         }
 
         if (!pressed)

@@ -119,16 +119,19 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
         if (_devices.ContainsKey(id)) return;
         var pad = SDL_OpenGamepad(id);
         if (pad == null) return;
+        var vendor = SDL_GetGamepadVendor(pad);
+        var type = SDL_GetGamepadStringForType(SDL_GetGamepadType(pad)) ?? "unknown";
         var info = new InputDeviceInfo(
             SessionKey: $"sdl:{(uint)id}",
             Name: SDL_GetGamepadName(pad) ?? "Controle",
             StableId: StableId(id),
-            VendorId: SDL_GetGamepadVendor(pad),
+            VendorId: vendor,
             ProductId: SDL_GetGamepadProduct(pad),
             IsGamepad: true,
             IsVirtual: SDL_IsJoystickVirtual(id),
-            TypeName: SDL_GetGamepadStringForType(SDL_GetGamepadType(pad)) ?? "unknown",
-            Path: SDL_GetGamepadPath(pad));
+            TypeName: type,
+            Path: SDL_GetGamepadPath(pad),
+            Family: ControllerFamilies.Detect(isGamepad: true, type, vendor));
         _devices[id] = new SdlDevice(info, pad, null, settings);
         _sink?.OnDeviceAdded(info);
     }

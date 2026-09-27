@@ -2,6 +2,7 @@ using ControlFS.Application.Operations;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Input;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
 
@@ -59,6 +60,12 @@ public sealed partial class AppController
     public ExtractionLimits Limits { get; set; } = ExtractionLimits.Default;
     public string? StatusMessage { get; private set; }
 
+    /// <summary>Família do controle ativo (null: nenhum controle ativo; legendas de teclado).</summary>
+    public ControllerFamily? ActiveController { get; private set; }
+
+    /// <summary>Família usada nas legendas: a escolha manual do menu vence; no automático, a do controle ativo.</summary>
+    public ControllerFamily PromptFamily => ControllerFamilies.Resolve(Settings.LabelStyle, ActiveController);
+
     public PaneState ActivePane => Screen == Screen.FolderPicker ? Picker : Browser;
 
     public event Action? Changed;
@@ -105,6 +112,14 @@ public sealed partial class AppController
     }
 
     public IReadOnlyList<Hint> Hints => BuildHints();
+
+    /// <summary>Publicado pela camada de entrada quando o controle ativo muda (inclusive troca a quente).</summary>
+    public void SetActiveController(ControllerFamily? family)
+    {
+        if (ActiveController == family) return;
+        ActiveController = family;
+        RaiseChanged();
+    }
 
     // ---------- Mouse/toque: posicionam o foco e reutilizam as mesmas ações semânticas ----------
 

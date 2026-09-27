@@ -78,19 +78,26 @@ public class InputRouterTests
     }
 
     [Fact]
-    public void Only_active_device_drives_the_ui()
+    public void Another_device_takes_over_only_with_a_new_press_while_the_active_one_is_idle()
     {
         var r = Router();
+        var changes = new List<string?>();
+        r.ActiveDeviceChanged += changes.Add;
         r.OnControl("pad-A", PhysicalControl.DPadDown, true, Ms(0));
-        r.OnControl("pad-B", PhysicalControl.South, true, Ms(10));
+        r.OnControl("pad-B", PhysicalControl.South, true, Ms(10)); // A segura o direcional: B não assume
         Assert.Equal("pad-A", r.ActiveDeviceKey);
         Assert.Equal([InputAction.NavigateDown], _actions);
-        r.OnDeviceRemoved("pad-A");
-        Assert.Null(r.ActiveDeviceKey);
-        r.OnControl("pad-B", PhysicalControl.South, false, Ms(20));
-        r.OnControl("pad-B", PhysicalControl.South, true, Ms(30));
+
+        r.OnControl("pad-A", PhysicalControl.DPadDown, false, Ms(20));
+        r.OnControl("pad-B", PhysicalControl.South, false, Ms(25)); // soltar não ativa ninguém
+        Assert.Equal("pad-A", r.ActiveDeviceKey);
+        r.OnControl("pad-B", PhysicalControl.South, true, Ms(30)); // troca a quente
         Assert.Equal("pad-B", r.ActiveDeviceKey);
         Assert.Equal(InputAction.Confirm, _actions[^1]);
+        Assert.Equal(["pad-A", "pad-B"], changes);
+
+        r.OnDeviceRemoved("pad-B");
+        Assert.Null(r.ActiveDeviceKey);
     }
 
     [Fact]
@@ -128,9 +135,9 @@ public class InputRouterTests
     [Fact]
     public void Glyphs_follow_physical_position_not_letters()
     {
-        Assert.Equal("A", ButtonGlyphs.For(PhysicalControl.South, ButtonLabelStyle.Xbox));
-        Assert.Equal("B", ButtonGlyphs.For(PhysicalControl.South, ButtonLabelStyle.Nintendo));
-        Assert.Equal("✕", ButtonGlyphs.For(PhysicalControl.South, ButtonLabelStyle.PlayStation));
+        Assert.Equal("A", ButtonGlyphs.For(PhysicalControl.South, ControllerFamily.Xbox));
+        Assert.Equal("B", ButtonGlyphs.For(PhysicalControl.South, ControllerFamily.Nintendo));
+        Assert.Equal("✕", ButtonGlyphs.For(PhysicalControl.South, ControllerFamily.PlayStation));
         Assert.Equal(PhysicalControl.East, new ActionMap(ConfirmBackConvention.EastConfirms).ControlFor(InputAction.Confirm));
     }
 }

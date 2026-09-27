@@ -1,11 +1,12 @@
 using ControlFS.Core.Actions;
+using ControlFS.Core.Input;
 
 namespace ControlFS.Core.Contracts;
 
 /// <summary>
 /// Identidade de um dispositivo. <see cref="SessionKey"/> vale só na sessão; <see cref="StableId"/>
 /// (GUID SDL + vendor/product) serve para perfis persistentes e NÃO é tratado como único
-/// (dois controles iguais têm o mesmo StableId).
+/// (dois controles iguais têm o mesmo StableId). <see cref="Family"/> vem de <see cref="ControllerFamilies.Detect"/>.
 /// </summary>
 public sealed record InputDeviceInfo(
     string SessionKey,
@@ -16,7 +17,8 @@ public sealed record InputDeviceInfo(
     bool IsGamepad,
     bool IsVirtual,
     string TypeName,
-    string? Path);
+    string? Path,
+    ControllerFamily Family = ControllerFamily.Generic);
 
 public interface IInputSink
 {

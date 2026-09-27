@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Input;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
 using ControlFS.Core.Text;
@@ -368,7 +369,9 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
                 Detail: "Troca comportamento e legendas de confirmar/voltar."),
             new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
-                UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 4) })),
+                UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
+                Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? null
+                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso."),
             new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null),
             new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only"),
@@ -563,7 +566,16 @@ public sealed partial class AppController
         ButtonLabelStyle.Xbox => "Xbox",
         ButtonLabelStyle.PlayStation => "PlayStation",
         ButtonLabelStyle.Nintendo => "Nintendo",
-        _ => "genéricas",
+        ButtonLabelStyle.Generic => "genéricas",
+        _ => "automáticas",
+    };
+
+    private static string FamilyName(ControllerFamily family) => family switch
+    {
+        ControllerFamily.Xbox => "Xbox",
+        ControllerFamily.PlayStation => "PlayStation",
+        ControllerFamily.Nintendo => "Nintendo",
+        _ => "genérico",
     };
 
     internal static string StateLabel(OperationState state) => state switch
