@@ -565,6 +565,9 @@ public sealed partial class AppController
                 if (dialog.BackOption is { } back) back.Execute();
                 else CloseModal(dialog);
                 break;
+            case InputAction.OpenAppMenu:
+                dialog.StartOption?.Execute();
+                break;
         }
     }
 

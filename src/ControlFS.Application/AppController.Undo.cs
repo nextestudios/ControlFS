@@ -102,6 +102,7 @@ public sealed partial class AppController
         var n = record.Steps.Count;
         return record.Steps[0].Kind switch
         {
+            UndoStepKind.RenameBack when n > 1 => $"Volta {Plural.Of(n, "item", "itens")} aos nomes anteriores.",
             UndoStepKind.RenameBack => $"Volta o nome para \"{Path.GetFileName(record.Steps[0].Original)}\".",
             UndoStepKind.MoveBack => $"Move {Plural.Of(n, "item", "itens")} de volta para {Path.GetDirectoryName(record.Steps[0].Original)}.",
             UndoStepKind.DeleteCopy => $"Remove {Plural.Of(n, "cópia criada", "cópias criadas")} pela operação, só se continuarem idênticas e o original ainda existir.",
@@ -198,6 +199,10 @@ public sealed partial class AppController
         return new OperationResult(ok ? OperationState.Completed : ct.IsCancellationRequested ? OperationState.Cancelled : OperationState.CompletedWithWarnings, results);
     }
 
+    /// <summary>Renomear só maiúsculas/minúsculas: o nome original "existe" porque é o próprio item.</summary>
+    private static bool SameItem(UndoStep step) =>
+        step.Kind == UndoStepKind.RenameBack && string.Equals(step.Original, step.Current, StringComparison.OrdinalIgnoreCase);
+
     private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path) || new FileInfo(path).LinkTarget is not null;
 
     /// <summary>Confere cada passo contra o disco agora. Devolve os motivos de recusa e, para a Lixeira, qual item restaurar.</summary>
@@ -213,7 +218,7 @@ public sealed partial class AppController
             string? reason = step.Kind switch
             {
                 UndoStepKind.RenameBack or UndoStepKind.MoveBack when !Exists(step.Current!) => $"\"{Path.GetFileName(step.Current)}\" não está mais em {Path.GetDirectoryName(step.Current)}.",
-                UndoStepKind.RenameBack or UndoStepKind.MoveBack or UndoStepKind.Restore when Exists(step.Original) => $"Já existe um item \"{name}\" em {parent}; nada é sobrescrito.",
+                UndoStepKind.RenameBack or UndoStepKind.MoveBack or UndoStepKind.Restore when Exists(step.Original) && !SameItem(step) => $"Já existe um item \"{name}\" em {parent}; nada é sobrescrito.",
                 UndoStepKind.MoveBack or UndoStepKind.Restore when !Directory.Exists(parent) => $"A pasta de origem {parent} não existe mais.",
                 UndoStepKind.MoveBack when !string.Equals(Path.GetFileName(step.Current), name, StringComparison.Ordinal) && Exists(Path.Join(parent, Path.GetFileName(step.Current))) =>
                     $"Já existe \"{Path.GetFileName(step.Current)}\" em {parent}.",

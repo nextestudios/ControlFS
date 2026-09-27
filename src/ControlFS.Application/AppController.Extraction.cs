@@ -155,6 +155,11 @@ public sealed partial class AppController
             OnUndoCompleted(item, undone);
             return;
         }
+        if (item.Result is { } renameResult && _batchRenames.Remove(item.Id, out var batchRename))
+        {
+            OnBatchRenameCompleted(item, batchRename, renameResult);
+            return;
+        }
         if (item.Result is { } fileResult && _fileOperations.Remove(item.Id, out var fileOp))
         {
             OnFileOperationCompleted(item, fileOp, fileResult);

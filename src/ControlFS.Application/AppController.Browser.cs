@@ -354,6 +354,8 @@ public sealed partial class AppController
                 ],
                 new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Placement: MenuPlacement.Quick, ShortLabel: "Recortar"),
                 copy,
+                new MenuItem("Renomear em lote…", () => BeginBatchRename(pane, marked), FileOpsUnavailable,
+                    Detail: "Numeração, localizar e substituir, prefixo e sufixo ou maiúsculas, com prévia.", Icon: ActionIcon.Rename),
                 new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo),
                 new MenuItem($"Mover {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo),
                 new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked), Icon: ActionIcon.Compress, Placement: MenuPlacement.Quick, ShortLabel: "Compactar"),
