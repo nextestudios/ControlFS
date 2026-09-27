@@ -25,6 +25,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitflow guard (tags only on main)
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          git fetch origin main --quiet
+          git merge-base --is-ancestor $env:GITHUB_SHA origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Tags must point to a commit on main (Gitflow: release/* or hotfix/* merged into main)." }
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

@@ -3,13 +3,7 @@ name: CodeQL
 # Security analysis (free for public repos). C# is analysed without building
 # (build-mode: none), so it runs on Linux; the workflows are analysed too.
 on:
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "LICENSE"
-      - ".github/ISSUE_TEMPLATE/**"
+  # Gitflow: analyze what is released (main) and weekly; not on every feature pull request.
   push:
     branches: [main]
     paths-ignore:
@@ -19,6 +13,7 @@ on:
       - ".github/ISSUE_TEMPLATE/**"
   schedule:
     - cron: "37 6 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
