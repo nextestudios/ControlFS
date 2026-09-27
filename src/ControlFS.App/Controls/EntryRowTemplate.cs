@@ -211,12 +211,14 @@ public static class EntryRowTemplate
             EntryKind.Drive => DriveGlyph(entry.Drive),
             EntryKind.KnownFolder when entry.Id == RecycleBinLocation.PlaceId => Glyphs.RecycleBin,
             EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory => Glyphs.Folder,
+            _ when entry.IsSteamGame => Glyphs.Game,
+            _ when entry.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) => Glyphs.Link,
             _ when IsArchiveName(entry.Name) => Glyphs.Archive,
             _ => Glyphs.File,
         };
         icon.Foreground = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
         icons.Load((Image)root.FindName("IconImage"), icon, IconRequest.For(entry, specialFolders));
-        title.Text = entry.Name;
+        title.Text = EntryText.DisplayName(entry); // jogos da Steam pelo título; o nome real fica nos detalhes
         title.Foreground = entry.IsBlocked ? Theme.Danger : entry.IsHidden ? Theme.TextMuted : Theme.Text;
 
         var muted = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
@@ -260,8 +262,8 @@ public static class EntryRowTemplate
 
         SetFocused(container, focused);
         var state = string.Concat(states.Select(s => ", " + s.ToLowerInvariant()));
-        var kind = entry.Kind == EntryKind.Drive ? ", " + TypeName(entry).ToLowerInvariant() : string.Empty;
-        AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{kind}{state}");
+        var kind = entry.Kind == EntryKind.Drive || entry.IsSteamGame ? ", " + TypeName(entry).ToLowerInvariant() : string.Empty;
+        AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{EntryText.DisplayName(entry)}{kind}{state}");
     }
 
     /// <summary>
@@ -321,6 +323,8 @@ public static class EntryRowTemplate
         public const string Unchecked = "\uE739";
         public const string Cut = "\uE8C6";
         public const string Lock = "\uE72E";
+        public const string Game = "\uE7FC";
+        public const string Link = "\uE71B";
     }
 
     /// <summary>

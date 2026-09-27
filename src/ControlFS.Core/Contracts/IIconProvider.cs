@@ -13,13 +13,20 @@ public enum IconSourceKind
     /// <summary>Pasta genérica, sem tocar no disco.</summary>
     Folder,
 
-    /// <summary>Ícone do item real (unidade, pasta especial, programa): o único caso que consulta o disco.</summary>
+    /// <summary>Ícone do item real (unidade, pasta especial, programa): consulta o disco.</summary>
     Path,
+
+    /// <summary>
+    /// Atalho (.lnk, ou .url de jogo da Steam): o ícone que o próprio atalho declara, lido e validado pela
+    /// infraestrutura (só caminhos locais em unidade fixa; nunca rede). <see cref="IconRequest.Value"/> é o caminho do atalho.
+    /// </summary>
+    Shortcut,
 }
 
 /// <summary>
 /// Pedido de ícone. <see cref="Key"/> identifica o ícone no cache: por tipo/extensão para os casos comuns e por caminho
-/// só onde o ícone é próprio do item (unidades, pastas especiais, .exe/.ico).
+/// só onde o ícone é próprio do item (unidades, pastas especiais, .exe/.ico). Atalhos (.lnk e .url de jogos da Steam)
+/// são chaveados pelo caminho mais data de modificação e tamanho: editar o atalho troca a chave e o ícone é lido de novo.
 /// </summary>
 public sealed record IconRequest(string Key, IconSourceKind Kind, string Value)
 {
@@ -41,6 +48,10 @@ public sealed record IconRequest(string Key, IconSourceKind Kind, string Value)
                 return new IconRequest("folder", IconSourceKind.Folder, string.Empty);
             case EntryKind.File when entry.FullPath is { } file && PerFileExtensions.Contains(entry.Extension):
                 return ForPath(file);
+            case EntryKind.File when entry.FullPath is { } shortcut && (entry.IsSteamGame || entry.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)):
+                return new IconRequest(
+                    string.Create(System.Globalization.CultureInfo.InvariantCulture, $"shortcut:{shortcut.ToUpperInvariant()}|{entry.Modified?.UtcTicks}|{entry.Size}"),
+                    IconSourceKind.Shortcut, shortcut);
             default:
                 // Entradas de compactados e arquivos comuns: só a extensão (nunca lê o disco).
                 var extension = entry.Extension.ToLowerInvariant();

@@ -444,7 +444,7 @@ public sealed partial class AppController
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable));
         else if (!ArchiveFormats.CanExtract(format))
             items.Add(new MenuItem("Visualizar como texto", () => OpenTextPreview(pane, entry), Detail: "Somente leitura; nada é executado."));
-        items.Add(new MenuItem(ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
+        items.Add(new MenuItem(entry.IsSteamGame ? "Jogar…" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
             () => OpenExternally(entry, file), ShellUnavailable));
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,
             Detail: "Escolher o programa na caixa do Windows."));
@@ -645,6 +645,7 @@ public sealed partial class AppController
             lines.Add(("Livre", EntryText.Size(volume.FreeBytes)));
             lines.Add(("Usado", $"{EntryText.Size(volume.UsedBytes)} ({volume.UsedFraction:P0})"));
         }
+        if (entry is { IsSteamGame: true, Shortcut.Url: { } steamTarget }) lines.Add(("Atalho", $"Jogo da Steam ({ShortText(steamTarget)})"));
         if (entry.Size is long size) lines.Add(("Tamanho", $"{FormatBytes(size)} ({size:N0} bytes)"));
         if (entry.Modified is { } modified) lines.Add(("Modificado", modified.LocalDateTime.ToString("g")));
         var attributes = new List<string>();

@@ -123,6 +123,8 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
     private static FileEntry ToEntry(FileSystemInfo info, FileAttributes attrs, string id, bool hidden, bool system)
     {
         var isDir = (attrs & FileAttributes.Directory) != 0;
+        // Atalho da Internet: lê o conteúdo (limitado, sem seguir links nem baixar da nuvem) só para reconhecer jogos da Steam.
+        var shortcut = !isDir && info.Name.EndsWith(".url", StringComparison.OrdinalIgnoreCase) ? ShortcutFiles.ReadInternetShortcut(info.FullName, attrs) : null;
         return new FileEntry(
             Id: id,
             Name: info.Name,
@@ -133,7 +135,8 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
             IsHidden: hidden,
             IsSystem: system,
             IsReadOnly: (attrs & FileAttributes.ReadOnly) != 0,
-            IsReparsePoint: (attrs & FileAttributes.ReparsePoint) != 0);
+            IsReparsePoint: (attrs & FileAttributes.ReparsePoint) != 0,
+            Shortcut: shortcut);
     }
 
     public string? GetParent(string path)

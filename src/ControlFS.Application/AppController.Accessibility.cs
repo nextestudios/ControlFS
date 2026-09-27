@@ -98,7 +98,7 @@ public sealed partial class AppController
     private string DescribeEntry(FileEntry entry)
     {
         if (entry.IsBlocked) return $"{entry.Name}, bloqueado: {entry.BlockedReason}";
-        var parts = new List<string> { entry.Name, EntryText.TypeName(entry).ToLowerInvariant() };
+        var parts = new List<string> { EntryText.DisplayName(entry), EntryText.TypeName(entry).ToLowerInvariant() };
         if (entry.Size is long size && !entry.IsContainer) parts.Add(EntryText.Size(size));
         if (entry.FoundIn is { } folder) parts.Add("em " + folder);
         if (ActivePane.List.IsSelected(entry)) parts.Add("marcado");

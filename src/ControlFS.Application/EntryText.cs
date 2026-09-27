@@ -12,8 +12,16 @@ public static class EntryText
 {
     public static CultureInfo Culture { get; } = CultureInfo.GetCultureInfo("pt-BR");
 
+    /// <summary>
+    /// Nome mostrado na lista, na grade e dito pelo Narrador: o nome do arquivo, exceto nos atalhos de jogos da Steam, que
+    /// aparecem pelo título ("Valheim" em vez de "Valheim.url"). Detalhes e Propriedades mostram o nome real.
+    /// </summary>
+    public static string DisplayName(FileEntry entry) =>
+        entry.IsSteamGame && Path.GetFileNameWithoutExtension(entry.Name) is { Length: > 0 } title ? title : entry.Name;
+
     public static string TypeName(FileEntry entry) => entry.Kind switch
     {
+        EntryKind.File when entry.IsSteamGame => "Jogo da Steam",
         EntryKind.Drive => entry.Drive switch
         {
             DriveKind.Removable => "Unidade removível (USB)",

@@ -3,6 +3,12 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **Steam game shortcuts** (#168): `.url` files that open `steam://` (like the ones Steam puts on the Desktop) show in the list and grid by the game's title without `.url` ("Valheim"), with the type "Jogo da Steam" (Steam game) and the game's own icon declared by the shortcut (or the same icon from the local Steam installation; with neither, a game symbol). The details panel and Properties keep the real file name, the real type and what the shortcut opens. Opening (South or North → **Jogar…**) asks first, starting on "Cancelar", and hands the shortcut file itself to Windows; without Steam installed you get a readable error. Website shortcuts (`https://`) stay ordinary `.url` files.
+- `.lnk` shortcuts show their own icon (the declared one or their target program's) instead of a blank document.
+
+### Security
+- Shortcut icons are only read from local paths on fixed drives with no links along the path: network paths (`\\server\…`), web addresses, device prefixes and relative paths are refused before any access (so merely showing a folder can't leak Windows credentials to a server). `.url` contents are read with a 64 KB cap and never executed.
 
 ## [0.7.0-alpha.1]
 ### Improvements

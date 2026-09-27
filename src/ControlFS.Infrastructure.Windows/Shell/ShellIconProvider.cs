@@ -8,7 +8,9 @@ namespace ControlFS.Infrastructure.Windows.Shell;
 /// <summary>
 /// Ícones do Shell do Windows (SHGetFileInfo + listas de imagens do sistema). Tudo roda numa thread STA dedicada: a thread
 /// de UI nunca espera. Tipos comuns são pedidos por extensão com SHGFI_USEFILEATTRIBUTES (sem tocar no disco); só
-/// unidades, pastas especiais e .exe/.ico consultam o item real. Fora do Windows devolve sempre <c>null</c>.
+/// unidades, pastas especiais e .exe/.ico consultam o item real. Atalhos (.lnk, .url de jogos da Steam) nunca passam
+/// pelo Shell: o ícone que declaram é lido por <see cref="ShortcutFiles"/>, validado (só caminho local em unidade fixa) e
+/// extraído do arquivo local. Fora do Windows devolve sempre <c>null</c>.
 /// </summary>
 public sealed partial class ShellIconProvider : IIconProvider, IDisposable
 {
@@ -58,7 +60,7 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
             {
                 if (OperatingSystem.IsWindows()) image = Extract(work.Request, work.SizePx);
             }
-            catch (Exception ex) when (ex is COMException or ExternalException or ArgumentException or OutOfMemoryException)
+            catch (Exception ex) when (ex is COMException or ExternalException or ArgumentException or OutOfMemoryException or IOException or UnauthorizedAccessException)
             {
                 image = null;
             }
@@ -131,6 +133,7 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
     [SupportedOSPlatform("windows")]
     private static unsafe IconImage? Extract(IconRequest request, int sizePx)
     {
+        if (request.Kind == IconSourceKind.Shortcut) return ExtractShortcut(request.Value, sizePx);
         var (name, attributes, flags) = request.Kind switch
         {
             IconSourceKind.Folder => ("pasta", FileAttributeDirectory, ShgfiSysIconIndex | ShgfiUseFileAttributes),
@@ -158,6 +161,50 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
         // Tipos sem arte de 256 px vêm pequenos no canto da imagem "jumbo": nesse caso, usa a de 48 px.
         if (list == ShilJumbo && image is not null && ContentExtent(image) <= 48) image = FromImageList(ShilExtraLarge, info.IIcon) ?? image;
         return image;
+    }
+
+    /// <summary>
+    /// Ícone de um atalho. .url (jogo da Steam): <c>IconFile</c>/<c>IconIndex</c> do atalho e, se o arquivo não existir,
+    /// o mesmo ícone na instalação local da Steam. .lnk: o ícone declarado; sem ele, o do destino (programa .exe/.ico
+    /// pelo próprio arquivo, pasta pela pasta genérica, documento só pela extensão — o Shell nunca lê o destino).
+    /// Nada resolvido: <c>null</c> (o chamador mostra o símbolo de reserva).
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static IconImage? ExtractShortcut(string path, int sizePx)
+    {
+        if (path.EndsWith(".url", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ShortcutFiles.ReadInternetShortcut(path) is not { IsSteamGame: true } shortcut) return null;
+            return (ShortcutFiles.ResolveLocal(shortcut.IconFile, iconFile: true) is { } file ? ExtractFromFile(file, shortcut.IconIndex, sizePx) : null)
+                ?? (ShortcutFiles.FindSteamGameIcon(shortcut) is { } steam ? ExtractFromFile(steam, 0, sizePx) : null);
+        }
+        if (ShortcutFiles.ReadShellLink(path) is not { } link) return null;
+        if (link.IconLocation is not null)
+            return ShortcutFiles.ResolveLocal(link.IconLocation, iconFile: true) is { } icon ? ExtractFromFile(icon, link.IconIndex, sizePx) : null;
+        if (ShortcutFiles.ResolveLocal(link.TargetPath, iconFile: false) is not { } target) return null;
+        if (Directory.Exists(target)) return Extract(new IconRequest("folder", IconSourceKind.Folder, string.Empty), sizePx);
+        var extension = Path.GetExtension(target).ToLowerInvariant();
+        return extension is ".exe" or ".ico"
+            ? ExtractFromFile(target, 0, sizePx)
+            : Extract(new IconRequest("ext:" + extension, IconSourceKind.Extension, extension), sizePx);
+    }
+
+    /// <summary>Ícone número <paramref name="index"/> (negativo: id do recurso) de um .ico/.exe/.dll local, no tamanho pedido.</summary>
+    [SupportedOSPlatform("windows")]
+    private static unsafe IconImage? ExtractFromFile(string file, int index, int sizePx)
+    {
+        var size = (uint)Math.Clamp(sizePx, 16, 256);
+        nint large = 0, small = 0;
+        try
+        {
+            if (SHDefExtractIconW(file, index, 0, &large, &small, size | (16u << 16)) != 0 || large == 0) return null;
+            return FromIcon(large);
+        }
+        finally
+        {
+            if (large != 0) _ = DestroyIcon(large);
+            if (small != 0) _ = DestroyIcon(small);
+        }
     }
 
     [SupportedOSPlatform("windows")]
@@ -270,6 +317,10 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
     [LibraryImport("shell32.dll", EntryPoint = "SHGetFileInfoW")]
     [SupportedOSPlatform("windows")]
     private static unsafe partial nint SHGetFileInfoW(char* pidl, uint dwFileAttributes, ShFileInfo* psfi, uint cbFileInfo, uint uFlags);
+
+    [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    [SupportedOSPlatform("windows")]
+    private static unsafe partial int SHDefExtractIconW(string pszIconFile, int iIndex, uint uFlags, nint* phiconLarge, nint* phiconSmall, uint nIconSize);
 
     [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
     [SupportedOSPlatform("windows")]

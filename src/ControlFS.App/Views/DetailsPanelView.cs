@@ -145,7 +145,7 @@ internal sealed class DetailsPanelView
         var entry = details.Entry;
         var fallback = new TextBlock
         {
-            Text = entry.IsBlocked ? "" : details.Kind switch
+            Text = entry.IsBlocked ? "" : entry.IsSteamGame ? "\uE7FC" : details.Kind switch
             {
                 DetailsKind.Drive => "",
                 DetailsKind.Place when entry.Id == RecycleBinLocation.PlaceId => "",

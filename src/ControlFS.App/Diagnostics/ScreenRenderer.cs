@@ -64,6 +64,7 @@ internal static class ScreenRenderer
         {
             Directory.CreateDirectory(outputDirectory);
             var sample = CreateSampleFolder(Path.Join(work, "files"));
+            var shortcuts = CreateShortcutFolder(Path.Join(work, "files", "Área de trabalho"));
             var window = new MainWindow(Path.Join(work, "data"));
             var loaded = new TaskCompletionSource();
             window.RootHost.Loaded += (_, _) => loaded.TrySetResult();
@@ -168,6 +169,15 @@ internal static class ScreenRenderer
                 app.TypeText("relatório");
                 await CaptureAsync(stage, target, dir, "5-keyboard", window);
                 CloseModals(app);
+
+                // Atalhos (#168): jogos da Steam pelo título e com o ícone que declaram, site comum, .lnk e ícone ausente.
+                app.OpenPhysical(shortcuts);
+                await app.WhenIdleAsync();
+                await FocusAsync(app, stage, "Valheim.url");
+                await CaptureAsync(stage, target, dir, "6-shortcuts-list", window);
+                app.Handle(InputAction.ChangeView);
+                await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
+                app.Handle(InputAction.ChangeView);
             }
 
             await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
@@ -265,6 +275,39 @@ internal static class ScreenRenderer
             foreach (var name in new[] { "contrato.docx", "notas.txt", "fotos/praia.jpg", "fotos/montanha.jpg" })
                 using (var writer = new StreamWriter(archive.CreateEntry(name).Open())) writer.Write(new string('x', 4096));
         File.SetLastWriteTime(zip, DateTime.Now.Date.AddDays(-1).AddHours(18).AddMinutes(5));
+        return folder;
+    }
+
+    /// <summary>
+    /// Área de trabalho de exemplo com atalhos: dois "jogos da Steam" (.url steam://) com ícones diferentes de um .dll do
+    /// Windows, um com ícone ausente (reserva), um site (https) e um .lnk. Nada é aberto; a Steam não precisa existir.
+    /// </summary>
+    private static string CreateShortcutFolder(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        var imageres = Path.Join(Environment.SystemDirectory, "imageres.dll");
+        void Url(string name, string url, string? icon, int index) => File.WriteAllText(Path.Join(folder, name),
+            $"[InternetShortcut]\r\nURL={url}\r\n" + (icon is null ? string.Empty : $"IconFile={icon}\r\nIconIndex={index}\r\n"));
+        Url("Valheim.url", "steam://rungameid/892970", imageres, 109);
+        Url("Dead Space.url", "steam://rungameid/1693980", imageres, 76);
+        Url("Aniimo.url", "steam://rungameid/2", Path.Join(folder, "sem-icone.ico"), 0);
+        Url("ControlFS no GitHub.url", "https://github.com/nextestudios/ControlFS", null, 0);
+        try
+        {
+            var type = Type.GetTypeFromProgID("WScript.Shell");
+            if (type is not null && Activator.CreateInstance(type) is { } shell)
+            {
+                var culture = System.Globalization.CultureInfo.InvariantCulture;
+                var flags = System.Reflection.BindingFlags.InvokeMethod;
+                var link = type.InvokeMember("CreateShortcut", flags, null, shell, [Path.Join(folder, "Prompt de comando.lnk")], culture)!;
+                link.GetType().InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty, null, link, [Path.Join(Environment.SystemDirectory, "cmd.exe")], culture);
+                link.GetType().InvokeMember("Save", flags, null, link, null, culture);
+            }
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Reflection.TargetInvocationException)
+        {
+            Report.AppendLine("  (sem WScript.Shell: .lnk de exemplo não criado)");
+        }
         return folder;
     }
 

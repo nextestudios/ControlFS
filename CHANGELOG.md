@@ -3,6 +3,12 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Atalhos de jogos da Steam** (#168): arquivos `.url` que abrem `steam://` (como os que a Steam coloca na Área de trabalho) aparecem na lista e na grade pelo título do jogo, sem `.url` ("Valheim"), com o tipo "Jogo da Steam" e o ícone do próprio jogo declarado pelo atalho (ou o mesmo ícone da instalação local da Steam; sem nenhum, um símbolo de jogo). O painel de detalhes e as Propriedades mantêm o nome real do arquivo, o tipo real e o que o atalho abre. Abrir (Sul ou Norte → **Jogar…**) confirma antes, começando em "Cancelar", e entrega o próprio atalho ao Windows; sem a Steam instalada aparece um erro legível. Atalhos de sites (`https://`) continuam `.url` comuns.
+- Atalhos `.lnk` mostram o próprio ícone (o declarado ou o do programa de destino) em vez de um documento em branco.
+
+### Segurança
+- Ícones de atalhos só são lidos de caminhos locais em unidades fixas, sem links no caminho: caminhos de rede (`\\servidor\…`), endereços da web, prefixos de dispositivo e caminhos relativos são recusados antes de qualquer acesso (evita vazar as credenciais do Windows para um servidor ao só mostrar a pasta). O conteúdo de `.url` é lido com limite de 64 KB e nunca executado.
 
 ## [0.7.0-alpha.1]
 ### Melhorias

@@ -20,6 +20,7 @@ public sealed partial class WindowsShellService : IShellService
     {
         if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
         Ensure(path);
+        EnsureUrlHandler(path);
         try
         {
             using var process = Process.Start(new ProcessStartInfo(path) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(path) ?? string.Empty });
@@ -67,6 +68,20 @@ public sealed partial class WindowsShellService : IShellService
         {
             ILFree(pidl);
         }
+    }
+
+    /// <summary>
+    /// Atalho da Internet cujo esquema não tem programa (ex.: <c>steam://</c> sem a Steam instalada): erro legível em vez
+    /// da caixa genérica do Windows. O arquivo continua sendo aberto pelo Shell, nunca por uma linha de comando montada.
+    /// </summary>
+    private static void EnsureUrlHandler(string path)
+    {
+        if (!OperatingSystem.IsWindows() || !path.EndsWith(".url", StringComparison.OrdinalIgnoreCase)) return;
+        var shortcut = ShortcutFiles.ReadInternetShortcut(path);
+        if (ShortcutFiles.UrlScheme(shortcut?.Url) is not { } scheme || ShortcutFiles.HasUrlHandler(scheme)) return;
+        throw new ShellException(shortcut!.IsSteamGame
+            ? "A Steam não está instalada (nenhum programa do Windows abre links steam://). Instale a Steam para jogar por este atalho."
+            : $"Nenhum programa do Windows abre links \"{scheme}:\".");
     }
 
     private static void Ensure(string path)
