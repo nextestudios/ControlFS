@@ -38,8 +38,8 @@ public sealed class DiskImageIntegrationTests : IDisposable
             Assert.Matches(@"^[A-Z]:\\$", root);
             Assert.Equal("ControlFS ISO", await File.ReadAllTextAsync(Path.Join(root, "HELLO.TXT")));
             var behind = service.ImageBehind(root);
-            Assert.NotNull(behind);
-            Assert.Equal("tiny.iso", Path.GetFileName(behind), ignoreCase: true);
+            Assert.True(behind is not null, "ImageBehind: " + VirtualDiskService.LastTrace);
+            Assert.Equal("tiny.iso", Path.GetFileName(behind!), ignoreCase: true);
             Assert.Equal(new FileInfo(iso).Length, new FileInfo(behind).Length);
             Assert.Equal(root, service.Mount(iso, CancellationToken.None)); // já montada: a mesma unidade
 

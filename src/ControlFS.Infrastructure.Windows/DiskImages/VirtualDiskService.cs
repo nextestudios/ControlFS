@@ -55,10 +55,32 @@ public sealed partial class VirtualDiskService : IDiskImageService
     public string? ImageBehind(string driveRoot)
     {
         if (!OperatingSystem.IsWindows() || VolumeDevice(driveRoot) is not { } volume) return null;
-        using var handle = CreateFileW(volume, 0, FileShareReadWrite, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
-        if (handle.IsInvalid) return null;
-        return BackingFile(handle);
+        var trace = new System.Text.StringBuilder();
+        // O volume e, por trás dele, o disco (CD-ROM virtual ou disco físico virtual): a dependência pode vir de qualquer um.
+        var devices = new List<string> { volume };
+        if (DeviceNumber(volume) is { } number)
+            devices.Add(number.Type == FileDeviceCdRom ? $@"\\.\CdRom{number.Number}" : $@"\\.\PhysicalDrive{number.Number}");
+        foreach (var device in devices)
+            foreach (var access in new[] { 0u, GenericRead })
+            {
+                using var handle = CreateFileW(device, access, FileShareReadWrite, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
+                if (handle.IsInvalid)
+                {
+                    trace.Append(device).Append(" open ").Append(Marshal.GetLastPInvokeError()).Append("; ");
+                    continue;
+                }
+                foreach (var flags in new[] { DependencyHostVolumes | DependencyDiskHandle, DependencyDiskHandle, DependencyHostVolumes })
+                {
+                    var found = BackingFile(handle, flags, trace);
+                    if (found is not null) return found;
+                }
+            }
+        LastTrace = trace.ToString();
+        return null;
     }
+
+    /// <summary>Diagnóstico da última consulta sem resultado (testes de integração).</summary>
+    internal static string? LastTrace { get; private set; }
 
     public void Unmount(string driveRoot)
     {
@@ -157,7 +179,7 @@ public sealed partial class VirtualDiskService : IDiskImageService
     /// hospedeiro convertido para a letra quando houver. Qualquer erro (disco comum, sem acesso): null.
     /// </summary>
     [SupportedOSPlatform("windows")]
-    private static unsafe string? BackingFile(SafeFileHandle volume)
+    private static unsafe string? BackingFile(SafeFileHandle handle, uint flags, System.Text.StringBuilder trace)
     {
         var size = 4096u;
         for (var attempt = 0; attempt < 3; attempt++)
@@ -166,25 +188,34 @@ public sealed partial class VirtualDiskService : IDiskImageService
             fixed (byte* data = buffer)
             {
                 *(int*)data = 2; // STORAGE_DEPENDENCY_INFO_VERSION_2
-                var rc = GetStorageDependencyInformation(volume, DependencyHostVolumes | DependencyDiskHandle, size, data, out var used);
+                var rc = GetStorageDependencyInformation(handle, flags, size, data, out var used);
                 if (rc == ErrorInsufficientBuffer && used > size)
                 {
                     size = used;
                     continue;
                 }
-                if (rc != 0) return null;
+                trace.Append("flags ").Append(flags).Append(" rc ").Append(rc);
+                if (rc != 0)
+                {
+                    trace.Append("; ");
+                    return null;
+                }
                 var count = *(uint*)(data + 4);
+                trace.Append(" n ").Append(count);
+                string? best = null;
+                var bestLevel = uint.MaxValue;
                 for (var i = 0; i < count; i++)
                 {
-                    var entry = data + 8 + (i * sizeof(DependencyEntry));
-                    var info = *(DependencyEntry*)entry;
-                    if (info.AncestorLevel != 1 || info.HostVolumeName == IntPtr.Zero || info.DependentVolumeRelativePath == IntPtr.Zero) continue;
-                    var host = Marshal.PtrToStringUni(info.HostVolumeName);
-                    var relative = Marshal.PtrToStringUni(info.DependentVolumeRelativePath);
-                    if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(relative)) continue;
-                    return Path.Join(FriendlyVolume(host), relative.TrimStart('\\'));
+                    var info = *(DependencyEntry*)(data + 8 + (i * sizeof(DependencyEntry)));
+                    var host = info.HostVolumeName == IntPtr.Zero ? null : Marshal.PtrToStringUni(info.HostVolumeName);
+                    var relative = info.DependentVolumeRelativePath == IntPtr.Zero ? null : Marshal.PtrToStringUni(info.DependentVolumeRelativePath);
+                    trace.Append(" [").Append(info.AncestorLevel).Append(' ').Append(host).Append(" | ").Append(relative).Append(']');
+                    if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(relative) || info.AncestorLevel >= bestLevel) continue;
+                    bestLevel = info.AncestorLevel;
+                    best = Path.Join(FriendlyVolume(host), relative.TrimStart('\\'));
                 }
-                return null;
+                trace.Append("; ");
+                return best;
             }
         }
         return null;
@@ -223,7 +254,7 @@ public sealed partial class VirtualDiskService : IDiskImageService
     private const uint AttachReadOnly = 0x1, AttachPermanentLifetime = 0x4;
     private const uint DependencyHostVolumes = 0x1, DependencyDiskHandle = 0x2;
     private const uint FileShareReadWrite = 0x3, OpenExisting = 3;
-    private const uint IoctlStorageGetDeviceNumber = 0x2D1080;
+    private const uint IoctlStorageGetDeviceNumber = 0x2D1080, FileDeviceCdRom = 2, GenericRead = 0x80000000;
 
     private const uint ErrorFileNotFound = 2, ErrorPathNotFound = 3, ErrorAccessDenied = 5, ErrorSharingViolation = 32, ErrorNotSupported = 50,
         ErrorInvalidParameter = 87, ErrorInsufficientBuffer = 122, ErrorBusy = 170, ErrorFileSystemLimitation = 665, ErrorPrivilegeNotHeld = 1314,
