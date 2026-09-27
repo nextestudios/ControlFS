@@ -23,6 +23,15 @@ public sealed record AppSettings
     public string? LastLocation { get; init; }
     public IReadOnlyList<string> Favorites { get; init; } = [];
 
+    /// <summary>Lembra pastas e arquivos abertos recentemente (somente neste computador). Desligar apaga as listas.</summary>
+    public bool RememberRecents { get; init; } = true;
+
+    /// <summary>Pastas visitadas recentemente, a mais recente primeiro (lista limitada).</summary>
+    public IReadOnlyList<string> RecentFolders { get; init; } = [];
+
+    /// <summary>Arquivos e compactados abertos recentemente, o mais recente primeiro (lista limitada).</summary>
+    public IReadOnlyList<string> RecentFiles { get; init; } = [];
+
     /// <summary>Verifica novas versões ao abrir (no máximo uma vez por dia). Desligável no menu.</summary>
     public bool AutoCheckUpdates { get; init; } = true;
 

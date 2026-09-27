@@ -27,8 +27,8 @@ public sealed partial class AppController
 
     internal static bool IsFavoriteEntry(FileEntry entry) => entry.Id.StartsWith(FavoriteIdPrefix, StringComparison.Ordinal);
 
-    /// <summary>Favoritas primeiro, depois os locais do sistema.</summary>
-    private IReadOnlyList<FileEntry> BuildPlaces() => [.. FavoriteEntries(), .. _fs.GetPlaces()];
+    /// <summary>Favoritas primeiro, depois "Recentes" (quando há) e os locais do sistema.</summary>
+    private IReadOnlyList<FileEntry> BuildPlaces() => [.. FavoriteEntries(), .. RecentPlace(), .. _fs.GetPlaces()];
 
     private List<FileEntry> FavoriteEntries()
     {
@@ -122,6 +122,16 @@ public sealed partial class AppController
 
     private void ShowHomeMenu()
     {
+        if (PlacesFocus >= 0 && PlacesFocus < Places.Count && IsRecentPlace(Places[PlacesFocus]))
+        {
+            PushModal(new MenuModal("Recentes",
+            [
+                new("Abrir", ShowRecents),
+                new("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador."),
+                new("Desligar recentes", ToggleRememberRecents, Detail: "Para de lembrar e apaga as listas. Religue no Menu."),
+            ]));
+            return;
+        }
         if (PlacesFocus < 0 || PlacesFocus >= Places.Count || Places[PlacesFocus] is not { FullPath: { } path } place) return;
         var items = new List<MenuItem>
         {
@@ -140,6 +150,11 @@ public sealed partial class AppController
 
     private void OpenPlace(FileEntry place)
     {
+        if (IsRecentPlace(place))
+        {
+            ShowRecents();
+            return;
+        }
         if (place.FullPath is not { } path) return;
         if (place.IsBlocked)
         {

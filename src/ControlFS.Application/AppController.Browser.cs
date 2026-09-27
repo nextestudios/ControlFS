@@ -114,6 +114,7 @@ public sealed partial class AppController
             pane.ArchivePassword = password;
             pane.Location = new ArchiveLocation(archivePath, string.Empty);
             pane.List.SetItems(tree.Children(string.Empty));
+            if (pane.Mode == PaneMode.Browse) RecordRecentFile(archivePath);
             if (tree.BlockedCount > 0) StatusMessage = $"{tree.BlockedCount} entrada(s) com nome inseguro foram bloqueadas.";
         }
         catch (ArchiveAccessException ex) when (generation == pane.Generation && ex.Kind is OperationErrorKind.PasswordRequired or OperationErrorKind.WrongPassword)
@@ -177,7 +178,7 @@ public sealed partial class AppController
             if (target is PhysicalLocation p)
             {
                 pane.LastValidPhysical = p;
-                if (pane.Mode == PaneMode.Browse && Settings.LastLocation != p.FullPath) UpdateSettings(s => s with { LastLocation = p.FullPath });
+                if (pane.Mode == PaneMode.Browse) RecordVisit(p.FullPath);
             }
         }
         catch (FileOperationException ex) when (generation == pane.Generation)
@@ -422,6 +423,8 @@ public sealed partial class AppController
             new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }), inBrowser ? null : "Abra uma pasta primeiro."),
             new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
                 Detail: "Vale para a próxima busca (Select/View)."),
+            new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
+                Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas."),
             new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });

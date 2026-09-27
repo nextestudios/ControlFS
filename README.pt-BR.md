@@ -41,7 +41,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Recursos
 
-- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** no Início e **barra de caminho navegável**
+- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** e **pastas/arquivos recentes** no Início e **barra de caminho navegável**
 - **Legendas do controle** de acordo com o que está na sua mão (Xbox, PlayStation, Nintendo, genérico), glifos vetoriais originais, rodapé por contexto e **assistente de mapeamento** para joysticks sem perfil
 - **Layout responsivo** para portáteis 720p/800p, desktop e TVs 1080p/4K
 - **Tentar de novo** uma operação que falhou ou só os itens que falharam; restos de operações interrompidas são limpos na próxima abertura

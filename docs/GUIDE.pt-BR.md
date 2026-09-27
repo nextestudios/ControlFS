@@ -71,6 +71,10 @@ Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no 
 - **Sul/A** num resultado abre a pasta dele com o foco no item; Voltar retorna aos resultados.
 - A busca nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode aparecer como resultado).
 
+## Pastas e arquivos recentes
+
+A tela inicial mostra **Recentes** assim que você abre algo: as últimas 10 pastas visitadas e os últimos 10 arquivos ou compactados abertos, do mais novo ao mais antigo. Escolha um item para voltar a ele (um arquivo abre como se você apertasse Sul nele, na pasta dele). Norte em **Recentes** oferece **Limpar recentes** e **Desligar recentes**; Menu → **Recentes: lembrar/não lembrar** religa. As listas ficam só nas preferências locais e nunca são enviadas; desligar também as apaga.
+
 ## Favoritos
 
 Aperte **Norte** numa pasta (ou em qualquer lugar dentro dela, para "esta pasta") e escolha **Adicionar aos favoritos**. Os favoritos aparecem primeiro na tela inicial e no seletor de pastas (Start → "Ir para outro local"), a um botão de distância ao copiar, mover ou extrair. Na tela inicial, Norte num favorito oferece **Mover favorito para cima/baixo** e **Remover dos favoritos**. Um favorito cuja pasta sumiu (por exemplo, pendrive desconectado) aparece como indisponível e continua na lista até você removê-lo.

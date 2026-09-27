@@ -71,6 +71,10 @@ Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the 
 - **South/A** on a result opens its folder with the item focused; Back returns to the results.
 - Search never enters junctions, symbolic links or other reparse points (the link itself can show up as a result).
 
+## Recent folders and files
+
+The home screen shows **Recent** once you have opened something: the last 10 folders you visited and the last 10 files or archives you opened, newest first. Choose an item to go back to it (a file opens as if you pressed South on it in its folder). North on **Recent** offers **Clear recent** and **Turn off recent**; Menu → **Recent: remember/don't remember** turns it back on. The lists are stored only in your local settings and never sent anywhere; turning the feature off also erases them.
+
 ## Favorites
 
 Press **North** on a folder (or anywhere inside one, for "this folder") and choose **Add to favorites**. Favorites come first on the home screen and in the folder picker (Start → "Go to another place"), so they are one press away when copying, moving or extracting. On the home screen, North on a favorite offers **Move favorite up/down** and **Remove from favorites**. A favorite whose folder is missing (for example, an unplugged drive) is shown as unavailable and kept until you remove it.

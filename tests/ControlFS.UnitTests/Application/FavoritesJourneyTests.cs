@@ -1,6 +1,7 @@
 using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Contracts;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Windows.FileSystem;
 using ControlFS.Infrastructure.Windows.Settings;
@@ -38,6 +39,7 @@ public class FavoritesJourneyTests : IDisposable
         var games = _tmp.MakeDir("Jogos");
         File.WriteAllText(_tmp.Sub("a.txt"), "a");
         var store = new JsonSettingsStore(_data.Path);
+        store.Save(new AppSettings { RememberRecents = false }); // só favoritos e locais no início
 
         // Adicionar duas pastas pelo menu de ações do navegador
         var d = Boot(store);
