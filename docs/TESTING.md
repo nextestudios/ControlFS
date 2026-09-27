@@ -145,6 +145,9 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
 - [ ] Desconectar o joystick no meio: o assistente fecha sem salvar e o app continua respondendo ao teclado.
 - [ ] Salvar, fechar o ControlFS e reabrir: o joystick navega sem configurar de novo; reconectar em outra porta USB também.
 - [ ] Com perfil salvo, configurar de novo e cancelar (Esc e "Cancelar" na confirmação): o perfil antigo continua valendo.
+- [ ] Mapear só direções, confirmar e voltar (pular todos os opcionais): segurar Confirmar ~0,6 s abre Ações, segurar
+      Voltar abre o Menu, pressões curtas confirmam/voltam como antes e o rodapé mostra "Ações (segure)" no glifo de
+      Confirmar e "Menu (segure)" no de Voltar.
 - [ ] Exportar para uma pasta, importar em outro computador (ou após apagar `controllers\` na pasta de dados) e usar.
 - [ ] Importar um `.json` qualquer (não perfil) e um perfil editado com um campo extra: ambos recusados com mensagem clara.
 

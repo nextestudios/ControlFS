@@ -26,7 +26,7 @@ The bottom bar shows the buttons of the controller in use (for example `A Open` 
 
 The on-screen keyboard has the text field on top, four character rows, a function row (`⇧` Shift · `ABC` letters · `@#:` symbols · space · `⌫`) and a bottom row (cursor `◀ ▶` · `…` more · Cancel · **Done**). `…` opens accents, **Clear** and the PT-BR/EN switch. Shift: one press capitalizes the next letter, a second press locks caps (`⇪`), a third turns it off. Keys that a field doesn't accept (e.g. `\ / : * ? " < > |` in file names) are dimmed. Holding West, LB/RB, or South on `⌫ ◀ ▶` repeats (it speeds up the longer you hold); Done and the other keys never repeat. The cursor is the accent-colored bar in the text field; LT/RT (or Home/End) jump to the start or end, and moving it never changes the text, page or Shift.
 
-Every essential action is reachable through menus (Start / North), so a pad with only a D-pad and two buttons still works.
+Every essential action is reachable through menus (Start / North). On a joystick mapped with only directions, Confirm and Back, **hold Confirm** (0.6 s) to open Actions and **hold Back** to open the Menu; short presses still confirm and go back, and the bottom bar shows "(segure)" ("hold") on those buttons.
 
 ### Controller test
 
@@ -39,7 +39,7 @@ Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads.
 1. Hold any button on the joystick for 2 seconds (or, with the keyboard or another controller, Menu → **Controllers without a profile…** → Configure).
 2. Let go of everything for a second while ControlFS measures each axis at rest.
 3. Press what you want for **Up, Down, Left, Right, Confirm and Back**, one at a time, releasing between steps. D-pads, sticks (including inverted axes) and buttons all work; an input already used is refused.
-4. Optional buttons follow (Actions, Menu, Mark, regions, pages, Search). Mapping **Actions** and **Menu** is recommended. Press the joystick's Back button (or Enter) to skip one.
+4. Optional buttons follow (Actions, Menu, Mark, regions, pages, Search). Mapping **Actions** and **Menu** is recommended; without them, holding Confirm opens Actions and holding Back opens the Menu. Press the joystick's Back button (or Enter) to skip one.
 5. **Test** the new mapping: the joystick already drives the screen; choose **Save profile**, **Redo a step…** or **Cancel without saving**.
 
 Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips an optional step. With no input for 20 seconds the wizard cancels itself. If the joystick already has a profile, saving asks before replacing it (starting on "Cancel"); cancelling at any point leaves the saved profile untouched. The profile applies again whenever that joystick is connected, including after restarting ControlFS. Menu → Controllers without a profile also exports a profile to a folder and imports one (`.json`, up to 64 KB, validated; anything unexpected is refused).

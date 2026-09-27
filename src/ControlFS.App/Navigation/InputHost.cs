@@ -30,6 +30,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly DispatcherQueueTimer _timer;
     private readonly Dictionary<string, InputDeviceInfo> _devices = [];
     private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
+    private readonly Dictionary<string, LongPressTranslator> _longPress = [];
 
     public InputHost(AppController app, DispatcherQueue queue)
     {
@@ -39,6 +40,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         Router.ActiveDeviceChanged += _ =>
         {
             app.SetActiveController(ActiveDevice?.Family); // troca de controle muda as legendas na hora
+            PublishLongPress();
             StatusChanged?.Invoke();
         };
         app.ModalContextChanged += () =>
@@ -46,7 +48,11 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
             Router.LatchHeld();
             Router.AllowAutomaticActivation = app.TopModal?.IsSensitive != true;
         };
-        app.SettingsChanged += s => Router.UpdateMap(new ActionMap(s.Convention));
+        app.SettingsChanged += s =>
+        {
+            Router.UpdateMap(new ActionMap(s.Convention));
+            foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device); // Confirmar/Voltar do substituto
+        };
         app.ControllerProfilesChanged += () =>
         {
             foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device);
@@ -91,7 +97,12 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private void Pump()
     {
         _backend.Pump();
-        if (!Router.IsSuspended) _app.TickControllers();
+        if (!Router.IsSuspended)
+        {
+            _app.TickControllers();
+            foreach (var (key, longPress) in _longPress.ToArray())
+                longPress.Tick(_clock.Elapsed, (control, pressed) => OnControl(key, control, pressed, _clock.Elapsed));
+        }
         Router.Tick(_clock.Elapsed);
     }
 
@@ -129,23 +140,43 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         }
         if (_app.OnRawInput(device, input)) return; // assistente em andamento ou joystick ainda sem perfil
         if (_translators.TryGetValue(deviceKey, out var translator))
-            translator.Apply(input, (control, pressed) => OnControl(deviceKey, control, pressed, timestamp));
+            translator.Apply(input, (control, pressed) => EmitProfiled(deviceKey, control, pressed, timestamp));
     }
 
     public RawJoystickState? GetState(string deviceKey) => _backend.GetRawState(deviceKey);
+
+    /// <summary>Perfil sem Ações/Menu: Confirmar/Voltar mantidos viram Norte/Start (<see cref="LongPressTranslator"/>).</summary>
+    private void EmitProfiled(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp)
+    {
+        if (_longPress.TryGetValue(deviceKey, out var longPress))
+            longPress.Apply(control, pressed, _clock.Elapsed, (c, p) => OnControl(deviceKey, c, p, timestamp));
+        else
+            OnControl(deviceKey, control, pressed, timestamp);
+    }
+
+    /// <summary>O rodapé mostra "segure" em Ações/Menu quando o controle ativo usa o substituto.</summary>
+    private void PublishLongPress() =>
+        _app.SetLongPressFallback(Router.ActiveDeviceKey is { } key && _longPress.TryGetValue(key, out var longPress) ? longPress.Fallback : null);
 
     /// <summary>Aplica (ou troca) o perfil salvo do joystick cru, soltando o que o perfil anterior mantinha pressionado.</summary>
     private void ApplyProfile(InputDeviceInfo device)
     {
         var key = device.SessionKey;
         if (_translators.Remove(key, out var old)) old.ReleaseAll((control, _) => Router.OnControl(key, control, false, _clock.Elapsed));
-        if (_app.ProfileFor(device) is { } profile) _translators[key] = new ControllerProfileTranslator(profile);
+        _longPress.Remove(key);
+        if (_app.ProfileFor(device) is { } profile)
+        {
+            _translators[key] = new ControllerProfileTranslator(profile);
+            if (LongPressFallback.For(profile) is { } fallback) _longPress[key] = new LongPressTranslator(fallback, _app.Settings.Convention);
+        }
+        PublishLongPress();
     }
 
     public void OnDeviceRemoved(string deviceKey)
     {
         _devices.Remove(deviceKey);
         _translators.Remove(deviceKey);
+        _longPress.Remove(deviceKey);
         _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
         StatusChanged?.Invoke();

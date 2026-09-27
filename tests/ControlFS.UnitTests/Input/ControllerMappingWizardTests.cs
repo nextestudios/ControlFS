@@ -1,4 +1,5 @@
 using ControlFS.Core.Actions;
+using ControlFS.Core.Input;
 using ControlFS.Core.Input.Mapping;
 
 namespace ControlFS.UnitTests.Input;
@@ -155,5 +156,63 @@ public class ControllerMappingWizardTests
         Feed(RawInputEvent.Hat(0, HatDirections.Up));
         Feed(RawInputEvent.Hat(0, HatDirections.Up | HatDirections.Right));
         Assert.Equal([(PhysicalControl.DPadUp, true), (PhysicalControl.DPadUp, false)], events);
+    }
+
+    [Fact]
+    public void Two_button_profile_opens_actions_and_menu_by_holding_confirm_and_back()
+    {
+        var required = new Dictionary<PhysicalControl, RawBinding>
+        {
+            [PhysicalControl.DPadUp] = new(RawInputKind.Hat, 0, HatDirections.Up),
+            [PhysicalControl.DPadDown] = new(RawInputKind.Hat, 0, HatDirections.Down),
+            [PhysicalControl.DPadLeft] = new(RawInputKind.Hat, 0, HatDirections.Left),
+            [PhysicalControl.DPadRight] = new(RawInputKind.Hat, 0, HatDirections.Right),
+            [PhysicalControl.South] = new(RawInputKind.Button, 0, 0),
+            [PhysicalControl.East] = new(RawInputKind.Button, 1, 0),
+        };
+        var profile = new ControllerProfile("Pad", Match, required, []);
+        var fallback = Assert.IsType<LongPressFallback>(LongPressFallback.For(profile));
+        Assert.Null(LongPressFallback.For(profile with
+        {
+            Bindings = new Dictionary<PhysicalControl, RawBinding>(required)
+            {
+                [PhysicalControl.North] = new(RawInputKind.Button, 2, 0),
+                [PhysicalControl.Start] = new(RawInputKind.Button, 3, 0),
+            },
+        }));
+
+        var actions = new List<InputAction>();
+        var router = new InputRouter(new ActionMap(ConfirmBackConvention.SouthConfirms), InputSettings.Default, actions.Add);
+        var translator = new ControllerProfileTranslator(profile);
+        var longPress = new LongPressTranslator(fallback, ConfirmBackConvention.SouthConfirms);
+        void Emit(PhysicalControl c, bool p) => router.OnControl("sdl:7", c, p, _now);
+        void Feed(RawInputEvent e) => translator.Apply(e, (c, p) => longPress.Apply(c, p, _now, Emit));
+        void Wait(double seconds)
+        {
+            _now += TimeSpan.FromSeconds(seconds);
+            longPress.Tick(_now, Emit);
+        }
+
+        // Pressões curtas não mudam: Confirmar e Voltar saem ao soltar; direções passam direto.
+        Feed(RawInputEvent.Button(0, true));
+        Wait(0.3);
+        Assert.Empty(actions);
+        Feed(RawInputEvent.Button(0, false));
+        Feed(RawInputEvent.Button(1, true));
+        Feed(RawInputEvent.Button(1, false));
+        Feed(RawInputEvent.Hat(0, HatDirections.Down));
+        Assert.Equal([InputAction.Confirm, InputAction.Back, InputAction.NavigateDown], actions);
+        Feed(RawInputEvent.Hat(0, HatDirections.Centered));
+
+        // Mantidos por 0,6 s: Ações e Menu, uma vez só; soltar depois não confirma nem volta.
+        actions.Clear();
+        Feed(RawInputEvent.Button(0, true));
+        Wait(0.61);
+        Wait(1);
+        Feed(RawInputEvent.Button(0, false));
+        Feed(RawInputEvent.Button(1, true));
+        Wait(0.61);
+        Feed(RawInputEvent.Button(1, false));
+        Assert.Equal([InputAction.OpenContextMenu, InputAction.OpenAppMenu], actions);
     }
 }
