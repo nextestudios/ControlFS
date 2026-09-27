@@ -105,6 +105,7 @@ public sealed class MainWindow : Window
 
         _app.Changed += Render;
         _app.ExitRequested += Close;
+        _app.CopyText = CopyToClipboard;
         _input.StatusChanged += Render;
         _app.SettingsChanged += settings =>
         {
@@ -368,6 +369,24 @@ public sealed class MainWindow : Window
                 _ => crumb.Label,
             } + (crumb.IsCurrent ? ", pasta atual" : string.Empty));
             _crumbs.Children.Add(chip);
+        }
+    }
+
+    /// <summary>Texto simples para a área de transferência do Windows (relatório do teste de controles).</summary>
+    private static bool CopyToClipboard(string text)
+    {
+        try
+        {
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush(); // continua disponível depois de fechar o app
+            return true;
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            AppLog.Info($"Área de transferência indisponível: {ex.Message}");
+            return false;
         }
     }
 

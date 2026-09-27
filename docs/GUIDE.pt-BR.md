@@ -28,6 +28,10 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 
+### Teste de controles
+
+Menu → **Teste de controles…** lista os controles conectados (nome, tipo, família, VID:PID, se é gamepad ou joystick sem perfil e qual está ativo) e mostra, a cada botão apertado, o controle físico e a ação que ele faz no ControlFS. Nada é executado nessa tela: segure Confirmar 1 s para copiar um relatório (sem dados pessoais) e segure Voltar 1 s para sair; no teclado, Enter e Esc.
+
 ### Joysticks sem perfil
 
 Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos como gamepad. O ControlFS os detecta, mas eles só navegam depois de mapeados:

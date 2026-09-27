@@ -44,6 +44,11 @@ public sealed partial class AppController
                 if (wizard.Wizard.CanRedoPrevious) hints.Add(new(InputAction.NavigateLeft, "Refazer anterior"));
                 hints.Add(new(InputAction.Back, "Cancelar"));
                 return hints;
+            case ControllerTestModal:
+                // No controle, Confirmar e Voltar também estão sendo testados: agem só quando mantidos.
+                hints.Add(new(InputAction.Confirm, ActiveController is null ? "Copiar relatório" : "Segure: copiar relatório"));
+                hints.Add(new(InputAction.Back, ActiveController is null ? "Sair" : "Segure: sair"));
+                return hints;
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;

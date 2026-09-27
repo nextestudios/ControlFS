@@ -274,6 +274,7 @@ public sealed partial class AppController
             case DialogModal dialog: HandleDialog(dialog, action); break;
             case AboutModal about: HandleAbout(about, action); break;
             case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
+            case ControllerTestModal test: HandleControllerTest(test, action); break;
         }
     }
 
@@ -332,10 +333,11 @@ public sealed partial class AppController
 
     /// <summary>
     /// Ações que repetem quando mantidas no contexto atual: navegação em qualquer tela e, no teclado virtual,
-    /// apagar e mover o cursor. Confirmar/Concluir fora de ⌫ ◀ ▶ nunca repetem.
+    /// apagar e mover o cursor. Confirmar/Concluir fora de ⌫ ◀ ▶ nunca repetem. Na tela de teste de controles nada
+    /// repete (cada linha é uma pressão real).
     /// </summary>
     public bool IsRepeatableInContext(InputAction action) =>
-        action.IsRepeatable() || TopModal is KeyboardModal { IsBusy: false } modal && modal.Keyboard.IsRepeatable(action);
+        TopModal is not ControllerTestModal && action.IsRepeatable() || TopModal is KeyboardModal { IsBusy: false } modal && modal.Keyboard.IsRepeatable(action);
 
     /// <summary>Entrada de texto do teclado físico no teclado virtual ativo.</summary>
     public void TypeText(string text)

@@ -28,6 +28,10 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 Every essential action is reachable through menus (Start / North), so a pad with only a D-pad and two buttons still works.
 
+### Controller test
+
+Menu → **Teste de controles…** (controller test) lists the connected controllers (name, type, family, VID:PID, gamepad or joystick without a profile, and which one is active) and shows, for every button you press, the physical control and the action it performs in ControlFS. Nothing runs on this screen: hold Confirm for 1 s to copy a report (no personal data) and hold Back for 1 s to leave; on the keyboard, Enter and Esc.
+
 ### Joysticks without a profile
 
 Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads. ControlFS detects them but they can't move around until you map them:
