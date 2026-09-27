@@ -16,6 +16,15 @@ namespace ControlFS.App.Views;
 /// <summary>Constrói a camada modal a partir do estado do AppController (escopo exclusivo de entrada).</summary>
 public static partial class ModalView
 {
+    /// <summary>
+    /// AutomationIds estáveis que os testes de UI Automation (build/Test-UiAutomation.ps1) procuram. O foco é lógico
+    /// (anel desenhado, não foco do XAML), então o texto da opção/tecla focada recebe um id próprio.
+    /// </summary>
+    public const string TitleId = "ControlFS.ModalTitle";
+    public const string FocusedOptionId = "ControlFS.FocusedOption";
+    public const string FocusedKeyId = "ControlFS.FocusedKey";
+    public const string KeyboardFieldId = "ControlFS.KeyboardField";
+
     public static UIElement? Build(AppController app)
     {
         if (app.TopModal is not { } modal) return null;
@@ -69,26 +78,33 @@ public static partial class ModalView
     private static void KeepInView(FrameworkElement element) =>
         element.Loaded += (_, _) => element.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false, VerticalAlignmentRatio = 0.5 });
 
-    private static TextBlock Title(string text) => new()
+    private static TextBlock Title(string text)
     {
-        Text = text,
-        FontSize = Theme.FontTitle,
-        FontWeight = FontWeights.SemiBold,
-        Foreground = Theme.Text,
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 0, 0, Theme.SpaceM),
-    };
+        var title = new TextBlock
+        {
+            Text = text,
+            FontSize = Theme.FontTitle,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Theme.Text,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, Theme.SpaceM),
+        };
+        AutomationProperties.SetAutomationId(title, TitleId);
+        return title;
+    }
 
     private static Border Choice(string text, bool focused, bool enabled, Action onTap, string? secondary = null, bool danger = false)
     {
         var stack = new StackPanel();
-        stack.Children.Add(new TextBlock
+        var label = new TextBlock
         {
             Text = (danger ? "⚠ " : string.Empty) + text,
             FontSize = Theme.FontItem,
             Foreground = !enabled ? Theme.TextDisabled : danger ? Theme.Danger : Theme.Text,
             TextWrapping = TextWrapping.Wrap,
-        });
+        };
+        if (focused) AutomationProperties.SetAutomationId(label, FocusedOptionId);
+        stack.Children.Add(label);
         if (secondary is not null)
             stack.Children.Add(new TextBlock { Text = secondary, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         var border = new Border
@@ -375,6 +391,8 @@ public static partial class ModalView
         var caretSpoken = kb.Length == 0 ? "campo vazio" : kb.HasSelection ? $"{kb.SelectionLength} de {kb.Length} caracteres selecionados" : caret == 0 ? "cursor no início" : caret >= kb.Length ? "cursor no fim" : $"cursor na posição {caret} de {kb.Length}";
         AutomationProperties.SetName(field, (kb.Kind == TextFieldKind.Password ? $"Senha, {kb.Length} caracteres" : $"Texto: {kb.Text}") + ", " + caretSpoken);
         AnnounceCaretMove(fieldText, kb, caretSpoken); // o TextBlock tem peer de automação; o Border não
+        AutomationProperties.SetName(fieldText, AutomationProperties.GetName(field));
+        AutomationProperties.SetAutomationId(fieldText, KeyboardFieldId);
         stack.Children.Add(field);
 
         var status = $"{(kb.Language == KeyboardLanguage.PortugueseBrazil ? "PT-BR" : "EN")} · {kb.Page switch { KeyboardPage.Symbols => "símbolos", KeyboardPage.Accents => "acentos", _ => "letras" }}" +
@@ -418,7 +436,11 @@ public static partial class ModalView
                         VerticalAlignment = VerticalAlignment.Center,
                     },
                 };
-                if (focused) KeepInView(cell);
+                if (focused)
+                {
+                    KeepInView(cell);
+                    AutomationProperties.SetAutomationId(cell.Child, FocusedKeyId);
+                }
                 AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
                 cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
                 Grid.SetRow(cell, r);
