@@ -85,6 +85,16 @@ Ainda manual, num aparelho real:
       com outra escala troca os ícones para o novo tamanho.
 - [ ] Anel de foco e marcação continuam legíveis sobre os ícones.
 
+## Tipos de unidade (#25)
+
+- [ ] Início com o app aberto: conectar um pendrive faz ele aparecer em até ~2 s, com ícone de USB e "Removível (USB)";
+      removê-lo tira da lista sem reiniciar e o foco fica num local válido.
+- [ ] Leitor de cartão vazio → inserir cartão: a unidade aparece. Leitor óptico com disco: ícone óptico e "Óptica".
+- [ ] Unidade de rede mapeada (`net use Z: \\servidor\pasta`): aparece com ícone de rede; desconectar o servidor não
+      trava o início.
+- [ ] Narrador lê o nome e o tipo da unidade (ex.: "PENDRIVE (E:), unidade removível (USB)").
+- [ ] Seletor de pasta → "Ir para outro local": cada unidade mostra tipo, espaço livre e total.
+
 ## Busca (#46)
 
 - [ ] Select/View numa pasta abre o teclado; Concluir inicia a busca e os primeiros resultados aparecem antes de ela terminar.

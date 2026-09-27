@@ -97,7 +97,7 @@ public static class EntryRowTemplate
         // Símbolo de reserva (fonte de ícones do Windows, nunca emoji) até o ícone do Shell chegar.
         icon.Text = entry.IsBlocked ? Glyphs.Warning : entry.Kind switch
         {
-            EntryKind.Drive => Glyphs.Drive,
+            EntryKind.Drive => DriveGlyph(entry.Drive),
             EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory => Glyphs.Folder,
             _ when IsArchiveName(entry.Name) => Glyphs.Archive,
             _ => Glyphs.File,
@@ -145,7 +145,8 @@ public static class EntryRowTemplate
 
         SetFocused(container, focused);
         var state = string.Concat(states.Select(s => ", " + s.ToLowerInvariant()));
-        AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{state}");
+        var kind = entry.Kind == EntryKind.Drive ? ", " + TypeName(entry).ToLowerInvariant() : string.Empty;
+        AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{kind}{state}");
     }
 
     /// <summary>Linha voltou para a fila de reciclagem: cancela o ícone pendente.</summary>
@@ -160,6 +161,9 @@ public static class EntryRowTemplate
         public const string Folder = "\uE8B7";
         public const string File = "\uE8A5";
         public const string Drive = "\uEDA2";
+        public const string Usb = "\uE88E";
+        public const string Optical = "\uE958";
+        public const string NetworkDrive = "\uE8CE";
         public const string Archive = "\uE7B8";
         public const string Warning = "\uE7BA";
         public const string Checked = "\uE73A";
@@ -181,6 +185,15 @@ public static class EntryRowTemplate
             title.MaxLines = focused ? 3 : 1;
         }
     }
+
+    /// <summary>Símbolo por tipo de unidade (o pendrive nunca se parece com o disco do sistema, mesmo antes do ícone do Shell).</summary>
+    private static string DriveGlyph(DriveKind? kind) => kind switch
+    {
+        DriveKind.Removable => Glyphs.Usb,
+        DriveKind.Optical => Glyphs.Optical,
+        DriveKind.Network => Glyphs.NetworkDrive,
+        _ => Glyphs.Drive,
+    };
 
     private static bool IsArchiveName(string name) =>
         new[] { ".zip", ".7z", ".rar", ".tar", ".tgz", ".gz" }.Any(ext => name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
@@ -209,7 +222,13 @@ public static class EntryRowTemplate
 
     private static string TypeName(FileEntry entry) => entry.Kind switch
     {
-        EntryKind.Drive => "Unidade",
+        EntryKind.Drive => entry.Drive switch
+        {
+            DriveKind.Removable => "Unidade removível (USB)",
+            DriveKind.Optical => "Unidade óptica",
+            DriveKind.Network => "Unidade de rede",
+            _ => "Unidade local",
+        },
         EntryKind.KnownFolder => "Pasta especial",
         EntryKind.Directory or EntryKind.ArchiveDirectory => "Pasta",
         _ => entry.Extension.Length > 1 ? "Arquivo " + entry.Extension[1..].ToUpperInvariant() : "Arquivo",

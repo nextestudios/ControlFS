@@ -69,6 +69,8 @@ Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the 
 
 Press **North** on a folder (or anywhere inside one, for "this folder") and choose **Add to favorites**. Favorites come first on the home screen and in the folder picker (Start → "Go to another place"), so they are one press away when copying, moving or extracting. On the home screen, North on a favorite offers **Move favorite up/down** and **Remove from favorites**. A favorite whose folder is missing (for example, an unplugged drive) is shown as unavailable and kept until you remove it.
 
+The home screen lists drives with their type (local, USB, optical, network), label, letter and free space. Plugging in or removing a USB stick updates the list within a couple of seconds, without restarting; a favorite on that stick becomes available again.
+
 ## Extracting
 
 On an archive the bottom bar shows **South Explore** (opens it read-only), **West Mark** and **North Extract…**: North opens the actions menu already on **Extract to "name"**, so North then South extracts.

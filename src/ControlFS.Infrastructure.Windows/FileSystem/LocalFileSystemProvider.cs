@@ -19,7 +19,7 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
             var label = drive.Label;
             var name = string.IsNullOrWhiteSpace(label) ? drive.Name : $"{label} ({drive.Name.TrimEnd('\\', '/')})";
             var detail = $"{DescribeType(drive.Type)} · {FormatSize(drive.Free)} livres de {FormatSize(drive.Total)}";
-            places.Add(new FileEntry("drive:" + drive.Name, name, EntryKind.Drive, FullPath: drive.Name, Detail: detail));
+            places.Add(new FileEntry("drive:" + drive.Name, name, EntryKind.Drive, FullPath: drive.Name, Detail: detail, Drive: KindOf(drive.Type)));
         }
         return places;
     }
@@ -211,11 +211,19 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
         }
     }
 
-    private static string DescribeType(DriveType type) => type switch
+    internal static DriveKind KindOf(DriveType type) => type switch
     {
-        DriveType.Removable => "Removível",
-        DriveType.Network => "Rede",
-        DriveType.CDRom => "Óptica",
+        DriveType.Removable => DriveKind.Removable,
+        DriveType.Network => DriveKind.Network,
+        DriveType.CDRom => DriveKind.Optical,
+        _ => DriveKind.Fixed,
+    };
+
+    private static string DescribeType(DriveType type) => KindOf(type) switch
+    {
+        DriveKind.Removable => "Removível (USB)",
+        DriveKind.Network => "Rede",
+        DriveKind.Optical => "Óptica",
         _ => "Local",
     };
 
