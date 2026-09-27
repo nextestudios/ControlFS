@@ -34,13 +34,13 @@ public class ShellAndCompressJourneyTests : IDisposable
     [Fact]
     public void Confirm_on_a_document_opens_it_with_windows_and_warns_about_leaving() => UiContext.Run(async () =>
     {
-        File.WriteAllText(_tmp.Sub("nota.txt"), "x");
+        File.WriteAllText(_tmp.Sub("relatorio.pdf"), "x");
         var (d, shell) = Boot();
         d.Press(InputAction.Confirm);
-        await d.FocusItem("nota.txt");
+        await d.FocusItem("relatorio.pdf");
         d.Press(InputAction.Confirm);
         await d.Idle();
-        Assert.Equal([("open", _tmp.Sub("nota.txt"))], shell.Calls);
+        Assert.Equal([("open", _tmp.Sub("relatorio.pdf"))], shell.Calls);
         Assert.Contains("outro programa", d.App.StatusMessage, StringComparison.Ordinal);
     });
 
