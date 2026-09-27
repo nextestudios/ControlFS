@@ -40,9 +40,10 @@ public sealed class VirtualKeyboard
     private int _length;
     private readonly Func<string, string?>? _validator;
     private VirtualKey? _confirmedKey;
+    private int? _anchor;
 
     public VirtualKeyboard(TextFieldKind kind, string title, string initialText = "", KeyboardLanguage language = KeyboardLanguage.PortugueseBrazil,
-        Func<string, string?>? validator = null, int? maxLength = null, int? initialCaret = null)
+        Func<string, string?>? validator = null, int? maxLength = null, int? initialCaret = null, (int Start, int Length)? initialSelection = null)
     {
         Kind = kind;
         Title = title;
@@ -59,6 +60,7 @@ public sealed class VirtualKeyboard
         initialText.AsSpan().CopyTo(_buffer);
         _length = initialText.Length;
         Caret = Math.Clamp(initialCaret ?? _length, 0, _length);
+        if (initialSelection is { } selection) Select(selection.Start, selection.Length);
         Rebuild();
     }
 
@@ -76,6 +78,14 @@ public sealed class VirtualKeyboard
     public KeyboardOutcome Outcome { get; private set; }
     public IReadOnlyList<IReadOnlyList<VirtualKey>> Rows { get; private set; } = [];
     public int Length => _length;
+
+    /// <summary>Início do trecho selecionado (o cursor fica no fim dele). Sem seleção, igual a <see cref="Caret"/>.</summary>
+    public int SelectionStart => _anchor is { } anchor ? Math.Min(anchor, Caret) : Caret;
+
+    /// <summary>Tamanho do trecho selecionado; 0 quando não há seleção.</summary>
+    public int SelectionLength => _anchor is { } anchor ? Math.Abs(Caret - anchor) : 0;
+
+    public bool HasSelection => SelectionLength > 0;
 
     public VirtualKey FocusedKey => Rows[Row][Column];
 
@@ -158,6 +168,7 @@ public sealed class VirtualKeyboard
             case KeyKind.Shift: ToggleShift(); break;
             case KeyKind.Backspace: Backspace(); break;
             case KeyKind.Clear: Clear(); break;
+            case KeyKind.SelectAll: SelectAll(); break;
             case KeyKind.CaretLeft: MoveCaret(-1); break;
             case KeyKind.CaretRight: MoveCaret(1); break;
             case KeyKind.PageLetters: SetPage(KeyboardPage.Letters); break;
@@ -186,11 +197,12 @@ public sealed class VirtualKeyboard
                 return;
             }
         }
-        if (_length + text.Length > MaxLength)
+        if (_length - SelectionLength + text.Length > MaxLength)
         {
             ErrorMessage = $"Limite de {MaxLength} caracteres.";
             return;
         }
+        DeleteSelection();
         EnsureCapacity(_length + text.Length);
         Array.Copy(_buffer, Caret, _buffer, Caret + text.Length, _length - Caret);
         text.AsSpan().CopyTo(_buffer.AsSpan(Caret));
@@ -202,6 +214,11 @@ public sealed class VirtualKeyboard
 
     public void Backspace()
     {
+        if (DeleteSelection())
+        {
+            ErrorMessage = null;
+            return;
+        }
         if (Caret == 0) return;
         // Remove um par substituto inteiro, se houver.
         var remove = Caret >= 2 && char.IsLowSurrogate(_buffer[Caret - 1]) && char.IsHighSurrogate(_buffer[Caret - 2]) ? 2 : 1;
@@ -217,11 +234,33 @@ public sealed class VirtualKeyboard
         Array.Clear(_buffer);
         _length = 0;
         Caret = 0;
+        _anchor = null;
         ErrorMessage = null;
     }
 
+    /// <summary>Seleciona um trecho (o cursor vai para o fim dele). Digitar substitui o trecho; ⌫ o apaga; mover o cursor desfaz a seleção.</summary>
+    public void Select(int start, int length)
+    {
+        start = Math.Clamp(start, 0, _length);
+        var end = Math.Clamp(start + Math.Max(0, length), start, _length);
+        if (start > 0 && start < _length && char.IsLowSurrogate(_buffer[start])) start--;
+        if (end < _length && char.IsLowSurrogate(_buffer[end])) end++;
+        Caret = end;
+        _anchor = end > start ? start : null;
+    }
+
+    /// <summary>Seleciona todo o texto. Não altera página nem maiúsculas.</summary>
+    public void SelectAll() => Select(0, _length);
+
     public void MoveCaret(int delta)
     {
+        if (HasSelection)
+        {
+            // Com seleção, ◀/▶ só a desfazem, deixando o cursor na borda correspondente (como em editores de texto).
+            Caret = delta < 0 ? SelectionStart : SelectionStart + SelectionLength;
+            _anchor = null;
+            return;
+        }
         var target = Math.Clamp(Caret + delta, 0, _length);
         if (delta < 0 && target > 0 && char.IsLowSurrogate(_buffer[target])) target--;
         if (delta > 0 && target < _length && char.IsLowSurrogate(_buffer[target])) target++;
@@ -229,10 +268,18 @@ public sealed class VirtualKeyboard
     }
 
     /// <summary>Leva o cursor ao início do texto. Não altera texto, página nem maiúsculas.</summary>
-    public void MoveCaretToStart() => Caret = 0;
+    public void MoveCaretToStart()
+    {
+        _anchor = null;
+        Caret = 0;
+    }
 
     /// <summary>Leva o cursor ao fim do texto. Não altera texto, página nem maiúsculas.</summary>
-    public void MoveCaretToEnd() => Caret = _length;
+    public void MoveCaretToEnd()
+    {
+        _anchor = null;
+        Caret = _length;
+    }
 
     public void Submit()
     {
@@ -276,6 +323,20 @@ public sealed class VirtualKeyboard
     {
         Outcome = KeyboardOutcome.None;
         ErrorMessage = error;
+    }
+
+    /// <summary>Apaga o trecho selecionado, se houver. Retorna true se algo foi apagado.</summary>
+    private bool DeleteSelection()
+    {
+        var start = SelectionStart;
+        var count = SelectionLength;
+        _anchor = null;
+        if (count == 0) return false;
+        Array.Copy(_buffer, start + count, _buffer, start, _length - start - count);
+        _length -= count;
+        Array.Clear(_buffer, _length, count);
+        Caret = start;
+        return true;
     }
 
     private string? ValidateCurrent()

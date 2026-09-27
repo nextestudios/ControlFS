@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### What's new
+- **Text selection** on the on-screen keyboard: **Select all** on the `…` page (or Ctrl+A), the selection is highlighted and underlined, typing replaces it, `⌫` deletes it and `◀ ▶` drop it. Rename opens with the name before the extension selected (`example-file.zip` → type `novo` → `novo.zip`). (#44)
 
 ## [0.4.0-alpha.1]
 ### What's new

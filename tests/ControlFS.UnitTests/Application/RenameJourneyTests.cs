@@ -30,22 +30,24 @@ public class RenameJourneyTests : IDisposable
     }
 
     [Fact]
-    public void Rename_starts_before_the_extension_and_keeps_focus_on_the_item() => UiContext.Run(async () =>
+    public void Rename_preselects_the_stem_so_typing_keeps_the_extension_and_focus_stays_on_the_item() => UiContext.Run(async () =>
     {
         File.WriteAllText(_tmp.Sub("example-file.zip"), "z");
         File.WriteAllText(_tmp.Sub("zzz.txt"), "z");
         var d = Boot();
         d.Press(InputAction.Confirm);
         var kb = await OpenRename(d, "example-file.zip");
+        Assert.Equal((0, "example-file".Length), (kb.Keyboard.SelectionStart, kb.Keyboard.SelectionLength));
         Assert.Equal("example-file".Length, kb.Keyboard.Caret);
 
-        d.TypeOnKeyboard(kb, "-2");
+        d.TypeOnKeyboard(kb, "novo");
+        Assert.Equal("novo.zip", kb.Keyboard.Text);
         d.PressKey(kb, KeyKind.Done);
         await UiContext.WaitUntil(() => d.App.TopModal is null, "teclado fechado");
         await d.Idle();
 
-        Assert.True(File.Exists(_tmp.Sub("example-file-2.zip")));
-        Assert.Equal("example-file-2.zip", d.App.Browser.List.Focused?.Name);
+        Assert.True(File.Exists(_tmp.Sub("novo.zip")));
+        Assert.Equal("novo.zip", d.App.Browser.List.Focused?.Name);
     });
 
     [Fact]

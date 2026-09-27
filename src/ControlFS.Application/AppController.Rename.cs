@@ -8,7 +8,7 @@ namespace ControlFS.Application;
 public sealed partial class AppController
 {
     /// <summary>
-    /// Renomear pelo teclado virtual: cursor antes da extensão, extensão alterada exige confirmação, nomes inválidos ou
+    /// Renomear pelo teclado virtual: nome sem a extensão pré-selecionado (cursor antes da extensão), extensão alterada exige confirmação, nomes inválidos ou
     /// já existentes são recusados sem tocar no disco, e o foco permanece no item renomeado.
     /// </summary>
     internal void BeginRename(PaneState pane, FileEntry entry)
@@ -17,7 +17,8 @@ public sealed partial class AppController
         var isFile = entry.Kind == EntryKind.File;
         var extension = isFile ? Path.GetExtension(entry.Name) : string.Empty;
         var caret = isFile && extension.Length > 0 && extension.Length < entry.Name.Length ? entry.Name.Length - extension.Length : entry.Name.Length;
-        var keyboard = new VirtualKeyboard(TextFieldKind.FileName, $"Renomear \"{entry.Name}\"", entry.Name, initialCaret: caret);
+        // O nome sem a extensão já vem selecionado: digitar substitui só ele (example-file.zip → novo.zip).
+        var keyboard = new VirtualKeyboard(TextFieldKind.FileName, $"Renomear \"{entry.Name}\"", entry.Name, initialCaret: caret, initialSelection: (0, caret));
         KeyboardModal? modal = null;
         modal = new KeyboardModal(keyboard, async k =>
         {
