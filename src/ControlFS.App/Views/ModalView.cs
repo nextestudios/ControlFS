@@ -21,6 +21,7 @@ public static class ModalView
             MenuModal menu => BuildMenu(app, menu),
             DialogModal dialog => BuildDialog(app, dialog),
             KeyboardModal keyboard => BuildKeyboard(app, keyboard),
+            AboutModal about => BuildAbout(about),
             _ => null,
         };
         if (panel is null) return null;
@@ -124,6 +125,45 @@ public static class ModalView
             stack.Children.Add(Choice(label, i == dialog.FocusIndex, true, () => app.PointerChooseModalOption(index), danger: option.Kind == DialogOptionKind.Danger));
         }
         return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
+    }
+
+    private static Border BuildAbout(AboutModal about)
+    {
+        var stack = new StackPanel { Spacing = Theme.SpaceS };
+        if (Branding.Logo is { } logo)
+        {
+            var image = new Image { Source = logo, Height = 72, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, Theme.SpaceM) };
+            AutomationProperties.SetName(image, "ControlFS");
+            stack.Children.Add(image);
+        }
+        else
+        {
+            stack.Children.Add(Title("ControlFS"));
+        }
+        var grid = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceXs };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        for (var i = 0; i < about.Lines.Count; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var label = new TextBlock { Text = about.Lines[i].Label, FontSize = Theme.FontBody, Foreground = Theme.TextMuted };
+            var value = new TextBlock { Text = about.Lines[i].Value, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
+            Grid.SetRow(label, i);
+            Grid.SetRow(value, i);
+            Grid.SetColumn(value, 1);
+            grid.Children.Add(label);
+            grid.Children.Add(value);
+        }
+        stack.Children.Add(grid);
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Este programa é software livre: você pode redistribuí-lo e/ou modificá-lo sob os termos da GNU AGPL versão 3. Ele é distribuído sem nenhuma garantia.",
+            FontSize = Theme.FontCaption,
+            Foreground = Theme.TextMuted,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, Theme.SpaceM, 0, 0),
+        });
+        return Card(stack, 760);
     }
 
     private static Border BuildKeyboard(AppController app, KeyboardModal modal)

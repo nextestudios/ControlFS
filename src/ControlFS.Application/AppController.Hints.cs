@@ -26,6 +26,9 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.OpenAppMenu, "OK"));
                 hints.Add(new(InputAction.Back, "Cancelar"));
                 return hints;
+            case AboutModal:
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
             case DialogModal dialog:
                 hints.Add(new(InputAction.Confirm, "Escolher"));
                 hints.Add(new(InputAction.Back, dialog.BackOption?.Label ?? "Fechar"));

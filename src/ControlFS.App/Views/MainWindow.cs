@@ -13,6 +13,7 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 
 namespace ControlFS.App.Views;
@@ -30,6 +31,7 @@ public sealed class MainWindow : Window
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
+    private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 4) };
     private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -97,6 +99,9 @@ public sealed class MainWindow : Window
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var titleStack = new StackPanel();
+        _logo.Source = Branding.Logo;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
+        titleStack.Children.Add(_logo);
         titleStack.Children.Add(_badge);
         titleStack.Children.Add(_location);
         header.Children.Add(titleStack);
@@ -149,8 +154,8 @@ public sealed class MainWindow : Window
         switch (_app.Screen)
         {
             case Screen.Home:
-                _badge.Text = "INÍCIO";
-                _location.Text = "Locais";
+                _badge.Text = "INÍCIO · LOCAIS";
+                _location.Text = string.Empty;
                 break;
             case Screen.FolderPicker:
                 _badge.Text = "ESCOLHER PASTA · " + _app.PickerTitle;
@@ -161,6 +166,9 @@ public sealed class MainWindow : Window
                 _location.Text = pane.Location?.DisplayPath ?? "…";
                 break;
         }
+        // Logo só na tela inicial (as demais telas usam o espaço para o caminho).
+        _logo.Visibility = _app.Screen == Screen.Home && _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
+        _location.Visibility = _app.Screen == Screen.Home ? Visibility.Collapsed : Visibility.Visible;
         var device = _input.ActiveDevice;
         _device.Text = !_input.BackendReady
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"

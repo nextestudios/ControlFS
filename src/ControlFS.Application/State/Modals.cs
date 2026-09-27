@@ -61,4 +61,11 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
     public override bool IsSensitive => sensitive;
 }
 
+/// <summary>Tela "Sobre": logo, versão, licença e origem do código. Fecha com Confirmar ou Voltar.</summary>
+public sealed class AboutModal(string version, IReadOnlyList<(string Label, string Value)> lines) : Modal("Sobre o ControlFS")
+{
+    public string Version { get; } = version;
+    public IReadOnlyList<(string Label, string Value)> Lines { get; } = lines;
+}
+
 public sealed record Hint(InputAction Action, string Label);
