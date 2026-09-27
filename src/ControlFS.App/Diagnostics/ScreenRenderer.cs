@@ -204,7 +204,8 @@ internal static class ScreenRenderer
 
     /// <summary>
     /// Uma linha por botão, uma coluna por família; cada célula é o glifo no tamanho do rodapé ao lado de um texto
-    /// (alinhamento com a linha de base). Escuro e claro, a 100%, 200% e 300%.
+    /// curto (alinhamento com o texto, como no rodapé). Estreita o bastante para caber em 4096 px a 300%, o limite do
+    /// RenderTargetBitmap. Escuro e claro, a 100%, 200% e 300%.
     /// </summary>
     private static async Task RenderGlyphGalleryAsync(Grid stage, Grid layout, MainWindow window, string directory)
     {
@@ -259,7 +260,7 @@ internal static class ScreenRenderer
             {
                 var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
                 chip.Children.Add(ControllerGlyphs.Create(buttons[r], Families[c], glyphHeight, palette));
-                chip.Children.Add(new TextBlock { Text = ControllerButtons.SpokenName(buttons[r], Families[c]), FontSize = Theme.FontCaption, Foreground = muted, VerticalAlignment = VerticalAlignment.Center });
+                chip.Children.Add(new TextBlock { Text = "Abrir", FontSize = Theme.FontCaption, Foreground = muted, VerticalAlignment = VerticalAlignment.Center });
                 Add(grid, chip, r + 1, c + 1);
             }
         }

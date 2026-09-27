@@ -61,7 +61,8 @@ public static class EntryRowTemplate
         "</Grid>");
 
     /// <summary>
-    /// Compacta: colunas de tipo, tamanho e data com largura fixa (proporcional ao texto). Em janelas estreitas
+    /// Compacta: colunas de tipo, tamanho e data (e estado) com largura fixa proporcional ao texto, para ficarem
+    /// alinhadas entre linhas marcadas e não marcadas. Em janelas estreitas
     /// (portátil 1280 de largura com texto grande) a coluna de tipo sai para o nome continuar legível.
     /// </summary>
     private static string CompactXaml()
@@ -70,7 +71,7 @@ public static class EntryRowTemplate
         return Frame(
             $"<Grid x:Name=\"Body\" Padding=\"{W(14)},{S(2)},{S(12)},{S(2)}\" ColumnSpacing=\"{S(12)}\">" +
             $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"{W(26)}\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"{typeWidth}\"/>" +
-            $"<ColumnDefinition Width=\"{W(96)}\"/><ColumnDefinition Width=\"{W(150)}\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
+            $"<ColumnDefinition Width=\"{W(96)}\"/><ColumnDefinition Width=\"{W(150)}\"/><ColumnDefinition Width=\"{W(190)}\"/></Grid.ColumnDefinitions>" +
             IconCell(24, 20) +
             $"<TextBlock x:Name=\"Title\" Grid.Column=\"1\" FontSize=\"{F(17)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>" +
             $"<TextBlock x:Name=\"TypeColumn\" Grid.Column=\"2\" FontSize=\"{F(14)}\" TextTrimming=\"CharacterEllipsis\" VerticalAlignment=\"Center\"/>" +
