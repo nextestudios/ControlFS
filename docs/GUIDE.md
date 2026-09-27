@@ -28,6 +28,12 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 Every essential action is reachable through menus (Start / North), so a pad with only a D-pad and two buttons still works.
 
+## The list
+
+The focused item has a highlight ring and shows its full name (up to three lines); other long names end in "…". Marked items get a stripe on the left, a checked box and "Marked"; cut items get scissors and "Cut" and are dimmed until pasted; password-protected archive entries show a lock. None of these rely on color alone.
+
+Menu → **List density** switches between **comfortable** (two lines per item, for the TV) and **compact** (one line with type, size and date columns). The choice is saved.
+
 ## Favorites
 
 Press **North** on a folder (or anywhere inside one, for "this folder") and choose **Add to favorites**. Favorites come first on the home screen and in the folder picker (Start → "Go to another place"), so they are one press away when copying, moving or extracting. On the home screen, North on a favorite offers **Move favorite up/down** and **Remove from favorites**. A favorite whose folder is missing (for example, an unplugged drive) is shown as unavailable and kept until you remove it.

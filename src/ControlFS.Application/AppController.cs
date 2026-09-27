@@ -190,6 +190,7 @@ public sealed partial class AppController
             case InputAction.OpenContextMenu: ShowHomeMenu(); break;
             case InputAction.Back: ShowExitDialog(); break;
             case InputAction.OpenAppMenu: ShowAppMenu(); break;
+            case InputAction.ChangeView: ToggleDensity(); break;
         }
     }
 
