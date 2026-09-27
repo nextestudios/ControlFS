@@ -174,4 +174,64 @@ public class FileOperationServiceTests : IDisposable
         Assert.All(result.Items, i => Assert.Equal(dest, i.TargetFolder));
         Assert.False(File.Exists(Path.Join(dest, "b.txt")));
     }
+
+    /// <summary>Progresso síncrono: chamado na própria thread do motor, logo depois de cada bloco gravado.</summary>
+    private sealed class SyncProgress(Action<OperationProgress> onReport) : IProgress<OperationProgress>
+    {
+        public void Report(OperationProgress value) => onReport(value);
+    }
+
+    private (string Source, string Dest, PauseGate Gate, SyncProgress Progress, Func<long> Bytes) PauseOnFirstBlock()
+    {
+        var source = _tmp.Sub("grande.bin");
+        File.WriteAllBytes(source, Enumerable.Range(0, 4_000_000).Select(i => (byte)(i % 251)).ToArray());
+        var dest = _tmp.MakeDir("destino");
+        var gate = new PauseGate();
+        long bytes = 0;
+        var progress = new SyncProgress(p =>
+        {
+            Interlocked.Exchange(ref bytes, p.BytesProcessed);
+            if (p.BytesProcessed > 0) gate.Pause();
+        });
+        return (source, dest, gate, progress, () => Interlocked.Read(ref bytes));
+    }
+
+    [Fact]
+    public async Task Pausing_mid_file_stops_writing_and_resuming_finishes_the_copy_intact()
+    {
+        var (source, dest, gate, progress, bytes) = PauseOnFirstBlock();
+        var run = _service.RunAsync(new FileOperationRequest { Kind = FileOperationKind.Copy, Sources = [source], DestinationFolder = dest, Pause = gate },
+            new Scripted(), progress, default);
+
+        await UiContext.WaitUntil(() => gate.IsPaused, "pausa no primeiro bloco");
+        var atPause = bytes();
+        await Task.Delay(1000);
+        Assert.Equal(atPause, bytes()); // nenhum bloco a mais enquanto pausado
+        Assert.True(atPause < new FileInfo(source).Length);
+        Assert.False(File.Exists(Path.Join(dest, "grande.bin")), "nada pela metade no destino: só o temporário oculto");
+        Assert.False(run.IsCompleted);
+
+        gate.Resume();
+        var result = await run;
+        Assert.Equal(OperationState.Completed, result.FinalState);
+        Assert.Equal(File.ReadAllBytes(source), File.ReadAllBytes(Path.Join(dest, "grande.bin")));
+        AssertNoTemps(dest);
+    }
+
+    [Fact]
+    public async Task Cancelling_while_paused_removes_the_partial_copy()
+    {
+        var (source, dest, gate, progress, _) = PauseOnFirstBlock();
+        using var cts = new CancellationTokenSource();
+        var run = _service.RunAsync(new FileOperationRequest { Kind = FileOperationKind.Copy, Sources = [source], DestinationFolder = dest, Pause = gate },
+            new Scripted(), progress, cts.Token);
+        await UiContext.WaitUntil(() => gate.IsPaused, "pausa no primeiro bloco");
+
+        cts.Cancel(); // sem continuar antes
+        var result = await run;
+
+        Assert.Equal(OperationState.Cancelled, result.FinalState);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(dest));
+        Assert.Equal(4_000_000, new FileInfo(source).Length);
+    }
 }

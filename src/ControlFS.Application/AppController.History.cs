@@ -114,6 +114,18 @@ public sealed partial class AppController
         var dialog = new DialogModal(op.Title, lines);
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
         dialog.Options.Add(close);
+        if (op.CanPause)
+            dialog.Options.Add(new DialogOption("Pausar", DialogOptionKind.Primary, () =>
+            {
+                CloseModal(dialog);
+                if (Operations.Pause(op)) StatusMessage = $"{op.Title}: pausada. Menu → Operações para continuar.";
+            }));
+        if (op.CanResume)
+            dialog.Options.Add(new DialogOption("Continuar", DialogOptionKind.Primary, () =>
+            {
+                CloseModal(dialog);
+                if (Operations.Resume(op)) StatusMessage = $"{op.Title}: continuando.";
+            }));
         if (op.IsActive)
             dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Danger, () =>
             {

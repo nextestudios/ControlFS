@@ -33,7 +33,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
     private async Task<OperationResult> RunCoreAsync(FileOperationRequest request, IConflictInteraction conflicts, IProgress<OperationProgress>? progress,
         CancellationToken ct)
     {
-        var run = new Run(conflicts, progress, ct) { Journal = _journal };
+        var run = new Run(conflicts, progress, ct) { Journal = _journal, Pause = request.Pause };
         if (request.DestinationFolder is { } root) run.Root = Path.GetFullPath(root);
         string? destination = null;
         try
@@ -44,6 +44,13 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                 var targets = request.Sources.Select(Path.GetFullPath).ToList();
                 for (var i = 0; i < targets.Count; i++)
                 {
+                    try
+                    {
+                        await run.WaitIfPausedAsync().ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
                     if (ct.IsCancellationRequested)
                     {
                         MarkNotProcessed(targets.Skip(i), null, null, run);
@@ -83,6 +90,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                     var enteredFolder = false;
                     try
                     {
+                        await run.WaitIfPausedAsync().ConfigureAwait(false);
                         ct.ThrowIfCancellationRequested();
                         if (move && string.Equals(Path.GetDirectoryName(source), Path.TrimEndingDirectorySeparator(destination), PathComparison))
                         {
@@ -225,7 +233,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         await using (var output = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
         {
             int read;
-            while ((read = await input.ReadAsync(buffer, run.Ct).ConfigureAwait(false)) > 0)
+            while (await run.WaitIfPausedAsync().ConfigureAwait(false) && (read = await input.ReadAsync(buffer, run.Ct).ConfigureAwait(false)) > 0)
             {
                 await output.WriteAsync(buffer.AsMemory(0, read), run.Ct).ConfigureAwait(false);
                 run.Report(name, read, fileDone: false);
@@ -380,6 +388,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                 var isFolder = false;
                 try
                 {
+                    await run.WaitIfPausedAsync().ConfigureAwait(false);
                     run.Ct.ThrowIfCancellationRequested();
                     if (IsLink(child.FullName))
                     {
@@ -724,7 +733,15 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         public string? Root { get; set; }
         public ITemporaryJournal Journal { get; init; } = NoTemporaryJournal.Instance;
         public string? RootIdentity { get; set; }
+        public PauseGate? Pause { get; init; }
         private long _bytes;
+
+        /// <summary>Ponto seguro de pausa (sempre verdadeiro; o valor só permite usar numa condição de laço).</summary>
+        public async Task<bool> WaitIfPausedAsync()
+        {
+            if (Pause is not null) await Pause.WaitIfPausedAsync(Ct).ConfigureAwait(false);
+            return true;
+        }
 
         /// <summary>Associa à origem e à pasta de destino os resultados adicionados desde <paramref name="from"/> sem origem própria.</summary>
         public void Tag(int from, string source, string targetFolder)
