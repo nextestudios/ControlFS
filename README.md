@@ -13,7 +13,7 @@ A **file manager for Windows made for the controller**, with a **built-in extrac
 
 ## Download
 
-Get **[0.4.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.4.0-alpha.1)** (pre-release):
+Get **[0.5.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.5.0-alpha.1)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
 - **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.
@@ -66,7 +66,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** validation on real controllers (#78), then the *Should* items: recent folders, tabs, history and undo, Grid View, previews, ZIP64/AES ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, split volumes, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: light theme, two panes, PDF preview, split volumes, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## More
 

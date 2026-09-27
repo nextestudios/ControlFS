@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.5.0-alpha.1]
 ### What's new
 - **Narrator**: the logical focus is now announced as you move with the controller or keyboard: the context when you enter it (home, folder, menu, dialog, on-screen keyboard, path bar, tabs), then just the item, with type, size, position and states in words (marked, cut, blocked, password-protected, unavailable with the reason). Bottom-bar messages are a live region read without moving the focus. (#40)
 - **Recycle Bin** on the home screen: lists deleted items with their original folder and deletion date; South/A on an item offers **Restore** (back to the original folder, never overwriting) and **Delete permanently**, which always asks first with the focus on Cancel. Marking several works. An invalid original location recorded in the bin is refused. (#26)
@@ -29,6 +31,10 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Tabs** in the browser: each tab keeps its own folder, history, marked items and focus. RB moves to the tab strip, LB/RB switch tabs and North creates or closes one; North on a folder has "Open in new tab". A copy or move refreshes every tab showing its source or destination. (#50)
 - **Go to path…** (Menu, and in the folder picker): the on-screen keyboard opens with the current folder selected; type or paste (Ctrl+V) a path, with or without quotes and with variables such as `%USERPROFILE%`, and Done goes there. A missing or invalid path shows the error without closing the keyboard; a file's path opens its folder with the file focused. (#54)
 - **More informative archive browser**: the header shows the format, files, uncompressed size and how many entries are password-protected or blocked; each file shows how much it takes compressed (%); folders show **Explore** and, with entries marked, North becomes **Extract selection (N)** and the menu opens on that option. (#68)
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84): Windows SmartScreen may warn on first run.
 
 ## [0.4.0-alpha.1]
 ### What's new
