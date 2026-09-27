@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.8.0-alpha.1]
 ### Melhorias
 - **Abas pelos gatilhos** (#185): Menu → **Nova aba** e, com duas ou mais abas, **L2/R2 (LT/RT)** trocam para a aba anterior/seguinte enquanto você navega; cada aba volta com a pasta, o histórico, as marcações e o foco dela. Com uma aba só os gatilhos continuam paginando; L1/R1 seguem na barra superior. O rodapé mostra "Aba anterior"/"Próxima aba" com os gatilhos do controle em uso.
 - **Sugestões no teclado virtual** (#45): em nomes, buscas e caminhos, uma faixa acima das teclas sugere nomes já digitados, nomes da pasta atual e, em caminhos, favoritos e pastas recentes (sem diferenciar maiúsculas e acentos). Cima na primeira linha foca a faixa, Sul usa. Tudo local; nunca em senhas. Menu → Sugestões do teclado desliga e apaga o histórico.
@@ -15,6 +17,10 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ### Segurança
 - Ícones de atalhos só são lidos de caminhos locais em unidades fixas, sem links no caminho: caminhos de rede (`\\servidor\…`), endereços da web, prefixos de dispositivo e caminhos relativos são recusados antes de qualquer acesso (evita vazar as credenciais do Windows para um servidor ao só mostrar a pasta). O conteúdo de `.url` é lido com limite de 64 KB e nunca executado.
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
 
 ## [0.7.0-alpha.1]
 ### Melhorias
