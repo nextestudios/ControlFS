@@ -471,7 +471,7 @@ public sealed partial class AppController
 
     private void HandleKeyboard(KeyboardModal modal, InputAction action)
     {
-        if (modal.IsBusy) return;
+        if (modal.IsBusy || HandleGyroRecenter(action)) return;
         var keyboard = modal.Keyboard;
         keyboard.Handle(action);
         if (keyboard.Outcome == Core.Text.KeyboardOutcome.Cancelled)

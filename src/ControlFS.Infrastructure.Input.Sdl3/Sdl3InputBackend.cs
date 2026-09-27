@@ -23,6 +23,7 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private IInputSink? _sink;
     private bool _initialized;
+    private bool _gyroWanted;
     private int? _threadId;
 
     public IReadOnlyList<InputDeviceInfo> Devices => _devices.Values.Select(d => d.Info).ToList();
@@ -92,6 +93,14 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
             case SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION:
                 if (IsRaw(e.jaxis.which, out var rawAxis)) _sink?.OnRawInput(rawAxis.Info.SessionKey, RawInputEvent.Axis(e.jaxis.axis, e.jaxis.value / 32767.0), now);
                 break;
+            case SDL_EventType.SDL_EVENT_GAMEPAD_SENSOR_UPDATE:
+                if (e.gsensor.sensor == (int)SDL_SensorType.SDL_SENSOR_GYRO && _devices.TryGetValue(e.gsensor.which, out var gyro) && gyro.GyroOn)
+                {
+                    // Relógio do próprio sensor quando existe (Bluetooth entrega em rajadas); senão, o do evento. Ambos em ns.
+                    var ns = e.gsensor.sensor_timestamp != 0 ? e.gsensor.sensor_timestamp : e.gsensor.timestamp;
+                    _sink?.OnGyro(gyro.Info.SessionKey, e.gsensor.data[0], e.gsensor.data[1], TimeSpan.FromTicks((long)(ns / 100)));
+                }
+                break;
             case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
                 if (_devices.TryGetValue(e.gaxis.which, out var device)) OnAxis(device, (SDL_GamepadAxis)e.gaxis.axis, e.gaxis.value / 32767.0, now);
                 break;
@@ -113,6 +122,27 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
         var hats = new int[Math.Clamp(SDL_GetNumJoystickHats(joy), 0, ControllerProfileSerializer.MaxRawIndex + 1)];
         for (var i = 0; i < hats.Length; i++) hats[i] = SDL_GetJoystickHat(joy, i);
         return new RawJoystickState(axes, buttons, hats);
+    }
+
+    /// <summary>
+    /// Liga/desliga o giroscópio dos gamepads que têm um (mira experimental, #77). Desligado, o sensor não é ligado (poupa
+    /// bateria e banda no Bluetooth). Vale também para os controles conectados depois.
+    /// </summary>
+    public void SetGyroEnabled(bool enabled)
+    {
+        _gyroWanted = enabled;
+        if (!_initialized) return;
+        foreach (var device in _devices.Values) ApplyGyro(device);
+    }
+
+    /// <summary>O gamepad tem giroscópio e ele está ligado.</summary>
+    public bool HasGyro(string deviceKey) => _devices.Values.Any(d => d.GyroOn && d.Info.SessionKey == deviceKey);
+
+    private void ApplyGyro(SdlDevice device)
+    {
+        if (device.Gamepad == null || !SDL_GamepadHasSensor(device.Gamepad, SDL_SensorType.SDL_SENSOR_GYRO)) return;
+        if (device.GyroOn == _gyroWanted) return;
+        device.GyroOn = SDL_SetGamepadSensorEnabled(device.Gamepad, SDL_SensorType.SDL_SENSOR_GYRO, _gyroWanted) && _gyroWanted;
     }
 
     private void OnAxis(SdlDevice device, SDL_GamepadAxis axis, double value, TimeSpan now)
@@ -168,7 +198,9 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
             TypeName: type,
             Path: SDL_GetGamepadPath(pad),
             Family: ControllerFamilies.Detect(isGamepad: true, type, vendor));
-        _devices[id] = new SdlDevice(info, pad, null, settings);
+        var device = new SdlDevice(info, pad, null, settings);
+        _devices[id] = device;
+        ApplyGyro(device);
         _sink?.OnDeviceAdded(info);
     }
 

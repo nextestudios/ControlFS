@@ -14,5 +14,7 @@ internal sealed unsafe class SdlDevice(InputDeviceInfo info, SDL.SDL_Gamepad* ga
     public double RightX { get; set; }
     public double RightY { get; set; }
     public bool LeftTriggerDown { get; set; }
+    /// <summary>Giroscópio ligado neste gamepad (mira experimental, #77).</summary>
+    public bool GyroOn { get; set; }
     public bool RightTriggerDown { get; set; }
 }
