@@ -6,7 +6,8 @@ namespace ControlFS.Application;
 
 /// <summary>
 /// Abas do navegador: cada uma é um <see cref="PaneState"/> com localização, histórico, marcação e foco próprios.
-/// RB leva à faixa de abas; nela, LB/RB (ou esquerda/direita) trocam de aba e Norte cria/fecha.
+/// A faixa (no cabeçalho) só aparece com 2+ abas e fica acima da barra superior: L1/R1 levam à barra e Cima, nela,
+/// à faixa; na faixa, L1/R1 (ou esquerda/direita) trocam de aba e Norte cria/fecha. Menu → Abas faz o mesmo sem a faixa.
 /// </summary>
 public sealed partial class AppController
 {
@@ -69,6 +70,7 @@ public sealed partial class AppController
         var title = TabTitle(tab);
         _tabs.RemoveAt(index);
         if (ActiveTab > index || ActiveTab >= _tabs.Count) ActiveTab = Math.Max(0, ActiveTab - 1);
+        if (_tabs.Count < 2 && Browser.Region == PaneRegion.Tabs) Browser.Region = PaneRegion.List; // a faixa some com uma aba
         StatusMessage = $"Aba \"{title}\" fechada.";
         if (Browser.Location is null) Screen = Screen.Home;
     }
@@ -113,14 +115,24 @@ public sealed partial class AppController
         }
     }
 
+    /// <summary>Nova/fechar aba e, com 2+ abas, trocar para qualquer uma (Norte na faixa ou Menu → Abas).</summary>
     private void ShowTabMenu()
     {
         var index = ActiveTab;
-        PushModal(new MenuModal($"Aba {index + 1} de {_tabs.Count}",
-        [
-            new MenuItem("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
-            new MenuItem("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
-        ]) { Icon = ActionIcon.NewTab });
+        var fromStrip = Browser.Region == PaneRegion.Tabs;
+        var items = new List<MenuItem>
+        {
+            new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
+            new("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
+        };
+        if (_tabs.Count > 1)
+            for (var i = 0; i < _tabs.Count; i++)
+            {
+                var target = i;
+                items.Add(new MenuItem($"Aba {i + 1}: {TabTitle(_tabs[i])}", () => SwitchTab(target, keepStripFocus: fromStrip),
+                    i == index ? "É a aba atual." : null, Icon: ActionIcon.Folder, Section: "Ir para a aba"));
+            }
+        PushModal(new MenuModal($"Aba {index + 1} de {_tabs.Count}", items) { Icon = ActionIcon.NewTab });
     }
 
     /// <summary>Mouse/toque numa aba: ativa a aba e volta o foco para a lista.</summary>

@@ -503,6 +503,8 @@ public sealed partial class AppController
             new("Atualizar", () => Refresh(pane), inBrowser ? null : "Nada para atualizar na tela inicial.", Icon: ActionIcon.Refresh, Section: "Nesta pasta"),
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
                 Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Nesta pasta"),
+            new(_tabs.Count > 1 ? $"Abas ({ActiveTab + 1} de {_tabs.Count})…" : "Abas…", ShowTabMenu, inBrowser ? null : "Abra uma pasta primeiro.",
+                Detail: "Nova aba, fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.NewTab, Section: "Nesta pasta"),
             new("Ir para caminho…", () => BeginGoToPath(pane), Detail: "Digite ou cole o caminho de uma pasta (ex.: D:\\Jogos).", Icon: ActionIcon.GoToPath, Section: "Nesta pasta"),
             new($"Ordenar por: {SortLabel(sort.Field)}", () =>
             {

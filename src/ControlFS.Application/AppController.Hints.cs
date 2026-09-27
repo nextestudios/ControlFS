@@ -168,7 +168,7 @@ public sealed partial class AppController
             hints.Add(new(InputAction.OpenContextMenu, search.Filter.IsActive ? "Filtros (ativos)" : "Filtros"));
             hints.Add(new(InputAction.Search, "Nova busca"));
             hints.Add(ChangeViewHint);
-            hints.Add(new(InputAction.NextRegion, TabsHint));
+            AddTopBarEntryHints(hints);
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             hints.Add(new(InputAction.Back, search.IsRunning ? "Cancelar busca" : "Voltar"));
             return hints;
@@ -197,14 +197,13 @@ public sealed partial class AppController
         else if (focused is { Kind: EntryKind.File } && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Abrir"));
         else if (focused is { Kind: EntryKind.ArchiveFile }) hints.Add(new(InputAction.Confirm, "Detalhes"));
 
-        if (crumbs.Count > 1) hints.Add(new(InputAction.PreviousRegion, "Caminho"));
+        AddTopBarEntryHints(hints);
         if (pane.Mode == PaneMode.PickFolder)
         {
             hints.Add(new(InputAction.OpenAppMenu, "Escolher esta pasta…"));
             hints.Add(new(InputAction.Back, pane.CanGoBack ? "Voltar" : "Cancelar"));
             return hints;
         }
-        hints.Add(new(InputAction.NextRegion, TabsHint));
         if (focused is not null && !focused.IsBlocked && focused.Kind is not (EntryKind.Drive or EntryKind.KnownFolder))
             hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
@@ -214,8 +213,6 @@ public sealed partial class AppController
         hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
         return hints;
     }
-
-    private string TabsHint => _tabs.Count > 1 ? $"Abas ({ActiveTab + 1}/{_tabs.Count})" : "Abas";
 
     /// <summary>
     /// O botão de ações diz o que abre: extração dentro de um compactado ou num compactado focado (o menu abre em

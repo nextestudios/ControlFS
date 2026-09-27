@@ -48,7 +48,6 @@ public sealed class MainWindow : Window
     private ViewMode _view = ViewMode.List;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, VerticalAlignment = VerticalAlignment.Center };
-    private readonly Border _rb = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
@@ -206,7 +205,7 @@ public sealed class MainWindow : Window
         layout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // rodapé
 
-        // Cabeçalho: logo com o nome, abas (RB) e, à direita, controle em uso e operação/atualização.
+        // Cabeçalho: logo com o nome, abas (só com 2+) e, à direita, controle em uso e operação/atualização.
         var header = _header;
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -215,7 +214,6 @@ public sealed class MainWindow : Window
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
         header.Children.Add(_logo);
         _tabs.Children.Add(_tabStrip);
-        _tabs.Children.Add(_rb);
         Grid.SetColumn(_tabs, 1);
         header.Children.Add(_tabs);
         var right = _headerRight;
@@ -410,7 +408,7 @@ public sealed class MainWindow : Window
         _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         _logo.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
         _topBar.Render();
-        RenderTabs(_app.Screen == Screen.Browser, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
+        RenderTabs(_app.Screen == Screen.Browser && _app.Tabs.Count > 1, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
         var device = _input.ActiveDevice;
         _device.Text = !_input.BackendReady
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"
@@ -620,7 +618,7 @@ public sealed class MainWindow : Window
         // Rodapé: somente ações válidas no contexto, com a legenda do dispositivo em uso (glifo do controle ou tecla)
         _hints.Children.Clear();
         var glyphHeight = FooterGlyphHeight;
-        // LB e RB aparecem na barra superior e ao lado das abas enquanto o foco está no conteúdo.
+        // L1 e R1 aparecem nas pontas da barra superior enquanto o foco está no conteúdo.
         var regionsShownAbove = _app.TopModal is null && _app.FocusRegion == PaneRegion.List;
         foreach (var prompt in _app.Prompts)
         {
@@ -681,19 +679,15 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// Faixa de abas do navegador: a ativa em destaque; com o foco na faixa (RB), a ativa recebe o anel de foco e LB/RB
-    /// trocam de aba. Só aparece no navegador.
+    /// Faixa de abas do navegador: a ativa em destaque; com o foco na faixa (Cima na barra superior), a ativa recebe o
+    /// anel de foco e L1/R1 trocam de aba. Só aparece no navegador com 2+ abas: com uma, repetiria a pasta do caminho.
+    /// Sem legenda de botão ao lado (#176).
     /// </summary>
     private void RenderTabs(bool visible, bool focused)
     {
         _tabStrip.Children.Clear();
         _tabs.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         if (!visible) return;
-        var rb = _app.PromptProvider.For(InputAction.NextRegion, "Abas");
-        _rb.Child = rb is { Button: { } button, Family: { } family }
-            ? ControllerGlyphs.Create(button, family, Math.Round(Theme.FontBody * 1.4))
-            : new TextBlock { Text = rb.Key, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_rb, rb.AccessibilityText);
         var tabs = _app.Tabs;
         for (var i = 0; i < tabs.Count; i++)
         {

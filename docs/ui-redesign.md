@@ -27,8 +27,8 @@ hardware, visual or timing checks that CI can't prove.
 ## Shell
 
 ```
-┌ [ControlFS logo with text] [tabs · RB]                         [controller · operation] ┐  (system title bar above)
-├ [LB] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira
+┌ [ControlFS logo with text] [tabs, only with 2+]                  [controller · operation] ┐  (system title bar above)
+├ [L1] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira [R1]
 ├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
 ├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List, each + details panel (C; grid #177)
 └ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Lista/Grade
@@ -48,14 +48,15 @@ hardware, visual or timing checks that CI can't prove.
 
 ### Controller model of the shell
 
-| Input | Home | Browser (list region) | Top bar focused | Tab strip focused |
+| Input | Home | Browser (list region) | Top bar focused | Tab strip focused (2+ tabs) |
 |---|---|---|---|---|
-| LB / Ctrl+← | top bar, first quick-access item (A2) | top bar, parent folder segment (#30) | back to content | previous tab |
-| RB / Ctrl+→ | — | tab strip (#50) | back to content | next tab |
-| Left / Right | grid: move; list: — (Right opens) | grid: move; list: up / open | move across breadcrumb then quick access | switch tab |
-| LT / RT | page | page | first / last item of the segment | first / last tab |
-| South | open place | open item | go to segment / open quick access | back to content |
-| North | place actions | item actions | full path menu (segments only) | new/close tab |
+| LB / L1 / Ctrl+← | top bar, first quick-access item (A2) | top bar, parent folder segment (#30) | previous target (#176) | previous tab |
+| RB / R1 / Ctrl+→ | top bar, first quick-access item (#176) | top bar, first quick-access item (#176; was: tab strip) | next target (#176) | next tab |
+| Left / Right | grid: move; list: — (Right opens) | grid: move; list: up / open | previous / next target (current folder and active shortcut skipped) | switch tab |
+| Up | move | move | tab strip, when 2+ tabs (#176) | — |
+| LT / RT | page | page | first / last target of the segment | first / last tab |
+| South | open place | open item | go to segment / open quick access (never the current folder) | back to content |
+| North | place actions | item actions | full path menu (segments only) | new/close/switch tab |
 | East | exit dialog | back (selection → search → history → Home) | back to content | back to content |
 | Down | move | move | back to content | back to content |
 | Start / F10 | app menu | app menu | app menu | app menu |
@@ -124,7 +125,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Raw joystick wizard, profiles import/export, two-button long press | Menu → Controles sem perfil… | — | `ControllerMappingWizardTests` (5), `ControllerMappingJourneyTests` (3), `ControllerProfileSerializerTests` (3); Manual "Joystick sem perfil (#79)" |
 | Family detection and label style (automatic/generic/Xbox/PS/Nintendo) | Menu → Legendas | — | `ControllerFamilyTests` (3), `PromptJourneyTests` |
 | Dynamic footer prompts, hot swap, keyboard keys when typing on a physical keyboard | footer | — | `PromptJourneyTests`, `HintJourneyTests` (4), `JourneyTests::Footer_hints_only_show_actions_that_work_in_context` |
-| Footer order (A1): Confirm, Back, Mark, Actions, Menu, Search, Lista/Grade, LB, RB (screens only; modals keep theirs) | footer | — | `PromptJourneyTests` |
+| Footer order (A1): Confirm, Back, Mark, Actions, Menu, Search, Lista/Grade, L1, R1 (screens only; modals keep theirs); L1/R1 glyphs at the ends of the top bar while the list has focus (#176) | footer, top bar | — | `PromptJourneyTests` |
 | Xbox face colors in glyphs (A green, B red, X blue, Y yellow) | footer, glyph gallery | — | Screens (`glyphs/`); Manual "Glifos dos botões" |
 | Glyphs per family (PS shapes, Nintendo A/B by position, generic dots, never fake Xbox) | footer | — | `ControllerFamilyTests::Glyph_letters_and_spoken_names_follow_position_per_family`, `InputRouterTests::Glyphs_follow_physical_position_not_letters`; Screens |
 | Physical keyboard map | all | arrows, Enter, Esc, Backspace, Space, F2/Menu key, F10, PgUp/PgDn, Home/End (typing), Ctrl+←/→, Ctrl+F, Ctrl+G, Ctrl+A/Ctrl+V (typing), F11 | UIA (F10, arrows, PageDown, Esc, Ctrl+F); Manual for the rest |
@@ -144,9 +145,9 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Browse real folders, open, up (Left in list), history Back with focus restore | content | South/Right, Left, East | `JourneyTests::Back_semantics_selection_then_history_then_home_then_confirmed_exit`, `BreadcrumbJourneyTests` |
 | Stale listing never overwrites a newer navigation | — | — | `JourneyTests::Late_listing_response_does_not_overwrite_newer_navigation` |
 | Focus by identity, survives resort/removal; focus ≠ selection | content | — | `StateTests` (5) |
-| Breadcrumb / path bar with archive boundary and collapse, root chip (Locais / Meu computador) | top bar left segment (A2) | LB, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3), `TopBarJourneyTests`; Manual "Barra de caminho (#30)" |
-| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador (B1: opens This PC), Lixeira | top bar right segment (A2) | LB then Right, South | `TopBarJourneyTests`, `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
-| Tabs (8 max), each with its own folder/history/marks/focus | header tab strip (A2) | RB, LB/RB, North new/close, "Abrir em nova aba" | `TabsJourneyTests`; Manual "Abas (#50)" |
+| Breadcrumb / path bar with archive boundary and collapse, root chip (Locais / Meu computador); the current folder is a label, never a target (#176) | top bar left segment (A2) | L1, L1/R1, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3), `TopBarJourneyTests` (2); Manual "Barra de caminho (#30)", "Barra superior com L1/R1 (#176)" |
+| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador (B1: opens This PC), Lixeira; the active shortcut is skipped (#176) | top bar right segment (A2) | R1 (or L1 then Right), South | `TopBarJourneyTests` (2), `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
+| Tabs (8 max), each with its own folder/history/marks/focus; strip only with 2+ tabs, no standalone prompt (#176) | header tab strip (A2) | Up from the top bar, L1/R1, North new/close/switch, Menu → Abas, "Abrir em nova aba" | `TabsJourneyTests`, `ModalSystemJourneyTests`; Screens `2g-folder-tabs`; Manual "Abas (#50)" |
 | Go to path (typed/pasted, quotes, %VARS%) | Menu → Ir para caminho… | Start | `GoToPathJourneyTests`, `TypedPathTests` |
 | Go to folder above… | Menu | Start | `BreadcrumbJourneyTests` (same menu as the `…` segment) |
 | Go home | Menu → Ir para o início; top bar root chip "Locais" (A2) | Start / LB | `JourneyTests::Back_semantics_…`, `TopBarJourneyTests` |
@@ -179,7 +180,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Recycle Bin: Restaurar, Excluir permanentemente…, Propriedades, Marcar todos, Atualizar | Y Ações in Lixeira | `RecycleBinJourneyTests` |
 | Search: filters, Outras ações (Mostrar na pasta, Nova busca, Subpastas, Pastas puladas, Cancelar busca, Propriedades) | Y Filtros | `SearchFilterJourneyTests`, `SearchJourneyTests` |
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
-| Tab strip: Nova aba, Fechar aba | North on the strip | `TabsJourneyTests` |
+| Tab strip: Nova aba, Fechar aba, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |
 
 ### App menu (Start)

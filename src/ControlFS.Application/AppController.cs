@@ -251,9 +251,9 @@ public sealed partial class AppController
             HandleTopBar(action);
             return;
         }
-        if (action == InputAction.PreviousRegion)
+        if (action is InputAction.PreviousRegion or InputAction.NextRegion)
         {
-            EnterHomeTopBar();
+            EnterTopBar(forward: action == InputAction.NextRegion);
             return;
         }
         // Grade: seções (pastas em 3 colunas, unidades em 2…) com as colunas que a tela mostra.

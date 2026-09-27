@@ -13,8 +13,8 @@ using Microsoft.UI.Xaml.Media;
 namespace ControlFS.App.Views;
 
 /// <summary>
-/// Barra superior compartilhada: glifo do LB, caminho (raiz "Locais"/"Meu computador" e segmentos reais) e acesso
-/// rápido com os ícones do Windows. Só desenha o estado do <see cref="AppController"/> (foco, itens, local atual); os
+/// Barra superior compartilhada: glifo do L1 (alvo anterior), caminho (raiz "Locais"/"Meu computador" e segmentos
+/// reais), acesso rápido com os ícones do Windows e glifo do R1 (alvo seguinte), com a família do controle em uso. Só desenha o estado do <see cref="AppController"/> (foco, itens, local atual); os
 /// chips são refeitos apenas quando o conteúdo muda, então a troca de foco anima o fundo.
 /// </summary>
 internal sealed class TopBarView
@@ -31,6 +31,7 @@ internal sealed class TopBarView
     private readonly IconLoader _icons;
     private readonly Grid _grid = new();
     private readonly Border _lb = new() { VerticalAlignment = VerticalAlignment.Center };
+    private readonly Border _rb = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _quick = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly ScrollViewer _crumbScroll = Scroller();
@@ -58,16 +59,19 @@ internal sealed class TopBarView
         _grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        _grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _crumbScroll.Content = _crumbs;
         _quickScroll.Content = _quick;
         _divider.Background = Theme.Border;
         Grid.SetColumn(_crumbScroll, 1);
         Grid.SetColumn(_divider, 2);
         Grid.SetColumn(_quickScroll, 3);
+        Grid.SetColumn(_rb, 4);
         _grid.Children.Add(_lb);
         _grid.Children.Add(_crumbScroll);
         _grid.Children.Add(_divider);
         _grid.Children.Add(_quickScroll);
+        _grid.Children.Add(_rb);
         AutomationProperties.SetName(Root, "Barra superior");
     }
 
@@ -109,15 +113,16 @@ internal sealed class TopBarView
         var region = _app.TopModal is null ? _app.FocusRegion : PaneRegion.List;
         var crumbFocus = region == PaneRegion.Breadcrumbs ? _app.BreadcrumbFocus : -1;
         var quickFocus = region == PaneRegion.QuickAccess && quick.Count > 0 ? Math.Clamp(_app.QuickAccessFocus, 0, quick.Count - 1) : -1;
-        var lb = _app.PromptProvider.For(InputAction.PreviousRegion, "Barra superior");
+        var lb = _app.PromptProvider.For(InputAction.PreviousRegion, "Barra superior, alvo anterior");
+        var rb = _app.PromptProvider.For(InputAction.NextRegion, "Barra superior, próximo alvo");
         var key = string.Join("|", crumbs.Select(c => $"{c.Kind}:{c.Label}:{c.IsCurrent}"))
             + "#" + string.Join("|", quick.Select(q => $"{q.Label}:{_app.IsQuickAccessActive(q)}"))
-            + $"#{lb.Button}:{lb.Family}:{lb.Key}";
+            + $"#{lb.Button}:{lb.Family}:{lb.Key}#{rb.Button}:{rb.Family}:{rb.Key}";
         if (key != _shownKey)
         {
             _shownKey = key;
             _shownFocus = null;
-            Build(crumbs, quick, lb);
+            Build(crumbs, quick, lb, rb);
             Fit();
         }
         var focus = (region, crumbFocus, quickFocus);
@@ -145,10 +150,12 @@ internal sealed class TopBarView
     {
         var infinite = new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity);
         _lb.Measure(infinite);
+        _rb.Measure(infinite);
         _crumbs.Measure(infinite);
         _quick.Measure(infinite);
         var bar = Theme.Viewport.Width - Root.Margin.Left - Root.Margin.Right - Root.Padding.Left - Root.Padding.Right - (2 * Root.BorderThickness.Left)
-            - _lb.DesiredSize.Width - _lb.Margin.Left - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
+            - _lb.DesiredSize.Width - _lb.Margin.Left - _rb.DesiredSize.Width - _rb.Margin.Right
+            - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (4 * _grid.ColumnSpacing) - Theme.SpaceXs;
         var path = _crumbs.DesiredSize.Width;
         _crumbWidths = [.. _crumbGlows.Select((g, i) => g.DesiredSize.Width + _crumbs.Spacing
             + (i > 0 ? _crumbSeparators[i - 1].DesiredSize.Width + _crumbSeparators[i - 1].Margin.Left + _crumbSeparators[i - 1].Margin.Right + _crumbs.Spacing : 0))];
@@ -207,21 +214,27 @@ internal sealed class TopBarView
 
     private static double FontSize => Theme.FontCaption + 1;
 
-    private void Build(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick, Application.Prompts.ControllerPrompt lb)
+    /// <summary>Glifo do ombro (LB/RB, L1/R1, L/R) da família em uso; sem controle, a tecla (Ctrl+←/Ctrl+→).</summary>
+    private static UIElement Shoulder(Application.Prompts.ControllerPrompt prompt) => prompt is { Button: { } button, Family: { } family }
+        ? ControllerGlyphs.Create(button, family, Math.Round(Theme.FontBody * 1.5))
+        : new Border
+        {
+            Background = Theme.SurfaceRaised,
+            BorderBrush = Theme.Border,
+            BorderThickness = Theme.Hairline,
+            CornerRadius = Theme.Radius,
+            Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
+            Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text },
+        };
+
+    private void Build(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick, Application.Prompts.ControllerPrompt lb, Application.Prompts.ControllerPrompt rb)
     {
-        _lb.Child = lb is { Button: { } button, Family: { } family }
-            ? ControllerGlyphs.Create(button, family, Math.Round(Theme.FontBody * 1.5))
-            : new Border
-            {
-                Background = Theme.SurfaceRaised,
-                BorderBrush = Theme.Border,
-                BorderThickness = Theme.Hairline,
-                CornerRadius = Theme.Radius,
-                Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
-                Child = new TextBlock { Text = lb.Key, FontSize = Theme.FontCaption, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text },
-            };
+        _lb.Child = Shoulder(lb);
         AutomationProperties.SetName(_lb, lb.AccessibilityText);
         _lb.Margin = new Thickness(Theme.SpaceXs, 0, 0, 0);
+        _rb.Child = Shoulder(rb);
+        AutomationProperties.SetName(_rb, rb.AccessibilityText);
+        _rb.Margin = new Thickness(0, 0, Theme.SpaceXs, 0);
 
         _crumbs.Children.Clear();
         _crumbRings.Clear();
@@ -268,7 +281,7 @@ internal sealed class TopBarView
             var ring = Ring(content);
             var index = i;
             var glow = Theme.WithGlow(ring);
-            glow.Tapped += (_, _) => _app.PointerActivateBreadcrumb(index);
+            if (!crumb.IsCurrent) glow.Tapped += (_, _) => _app.PointerActivateBreadcrumb(index); // a pasta atual é só o rótulo
             AutomationProperties.SetName(glow, crumb.Kind switch
             {
                 BreadcrumbKind.Collapsed => $"{crumb.Hidden.Count} pastas recolhidas",
