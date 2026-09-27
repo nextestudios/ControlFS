@@ -75,6 +75,27 @@ public sealed partial class AppController
         if (Browser.Location is null) Screen = Screen.Home;
     }
 
+    /// <summary>
+    /// L2/R2 (LT/RT) no navegador com 2+ abas: aba anterior/próxima, dando a volta nas pontas (#185). Com uma aba só
+    /// os gatilhos continuam paginando a lista e as seções do início. Modais, teclado e visualizações tratam os gatilhos
+    /// antes e nunca chegam aqui; L1/R1 seguem na barra superior.
+    /// </summary>
+    private bool HandleTabTrigger(InputAction action)
+    {
+        if (_tabs.Count < 2 || action is not (InputAction.PageUp or InputAction.PageDown)) return false;
+        var step = action == InputAction.PageDown ? 1 : -1;
+        SwitchTab((ActiveTab + step + _tabs.Count) % _tabs.Count, keepStripFocus: false);
+        StatusMessage = $"Aba {ActiveTab + 1} de {_tabs.Count}: {TabTitle(Browser)}.";
+        return true;
+    }
+
+    private void AddTabTriggerHints(List<Hint> hints)
+    {
+        if (_tabs.Count < 2) return;
+        hints.Add(new(InputAction.PageUp, "Aba anterior"));
+        hints.Add(new(InputAction.PageDown, "Próxima aba"));
+    }
+
     private void SwitchTab(int index, bool keepStripFocus)
     {
         index = Math.Clamp(index, 0, _tabs.Count - 1);

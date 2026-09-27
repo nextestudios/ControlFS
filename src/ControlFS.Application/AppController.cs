@@ -263,6 +263,7 @@ public sealed partial class AppController
             EnterTopBar(forward: action == InputAction.NextRegion);
             return;
         }
+        if (HandleTabTrigger(action)) return;
         // Grade: seções (pastas em 3 colunas, unidades em 2…) com as colunas que a tela mostra.
         if (IsGrid && SectionGridNavigation.Move(HomeSections, HomeColumns, PlacesFocus, action) is { } cell)
         {

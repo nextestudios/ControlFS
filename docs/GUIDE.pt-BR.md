@@ -67,7 +67,7 @@ Para pular direto para qualquer lugar, use Menu → **Ir para caminho…** (tamb
 
 ## Abas
 
-Cada aba guarda a própria pasta, histórico, itens marcados e foco. Com duas ou mais abas, a faixa de abas aparece no cabeçalho, ao lado do logo (com uma só ela repetiria o caminho, então fica escondida). Para chegar nela, entre na barra superior (LB ou RB) e aperte **Cima**; na faixa, **LB/RB** (ou esquerda/direita) trocam de aba e **Norte** oferece **Nova aba** (a pasta atual numa aba nova), **Fechar aba** e a lista das abas. **Sul**, **baixo** ou **Leste** voltam para a lista. Menu → **Abas** faz o mesmo sem a faixa, e Norte numa pasta tem **Abrir em nova aba**. Até 8 abas; clicar numa aba troca para ela.
+Cada aba guarda a própria pasta, histórico, itens marcados e foco. Com duas ou mais abas, a faixa de abas aparece no cabeçalho, ao lado do logo (com uma só ela repetiria o caminho, então fica escondida). Para chegar nela, entre na barra superior (LB ou RB) e aperte **Cima**; na faixa, **LB/RB** (ou esquerda/direita) trocam de aba e **Norte** oferece **Nova aba** (a pasta atual numa aba nova), **Fechar aba** e a lista das abas. **Sul**, **baixo** ou **Leste** voltam para a lista. Menu → **Abas** faz o mesmo sem a faixa, e Norte numa pasta tem **Abrir em nova aba**. Até 8 abas; clicar numa aba troca para ela. Menu → **Nova aba** abre a pasta atual numa aba nova de qualquer lugar. **Com duas ou mais abas, LT/RT (L2/R2) trocam para a aba anterior/seguinte** enquanto você navega (dando a volta nas pontas); com uma aba só eles continuam paginando a lista e pulando entre as seções do início. L1/R1 ficam sempre na barra superior, e dentro de menus, do teclado e das visualizações os gatilhos são deles.
 
 ## A lista
 
