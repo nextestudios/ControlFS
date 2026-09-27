@@ -235,6 +235,13 @@ public sealed partial class AppController
         Handle(InputAction.Confirm);
     }
 
+    public void PointerPressSuggestion(int index)
+    {
+        if (TopModal is not KeyboardModal modal) return;
+        modal.Keyboard.FocusSuggestion(index);
+        Handle(InputAction.Confirm);
+    }
+
     public void PointerPressKey(int row, int column)
     {
         if (TopModal is not KeyboardModal modal) return;
@@ -309,6 +316,7 @@ public sealed partial class AppController
     internal void PushModal(Modal modal)
     {
         SafeInitialFocus(modal);
+        if (modal is KeyboardModal keyboard) AttachSuggestions(keyboard.Keyboard);
         _modals.Add(modal);
         ModalContextChanged?.Invoke();
         RaiseChanged();
@@ -457,6 +465,7 @@ public sealed partial class AppController
         try
         {
             await modal.OnSubmit(modal.Keyboard);
+            if (modal.Keyboard.Outcome == Core.Text.KeyboardOutcome.Submitted) RememberTypedText(modal.Keyboard);
         }
         catch (Exception ex)
         {

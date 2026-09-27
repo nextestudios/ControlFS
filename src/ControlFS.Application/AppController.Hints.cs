@@ -49,6 +49,12 @@ public sealed partial class AppController
                 return hints;
             case KeyboardModal { IsBusy: true }:
                 return hints; // aguardando a validação do texto: nenhuma ação é aceita
+            case KeyboardModal { Keyboard.FocusedSuggestion: not null }:
+                hints.Add(new(InputAction.Confirm, "Usar sugestão"));
+                hints.Add(new(InputAction.NavigateDown, "Teclas"));
+                hints.Add(new(InputAction.OpenAppMenu, "Concluir"));
+                hints.Add(new(InputAction.Back, "Cancelar"));
+                return hints;
             case KeyboardModal:
                 // Com o teclado físico, as teclas digitam direto (Enter conclui); "Selecionar" é coisa do controle.
                 if (ActiveController is not null) hints.Add(new(InputAction.Confirm, "Selecionar"));

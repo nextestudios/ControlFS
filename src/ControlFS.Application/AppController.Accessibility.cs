@@ -35,6 +35,8 @@ public sealed partial class AppController
                 return new(context, $"{option.Label}{toggle}, botão {Position(dialog.FocusIndex, dialog.Options.Count)}");
             case KeyboardModal keyboard:
                 var kb = keyboard.Keyboard;
+                if (kb.FocusedSuggestion is { } suggestion)
+                    return new($"Teclado virtual: {kb.Title}", $"sugestão {suggestion}, {Position(kb.SuggestionIndex ?? 0, kb.Suggestions.Count)}");
                 var key = kb.FocusedKey;
                 return new($"Teclado virtual: {kb.Title}", "tecla " + key.Name + (kb.IsKeyEnabled(key) ? string.Empty : ", indisponível neste campo"));
             case MappingWizardModal wizard:

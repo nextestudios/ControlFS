@@ -515,6 +515,8 @@ public sealed partial class AppController
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: "Exibição"),
             new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
                 Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: "Exibição"),
+            new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
+                Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: "Exibição"),
             new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
