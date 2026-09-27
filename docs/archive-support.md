@@ -10,7 +10,9 @@ SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 |---|---|---|---|---|---|
 | ZIP | Stored, Deflate | — | gerada no teste | **validado** (tudo, seleção, conflitos, CRC, truncado, maliciosos) | — |
 | ZIP | Deflate | ZipCrypto | `zip/zipcrypto-senha-certa.zip` | **validado** (sem/errada/certa) | ZipCrypto aceita senha errada ~1/256; aí o CRC acusa "senha ou dados". |
-| ZIP | AES (AE-2), ZIP64 | — | nenhuma | não testado | Obrigatório na 1.0. |
+| ZIP | AES (AE-2) | — | nenhuma | não testado | Obrigatório na 1.0. |
+| ZIP64 | entrada > 4 GiB (Deflate) e entrada seguinte | — | gerada no teste (≈4,0 GiB descompactados) | **validado** (tamanho exato, CRC-32 conferido, amostras em volta da fronteira de 4 GiB) | Não testado: arquivo compactado com mais de 4 GiB em disco (deslocamentos ZIP64). |
+| ZIP64 | 70.000 entradas (registro final ZIP64) | — | gerada no teste | **validado** (lista todas; extrai entradas além da 65.535ª; limite de entradas continua valendo) | Extrair tudo não foi medido (70 mil arquivos no runner). |
 | 7z | LZMA2 | — | `7z/7Zip.LZMA2.7z` | **validado** (SHA-256 de cada arquivo) | — |
 | 7z | sólido | — | `7z/7Zip.solid.7z` | **validado** | Extrair seleção de um sólido pode ser lento. |
 | 7z | LZMA2 + AES | `testpassword` | `7z/7Zip.LZMA2.Aes.7z` | **validado** (sem senha → pede; com senha → conteúdo correto) | — |
