@@ -517,6 +517,7 @@ public sealed partial class AppController
     internal void RaiseChanged()
     {
         UpdateHomeStats();
+        UpdateDetailsWork();
         Changed?.Invoke();
     }
 

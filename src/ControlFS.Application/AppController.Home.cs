@@ -116,28 +116,7 @@ public sealed partial class AppController
             foreach (var folder in folders)
             {
                 if (cts.IsCancellationRequested) return;
-                using var budget = CancellationTokenSource.CreateLinkedTokenSource(cts.Token);
-                budget.CancelAfter(FolderStatsBudget);
-                var partial = new LatestProgress();
-                FolderStats result;
-                try
-                {
-                    var size = await Task.Run(() => _fs.MeasureFolder(folder, partial, budget.Token), CancellationToken.None);
-                    result = new FolderStats(FolderStatsState.Ready, size.Files + size.Folders, size.Bytes);
-                }
-                catch (OperationCanceledException) when (!cts.IsCancellationRequested)
-                {
-                    var last = partial.Last ?? FolderSize.Empty;
-                    result = new FolderStats(FolderStatsState.Partial, last.Files + last.Folders, last.Bytes);
-                }
-                catch (OperationCanceledException)
-                {
-                    return; // saiu do início: sem valor guardado, recomeça na próxima visita
-                }
-                catch (Exception ex) when (ex is FileOperationException or IOException or UnauthorizedAccessException)
-                {
-                    result = new FolderStats(FolderStatsState.Unavailable);
-                }
+                if (await MeasureStatsAsync(folder, cts.Token) is not { } result) return; // saiu do início: recomeça na próxima visita
                 _folderStats[folder] = (result, Clock());
                 FolderStatsVersion++;
                 RaiseChanged();
@@ -148,6 +127,35 @@ public sealed partial class AppController
             if (ReferenceEquals(StatsRun, cts)) StatsRun = null;
             cts.Dispose();
             if (Screen == Screen.Home) UpdateHomeStats(); // voltou ao início enquanto a soma cancelada terminava
+        }
+    }
+
+    /// <summary>
+    /// Soma recursiva de uma pasta (mesmo percurso do "Calcular tamanho", #55) fora da thread de UI, com tempo limite:
+    /// passado o limite, o parcial real (com "+"). Null quando <paramref name="cancellationToken"/> cancelou.
+    /// </summary>
+    private async Task<FolderStats?> MeasureStatsAsync(string folder, CancellationToken cancellationToken)
+    {
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(FolderStatsBudget);
+        var partial = new LatestProgress();
+        try
+        {
+            var size = await Task.Run(() => _fs.MeasureFolder(folder, partial, budget.Token), CancellationToken.None);
+            return new FolderStats(FolderStatsState.Ready, size.Files + size.Folders, size.Bytes);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            var last = partial.Last ?? FolderSize.Empty;
+            return new FolderStats(FolderStatsState.Partial, last.Files + last.Folders, last.Bytes);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception ex) when (ex is FileOperationException or IOException or UnauthorizedAccessException)
+        {
+            return new FolderStats(FolderStatsState.Unavailable);
         }
     }
 
