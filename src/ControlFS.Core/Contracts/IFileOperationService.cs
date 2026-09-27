@@ -26,6 +26,11 @@ public sealed class FileOperationRequest
     public string? DestinationFolder { get; init; }
     /// <summary>Exclusão permanente (só com confirmação específica; nunca como fallback silencioso da Lixeira).</summary>
     public bool Permanent { get; init; }
+    /// <summary>
+    /// Mover: pastas de origem que ficaram para trás numa tentativa anterior. Ao final (sem cancelamento), são removidas
+    /// se contiverem apenas pastas vazias; nunca se tiverem algum arquivo ou link.
+    /// </summary>
+    public IReadOnlyList<string>? LeftoverSourceFolders { get; init; }
 
     public override string ToString() => $"{Kind} {Sources.Count} item(s)";
 }

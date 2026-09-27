@@ -116,4 +116,31 @@ public class FileOperationJourneyTests : IDisposable
         await d.ChooseMenu("Copiar 1 item(ns) — concluída");
         Assert.DoesNotContain((await d.WaitDialog("Copiar 1 item(ns)")).Options, o => o.Label == "Tentar de novo");
     });
+
+    [Fact]
+    public void Retry_failed_items_copies_only_the_locked_file_into_its_subfolder() => UiContext.Run(async () =>
+    {
+        _tmp.MakeDir("Pasta");
+        File.WriteAllText(_tmp.Sub("Pasta", "livre.txt"), "livre");
+        File.WriteAllText(_tmp.Sub("Pasta", "travado.txt"), "travado");
+        _tmp.MakeDir("Destino");
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        var locked = new FileStream(_tmp.Sub("Pasta", "travado.txt"), FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("Pasta")], _tmp.Sub("Destino"), _tmp.Path);
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        var partial = await d.WaitDialog("Copiar: concluído com avisos");
+        locked.Dispose();
+        File.WriteAllText(_tmp.Sub("Destino", "Pasta", "livre.txt"), "editado depois"); // já copiado: não pode ser refeito
+
+        // Um conflito com livre.txt travaria o teste em "Já existe": só o item com falha é refeito.
+        d.ChooseOption(partial, "Tentar de novo só as falhas (1)");
+        await d.WaitDialog("Copiar: concluído");
+
+        var retried = d.App.Operations.Items[^1].Result!;
+        Assert.Equal("travado.txt", Assert.Single(retried.Items).Name);
+        Assert.Equal("travado", File.ReadAllText(_tmp.Sub("Destino", "Pasta", "travado.txt")));
+        Assert.Equal("editado depois", File.ReadAllText(_tmp.Sub("Destino", "Pasta", "livre.txt")));
+    });
 }

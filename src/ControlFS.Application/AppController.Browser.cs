@@ -419,6 +419,7 @@ public sealed partial class AppController
                 CloseModal(dialog);
                 Operations.Retry(op);
             }));
+        AddRetryFailedOption(dialog, op);
         dialog.BackOption = close;
         PushModal(dialog);
     }

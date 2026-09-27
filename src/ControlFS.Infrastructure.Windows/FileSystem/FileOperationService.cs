@@ -38,11 +38,16 @@ public sealed partial class FileOperationService : IFileOperationService
             if (request.Kind == FileOperationKind.Delete)
             {
                 run.Total = request.Sources.Count;
-                foreach (var source in request.Sources)
+                var targets = request.Sources.Select(Path.GetFullPath).ToList();
+                for (var i = 0; i < targets.Count; i++)
                 {
-                    ct.ThrowIfCancellationRequested();
-                    run.Results.Add(DeleteItem(Path.GetFullPath(source), request.Permanent));
-                    run.Report(Path.GetFileName(source), 0, fileDone: true);
+                    if (ct.IsCancellationRequested)
+                    {
+                        MarkNotProcessed(targets.Skip(i), null, null, run);
+                        ct.ThrowIfCancellationRequested();
+                    }
+                    run.Results.Add(DeleteItem(targets[i], request.Permanent) with { SourcePath = targets[i] });
+                    run.Report(Path.GetFileName(targets[i]), 0, fileDone: true);
                 }
             }
             else
@@ -61,26 +66,49 @@ public sealed partial class FileOperationService : IFileOperationService
                         return Fail(OperationErrorKind.PathRejected, $"Não é possível {(move ? "mover" : "copiar")} a pasta \"{Path.GetFileName(source)}\" para dentro dela mesma.");
                 }
                 (run.Total, run.BytesTotal) = Measure(request.Sources);
-                foreach (var raw in request.Sources)
+                var sources = request.Sources.Select(raw => Path.GetFullPath(Path.TrimEndingDirectorySeparator(raw))).ToList();
+                for (var i = 0; i < sources.Count; i++)
                 {
-                    if (run.Cancelled) break;
-                    ct.ThrowIfCancellationRequested();
-                    var source = Path.GetFullPath(Path.TrimEndingDirectorySeparator(raw));
+                    if (run.Cancelled)
+                    {
+                        MarkNotProcessed(sources.Skip(i), destination, null, run);
+                        break;
+                    }
+                    var source = sources[i];
                     var name = Path.GetFileName(source);
-                    if (move && string.Equals(Path.GetDirectoryName(source), Path.TrimEndingDirectorySeparator(destination), PathComparison))
+                    var mark = run.Results.Count;
+                    var enteredFolder = false;
+                    try
                     {
-                        run.Results.Add(new ItemResult(name, ItemOutcome.Skipped, Message: "Já está nesta pasta."));
-                        continue;
+                        ct.ThrowIfCancellationRequested();
+                        if (move && string.Equals(Path.GetDirectoryName(source), Path.TrimEndingDirectorySeparator(destination), PathComparison))
+                        {
+                            run.Results.Add(new ItemResult(name, ItemOutcome.Skipped, Message: "Já está nesta pasta."));
+                            continue;
+                        }
+                        if (IsLink(source))
+                        {
+                            if (move && SameVolume(source, destination)) await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                            else run.Results.Add(new ItemResult(name, ItemOutcome.Skipped, OperationErrorKind.LinkOrSpecialBlocked, "Link ou junction: não é seguido."));
+                            continue;
+                        }
+                        enteredFolder = Directory.Exists(source);
+                        if (enteredFolder) await TransferDirectoryAsync(source, destination, name, move, run).ConfigureAwait(false);
+                        else await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
                     }
-                    if (IsLink(source))
+                    catch (Exception ex) when (ex is OperationCanceledException or FatalException)
                     {
-                        if (move && SameVolume(source, destination)) await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
-                        else run.Results.Add(new ItemResult(name, ItemOutcome.Skipped, OperationErrorKind.LinkOrSpecialBlocked, "Link ou junction: não é seguido."));
-                        continue;
+                        // Interrompido: o item atual (se não deixou resultado próprio) e os seguintes ficam "não processados".
+                        MarkNotProcessed(sources.Skip(enteredFolder ? i + 1 : i), destination, null, run);
+                        throw;
                     }
-                    if (Directory.Exists(source)) await TransferDirectoryAsync(source, destination, name, move, run).ConfigureAwait(false);
-                    else await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                    finally
+                    {
+                        run.Tag(mark, source, destination);
+                    }
                 }
+                if (move && !run.Cancelled && request.LeftoverSourceFolders is { } leftovers)
+                    foreach (var folder in leftovers) RemoveEmptyTree(Path.GetFullPath(folder));
             }
         }
         catch (OperationCanceledException)
@@ -105,6 +133,7 @@ public sealed partial class FileOperationService : IFileOperationService
     private static async Task TransferFileAsync(string source, string destDir, string name, bool move, Run run)
     {
         var final = Path.Join(destDir, name);
+        var mark = run.Results.Count;
         try
         {
             if (move && SameVolume(source, destDir))
@@ -167,6 +196,10 @@ public sealed partial class FileOperationService : IFileOperationService
             if (kind is OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable) throw new FatalException(kind, message);
             run.Results.Add(new ItemResult(name, ItemOutcome.Failed, kind, message));
             run.Report(name, 0, fileDone: true);
+        }
+        finally
+        {
+            run.Tag(mark, source, destDir);
         }
     }
 
@@ -252,6 +285,7 @@ public sealed partial class FileOperationService : IFileOperationService
     {
         var label = relative is null ? name + "/" : relative + "/";
         var target = Path.Join(destDir, name);
+        var mark = run.Results.Count;
         try
         {
             if (move && SameVolume(source, destDir) && !Exists(target))
@@ -295,6 +329,7 @@ public sealed partial class FileOperationService : IFileOperationService
                         break; // mesclar: conflitos de arquivos dentro dela continuam perguntando
                     default:
                         run.Cancelled = true;
+                        run.Results.Add(new ItemResult(label, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; nada foi alterado."));
                         return;
                 }
             }
@@ -304,20 +339,38 @@ public sealed partial class FileOperationService : IFileOperationService
             }
             Directory.SetLastWriteTimeUtc(target, Directory.GetLastWriteTimeUtc(source));
 
-            foreach (var child in new DirectoryInfo(source).EnumerateFileSystemInfos().ToList())
+            var children = new DirectoryInfo(source).EnumerateFileSystemInfos().ToList();
+            var prefix = relative is null ? name : relative;
+            for (var i = 0; i < children.Count; i++)
             {
-                if (run.Cancelled) return;
-                run.Ct.ThrowIfCancellationRequested();
-                var childLabel = (relative is null ? name : relative) + "/" + child.Name;
-                if (IsLink(child.FullName))
+                if (run.Cancelled)
                 {
-                    run.Results.Add(new ItemResult(childLabel, ItemOutcome.Skipped, OperationErrorKind.LinkOrSpecialBlocked, "Link ou junction: não é seguido."));
-                    continue;
+                    MarkNotProcessed(children.Skip(i).Select(c => c.FullName), target, prefix, run);
+                    return;
                 }
-                if ((child.Attributes & FileAttributes.Directory) != 0)
-                    await TransferDirectoryAsync(child.FullName, target, child.Name, move, run, childLabel).ConfigureAwait(false);
-                else
-                    await TransferFileAsync(child.FullName, target, child.Name, move, run).ConfigureAwait(false);
+                var child = children[i];
+                var childLabel = prefix + "/" + child.Name;
+                var isFolder = false;
+                try
+                {
+                    run.Ct.ThrowIfCancellationRequested();
+                    if (IsLink(child.FullName))
+                    {
+                        run.Results.Add(new ItemResult(childLabel, ItemOutcome.Skipped, OperationErrorKind.LinkOrSpecialBlocked, "Link ou junction: não é seguido.")
+                            { SourcePath = child.FullName, TargetFolder = target });
+                        continue;
+                    }
+                    isFolder = (child.Attributes & FileAttributes.Directory) != 0;
+                    if (isFolder)
+                        await TransferDirectoryAsync(child.FullName, target, child.Name, move, run, childLabel).ConfigureAwait(false);
+                    else
+                        await TransferFileAsync(child.FullName, target, child.Name, move, run).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is OperationCanceledException or FatalException)
+                {
+                    MarkNotProcessed(children.Skip(isFolder ? i + 1 : i).Select(c => c.FullName), target, prefix, run);
+                    throw;
+                }
             }
 
             if (move && !run.Cancelled)
@@ -340,6 +393,37 @@ public sealed partial class FileOperationService : IFileOperationService
             var (kind, message) = Map(ex);
             if (kind is OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable) throw new FatalException(kind, message);
             run.Results.Add(new ItemResult(label, ItemOutcome.Failed, kind, message));
+        }
+        finally
+        {
+            run.Tag(mark, source, destDir);
+        }
+    }
+
+    /// <summary>Itens que a interrupção (cancelamento ou falha fatal) impediu de começar.</summary>
+    private static void MarkNotProcessed(IEnumerable<string> paths, string? targetFolder, string? relative, Run run)
+    {
+        foreach (var path in paths)
+        {
+            var name = Path.GetFileName(path);
+            var label = (relative is null ? name : relative + "/" + name) + (Directory.Exists(path) && !IsLink(path) ? "/" : string.Empty);
+            run.Results.Add(new ItemResult(label, ItemOutcome.NotProcessed, Message: "Não processado.") { SourcePath = path, TargetFolder = targetFolder });
+        }
+    }
+
+    /// <summary>Remove uma pasta de origem que sobrou de um "mover" só se ela contém apenas pastas vazias (sem links).</summary>
+    private static void RemoveEmptyTree(string folder)
+    {
+        try
+        {
+            if (!Directory.Exists(folder) || IsLink(folder)) return;
+            foreach (var sub in Directory.EnumerateDirectories(folder).ToList())
+                if (!IsLink(sub)) RemoveEmptyTree(sub);
+            if (!Directory.EnumerateFileSystemEntries(folder).Any()) Directory.Delete(folder);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Continua na origem; o usuário pode removê-la depois.
         }
     }
 
@@ -623,6 +707,13 @@ public sealed partial class FileOperationService : IFileOperationService
         public long BytesTotal { get; set; }
         public int FilesDone { get; set; }
         private long _bytes;
+
+        /// <summary>Associa à origem e à pasta de destino os resultados adicionados desde <paramref name="from"/> sem origem própria.</summary>
+        public void Tag(int from, string source, string targetFolder)
+        {
+            for (var i = from; i < Results.Count; i++)
+                if (Results[i].SourcePath is null) Results[i] = Results[i] with { SourcePath = source, TargetFolder = targetFolder };
+        }
 
         public void Report(string? current, long bytes, bool fileDone)
         {
