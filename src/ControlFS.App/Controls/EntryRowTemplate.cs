@@ -85,28 +85,44 @@ public static class EntryRowTemplate
             "</Grid>");
     }
 
-    /// <summary>Medidas do bloco da grade (largura, altura e ícone), já na escala da faixa de layout.</summary>
-    public static (double Width, double Height, double Icon) TileSize(ListDensity density) => density == ListDensity.Compact
-        ? (Theme.Scaled(150), Theme.Scaled(150), 48)
-        : (Theme.Scaled(200), Theme.Scaled(196), 64);
+    /// <summary>
+    /// Medidas do cartão da grade: largura mínima (define as colunas), altura e ícone, na escala da faixa de layout.
+    /// Confortável: 3 colunas em 1080p, 2 no portátil, 1 em janela estreita, 4+ numa TV grande; compacta: cartões menores.
+    /// </summary>
+    public static (double MinWidth, double Height, double Icon) TileSize(ListDensity density)
+    {
+        var large = Theme.Layout.Tier == Core.Layout.LayoutTier.Large ? 0.9 : 1;
+        return density == ListDensity.Compact
+            ? (Theme.Scaled(360) * large, Theme.Scaled(92), 44)
+            : (Theme.Scaled(480) * large, Theme.Scaled(124), 64);
+    }
+
+    /// <summary>Espaço entre cartões (metade de cada lado do cartão).</summary>
+    public static double TileGap => Theme.Space(20);
 
     /// <summary>
-    /// Bloco da grade: ícone grande, nome em até duas linhas, tipo e tamanho, e a mesma linha de estados da lista
-    /// (marcado, recortado, com senha). Mesmos nomes de elementos da linha: <see cref="Fill"/> preenche os dois.
+    /// Cartão da grade (redesenho, fase B2), no desenho dos cartões do início: [ícone grande] nome / tipo e tamanho
+    /// ("Pasta", "Arquivo ZIP · 12 MB") / estados (marcado, recortado, com senha) ou a pasta do resultado da busca, e a
+    /// seta nas pastas. Mesmos nomes de elementos da linha: <see cref="Fill"/> preenche os dois.
     /// </summary>
     private static string TileXaml(ListDensity density)
     {
         var compact = density == ListDensity.Compact;
         var (_, _, iconSize) = TileSize(density);
+        var half = N(TileGap / 2);
         return Frame(
-            $"<StackPanel x:Name=\"Body\" Padding=\"{S(10)},{S(10)},{S(10)},{S(6)}\" Spacing=\"{S(4)}\" HorizontalAlignment=\"Stretch\">" +
-            IconCell(iconSize, iconSize * 0.75).Replace("VerticalAlignment=\"Center\">", "HorizontalAlignment=\"Center\">", StringComparison.Ordinal) +
-            $"<TextBlock x:Name=\"Title\" FontSize=\"{F(compact ? 14 : 16)}\" TextAlignment=\"Center\" TextWrapping=\"WrapWholeWords\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"2\"/>" +
-            $"<TextBlock x:Name=\"TileDetail\" FontSize=\"{F(compact ? 12 : 13)}\" TextAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
-            $"<StackPanel Orientation=\"Horizontal\" Spacing=\"{S(4)}\" HorizontalAlignment=\"Center\">" +
+            $"<Grid x:Name=\"Body\" Padding=\"{S(compact ? 16 : 24)},{S(8)},{S(compact ? 14 : 20)},{S(8)}\" ColumnSpacing=\"{S(compact ? 16 : 24)}\">" +
+            $"<Grid.ColumnDefinitions><ColumnDefinition Width=\"Auto\"/><ColumnDefinition Width=\"*\"/><ColumnDefinition Width=\"Auto\"/></Grid.ColumnDefinitions>" +
+            IconCell(iconSize, iconSize * 0.7) +
+            $"<StackPanel Grid.Column=\"1\" VerticalAlignment=\"Center\" Spacing=\"{S(3)}\">" +
+            $"<TextBlock x:Name=\"Title\" FontSize=\"{F(compact ? 17 : 21)}\" TextTrimming=\"CharacterEllipsis\" TextWrapping=\"NoWrap\" MaxLines=\"1\"/>" +
+            $"<TextBlock x:Name=\"TileDetail\" FontSize=\"{F(compact ? 14 : 17)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+            $"<StackPanel x:Name=\"TileStates\" Orientation=\"Horizontal\" Spacing=\"{S(6)}\">" +
             $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(compact ? 13 : 15)}\" VerticalAlignment=\"Center\"/>" +
-            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(compact ? 12 : 13)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\"/>" +
-            "</StackPanel></StackPanel>", "tile");
+            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(compact ? 13 : 16)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\"/>" +
+            "</StackPanel></StackPanel>" +
+            $"<TextBlock x:Name=\"Chevron\" Grid.Column=\"2\" {IconFont} Text=\"&#xE76C;\" FontSize=\"{F(compact ? 18 : 22)}\" VerticalAlignment=\"Center\"/>" +
+            "</Grid>", "tile").Replace("<Border Tag=\"glow\"", $"<Border Tag=\"glow\" Margin=\"{half}\"", StringComparison.Ordinal);
     }
 
     /// <summary>Modelo do bloco da grade na densidade pedida (recriar quando a faixa de layout mudar).</summary>
@@ -148,11 +164,12 @@ public static class EntryRowTemplate
         if (root.FindName("TileDetail") is TextBlock tileDetail)
         {
             var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
-            tileDetail.Text = entry.IsBlocked ? "Bloqueado"
+            tileDetail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
                 : place ? entry.Detail ?? TypeName(entry)
                 : entry.Size is long bytes && !entry.IsContainer ? $"{TypeName(entry)} · {Format(bytes)}" : TypeName(entry);
             tileDetail.Foreground = muted;
         }
+        if (root.FindName("Chevron") is TextBlock chevron) chevron.Visibility = entry.IsContainer && !entry.IsBlocked ? Visibility.Visible : Visibility.Collapsed;
         if (root.FindName("TypeColumn") is TextBlock type)
         {
             var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
@@ -178,7 +195,11 @@ public static class EntryRowTemplate
         var stateText = (TextBlock)root.FindName("StateText");
         stateGlyph.Text = string.Join(" ", glyphs);
         stateText.Text = string.Join(" · ", states);
+        // Cartão da grade: sem estado, a terceira linha diz onde o resultado da busca está (ou onde estava, na Lixeira).
+        if (states.Count == 0 && entry.FoundIn is { } foundIn && root.FindName("TileStates") is not null) stateText.Text = "em " + foundIn;
         stateGlyph.Foreground = stateText.Foreground = selected ? Theme.Selected : Theme.TextMuted;
+        if (states.Count == 0) stateText.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
+        else stateText.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
         ((Border)root.FindName("MarkBar")).Background = selected ? Theme.Selected : Theme.Transparent;
         // Recortado: conteúdo esmaecido (e indicado em texto e símbolo); o anel de foco e a faixa de marcado continuam nítidos.
         ((UIElement)root.FindName("Body")).Opacity = cut ? 0.55 : 1.0;
@@ -219,9 +240,16 @@ public static class EntryRowTemplate
     public static void SetFocused(SelectorItem container, bool focused)
     {
         if (container.ContentTemplateRoot is not FrameworkElement root || root.FindName("Ring") is not Border ring) return;
+        if (Equals(ring.Tag, "tile"))
+        {
+            // Cartão: mesmo foco dos cartões do início (borda ciano, fundo azul, halo, leve aumento) e seta em destaque.
+            if (ring.Parent is Border { ScaleTransition: null } glow) glow.ScaleTransition = new Vector3Transition { Duration = Theme.MotionFocus };
+            Theme.ApplyCardFocus(ring, focused);
+            if (ring.FindName("Chevron") is TextBlock chevron) chevron.Foreground = focused ? Theme.Accent : Theme.TextMuted;
+            return;
+        }
         Theme.ApplyFocus(ring, focused);
-        // Bloco da grade: altura fixa, o nome fica sempre em até duas linhas (o Narrador lê o nome inteiro).
-        if (ring.FindName("Title") is TextBlock title && !Equals(ring.Tag, "tile"))
+        if (ring.FindName("Title") is TextBlock title)
         {
             title.TextWrapping = focused ? TextWrapping.WrapWholeWords : TextWrapping.NoWrap;
             title.MaxLines = focused ? 3 : 1;

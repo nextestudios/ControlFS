@@ -136,6 +136,7 @@ public static class Theme
         if (card.Parent is Microsoft.UI.Xaml.Controls.Border { Tag: GlowTag } glow)
         {
             glow.BorderBrush = focused ? FocusGlow : Transparent;
+            glow.CenterPoint = new System.Numerics.Vector3((float)(glow.ActualWidth / 2), (float)(glow.ActualHeight / 2), 0);
             glow.Scale = focused ? new System.Numerics.Vector3(CardFocusScale, CardFocusScale, 1) : System.Numerics.Vector3.One;
         }
     }

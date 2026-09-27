@@ -251,6 +251,7 @@ public sealed class MainWindow : Window
             if (args.Item is not FileEntry entry) return;
             args.ItemContainer.HorizontalContentAlignment = HorizontalAlignment.Stretch; // o anel ocupa o bloco/linha inteiro
             args.ItemContainer.VerticalContentAlignment = VerticalAlignment.Stretch;
+            if (view == _grid) args.ItemContainer.Margin = args.ItemContainer.Padding = new Thickness(0); // o cartão desenha o próprio espaço
             EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), icons, _specialFolders);
         };
         view.ItemClick += (_, e) =>
@@ -285,9 +286,13 @@ public sealed class MainWindow : Window
     private void UpdateGridMetrics()
     {
         if (_home.Root.Visibility == Visibility.Visible) return; // cartões publicam as próprias colunas
-        var (width, height, _) = EntryRowTemplate.TileSize(_density);
+        // Colunas pela largura disponível (não pela resolução): o cartão estica para ocupar a linha inteira.
+        var (minWidth, height, _) = EntryRowTemplate.TileSize(_density);
+        var gap = EntryRowTemplate.TileGap;
         var available = _grid.ActualWidth - _grid.Padding.Left - _grid.Padding.Right;
-        var columns = available > 0 ? Math.Max(1, (int)Math.Floor(available / width)) : 1;
+        var columns = available > 0 ? Math.Max(1, (int)Math.Floor((available + 0.5) / (minWidth + gap))) : 1;
+        var width = available > 0 ? Math.Floor(available / columns) : minWidth + gap;
+        height += gap;
         var rows = _grid.ActualHeight > 0 ? Math.Max(1, (int)Math.Floor(_grid.ActualHeight / height)) : 1;
         if (_grid.ItemsPanelRoot is ItemsWrapGrid panel)
         {
@@ -630,7 +635,10 @@ public sealed class MainWindow : Window
         _home.ApplyLayout();
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
-        _list.Padding = _grid.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
+        _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
+        // Grade: cartões alinhados com os do início (margem lateral igual, meia distância entre cartões de cada lado).
+        var gutter = Theme.SpaceL + Theme.Space(28) - (EntryRowTemplate.TileGap / 2);
+        _grid.Padding = new Thickness(gutter, Theme.Space(16), gutter, Theme.Space(16));
         _list.ItemTemplate = EntryRowTemplate.Create(_density);
         _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
         _footerBar.BorderThickness = new Thickness(0, Theme.Hairline.Top, 0, 0);

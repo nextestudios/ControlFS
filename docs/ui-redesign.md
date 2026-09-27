@@ -13,7 +13,7 @@ mouse-only or lose its test.** A later phase that moves a feature updates its "W
 | A1 | This inventory, design tokens, footer (prompt colors, order, Lista/Grade), R3 → ChangeView | done |
 | A2 | Shared header (logo on every screen, tabs next to it) and top navigation bar (breadcrumb + quick access) | done |
 | B1 | Grid Home cards ("Pastas principais" with real counts/sizes, "Unidades e dispositivos" with usage bars, Favoritos, Outros locais), This PC view | done |
-| B2 | Grid tiles restyled as cards in folders, search, archives, Recycle Bin and This PC; responsive columns | planned |
+| B2 | Grid tiles restyled as cards (icon · name · type/size · states or "em <pasta>" · chevron) in folders, search, archives and Recycle Bin; columns from the available width | done |
 | C | List mode: column header, friendly dates, details panel | planned |
 
 Legend for the matrix: **Where** is the place in the new shell (after the phase in brackets). **Test** names the automated
@@ -133,7 +133,7 @@ hardware, visual or timing checks that CI can't prove.
 | Search (on-screen keyboard, streaming, partial/complete, skipped folders, cancel keeps partial) | results in the current mode | Select/View, Ctrl+F | `SearchJourneyTests` (2), `SearchIntegrationTests` (3); Manual "Busca (#46)" |
 | Search filters (type/size/date), subfolders toggle | North on results | — | `SearchFilterJourneyTests` |
 | OneDrive files-on-demand folders searched without downloading | — | — | `SearchIntegrationTests::Reparse_tag_…`; Manual "OneDrive sob demanda (#126)" |
-| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
+| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
 | Density comfortable/compact, persisted | Menu → Densidade da lista | — | `DensityJourneyTests` |
 | Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem (C: column header) | Start | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity` |
 | Hidden items show/hide (persisted) | Menu → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
@@ -233,6 +233,8 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 - B1: the Home grid is `HomeView` (non-virtualized card sections), not the `GridView`; the folder `GridView` keeps
   `EntryRowTemplate` tiles until B2. Card texts come from `AppController.DescribePlace` (also read by Narrator);
   numbers from `EntryText` (pt-BR). Folder stats: `AppController.FolderStatsFor(path)`; drives: `FileEntry.Volume`.
+- B2: folder/search/archive/Recycle Bin grid cards are still the virtualized `GridView` with `EntryRowTemplate.TileXaml`
+  (uniform size); `UpdateGridMetrics` picks columns from `TileSize(density).MinWidth` and stretches cards to fill the row.
 - The details panel (C) can reuse `FolderStatsFor` for known folders and `EntryText.DriveUsage` for drives.
 
 - `AppController.IsGrid`, `SetGridLayout(columns, rows)` and `GridNavigation` already give 2D focus with the same columns
