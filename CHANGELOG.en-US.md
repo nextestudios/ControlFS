@@ -3,9 +3,23 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
-### License
-- Changed the project license from MIT to GNU AGPL v3.0 only (`AGPL-3.0-only`). Releases up to and including 0.2.0-alpha.1 remain available under MIT; later releases are distributed under AGPL-3.0-only. See `docs/LICENSING.md`.
 
+## [0.3.0-alpha.1]
+### What's new
+- **Rename** files and folders with the on-screen keyboard: the cursor starts before the extension, changing the extension asks first, and invalid or duplicate names are refused without touching the disk. (#103)
+- **Copy, cut and paste** with ControlFS's own clipboard, plus **Copy to… / Move to…** with the in-app folder picker. Cut items are dimmed until pasted. (#101, #102)
+- **Move** on the same drive is instant; across drives, ControlFS copies first and removes each original only after its copy succeeded. (#101)
+- **Delete to the Windows Recycle Bin**, with a separate, always-confirmed "Delete permanently". Where there is no Recycle Bin the app says the delete is permanent; it never deletes permanently in silence. (#104)
+- **Conflicts in every operation**: skip, keep both, replace (with confirmation) or, for folders, merge; "apply to the rest" only lasts for the current operation. (#101)
+- Per-item results for every operation in the operations center. (#101)
+- Official ControlFS icon and logo in the app, taskbar, shortcuts, installer and README. (#100)
+
+### License
+- Changed the project license from MIT to GNU AGPL v3.0 only (`AGPL-3.0-only`). Releases up to and including 0.2.0-alpha.1 remain available under MIT; this release and later ones are AGPL-3.0-only. See `docs/LICENSING.md`. (#9)
+
+### Updating
+- From 0.2.0-alpha.1: the installed app shows the notice; choose **Install and restart**. Your settings are kept.
+- From 0.1.0-alpha.1 to alpha.4 (which didn't open): download the installer below once.
 
 ## [0.2.0-alpha.1]
 ### What's new

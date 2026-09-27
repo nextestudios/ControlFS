@@ -3,9 +3,23 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
-### Licença
-- A licença do projeto mudou de MIT para GNU AGPL v3.0 only (`AGPL-3.0-only`). Versões até 0.2.0-alpha.1 continuam sob MIT; as seguintes são distribuídas sob AGPL-3.0-only. Detalhes em `docs/LICENSING.md`.
 
+## [0.3.0-alpha.1]
+### Novidades
+- **Renomear** arquivos e pastas pelo teclado virtual: o cursor começa antes da extensão, mudar a extensão pede confirmação e nomes inválidos ou repetidos são recusados sem tocar no disco. (#103)
+- **Copiar, recortar e colar** com uma área de transferência própria, e **Copiar para… / Mover para…** com o seletor de pastas do app. Itens recortados ficam esmaecidos até serem colados. (#101, #102)
+- **Mover** no mesmo disco é instantâneo; entre discos, o ControlFS copia e só remove cada original depois que a cópia deu certo. (#101)
+- **Excluir para a Lixeira do Windows**, com "Excluir permanentemente" separado e sempre confirmado. Em locais sem Lixeira o app avisa que a exclusão será permanente; nunca exclui de vez em silêncio. (#104)
+- **Conflitos em todas as operações**: pular, manter ambos, substituir (com confirmação) ou, entre pastas, mesclar; "aplicar aos demais" vale só para a operação atual. (#101)
+- Resultado por item de cada operação, na central de operações. (#101)
+- Ícone e logo oficiais do ControlFS no app, na barra de tarefas, nos atalhos, no instalador e no README. (#100)
+
+### Licença
+- A licença do projeto mudou de MIT para GNU AGPL v3.0 only (`AGPL-3.0-only`). Versões até 0.2.0-alpha.1 continuam sob MIT; a partir desta, AGPL-3.0-only. Detalhes em `docs/LICENSING.md`. (#9)
+
+### Atualizando
+- Da 0.2.0-alpha.1: o app instalado mostra o aviso; clique em **Instalar e reiniciar**. As configurações são mantidas.
+- Das versões 0.1.0-alpha.1 a alpha.4 (que não abriam): baixe o instalador abaixo uma vez.
 
 ## [0.2.0-alpha.1]
 ### Novidades
