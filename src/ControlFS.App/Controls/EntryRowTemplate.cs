@@ -28,7 +28,7 @@ public static class EntryRowTemplate
 
     public static DataTemplate Create() => (DataTemplate)XamlReader.Load(Xaml);
 
-    public static void Fill(SelectorItem container, FileEntry entry, bool selected)
+    public static void Fill(SelectorItem container, FileEntry entry, bool selected, bool cut = false)
     {
         if (container.ContentTemplateRoot is not FrameworkElement root) return;
         var icon = (TextBlock)root.FindName("Icon");
@@ -47,9 +47,10 @@ public static class EntryRowTemplate
         title.Foreground = entry.IsBlocked ? Theme.Danger : entry.IsHidden ? Theme.TextMuted : Theme.Text;
         detail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason : Describe(entry);
         detail.Foreground = entry.IsBlocked ? Theme.Danger : Theme.TextMuted;
-        mark.Text = selected ? "✔ marcado" : entry.IsEncrypted ? "🔒" : string.Empty;
+        mark.Text = selected ? "✔ marcado" : cut ? "✂ recortado" : entry.IsEncrypted ? "🔒" : string.Empty;
+        root.Opacity = cut ? 0.5 : 1.0; // recortado: esmaecido (e indicado em texto, não só visualmente)
         mark.Foreground = selected ? Theme.Selected : Theme.TextMuted;
-        var state = selected ? ", marcado" : string.Empty;
+        var state = (selected ? ", marcado" : string.Empty) + (cut ? ", recortado" : string.Empty);
         AutomationProperties.SetName(container, entry.IsBlocked ? $"{entry.Name}, bloqueado: {entry.BlockedReason}" : $"{entry.Name}{state}");
     }
 
