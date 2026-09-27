@@ -3,6 +3,12 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **List in the new look (redesign, phase C)**: the list sits in a card with a column header (mark box · Name · Type · Size · Modified) and the current sort arrow on the sorted column (↑ ascending, ↓ descending), the same as Menu → Sort by/Order; with a mouse, clicking a title sorts by it and clicking again reverses it, and the header box marks all or clears. Tall rows for TV and controller, with the mark box (focus never marks), Windows icon, name, type, size, a friendly date ("Hoje, 14:32" today, "Ontem, 18:05" yesterday, otherwise "25/09/2026, 20:11") and a chevron on folders; the focused row has a blue fill, cyan border and a highlighted chevron. On the home screen, Windows folders show as "Pasta do sistema" (system folder) with their real size (the same sum as the grid cards, with "Calculando…"). Compact density stays, with short rows in the same columns; when space runs out, the type column goes first.
+- Slightly taller bottom bar and top bar at 1080p and 4K, as in the reference (720p/800p stay compact).
+
+### Fixes
+- Opening another folder (or an archive) without a chosen item now focuses the first item, instead of keeping the previous list's position or jumping to an item with the same name. Back and up still focus the item you came from.
 
 ## [0.6.0-alpha.1]
 ### Improvements

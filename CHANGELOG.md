@@ -3,6 +3,12 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Lista no novo visual (redesenho, fase C)**: a lista fica num cartão com cabeçalho de colunas (caixa de marcação · Nome · Tipo · Tamanho · Modificado em) e a seta da ordenação atual na coluna ordenada (↑ crescente, ↓ decrescente), a mesma do Menu → Ordenar por/Ordem; com mouse, clicar num título ordena por ele e clicar de novo inverte, e a caixa do cabeçalho marca todos ou limpa. Linhas altas para TV e controle, com a caixa de marcação (o foco nunca marca), ícone do Windows, nome, tipo, tamanho, data amigável ("Hoje, 14:32", "Ontem, 18:05", senão "25/09/2026, 20:11") e a seta nas pastas; a linha focada tem fundo azul, borda ciano e a seta em destaque. No início, as pastas do Windows aparecem como "Pasta do sistema" com o tamanho real (a mesma soma dos cartões da grade, com "Calculando…"). A densidade compacta continua, com linhas baixas nas mesmas colunas; sem espaço, a coluna de tipo sai primeiro.
+- Rodapé e barra superior um pouco mais altos em 1080p e 4K, como na referência (em 720p/800p continuam enxutos).
+
+### Correções
+- Abrir outra pasta (ou um compactado) sem um item escolhido agora foca o primeiro item, em vez de manter a posição da lista anterior ou pular para um item com o mesmo nome. Voltar e subir continuam focando o item de onde se veio.
 
 ## [0.6.0-alpha.1]
 ### Melhorias

@@ -30,6 +30,8 @@ internal sealed class ListHeaderView
     private readonly Grid _grid = new();
     private readonly Dictionary<SortField, (TextBlock Label, TextBlock Arrow, StackPanel Cell)> _titles = [];
     private TextBlock? _check;
+    private TextBlock? _checkInner;
+    private Grid? _checkCell;
     private string _shownKey = string.Empty;
 
     public ListHeaderView(AppController app)
@@ -58,12 +60,13 @@ internal sealed class ListHeaderView
                 ? $"{label.Text}, ordenado em ordem {(header.Sort!.Descending ? "decrescente" : "crescente")}"
                 : header.Sort is null ? label.Text : $"Ordenar por {label.Text.ToLowerInvariant()}");
         }
-        if (_check is not null)
+        if (_check is not null && _checkInner is not null && _checkCell is not null)
         {
-            _check.Visibility = header.CanMark ? Visibility.Visible : Visibility.Collapsed;
-            _check.Text = header.Marks switch { MarkAllState.All => Checked, MarkAllState.Some => Partial, _ => Unchecked };
-            _check.Foreground = header.Marks == MarkAllState.None ? Theme.TextMuted : Theme.Selected;
-            AutomationProperties.SetName(_check, header.Marks == MarkAllState.All ? "Limpar marcação" : "Marcar todos");
+            // Caixa sempre desenhada; por cima, o visto (todos) ou o quadrado de "alguns" (nunca só a cor).
+            _checkCell.Visibility = header.CanMark ? Visibility.Visible : Visibility.Collapsed;
+            _checkInner.Text = header.Marks switch { MarkAllState.All => Checked, MarkAllState.Some => Partial, _ => string.Empty };
+            _check.Foreground = _checkInner.Foreground = header.Marks == MarkAllState.None ? Theme.TextMuted : Theme.Selected;
+            AutomationProperties.SetName(_checkCell, header.Marks == MarkAllState.All ? "Limpar marcação" : "Marcar todos");
         }
     }
 
@@ -72,7 +75,8 @@ internal sealed class ListHeaderView
         _grid.Children.Clear();
         _grid.ColumnDefinitions.Clear();
         _titles.Clear();
-        _check = null;
+        _check = _checkInner = null;
+        _checkCell = null;
         var (mark, icon, name, type, size, date, chevron, _) = EntryRowTemplate.ColumnLayout(c);
         var widths = new double?[chevron + 1];
         if (mark >= 0) widths[mark] = c.MarkWidth;
@@ -94,16 +98,22 @@ internal sealed class ListHeaderView
         var fontSize = Theme.Font(c.Compact ? 15 : 19);
         if (mark >= 0)
         {
-            _check = new TextBlock
+            TextBlock Glyph(string text) => new()
             {
+                Text = text,
                 FontFamily = new FontFamily(IconFont),
                 FontSize = Theme.Font(c.Compact ? 18 : 26),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
-            _check.Tapped += (_, _) => _app.PointerToggleMarkAll();
-            Grid.SetColumn(_check, mark);
-            _grid.Children.Add(_check);
+            _check = Glyph(Unchecked);
+            _checkInner = Glyph(string.Empty);
+            _checkCell = new Grid { Background = Theme.Transparent, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+            _checkCell.Children.Add(_check);
+            _checkCell.Children.Add(_checkInner);
+            _checkCell.Tapped += (_, _) => _app.PointerToggleMarkAll();
+            Grid.SetColumn(_checkCell, mark);
+            _grid.Children.Add(_checkCell);
         }
         Title(SortField.Name, "Nome", name, fontSize);
         if (type >= 0) Title(SortField.Type, "Tipo", type, fontSize);

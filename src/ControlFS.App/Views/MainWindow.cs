@@ -711,7 +711,7 @@ public sealed class MainWindow : Window
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
         // Lista (fase C): cartão escuro com cantos arredondados, recuado como na referência; linhas quase até a borda.
-        _listCard.Background = Theme.Surface;
+        _listCard.Background = Theme.SurfaceRaised;
         _listCard.CornerRadius = new CornerRadius(Theme.Scaled(14));
         _listCard.Margin = new Thickness(Theme.SpaceL, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
         _listCard.Padding = new Thickness(0, Theme.Space(6), 0, Theme.Space(10));

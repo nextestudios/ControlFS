@@ -32,6 +32,9 @@ perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
 ## Regras implementadas e testadas (unitário)
 
 - Confirmar/voltar/menus disparam uma vez por transição; **nunca repetem** (`InputRouterTests`).
+- Foco ao trocar de local (`FileListState.SetItems(..., newLocation)`): abrir outra pasta ou compactado sem um item
+  pedido foca o **primeiro** item; Voltar (histórico), subir (Esquerda/LB) e Atualizar focam o item guardado
+  (`ListModeJourneyTests::Opening_another_location_…`).
 - Navegação repete após 380 ms, acelerando de 130 ms até 45 ms.
 - Ao abrir/fechar modal, botões mantidos ficam travados até serem soltos — o botão que abriu o diálogo não o aceita.
 - Somente um dispositivo comanda a UI; o primeiro a pressionar assume. Outro controle assume com uma nova pressão
