@@ -570,3 +570,7 @@ Não validado em hardware:
 ## Renomear em lote (#71) — não validado em hardware
 - [ ] Com controle real: marcar ~20 fotos, Norte → Renomear em lote…; trocar o modo com Sul, digitar o nome base no teclado virtual e aplicar com Start. A prévia (12 linhas + "e mais N") fica legível a 3 m e em 1280×720, sem cortar a opção focada.
 - [ ] Menu → Desfazer volta todos os nomes; a Central de operações mostra o resultado por item.
+
+## Uso do disco (#72) — não validado em hardware
+- [ ] Unidade real grande (SSD de portátil): Norte na unidade em Meu computador → Analisar uso do disco; o total parcial anda, a tela não trava e Leste cancela em menos de 1 s. O total bate com o "Tamanho" das Propriedades do Explorador (pasta com junções: o Explorador também não segue).
+- [ ] Com controle real: descer/subir níveis com Sul/Leste; rótulos "nome — tamanho (%)" legíveis a 3 m e em 1280×720.

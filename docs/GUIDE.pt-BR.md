@@ -100,6 +100,8 @@ Menu → Configurações → **Exibição** (ou **R3**, apertando o analógico d
 
 **Tamanho da pasta:** Norte numa pasta ou unidade → **Propriedades** → **Calcular tamanho** soma todos os arquivos dentro dela (inclusive os ocultos, como o "Tamanho" do Explorador), mostrando o total parcial enquanto calcula. **Leste** cancela na hora e mantém o valor parcial. Junções e links nunca são seguidos (aparecem contados à parte) e pastas que não puderam ser lidas são listadas em vez de puladas em silêncio.
 
+**Uso do disco:** Norte numa pasta ou unidade (ou num espaço vazio, para a pasta atual) → **Analisar uso do disco** lê a árvore inteira uma vez, em segundo plano, mostrando o total parcial; **Leste** cancela na hora. O resultado lista as subpastas e depois os maiores arquivos, cada grupo do maior para o menor, com o tamanho e a fatia da pasta (ex.: "Jogos — 12 GB (45%)"). Sul numa pasta desce nela sem ler o disco de novo, Leste sobe um nível, Sul num arquivo abre a pasta dele com o foco no arquivo, e **Abrir esta pasta** abre o nível atual. Mesmas regras do tamanho da pasta: junções e links nunca são seguidos e pastas sem acesso são listadas, então os totais batem com o "Tamanho" do Explorador.
+
 ## Renomear em lote
 
 Marque os itens (X/Oeste, ou Norte → Marcar todos) e escolha Norte → **Renomear em lote…**. O diálogo mostra a prévia ao vivo (nome atual → nome novo, problemas primeiro) e as opções do **Modo** escolhido (Sul em "Modo" troca):

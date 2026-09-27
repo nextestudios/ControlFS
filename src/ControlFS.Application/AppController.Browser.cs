@@ -391,6 +391,8 @@ public sealed partial class AppController
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco.", Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
         items.AddRange(SelectionItems(pane));
+        if (entry is { Kind: EntryKind.Directory or EntryKind.KnownFolder or EntryKind.Drive, FullPath: { } usagePath }) items.Add(DiskUsageItem(usagePath, "Informações"));
+        else if (entry is null && pane.Location is PhysicalLocation usageHere) items.Add(DiskUsageItem(usageHere.FullPath, "Esta pasta"));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items) { Icon = entry is null ? ActionIcon.Folder : EntryIcon(entry), Subtitle = entry is null ? pane.Location?.DisplayPath : TypeNameOf(entry) });
     }
@@ -406,6 +408,7 @@ public sealed partial class AppController
             items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(path), NewTabUnavailable, Icon: ActionIcon.NewTab, Placement: MenuPlacement.Quick, ShortLabel: "Nova aba"));
             items.Add(FavoriteToggleItem(path));
             items.Add(new MenuItem("Propriedades", () => ShowProperties(drive), Icon: ActionIcon.Properties, Placement: MenuPlacement.Quick));
+            items.Add(DiskUsageItem(path));
         }
         items.Add(new MenuItem("Atualizar", () => Refresh(pane), Icon: ActionIcon.Refresh, Placement: MenuPlacement.Quick));
         PushModal(new MenuModal(pane.List.Focused?.Name ?? "Meu computador", items) { Icon = pane.List.Focused is null ? ActionIcon.ThisPc : ActionIcon.Drive });
