@@ -191,6 +191,7 @@ by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTes
 | Recycle Bin: Restaurar, Excluir permanentemente…, Propriedades, Marcar todos, Atualizar | Y Ações in Lixeira | `RecycleBinJourneyTests` |
 | Search: filters, Outras ações (Mostrar na pasta, Nova busca, Subpastas, Pastas puladas, Cancelar busca, Propriedades) | Y Filtros | `SearchFilterJourneyTests`, `SearchJourneyTests` |
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
+| Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
 | Tab strip: Nova aba, Fechar aba, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |
 

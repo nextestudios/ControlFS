@@ -117,6 +117,92 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
         return new FolderSize(bytes, files, folders, inaccessible, links);
     }
 
+    public DiskUsage AnalyzeDiskUsage(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken)
+    {
+        var root = Path.GetFullPath(path);
+        if (!Directory.Exists(root)) throw new FileOperationException(OperationErrorKind.DestinationUnavailable, "A pasta não existe ou não está acessível.");
+        long bytes = 0, files = 0, folders = 0;
+        var links = 0;
+        var inaccessible = new List<string>();
+        var lastReport = Environment.TickCount64;
+        var rootNode = new UsageBuilder(Path.GetFileName(Path.TrimEndingDirectorySeparator(root)) is { Length: > 0 } name ? name : root, root);
+        // Em largura: cada pasta aparece depois da pasta onde está (a ordem inversa soma os filhos antes dos pais).
+        var order = new List<UsageBuilder> { rootNode };
+        var nodes = new Dictionary<string, UsageBuilder>(StringComparer.Ordinal) { [root] = rootNode };
+        foreach (var step in TreeWalker.Walk(root, recurse: true, cancellationToken))
+        {
+            if (step.Info is not { } info)
+            {
+                inaccessible.Add(step.Folder);
+                continue;
+            }
+            var parent = nodes[step.Folder];
+            if (step.IsDirectory && !step.IsTraversed) links++;
+            else if (step.IsDirectory)
+            {
+                folders++;
+                var child = new UsageBuilder(info.Name, info.FullName);
+                parent.Children.Add(child);
+                nodes[info.FullName] = child;
+                order.Add(child);
+            }
+            else
+            {
+                var length = SafeLength(info as FileInfo) ?? 0;
+                files++;
+                bytes += length;
+                parent.Add(new DiskUsageFile(info.Name, info.FullName, length));
+            }
+            if (progress is not null && Environment.TickCount64 - lastReport >= 100)
+            {
+                lastReport = Environment.TickCount64;
+                progress.Report(new FolderSize(bytes, files, folders, [.. inaccessible], links));
+            }
+        }
+        var built = new Dictionary<UsageBuilder, DiskUsageNode>();
+        for (var i = order.Count - 1; i >= 0; i--)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            built[order[i]] = order[i].Build(built);
+        }
+        return new DiskUsage(built[rootNode], inaccessible, links);
+    }
+
+    /// <summary>Pasta em montagem na análise: os arquivos próprios (só os maiores guardados) e as subpastas.</summary>
+    private sealed class UsageBuilder(string name, string fullPath)
+    {
+        private readonly List<DiskUsageFile> _files = [];
+        private long _ownFiles, _ownBytes;
+
+        public List<UsageBuilder> Children { get; } = [];
+
+        public void Add(DiskUsageFile file)
+        {
+            _ownFiles++;
+            _ownBytes += file.Bytes;
+            _files.Add(file);
+            if (_files.Count >= DiskUsageNode.MaxFiles * 4) Trim();
+        }
+
+        private void Trim()
+        {
+            _files.Sort((a, b) => b.Bytes.CompareTo(a.Bytes));
+            if (_files.Count > DiskUsageNode.MaxFiles) _files.RemoveRange(DiskUsageNode.MaxFiles, _files.Count - DiskUsageNode.MaxFiles);
+        }
+
+        public DiskUsageNode Build(Dictionary<UsageBuilder, DiskUsageNode> built)
+        {
+            Trim();
+            var subfolders = Children.Select(c => built[c]).OrderByDescending(c => c.Bytes).ThenBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            var kept = _files.Sum(f => f.Bytes);
+            return new DiskUsageNode(name, fullPath,
+                _ownBytes + subfolders.Sum(s => s.Bytes),
+                _ownFiles + subfolders.Sum(s => s.Files),
+                subfolders.Count + subfolders.Sum(s => s.Folders),
+                subfolders, [.. _files], _ownFiles - _files.Count, _ownBytes - kept);
+        }
+    }
+
     private static bool IsHidden(FileSystemInfo info, FileAttributes attrs) =>
         (attrs & FileAttributes.Hidden) != 0 || (!OperatingSystem.IsWindows() && info.Name.StartsWith('.'));
 

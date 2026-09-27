@@ -102,6 +102,8 @@ Menu → Configurações → **View** (or **R3**, pressing the right stick, or *
 
 **Folder size:** North on a folder or drive → **Properties** → **Calculate size** adds up every file inside it (hidden ones included, like Explorer's "Size"), showing the running total while it works. **East** cancels at once and keeps the partial value. Junctions and links are never followed (they are counted separately), and folders that could not be read are listed instead of silently skipped.
 
+**Disk usage:** North on a folder or drive (or on empty space for the current folder) → **Analisar uso do disco** (analyze disk usage) reads the whole tree once in the background, showing the running total; **East** cancels at once. The result lists the subfolders and then the largest files, each from biggest to smallest, with size and share of the folder (e.g. "Jogos — 12 GB (45%)"). South on a folder drills into it without reading the disk again, East goes back up a level, South on a file opens its folder with the file focused, and **Abrir esta pasta** opens the level you're on. Same rules as folder size: junctions and links are never followed and unreadable folders are listed, so the totals match Explorer's "Size".
+
 ## Batch rename
 
 Mark the items (X/West, or North → Select all), then North → **Batch rename…**. The dialog shows a live preview (current name → new name, problems first) and the options of the chosen **Mode** (South on "Mode" cycles through them):

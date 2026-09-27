@@ -25,6 +25,13 @@ public interface IFileSystemProvider
     /// </summary>
     FolderSize MeasureFolder(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Análise de uso do disco (#72): lê a árvore de <paramref name="path"/> uma vez, com o mesmo percurso de
+    /// <see cref="MeasureFolder"/> (nunca segue junções nem links), e devolve os totais por pasta. Síncrono, cancelável,
+    /// com parciais em <paramref name="progress"/>.
+    /// </summary>
+    DiskUsage AnalyzeDiskUsage(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken);
+
     string? GetParent(string path);
 
     bool DirectoryExists(string path);

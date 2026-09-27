@@ -46,4 +46,29 @@ public sealed class FolderSizeIntegrationTests : IDisposable
         Assert.Equal(1, size.LinksNotFollowed);
         Assert.Empty(size.Inaccessible);
     }
+
+    [Fact]
+    public async Task Disk_usage_totals_match_the_folder_size_and_never_follow_a_junction()
+    {
+        var outside = Directory.CreateDirectory(Path.Join(_root, "outside")).FullName;
+        File.WriteAllBytes(Path.Join(outside, "big.bin"), new byte[50_000]);
+        var tree = Directory.CreateDirectory(Path.Join(_root, "tree")).FullName;
+        var deep = Directory.CreateDirectory(Path.Join(tree, "a", "b")).FullName;
+        File.WriteAllBytes(Path.Join(tree, "root.bin"), new byte[1_000]);
+        File.WriteAllBytes(Path.Join(deep, "deep.bin"), new byte[2_345]);
+        var mklink = Process.Start(new ProcessStartInfo("cmd.exe") { ArgumentList = { "/c", "mklink", "/J", Path.Join(tree, "a", "link"), outside }, UseShellExecute = false, CreateNoWindow = true })!;
+        await mklink.WaitForExitAsync();
+        Assert.Equal(0, mklink.ExitCode);
+
+        var provider = new LocalFileSystemProvider();
+        var usage = provider.AnalyzeDiskUsage(tree, null, CancellationToken.None);
+        var size = provider.MeasureFolder(tree, null, CancellationToken.None);
+
+        Assert.Equal((size.Bytes, size.Files, size.Folders), (usage.Root.Bytes, usage.Root.Files, usage.Root.Folders));
+        Assert.Equal(3_345, usage.Root.Bytes); // o alvo da junção fica de fora
+        Assert.Equal(1, usage.LinksNotFollowed);
+        var a = Assert.Single(usage.Root.Subfolders);
+        Assert.Equal(2_345, a.Bytes);
+        Assert.Equal("b", Assert.Single(a.Subfolders).Name); // a junção não vira uma pasta da análise
+    }
 }
