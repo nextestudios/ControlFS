@@ -89,6 +89,56 @@ public class FormatTests : IDisposable
         Assert.All(HashesUnder(ok.Destination!), h => Assert.Contains(h, OriginalHashes));
     }
 
+    [Fact]
+    public async Task Winzip_aes256_ae2_fixture_needs_the_right_password_and_extracts_identical_files()
+    {
+        // Gerado por ferramenta real (WinZip AES, AE-2, AES-256): CRC 0, então só o conteúdo byte a byte prova a extração.
+        var path = ZipFixtures.FixturePath("zip/Zip.deflate.WinzipAES.zip");
+        var info = await _service.InspectAsync(path, null, ControlFS.Core.Policies.ExtractionLimits.Default, CancellationToken.None);
+        Assert.True(info.HasEncryptedEntries);
+
+        var missing = await Extract(path);
+        Assert.Equal(OperationErrorKind.PasswordRequired, missing.Error);
+        var wrong = await Extract(path, "errada");
+        Assert.Equal(OperationErrorKind.WrongPassword, wrong.Error);
+        Assert.Null(wrong.Destination);
+        var ok = await Extract(path, "test");
+        Assert.True(ok.FinalState == OperationState.Completed, $"{ok.FinalState} {ok.Error} {ok.Message} :: {string.Join(" | ", ok.Items.Where(i => i.Outcome != ItemOutcome.Succeeded).Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
+        var hashes = HashesUnder(ok.Destination!);
+        Assert.Equal(OriginalHashes.Count, hashes.Count);
+        Assert.All(hashes, h => Assert.Contains(h, OriginalHashes));
+    }
+
+    [Theory]
+    [InlineData(1, 128)] // AE-1: CRC guardado e conferido
+    [InlineData(2, 192)] // AE-2: CRC 0, verificação CRC pulada
+    public async Task Generated_winzip_aes_zip_missing_wrong_and_correct_password(int aeVersion, int keyBits)
+    {
+        var path = AesZipFixtures.Create(_tmp.Sub($"aes{keyBits}.zip"), "c3rta", new AesZipFixtures.Options(aeVersion, keyBits),
+            ("segredo.txt", Encoding.UTF8.GetBytes("conteúdo protegido")), ("docs/nota.txt", Encoding.UTF8.GetBytes(new string('n', 5000))));
+
+        Assert.Equal(OperationErrorKind.PasswordRequired, (await Extract(path)).Error);
+        Assert.Equal(OperationErrorKind.WrongPassword, (await Extract(path, "errada")).Error);
+        var ok = await Extract(path, "c3rta");
+        Assert.True(ok.FinalState == OperationState.Completed, $"{ok.FinalState} {ok.Error} {ok.Message} :: {string.Join(" | ", ok.Items.Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
+        Assert.Equal("conteúdo protegido", File.ReadAllText(Path.Join(ok.Destination!, "segredo.txt")));
+        Assert.Equal(new string('n', 5000), File.ReadAllText(Path.Join(ok.Destination!, "docs", "nota.txt")));
+    }
+
+    [Fact]
+    public async Task Tampered_aes_ae1_entry_is_rejected_by_crc_and_not_placed()
+    {
+        var path = AesZipFixtures.Create(_tmp.Sub("adulterado.zip"), "c3rta", new AesZipFixtures.Options(1, 256, Deflate: false, CorruptPayload: true),
+            ("dados.txt", Encoding.UTF8.GetBytes("dados que serão adulterados")));
+
+        var result = await Extract(path, "c3rta");
+
+        Assert.NotEqual(OperationState.Completed, result.FinalState);
+        var item = Assert.Single(result.Items);
+        Assert.Equal(OperationErrorKind.WrongPasswordOrCorrupt, item.Error);
+        Assert.Null(result.Destination);
+    }
+
     private string MakeTar(string path, bool gzip)
     {
         using var file = File.Create(path);

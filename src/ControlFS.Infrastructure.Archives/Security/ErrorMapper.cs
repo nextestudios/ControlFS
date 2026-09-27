@@ -24,6 +24,9 @@ internal static class ErrorMapper
             (OperationErrorKind.PasswordRequired, "O arquivo está protegido por senha."),
         CryptographicException c when c.Message.Contains("did not match", StringComparison.OrdinalIgnoreCase) =>
             (OperationErrorKind.WrongPassword, "Senha incorreta."),
+        // WinZip AES: o verificador de 2 bytes derivado da senha não confere (SharpCompress lança "bad password").
+        InvalidFormatException f when f.Message.Contains("bad password", StringComparison.OrdinalIgnoreCase) =>
+            (OperationErrorKind.WrongPassword, "Senha incorreta."),
         CryptographicException => (OperationErrorKind.WrongPasswordOrCorrupt, "Senha incorreta ou dados corrompidos (o motor não distingue)."),
         MultiVolumeExtractionException or MultipartStreamRequiredException =>
             (OperationErrorKind.MissingVolume, "O arquivo faz parte de um conjunto de volumes; volume ausente ou não suportado."),
