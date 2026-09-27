@@ -13,7 +13,7 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | East | Back / close | Cancel without applying |
 | West | Mark item | Backspace |
 | North | Item actions | Shift |
-| LB / RB | — | Move cursor |
+| LB / RB | Path bar (breadcrumbs) | Move cursor |
 | LT / RT | Page up / down | Cursor to start / end |
 | Start | App menu | Done |
 | Select | (search, not yet) | Symbols |
@@ -39,6 +39,9 @@ Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads.
 5. **Test** the new mapping: the joystick already drives the screen; choose **Save profile**, **Redo a step…** or **Cancel without saving**.
 
 Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips an optional step. With no input for 20 seconds the wizard cancels itself. If the joystick already has a profile, saving asks before replacing it (starting on "Cancel"); cancelling at any point leaves the saved profile untouched. The profile applies again whenever that joystick is connected, including after restarting ControlFS. Menu → Controllers without a profile also exports a profile to a folder and imports one (`.json`, up to 64 KB, validated; anything unexpected is refused).
+## Path bar
+
+The current path is shown as segments at the top. **LB** moves focus from the list to the path bar (on the folder above the current one); **Left/Right** pick a segment and **South** goes there, focusing the folder you came from. **RB**, **Down** or **East** go back to the list. Inside an archive, the archive file is its own segment after a `▸`, so the disk part and the inside of the archive are easy to tell apart. Long paths collapse the middle into `…`, which opens the hidden folders. Keyboard: Ctrl+← / Ctrl+→. The same list is in Menu → **Go to folder above…**.
 
 ## The list
 

@@ -1,0 +1,140 @@
+using ControlFS.Application.State;
+using ControlFS.Core.Actions;
+using ControlFS.Core.Models;
+
+namespace ControlFS.Application;
+
+public sealed partial class AppController
+{
+    /// <summary>Segmentos visíveis da barra de caminho do painel ativo (vazio na tela inicial).</summary>
+    public IReadOnlyList<Breadcrumb> Breadcrumbs => Screen == Screen.Home ? [] : BreadcrumbTrail.Collapse(BuildBreadcrumbs(ActivePane));
+
+    /// <summary>Caminho completo, da raiz até a pasta atual (a última é a atual).</summary>
+    internal List<Breadcrumb> BuildBreadcrumbs(PaneState pane)
+    {
+        var crumbs = new List<Breadcrumb>();
+        switch (pane.Location)
+        {
+            case PhysicalLocation physical:
+                AddPhysicalChain(crumbs, physical.FullPath, childFocusOfLast: null);
+                break;
+            case ArchiveLocation archive:
+                var folder = Path.GetDirectoryName(archive.ArchivePath);
+                if (folder is not null) AddPhysicalChain(crumbs, folder, Path.GetFileName(archive.ArchivePath));
+                var segments = archive.InnerPath.Length == 0 ? [] : archive.InnerPath.Split('/');
+                crumbs.Add(new Breadcrumb(Path.GetFileName(archive.ArchivePath), BreadcrumbKind.Archive, archive with { InnerPath = string.Empty },
+                    segments.Length > 0 ? ArchiveTree.IdPrefix + segments[0] + "/" : null));
+                for (var i = 0; i < segments.Length; i++)
+                {
+                    var inner = string.Join('/', segments.Take(i + 1));
+                    var child = i + 1 < segments.Length ? ArchiveTree.IdPrefix + inner + "/" + segments[i + 1] + "/" : null;
+                    crumbs.Add(new Breadcrumb(segments[i], BreadcrumbKind.ArchiveFolder, archive with { InnerPath = inner }, child));
+                }
+                break;
+        }
+        if (crumbs.Count > 0) crumbs[^1] = crumbs[^1] with { IsCurrent = true };
+        return crumbs;
+    }
+
+    private void AddPhysicalChain(List<Breadcrumb> crumbs, string path, string? childFocusOfLast)
+    {
+        var chain = new List<string>();
+        for (string? current = path; current is not null && chain.Count < 256; current = _fs.GetParent(current)) chain.Add(current);
+        chain.Reverse();
+        for (var i = 0; i < chain.Count; i++)
+        {
+            var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(chain[i]));
+            var label = name.Length > 0 ? name : chain[i];
+            var child = i + 1 < chain.Count ? Path.GetFileName(Path.TrimEndingDirectorySeparator(chain[i + 1])) : childFocusOfLast;
+            crumbs.Add(new Breadcrumb(label, BreadcrumbKind.Folder, new PhysicalLocation(chain[i]), child));
+        }
+    }
+
+    /// <summary>LB/RB alternam entre a lista e a barra de caminho; ao entrar, o foco vai para a pasta de cima.</summary>
+    private bool HandleRegionSwitch(PaneState pane, InputAction action)
+    {
+        if (pane.Region == PaneRegion.List)
+        {
+            if (action != InputAction.PreviousRegion || pane.IsLoading) return false;
+            var crumbs = Breadcrumbs;
+            if (crumbs.Count < 2) return true;
+            pane.Region = PaneRegion.Breadcrumbs;
+            pane.BreadcrumbFocus = crumbs.Count - 2;
+            return true;
+        }
+        HandleBreadcrumbs(pane, action);
+        return true;
+    }
+
+    private void HandleBreadcrumbs(PaneState pane, InputAction action)
+    {
+        var crumbs = Breadcrumbs;
+        if (crumbs.Count == 0 || pane.IsLoading)
+        {
+            pane.Region = PaneRegion.List;
+            return;
+        }
+        pane.BreadcrumbFocus = Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1);
+        switch (action)
+        {
+            case InputAction.NavigateLeft: pane.BreadcrumbFocus = Math.Max(0, pane.BreadcrumbFocus - 1); break;
+            case InputAction.NavigateRight: pane.BreadcrumbFocus = Math.Min(crumbs.Count - 1, pane.BreadcrumbFocus + 1); break;
+            case InputAction.PageUp: pane.BreadcrumbFocus = 0; break;
+            case InputAction.PageDown: pane.BreadcrumbFocus = crumbs.Count - 1; break;
+            case InputAction.Confirm: ActivateBreadcrumb(pane, crumbs[pane.BreadcrumbFocus]); break;
+            case InputAction.NextRegion:
+            case InputAction.PreviousRegion:
+            case InputAction.NavigateDown:
+            case InputAction.Back:
+                pane.Region = PaneRegion.List;
+                break;
+            case InputAction.OpenContextMenu:
+                ShowPathMenu(pane);
+                break;
+            case InputAction.OpenAppMenu:
+                pane.Region = PaneRegion.List;
+                if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
+                else ShowAppMenu();
+                break;
+        }
+    }
+
+    private void ActivateBreadcrumb(PaneState pane, Breadcrumb crumb)
+    {
+        if (crumb.Kind == BreadcrumbKind.Collapsed)
+        {
+            ShowPathMenu(pane, crumb.Hidden);
+            return;
+        }
+        pane.Region = PaneRegion.List;
+        if (crumb.IsCurrent || crumb.Target is null) return;
+        Track(NavigateAsync(pane, crumb.Target, pushHistory: true, focusId: crumb.ChildFocusId));
+    }
+
+    /// <summary>Todas as pastas acima da atual, num menu (também é o caminho pelo menu do app e o conteúdo do "…").</summary>
+    private void ShowPathMenu(PaneState pane, IReadOnlyList<Breadcrumb>? only = null)
+    {
+        var crumbs = (only ?? BuildBreadcrumbs(pane).Where(c => !c.IsCurrent).ToList()).ToList();
+        if (crumbs.Count == 0) return;
+        var items = crumbs.Select(c => new MenuItem(c.Label, () => ActivateBreadcrumb(pane, c),
+            Detail: c.Kind switch
+            {
+                BreadcrumbKind.Archive => "Compactado (raiz)",
+                BreadcrumbKind.ArchiveFolder => "Dentro do compactado",
+                _ => c.Target?.DisplayPath,
+            })).ToList();
+        PushModal(new MenuModal("Ir para", items) { FocusIndex = items.Count - 1 });
+    }
+
+    /// <summary>Mouse/toque num segmento: mesmo efeito de focar e confirmar.</summary>
+    public void PointerActivateBreadcrumb(int index)
+    {
+        if (TopModal is not null || Screen == Screen.Home) return;
+        var crumbs = Breadcrumbs;
+        if (index < 0 || index >= crumbs.Count) return;
+        var pane = ActivePane;
+        pane.Region = PaneRegion.Breadcrumbs;
+        pane.BreadcrumbFocus = index;
+        Handle(InputAction.Confirm);
+    }
+}

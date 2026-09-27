@@ -31,6 +31,15 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
 
+## Barra de caminho (#30)
+
+- [ ] Com o controle: LB na lista leva o foco para a barra; esquerda/direita; Sul numa pasta de cima navega e foca a
+      pasta de origem; RB volta para a lista. Mesmo com Ctrl+←/→ no teclado.
+- [ ] Dentro de um ZIP em subpasta: o `▸` e o ícone de pacote separam disco e compactado; escolher a pasta do disco
+      foca o arquivo .zip.
+- [ ] Caminho longo (8+ níveis) em 1280×720: o meio vira `…`, nada sai da tela; Sul no `…` mostra as pastas escondidas.
+- [ ] Clique/toque num segmento navega até ele.
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item
