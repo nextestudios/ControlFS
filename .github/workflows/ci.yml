@@ -1,7 +1,7 @@
 name: CI
 
-# Builds the app and runs the tests on every pull request and on main, on Windows:
-# the WinUI 3 app only runs there. The portable core is also tested on Linux.
+# Builds the app and runs all tests on every pull request and on main, on Windows —
+# the only platform ControlFS targets.
 on:
   pull_request:
     paths-ignore:
@@ -64,19 +64,3 @@ jobs:
           $report = dotnet list ControlFS.slnx package --vulnerable --include-transitive 2>&1 | Out-String
           Write-Host $report
           if ($report -match "has the following vulnerable packages") { throw "Vulnerable packages found" }
-
-  portable-core:
-    name: Portable core (Linux)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-          # Cache de pacotes NuGet com chave nos lock files (a release não usa cache).
-          cache: true
-          cache-dependency-path: "**/packages.lock.json"
-      - run: dotnet test tests/ControlFS.UnitTests -c Release --nologo

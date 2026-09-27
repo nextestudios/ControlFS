@@ -35,8 +35,9 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 ## CI
 
 - `ci.yml` (PR e `main`): Windows — restore travado por lock files, build de toda a solução (inclui o app WinUI), testes
-  unitários/jornadas, testes de integração Windows e checagem de pacotes vulneráveis; Linux — núcleo portátil.
-  Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows, 133 no Linux.
+  unitários/jornadas, testes de integração Windows e checagem de pacotes vulneráveis.
+  Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows. (Um job extra em Linux existiu até 2026-09-27 e
+  foi removido: o produto é só para Windows e os mesmos testes já rodam lá.)
 - `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
   `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
   de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
