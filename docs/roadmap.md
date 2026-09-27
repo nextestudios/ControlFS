@@ -1,5 +1,9 @@
 # Roadmap
 
+> **Fonte atual do roadmap: GitHub Issues.** Acompanhamento geral e ordem recomendada:
+> [#95](https://github.com/nextestudios/ControlFS/issues/95). Milestones 1–9 com épicos #87–#94 e issues #10–#86
+> (prioridade, área e dependências nativas "blocked by"). As etapas abaixo são o histórico do plano inicial.
+
 Etapas com critérios de saída; sem datas.
 
 ## Etapa 0 — Viabilidade e decisões ✅ (com pendências de Windows)
