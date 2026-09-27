@@ -297,6 +297,7 @@ public sealed partial class AppController
         Places = BuildPlaces();
         PlacesFocus = Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
         Screen = Screen.Home;
+        RaiseChanged(); // chamado também de fora de Handle (gerador de capturas, Meu computador)
     }
 
     // ---------- Modais ----------

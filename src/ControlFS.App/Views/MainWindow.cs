@@ -564,7 +564,7 @@ public sealed class MainWindow : Window
         _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL, Theme.SpaceM);
         _header.ColumnSpacing = Theme.SpaceXl;
         _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
-        _logo.Height = Math.Round(Theme.Layout.LogoHeight * 0.8);
+        _logo.Height = Theme.Layout.LogoHeight;
         _tabStrip.Spacing = Theme.SpaceXs;
         _tabs.Spacing = Theme.SpaceS;
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);

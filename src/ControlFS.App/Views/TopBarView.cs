@@ -86,7 +86,6 @@ internal sealed class TopBarView
         _quick.Spacing = Theme.SpaceXs;
         _divider.Width = Theme.Hairline.Left;
         _divider.Margin = new Thickness(Theme.SpaceXs, Theme.SpaceS, Theme.SpaceXs, Theme.SpaceS);
-        _crumbScroll.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.42); // caminho longo não espreme o acesso rápido
         _shownKey = null;
     }
 
@@ -98,7 +97,8 @@ internal sealed class TopBarView
         var crumbFocus = region == PaneRegion.Breadcrumbs ? _app.BreadcrumbFocus : -1;
         var quickFocus = region == PaneRegion.QuickAccess && quick.Count > 0 ? Math.Clamp(_app.QuickAccessFocus, 0, quick.Count - 1) : -1;
         var lb = _app.PromptProvider.For(InputAction.PreviousRegion, "Barra superior");
-        var iconsOnly = !LabelsFit(crumbs, quick);
+        var (iconsOnly, pathWidth) = Fit(crumbs, quick);
+        _crumbScroll.MaxWidth = pathWidth;
         var key = string.Join("|", crumbs.Select(c => $"{c.Kind}:{c.Label}:{c.IsCurrent}"))
             + "#" + string.Join("|", quick.Select(q => $"{q.Label}:{_app.IsQuickAccessActive(q)}"))
             + $"#{lb.Button}:{lb.Family}:{lb.Key}#{iconsOnly}" + (iconsOnly ? $"#{quickFocus}" : string.Empty);
@@ -120,18 +120,22 @@ internal sealed class TopBarView
     }
 
     /// <summary>
-    /// Os rótulos do acesso rápido cabem? Estimativa pelo número de caracteres (sem medir de novo a cada quadro). Não
-    /// cabendo (portátil, janela estreita, caminho longo), os atalhos mostram só o ícone, menos o focado e o local atual.
+    /// Divide a largura da barra (estimativa pelo número de caracteres, sem medir de novo a cada quadro). O caminho vem
+    /// primeiro: se caminho e atalhos com nome não cabem juntos, os atalhos mostram só o ícone (menos o focado e o do
+    /// local atual) e o caminho fica com o resto; só um caminho maior que isso rola (mostrando a pasta atual).
     /// </summary>
-    private bool LabelsFit(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick)
+    private (bool IconsOnly, double PathWidth) Fit(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick)
     {
-        if (quick.Count == 0) return true;
-        double Text(string s) => s.Length * FontSize * 0.56;
-        var chrome = Theme.Scaled(IconSize) + (2 * Theme.SpaceS) + Theme.SpaceXs + (2 * (Theme.FocusRing.Left + Theme.GlowRing.Left)) + _quick.Spacing;
-        var quickWidth = quick.Sum(q => Text(q.Label) + chrome);
-        var crumbWidth = Math.Min(_crumbScroll.MaxWidth, crumbs.Sum(c => Math.Min(Text(c.Label), Theme.Scaled(220)) + chrome));
-        var available = Theme.Viewport.Width - (2 * Theme.SpaceL) - (4 * Theme.SpaceS) - Theme.Scaled(56) - crumbWidth;
-        return quickWidth <= available;
+        static double Text(string s, double size) => s.Length * size * 0.56;
+        var chrome = (2 * (Theme.SpaceS + Theme.SpaceXs)) + (2 * (Theme.FocusRing.Left + Theme.GlowRing.Left));
+        var icon = Theme.Scaled(IconSize) + Theme.SpaceS;
+        var bar = Theme.Viewport.Width - (2 * Theme.SpaceL) - (2 * Theme.SpaceS) - (4 * Theme.SpaceS) - Math.Round(Theme.FontBody * 2.6);
+        var path = crumbs.Sum(c => Math.Min(Text(c.Label, Theme.FontBody), Theme.Scaled(220)) + chrome + Theme.FontCaption + Theme.SpaceXs
+            + (c.Kind is BreadcrumbKind.Root or BreadcrumbKind.Archive ? icon : 0));
+        var labeled = quick.Sum(q => Text(q.Label, FontSize) + Theme.SpaceS + icon + chrome + _quick.Spacing);
+        var iconic = quick.Sum(_ => icon + chrome + _quick.Spacing) + Text("Arquivos recentes", FontSize); // o focado mostra o nome
+        if (path + labeled <= bar) return (false, bar - labeled);
+        return (quick.Count > 0, Math.Max(Theme.Scaled(240), bar - iconic));
     }
 
     private static double FontSize => Theme.FontCaption + 1;
