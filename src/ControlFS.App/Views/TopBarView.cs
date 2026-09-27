@@ -150,12 +150,10 @@ internal sealed class TopBarView
     {
         var infinite = new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity);
         _lb.Measure(infinite);
-        _rb.Measure(infinite);
         _crumbs.Measure(infinite);
         _quick.Measure(infinite);
         var bar = Theme.Viewport.Width - Root.Margin.Left - Root.Margin.Right - Root.Padding.Left - Root.Padding.Right - (2 * Root.BorderThickness.Left)
-            - _lb.DesiredSize.Width - _lb.Margin.Left - _rb.DesiredSize.Width - _rb.Margin.Right
-            - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (4 * _grid.ColumnSpacing) - Theme.SpaceXs;
+            - _lb.DesiredSize.Width - _lb.Margin.Left - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
         var path = _crumbs.DesiredSize.Width;
         _crumbWidths = [.. _crumbGlows.Select((g, i) => g.DesiredSize.Width + _crumbs.Spacing
             + (i > 0 ? _crumbSeparators[i - 1].DesiredSize.Width + _crumbSeparators[i - 1].Margin.Left + _crumbSeparators[i - 1].Margin.Right + _crumbs.Spacing : 0))];
@@ -171,7 +169,8 @@ internal sealed class TopBarView
             }
             _quick.Measure(infinite);
         }
-        var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel; // o focado mostra o nome
+        // O focado mostra o nome; o glifo do R1 usa essa mesma folga (sem ela, o caminho perderia um segmento).
+        var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel;
         var max = Math.Max(Theme.Scaled(240), bar - quickWidth);
         _pathMax = double.IsFinite(max) ? max : double.PositiveInfinity; // antes da primeira faixa de layout há medidas NaN
         _crumbScroll.MaxWidth = _pathMax;
