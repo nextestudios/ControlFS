@@ -17,12 +17,13 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | LT / RT | Page up / down | Cursor to start / end |
 | Start | App menu | Done |
 | Select / View | Search | Symbols |
+| R3 (press right stick) | List ↔ grid | — |
 
 **Back** closes the open menu first, then clears the selection, then goes back in history, then to the home screen. Leaving the app always asks for confirmation, starting on "Cancel".
 
 Only one controller drives the app at a time: the first one to press a button. Pressing a button on another controller (while the active one isn't holding anything) makes it the active one. With the window in the background, input is ignored. The menu has "Confirm with: bottom/right button" and the label style: **automatic** (default: follows the family of the controller in use: Xbox, PlayStation, Nintendo or generic) or fixed to generic, Xbox, PlayStation or Nintendo.
 
-The bottom bar shows the buttons of the controller in use (for example `A Open` on Xbox, `✕ Open` on PlayStation) and switches as soon as you use another controller. When you use the keyboard, it shows keyboard keys instead (`Enter Open`, `Esc Back`) until you press a controller button again.
+The bottom bar shows the buttons of the controller in use (for example `A Open` on Xbox, with the Xbox face colors: A green, B red, X blue, Y yellow; `✕ Open` on PlayStation) and switches as soon as you use another controller. When you use the keyboard, it shows keyboard keys instead (`Enter Open`, `Esc Back`) until you press a controller button again.
 
 The on-screen keyboard has the text field on top, four character rows, a function row (`⇧` Shift · `ABC` letters · `@#:` symbols · space · `⌫`) and a bottom row (cursor `◀ ▶` · `…` more · Cancel · **Done**). `…` opens accents, **Select all** (`Sel. tudo`), **Clear** and the PT-BR/EN switch. Selected text is highlighted and underlined: typing replaces it, `⌫` deletes it and `◀ ▶` just drop the selection (Ctrl+A on a physical keyboard selects everything). Rename opens with the name before the extension already selected, so typing `novo` on `example-file.zip` gives `novo.zip`. Shift: one press capitalizes the next letter, a second press locks caps (`⇪`), a third turns it off. Keys that a field doesn't accept (e.g. `\ / : * ? " < > |` in file names) are dimmed. Holding West, LB/RB, or South on `⌫ ◀ ▶` repeats (it speeds up the longer you hold); Done and the other keys never repeat. The cursor is the accent-colored bar in the text field; LT/RT (or Home/End) jump to the start or end, and moving it never changes the text, page or Shift.
 
@@ -68,7 +69,7 @@ North → **Select all (N)** marks every item in the folder or archive (never dr
 
 Menu → **List density** switches between **comfortable** (two lines per item, for the TV) and **compact** (one line with type, size and date columns). The choice is saved.
 
-Menu → **View** (or **Ctrl+G** on the keyboard) switches between the **list** and a **grid** of large icons, for folders and the home screen alike. In the grid the D-pad and stick move up, down, left and right between tiles: left/right continue onto the previous/next row at the ends, and down onto a shorter last row lands on its last item. The triggers page one screen of rows. Since left no longer goes to the parent folder in the grid, use Back or the path bar (LB). Density applies to the grid too (compact = smaller tiles), and switching views keeps the focused item.
+Menu → **View** (or **R3**, pressing the right stick, or **Ctrl+G** on the keyboard) switches between the **list** and a **grid** of large icons, for folders and the home screen alike. In the grid the D-pad and stick move up, down, left and right between tiles: left/right continue onto the previous/next row at the ends, and down onto a shorter last row lands on its last item. The triggers page one screen of rows. Since left no longer goes to the parent folder in the grid, use Back or the path bar (LB). Density applies to the grid too (compact = smaller tiles), and switching views keeps the focused item.
 
 **Folder size:** North on a folder or drive → **Properties** → **Calculate size** adds up every file inside it (hidden ones included, like Explorer's "Size"), showing the running total while it works. **East** cancels at once and keeps the partial value. Junctions and links are never followed (they are counted separately), and folders that could not be read are listed instead of silently skipped.
 

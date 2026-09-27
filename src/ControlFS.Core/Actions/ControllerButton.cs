@@ -49,6 +49,7 @@ public static class ControllerButtons
         PhysicalControl.DPadDown => ControllerButton.DPadDown,
         PhysicalControl.DPadLeft => ControllerButton.DPadLeft,
         PhysicalControl.DPadRight => ControllerButton.DPadRight,
+        PhysicalControl.RightStickClick => ControllerButton.RightStickClick,
         _ => ControllerButton.LeftStick, // StickUp/Down/Left/Right: o analógico esquerdo
     };
 

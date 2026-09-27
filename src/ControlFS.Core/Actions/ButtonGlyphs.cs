@@ -11,25 +11,25 @@ public static class ButtonGlyphs
         {
             PhysicalControl.South => "A", PhysicalControl.East => "B", PhysicalControl.West => "X", PhysicalControl.North => "Y",
             PhysicalControl.LeftShoulder => "LB", PhysicalControl.RightShoulder => "RB", PhysicalControl.LeftTrigger => "LT", PhysicalControl.RightTrigger => "RT",
-            PhysicalControl.Start => "☰", PhysicalControl.Select => "⧉", _ => Direction(control),
+            PhysicalControl.Start => "☰", PhysicalControl.Select => "⧉", PhysicalControl.RightStickClick => "RS", _ => Direction(control),
         },
         ControllerFamily.PlayStation => control switch
         {
             PhysicalControl.South => "✕", PhysicalControl.East => "○", PhysicalControl.West => "□", PhysicalControl.North => "△",
             PhysicalControl.LeftShoulder => "L1", PhysicalControl.RightShoulder => "R1", PhysicalControl.LeftTrigger => "L2", PhysicalControl.RightTrigger => "R2",
-            PhysicalControl.Start => "Options", PhysicalControl.Select => "Create", _ => Direction(control),
+            PhysicalControl.Start => "Options", PhysicalControl.Select => "Create", PhysicalControl.RightStickClick => "R3", _ => Direction(control),
         },
         ControllerFamily.Nintendo => control switch
         {
             PhysicalControl.South => "B", PhysicalControl.East => "A", PhysicalControl.West => "Y", PhysicalControl.North => "X",
             PhysicalControl.LeftShoulder => "L", PhysicalControl.RightShoulder => "R", PhysicalControl.LeftTrigger => "ZL", PhysicalControl.RightTrigger => "ZR",
-            PhysicalControl.Start => "+", PhysicalControl.Select => "−", _ => Direction(control),
+            PhysicalControl.Start => "+", PhysicalControl.Select => "−", PhysicalControl.RightStickClick => "RS", _ => Direction(control),
         },
         _ => control switch
         {
             PhysicalControl.South => "↓●", PhysicalControl.East => "→●", PhysicalControl.West => "←●", PhysicalControl.North => "↑●",
             PhysicalControl.LeftShoulder => "L1", PhysicalControl.RightShoulder => "R1", PhysicalControl.LeftTrigger => "L2", PhysicalControl.RightTrigger => "R2",
-            PhysicalControl.Start => "Start", PhysicalControl.Select => "Select", _ => Direction(control),
+            PhysicalControl.Start => "Start", PhysicalControl.Select => "Select", PhysicalControl.RightStickClick => "R3", _ => Direction(control),
         },
     };
 

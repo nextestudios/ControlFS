@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **New look, first step of the redesign**: a navy palette with a cyan focus (border, blue fill and a subtle glow, with a short transition) and a larger bottom bar with the actions always in the same order (Open · Back · Mark · Actions · Menu · Search · List/Grid) and the Xbox face colors in the glyphs (A green, B red, X blue, Y yellow). **R3** (pressing the right stick) switches between list and grid, like Ctrl+G and Menu → View; the bottom bar names the target: "Grade" (grid) in the list, "Lista" (list) in the grid.
 
 ## [0.5.0-alpha.1]
 ### What's new

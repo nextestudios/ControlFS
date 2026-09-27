@@ -45,10 +45,13 @@ public static class EntryRowTemplate
         $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(text)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\"/>" +
         "</StackPanel>";
 
+    /// <summary>Halo (tag "glow", ver <see cref="Theme.ApplyFocus"/>) em volta do anel; o fundo do anel muda com transição curta.</summary>
     private static string Frame(string body, string tag = "row") =>
-        $"<DataTemplate {Ns}><Border x:Name=\"Ring\" Tag=\"{tag}\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"6\"><Grid>" +
+        $"<DataTemplate {Ns}><Border Tag=\"glow\" BorderThickness=\"{N(Theme.GlowRing.Left)}\" CornerRadius=\"{N(Theme.Radius.TopLeft + Theme.GlowRing.Left)}\">" +
+        $"<Border x:Name=\"Ring\" Tag=\"{tag}\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"{N(Theme.Radius.TopLeft)}\">" +
+        $"<Border.BackgroundTransition><BrushTransition Duration=\"0:0:0.{Theme.MotionFocus.Milliseconds:000}\"/></Border.BackgroundTransition><Grid>" +
         $"<Border x:Name=\"MarkBar\" Width=\"{W(6)}\" HorizontalAlignment=\"Left\" CornerRadius=\"3\" Margin=\"2,6,0,6\"/>" +
-        body + "</Grid></Border></DataTemplate>";
+        body + "</Grid></Border></Border></DataTemplate>";
 
     private static string ComfortableXaml() => Frame(
         $"<Grid x:Name=\"Body\" Padding=\"{W(16)},{S(8)},{S(12)},{S(8)}\" ColumnSpacing=\"{S(12)}\">" +
@@ -215,7 +218,7 @@ public static class EntryRowTemplate
     /// </summary>
     public static void SetFocused(SelectorItem container, bool focused)
     {
-        if (container.ContentTemplateRoot is not Border ring) return;
+        if (container.ContentTemplateRoot is not FrameworkElement root || root.FindName("Ring") is not Border ring) return;
         Theme.ApplyFocus(ring, focused);
         // Bloco da grade: altura fixa, o nome fica sempre em até duas linhas (o Narrador lê o nome inteiro).
         if (ring.FindName("Title") is TextBlock title && !Equals(ring.Tag, "tile"))

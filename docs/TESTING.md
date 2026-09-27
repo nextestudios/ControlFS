@@ -298,6 +298,19 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
 - [ ] Exportar para uma pasta, importar em outro computador (ou após apagar `controllers\` na pasta de dados) e usar.
 - [ ] Importar um `.json` qualquer (não perfil) e um perfil editado com um campo extra: ambos recusados com mensagem clara.
 
+## Redesenho: tokens, rodapé e R3 (fase A)
+
+Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hardware.
+
+- [ ] Xbox, DualSense, Switch Pro e um controle genérico: apertar o analógico direito (R3) alterna lista ↔ grade nas
+      pastas, no início, na busca e na Lixeira, mantendo o item focado; dentro de menus, diálogos e do teclado virtual
+      não faz nada. O rodapé mostra "Grade" na lista e "Lista" na grade, com o glifo do analógico pressionado.
+- [ ] TV 1080p a ~3 m: o anel ciano com halo e o fundo azul do item focado são visíveis; a transição do fundo é curta
+      (não pisca nem atrasa a navegação com o direcional mantido).
+- [ ] Rodapé: A verde, B vermelho, X azul e Y amarelo legíveis (letra contrastando), na ordem Abrir · Voltar · Marcar ·
+      Ações · Menu · Buscar · Lista/Grade; com PlayStation/Nintendo/genérico os glifos continuam os da família.
+- [ ] Capturas do Smoke (`smoke-screens`, 1920×1080 e 1280×720) comparadas com as referências do redesenho.
+
 ## Glifos dos botões
 
 - [ ] Com Legendas fixadas em cada estilo (genéricas, Xbox, PlayStation, Nintendo) e um controle ativo, o rodapé mostra

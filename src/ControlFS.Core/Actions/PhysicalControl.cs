@@ -24,6 +24,9 @@ public enum PhysicalControl
     RightTrigger,
     Start,
     Select,
+
+    /// <summary>Pressionar o analógico direito (R3/RS): troca lista ↔ grade.</summary>
+    RightStickClick,
 }
 
 /// <summary>Qual botão de face confirma. O padrão é South; a alternativa troca comportamento E legendas.</summary>

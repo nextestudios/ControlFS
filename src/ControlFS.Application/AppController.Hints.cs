@@ -10,7 +10,34 @@ public sealed partial class AppController
     /// Fonte única do rodapé: somente ações que funcionam no contexto atual, com o rótulo do que farão.
     /// Ações indisponíveis não aparecem (o motivo, quando existe, é mostrado no próprio item).
     /// </summary>
-    private List<Hint> BuildHints()
+    private List<Hint> BuildHints() => TopModal is null ? ScreenOrder(BuildScreenHints()) : BuildModalHints();
+
+    /// <summary>
+    /// Ordem do rodapé nas telas (não nos modais, onde a ordem acompanha o conteúdo): Confirmar, Voltar, Marcar, Ações,
+    /// Menu, Buscar, Lista/Grade e as regiões (LB/RB). Só a ordem muda; quais legendas aparecem continua por contexto.
+    /// </summary>
+    private List<Hint> ScreenOrder(List<Hint> hints)
+    {
+        if (Screen != Screen.Home && ActivePane.Region != PaneRegion.List) return hints; // barra de caminho e abas: a ordem é a da tarefa
+        return [.. hints.OrderBy(h => h.Action switch
+        {
+            InputAction.Confirm => 0,
+            InputAction.Back => 1,
+            InputAction.ToggleSelection => 2,
+            InputAction.OpenContextMenu => 3,
+            InputAction.OpenAppMenu => 4,
+            InputAction.Search => 5,
+            InputAction.ChangeView => 6,
+            InputAction.PreviousRegion => 7,
+            InputAction.NextRegion => 8,
+            _ => 9,
+        })];
+    }
+
+    /// <summary>Lista/grade (R3, Ctrl+G): a legenda diz para onde vai, não onde está.</summary>
+    private Hint ChangeViewHint => new(InputAction.ChangeView, IsGrid ? "Lista" : "Grade");
+
+    private List<Hint> BuildModalHints()
     {
         var hints = new List<Hint>();
         switch (TopModal)
@@ -85,7 +112,12 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.Back, dialog.BackOption?.Label ?? "Fechar"));
                 return hints;
         }
+        return hints;
+    }
 
+    private List<Hint> BuildScreenHints()
+    {
+        var hints = new List<Hint>();
         if (Screen == Screen.Home)
         {
             if (Places.Count > 0)
@@ -94,6 +126,7 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.OpenContextMenu, "Ações"));
             }
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
+            if (Places.Count > 0) hints.Add(ChangeViewHint);
             hints.Add(new(InputAction.Back, "Sair"));
             return hints;
         }
@@ -132,6 +165,7 @@ public sealed partial class AppController
             if (pane.List.Focused is not null) hints.Add(new(InputAction.Confirm, "Mostrar na pasta"));
             hints.Add(new(InputAction.OpenContextMenu, search.Filter.IsActive ? "Filtros (ativos)" : "Filtros"));
             hints.Add(new(InputAction.Search, "Nova busca"));
+            hints.Add(ChangeViewHint);
             hints.Add(new(InputAction.NextRegion, TabsHint));
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             hints.Add(new(InputAction.Back, search.IsRunning ? "Cancelar busca" : "Voltar"));
@@ -149,6 +183,7 @@ public sealed partial class AppController
             }
             hints.Add(new(InputAction.OpenContextMenu, selection > 0 ? $"Operações ({selection})" : "Ações"));
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
+            hints.Add(ChangeViewHint);
             hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
             return hints;
         }
@@ -173,6 +208,7 @@ public sealed partial class AppController
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
         if (pane.Location is PhysicalLocation) hints.Add(new(InputAction.Search, "Buscar"));
         hints.Add(new(InputAction.OpenAppMenu, "Menu"));
+        hints.Add(ChangeViewHint);
         hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
         return hints;
     }

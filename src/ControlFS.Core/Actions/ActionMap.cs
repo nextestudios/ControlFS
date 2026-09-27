@@ -30,6 +30,7 @@ public sealed class ActionMap
             [PhysicalControl.RightTrigger] = InputAction.PageDown,
             [PhysicalControl.Start] = InputAction.OpenAppMenu,
             [PhysicalControl.Select] = InputAction.Search,
+            [PhysicalControl.RightStickClick] = InputAction.ChangeView,
         };
     }
 
