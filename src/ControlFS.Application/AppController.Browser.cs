@@ -343,6 +343,8 @@ public sealed partial class AppController
         {
             // Compactados marcados: "extrair cada um" vem primeiro, então Norte e depois Sul extraem o lote (#69).
             var markedArchives = MarkedArchives(marked);
+            var copy = new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable,
+                Icon: ActionIcon.Copy, Placement: MenuPlacement.Quick, ShortLabel: "Copiar");
             PushModal(new MenuModal($"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}",
             [
                 .. markedArchives.Count == 0 ? Array.Empty<MenuItem>() :
@@ -350,14 +352,14 @@ public sealed partial class AppController
                     new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
                         Detail: markedArchives.Count < marked.Count ? "Itens que não são compactados ficam de fora." : null, Icon: ActionIcon.Extract),
                 ],
-                new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.Copy),
-                new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut),
+                new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Placement: MenuPlacement.Quick, ShortLabel: "Recortar"),
+                copy,
                 new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo),
                 new MenuItem($"Mover {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo),
-                new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked), Icon: ActionIcon.Compress),
-                new MenuItem($"Excluir {Plural.Of(marked.Count, "item", "itens")}…", () => BeginDelete(pane, marked), FileOpsUnavailable, Icon: ActionIcon.Delete),
+                new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked), Icon: ActionIcon.Compress, Placement: MenuPlacement.Quick, ShortLabel: "Compactar"),
+                new MenuItem($"Excluir {Plural.Of(marked.Count, "item", "itens")}…", () => BeginDelete(pane, marked), FileOpsUnavailable, Icon: ActionIcon.Delete, Placement: MenuPlacement.Quick, ShortLabel: "Excluir"),
                 .. SelectionItems(pane),
-            ]) { Icon = ActionIcon.SelectAll, Subtitle = "Ações para todos os itens marcados" });
+            ]) { Icon = ActionIcon.SelectAll, Subtitle = "Ações para todos os itens marcados", FocusOn = markedArchives.Count == 0 ? copy : null });
             return;
         }
         var entry = pane.List.Focused;
@@ -367,27 +369,27 @@ public sealed partial class AppController
             return;
         }
         var items = new List<MenuItem>();
-        if (entry is { IsContainer: true }) items.Add(new MenuItem("Abrir", () => OpenEntry(pane, entry), Icon: ActionIcon.OpenFolder, Section: "Abrir"));
+        if (entry is { IsContainer: true }) items.Add(new MenuItem("Abrir", () => OpenEntry(pane, entry), Icon: ActionIcon.OpenFolder, Section: "Abrir", Placement: MenuPlacement.Quick));
         if (entry is { IsContainer: true, FullPath: { } folderPath })
             items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(folderPath), external: true), ShellUnavailable, Icon: ActionIcon.OpenExternal, Section: "Abrir"));
         if (entry is { IsContainer: true, FullPath: { } tabPath } && pane.Mode == PaneMode.Browse)
             items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(tabPath), NewTabUnavailable, Icon: ActionIcon.NewTab, Section: "Abrir"));
         if (entry is { Kind: EntryKind.Directory, FullPath: not null } && pane.Location is PhysicalLocation)
         {
-            items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar"));
-            items.Add(new MenuItem("Copiar", () => PutOnClipboard(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.Copy, Section: "Organizar"));
-            items.Add(new MenuItem("Recortar", () => PutOnClipboard(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Section: "Organizar"));
+            items.Add(new MenuItem("Recortar", () => PutOnClipboard(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Section: "Organizar", Placement: MenuPlacement.Quick));
+            items.Add(new MenuItem("Copiar", () => PutOnClipboard(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.Copy, Section: "Organizar", Placement: MenuPlacement.Quick));
+            items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar", Placement: MenuPlacement.Quick));
             items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo, Section: "Organizar"));
             items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo, Section: "Organizar"));
-            items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar"));
-            items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar"));
+            items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar", Placement: MenuPlacement.Quick));
+            items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
         }
         if (entry is { IsContainer: true, FullPath: { } favoritePath }) items.Add(FavoriteToggleItem(favoritePath, section: "Favoritos"));
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
-        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta"));
+        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco.", Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
         items.AddRange(SelectionItems(pane));
-        if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações"));
+        if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items) { Icon = entry is null ? ActionIcon.Folder : EntryIcon(entry), Subtitle = entry is null ? pane.Location?.DisplayPath : TypeNameOf(entry) });
     }
 
@@ -397,13 +399,13 @@ public sealed partial class AppController
         var items = new List<MenuItem>();
         if (pane.List.Focused is { FullPath: { } path } drive)
         {
-            items.Add(new MenuItem("Abrir", () => OpenEntry(pane, drive), Icon: ActionIcon.OpenFolder));
+            items.Add(new MenuItem("Abrir", () => OpenEntry(pane, drive), Icon: ActionIcon.OpenFolder, Placement: MenuPlacement.Quick));
             items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(path), external: true), ShellUnavailable, Icon: ActionIcon.OpenExternal));
-            items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(path), NewTabUnavailable, Icon: ActionIcon.NewTab));
+            items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(path), NewTabUnavailable, Icon: ActionIcon.NewTab, Placement: MenuPlacement.Quick, ShortLabel: "Nova aba"));
             items.Add(FavoriteToggleItem(path));
-            items.Add(new MenuItem("Propriedades", () => ShowProperties(drive), Icon: ActionIcon.Properties));
+            items.Add(new MenuItem("Propriedades", () => ShowProperties(drive), Icon: ActionIcon.Properties, Placement: MenuPlacement.Quick));
         }
-        items.Add(new MenuItem("Atualizar", () => Refresh(pane), Icon: ActionIcon.Refresh));
+        items.Add(new MenuItem("Atualizar", () => Refresh(pane), Icon: ActionIcon.Refresh, Placement: MenuPlacement.Quick));
         PushModal(new MenuModal(pane.List.Focused?.Name ?? "Meu computador", items) { Icon = pane.List.Focused is null ? ActionIcon.ThisPc : ActionIcon.Drive });
     }
 
@@ -432,12 +434,14 @@ public sealed partial class AppController
     {
         var format = await Task.Run(() => _archives.Detect(file));
         var items = new List<MenuItem>();
+        MenuItem? extract = null;
         if (ArchiveFormats.CanExtract(format))
         {
             var folder = Path.GetDirectoryName(file)!;
             var stem = ArchiveFormats.StemOf(file);
             items.Add(new MenuItem($"Abrir compactado ({ArchiveFormats.DisplayName(format)})", () => Track(OpenArchiveAsync(pane, file)), Icon: ActionIcon.Archive, Section: "Compactado"));
-            items.Add(new MenuItem($"Extrair para \"{stem}\"", () => BeginExtraction(file, folder, dedicated: true, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado"));
+            extract = new MenuItem($"Extrair para \"{stem}\"", () => BeginExtraction(file, folder, dedicated: true, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado");
+            items.Add(extract);
             items.Add(new MenuItem("Extrair aqui", () => BeginExtraction(file, folder, dedicated: false, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado"));
             items.Add(new MenuItem("Extrair para…", () => PickDestinationThenExtract(file, folder, null, string.Empty), Icon: ActionIcon.Extract, Section: "Compactado"));
             items.Add(TestIntegrityItem(file));
@@ -446,24 +450,25 @@ public sealed partial class AppController
         else if (!ArchiveFormats.CanExtract(format))
             items.Add(new MenuItem("Visualizar como texto", () => OpenTextPreview(pane, entry), Detail: "Somente leitura; nada é executado.", Icon: ActionIcon.Text, Section: "Abrir"));
         items.Add(new MenuItem(entry.IsSteamGame ? "Jogar…" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
-            () => OpenExternally(entry, file), ShellUnavailable, Icon: entry.IsSteamGame ? ActionIcon.Game : ExecutableFiles.IsPotentiallyExecutable(file) ? ActionIcon.Run : ActionIcon.Open, Section: "Abrir"));
+            () => OpenExternally(entry, file), ShellUnavailable, Icon: entry.IsSteamGame ? ActionIcon.Game : ExecutableFiles.IsPotentiallyExecutable(file) ? ActionIcon.Run : ActionIcon.Open, Section: "Abrir",
+            Placement: MenuPlacement.Quick, ShortLabel: entry.IsSteamGame ? "Jogar" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar" : "Abrir"));
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,
             Detail: "Escolher o programa na caixa do Windows.", Icon: ActionIcon.OpenWith, Section: "Abrir"));
         items.Add(new MenuItem("Mostrar no Explorador de Arquivos", () => RunShell(s => s.RevealInExplorer(file), external: true), ShellUnavailable, Icon: ActionIcon.Reveal, Section: "Abrir"));
-        items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar"));
-        items.Add(new MenuItem("Copiar", () => PutOnClipboard(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.Copy, Section: "Organizar"));
-        items.Add(new MenuItem("Recortar", () => PutOnClipboard(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Section: "Organizar"));
+        items.Add(new MenuItem("Recortar", () => PutOnClipboard(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Section: "Organizar", Placement: MenuPlacement.Quick));
+        items.Add(new MenuItem("Copiar", () => PutOnClipboard(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.Copy, Section: "Organizar", Placement: MenuPlacement.Quick));
+        items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable, Icon: ActionIcon.Rename, Section: "Organizar", Placement: MenuPlacement.Quick));
         items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable, Icon: ActionIcon.CopyTo, Section: "Organizar"));
         items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.MoveTo, Section: "Organizar"));
-        items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar"));
-        items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar"));
+        items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar", Placement: MenuPlacement.Quick));
+        items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
-        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta"));
+        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
         items.AddRange(SelectionItems(pane));
-        items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações"));
+        items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
         // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>".
-        PushModal(new MenuModal(entry.Name, items) { Icon = EntryIcon(entry, format), Subtitle = TypeNameOf(entry), FocusIndex = ArchiveFormats.CanExtract(format) ? 1 : 0 });
+        PushModal(new MenuModal(entry.Name, items) { Icon = EntryIcon(entry, format), Subtitle = TypeNameOf(entry), FocusOn = extract });
     }
 
     private MenuItem TestIntegrityItem(string archivePath) => new("Testar integridade", () => BeginArchiveTest(archivePath),
@@ -482,78 +487,102 @@ public sealed partial class AppController
             new("Extrair tudo para…", () => PickDestinationThenExtract(path, folder, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
         };
         var noSelection = selected.Count == 0 ? "Marque entradas primeiro (botão de marcar)." : null;
-        var selectionIndex = items.Count;
-        items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection, Icon: ActionIcon.Extract, Section: "Extrair"));
+        var extractSelection = new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection, Icon: ActionIcon.Extract, Section: "Extrair");
+        items.Add(extractSelection);
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para…", () => PickDestinationThenExtract(path, folder, selected, archive.InnerPath), noSelection, Icon: ActionIcon.Extract, Section: "Extrair"));
         items.AddRange(SelectionItems(pane));
         items.Add(TestIntegrityItem(path));
         items.Add(new MenuItem("Informações do compactado", () => ShowArchiveInfo(pane), Icon: ActionIcon.Info, Section: "Compactado"));
         // Com entradas marcadas, o rodapé anuncia "Extrair seleção": o menu abre já nela (Norte e depois Sul extraem).
-        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items) { Icon = ActionIcon.Archive, FocusIndex = selected.Count > 0 ? selectionIndex : 0 });
+        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items) { Icon = ActionIcon.Archive, FocusOn = selected.Count > 0 ? extractSelection : null });
     }
 
+    /// <summary>
+    /// Menu do app (Start): as ações mais usadas em blocos (Colar, Nova pasta, Nova aba, Atualizar, Ir para caminho,
+    /// Operações, Configurações, Início) e o resto numa lista curta que termina em Sair. Os ajustes ficam em Configurações.
+    /// </summary>
     private void ShowAppMenu()
     {
         var pane = Browser;
         var inBrowser = Screen == Screen.Browser;
-        var sort = pane.List.Sort;
-        var items = new List<MenuItem>
-        {
-            new(PasteLabel, () => Paste(pane), inBrowser ? PasteUnavailable(pane) : "Abra uma pasta do disco para colar.", Icon: ActionIcon.Paste, Section: "Nesta pasta"),
-            new("Nova pasta", () => BeginCreateFolder(pane), inBrowser && pane.Location is PhysicalLocation ? null : "Abra uma pasta do disco primeiro.", Icon: ActionIcon.NewFolder, Section: "Nesta pasta"),
-            new("Atualizar", () => Refresh(pane), inBrowser ? null : "Nada para atualizar na tela inicial.", Icon: ActionIcon.Refresh, Section: "Nesta pasta"),
+        const MenuPlacement quick = MenuPlacement.Quick;
+        List<MenuItem> items =
+        [
+            new(PasteLabel, () => Paste(pane), inBrowser ? PasteUnavailable(pane) : "Abra uma pasta do disco para colar.", Icon: ActionIcon.Paste, Placement: quick, ShortLabel: "Colar"),
+            new("Nova pasta", () => BeginCreateFolder(pane), inBrowser && pane.Location is PhysicalLocation ? null : "Abra uma pasta do disco primeiro.", Icon: ActionIcon.NewFolder, Placement: quick),
+            new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova. Com 2+ abas, L2/R2 trocam de aba.", Icon: ActionIcon.NewTab, Placement: quick),
+            new("Atualizar", () => Refresh(pane), inBrowser ? null : "Nada para atualizar na tela inicial.", Icon: ActionIcon.Refresh, Placement: quick),
+            new("Ir para caminho…", () => BeginGoToPath(pane), Detail: "Digite ou cole o caminho de uma pasta (ex.: D:\\Jogos).", Icon: ActionIcon.GoToPath, Placement: quick, ShortLabel: "Caminho"),
+            new($"Operações ({Plural.Of(Operations.ActiveCount, "ativa", "ativas")})", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null,
+                Icon: ActionIcon.Operations, Placement: quick, ShortLabel: "Operações"),
+            new("Configurações…", ShowSettings, Detail: "Exibição, busca, privacidade, controles e atualizações.", Icon: ActionIcon.Settings, Placement: quick),
+            new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null, Icon: ActionIcon.Home, Placement: quick, ShortLabel: "Início"),
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
-                Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Nesta pasta"),
-            new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova. Com 2+ abas, L2/R2 trocam de aba.", Icon: ActionIcon.NewTab, Section: "Nesta pasta"),
+                Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Navegar"),
             new(_tabs.Count > 1 ? $"Abas ({ActiveTab + 1} de {_tabs.Count})…" : "Abas…", ShowTabMenu, inBrowser ? null : "Abra uma pasta primeiro.",
-                Detail: "Fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.NewTab, Section: "Nesta pasta"),
-            new("Ir para caminho…", () => BeginGoToPath(pane), Detail: "Digite ou cole o caminho de uma pasta (ex.: D:\\Jogos).", Icon: ActionIcon.GoToPath, Section: "Nesta pasta"),
-            new($"Ordenar por: {SortLabel(sort.Field)}", () =>
-            {
-                pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) });
-            }, inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.Sort, Section: "Exibição"),
-            new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }), inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.SortOrder, Section: "Exibição"),
-            new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
-                Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: "Exibição"),
-            new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
-                Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: "Exibição"),
-            new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima (acompanha a tela)" : "economia de bateria")}",
-                () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
-                Detail: "Máxima lê o controle a cada quadro da tela (120 vezes por segundo numa tela de 120 Hz). Economia gasta menos bateria em portáteis.",
-                Icon: ActionIcon.Settings, Section: "Exibição"),
-            new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
-                Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: "Exibição"),
+                Detail: "Fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.NewTab, Section: "Navegar"),
+            .. UndoMenuItems(),
+            new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),
+            new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only", Icon: ActionIcon.About, Section: "ControlFS"),
+            new("Sair", ShowExitDialog, Icon: ActionIcon.Exit, Section: "ControlFS"),
+        ];
+        PushModal(new MenuModal("Menu", items));
+    }
+
+    /// <summary>
+    /// Configurações (Menu → Configurações): todos os ajustes, em grupos. Alternar um ajuste mantém o menu aberto com o
+    /// texto novo e o foco nele; Voltar fecha. Opções com tela própria (controle ativo, teste, joysticks, atualizações) fecham
+    /// Configurações e abrem essa tela, como os outros submenus.
+    /// </summary>
+    internal void ShowSettings() =>
+        PushModal(new MenuModal("Configurações", SettingsItems()) { Icon = ActionIcon.Settings, Reload = SettingsItems });
+
+    private List<MenuItem> SettingsItems()
+    {
+        var pane = Browser;
+        var inBrowser = Screen == Screen.Browser;
+        var sort = pane.List.Sort;
+        const string view = "Exibição", privacy = "Busca e privacidade", controls = "Controles", app = "ControlFS";
+        return
+        [
+            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: view, KeepOpen: true),
+            new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
+                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: view, KeepOpen: true),
+            new(DetailsPanelMenuLabel, ToggleDetailsPanel,
+                Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: view, KeepOpen: true),
+            new($"Ordenar por: {SortLabel(sort.Field)}", () => pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) }),
+                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true),
+            new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }),
+                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true),
             new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
-            }, Icon: ActionIcon.Hidden, Section: "Exibição"),
-            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: "Exibição"),
-            new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
-                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: "Exibição"),
-            new(DetailsPanelMenuLabel, ToggleDetailsPanel,
-                Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: "Exibição"),
-            new($"Operações ({Plural.Of(Operations.ActiveCount, "ativa", "ativas")})", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null, Icon: ActionIcon.Operations, Section: "Operações"),
+            }, Icon: ActionIcon.Hidden, Section: view, KeepOpen: true),
+            new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
+                Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true),
+            new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
+                Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true),
+            new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
+                Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
-                Detail: "Troca comportamento e legendas de confirmar/voltar.", Icon: ActionIcon.Accept, Section: "Controles"),
+                Detail: "Troca comportamento e legendas de confirmar/voltar.", Icon: ActionIcon.Accept, Section: controls, KeepOpen: true),
             new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
                 Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? null
-                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: "Controles"),
-            new("Teste de controles…", ShowControllerTest, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
-                Detail: "Mostra cada botão e a ação que ele produz; copia um relatório para a issue #78.", Icon: ActionIcon.ControllerTest, Section: "Controles"),
+                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true),
+            new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima (acompanha a tela)" : "economia de bateria")}",
+                () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
+                Detail: "Máxima lê o controle a cada quadro da tela (120 vezes por segundo numa tela de 120 Hz). Economia gasta menos bateria em portáteis.",
+                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true),
             new(ActiveControllerMenuLabel, ShowActiveControllerMenu, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
-                Detail: "Escolha qual controle comanda o ControlFS (ex.: Steam Input ou DS4Windows duplicando o controle).", Icon: ActionIcon.Controller, Section: "Controles"),
-            new("Controles sem perfil…", ShowControllersMenu, Detail: "Configurar joysticks que não são reconhecidos como gamepad.", Icon: ActionIcon.ControllerSetup, Section: "Controles"),
-            new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null, Icon: ActionIcon.Update, Section: "ControlFS"),
-            new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),
-            new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only", Icon: ActionIcon.About, Section: "ControlFS"),
-            new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null, Icon: ActionIcon.Home, Section: "ControlFS"),
-            new("Sair", ShowExitDialog, Icon: ActionIcon.Exit, Section: "ControlFS"),
-        };
-        items.InsertRange(items.FindIndex(i => i.Label.StartsWith("Operações (", StringComparison.Ordinal)) + 1, UndoMenuItems());
-        PushModal(new MenuModal("Menu", items));
+                Detail: "Escolha qual controle comanda o ControlFS (ex.: Steam Input ou DS4Windows duplicando o controle).", Icon: ActionIcon.Controller, Section: controls),
+            new("Teste de controles…", ShowControllerTest, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
+                Detail: "Mostra cada botão e a ação que ele produz; copia um relatório para a issue #78.", Icon: ActionIcon.ControllerTest, Section: controls),
+            new("Controles sem perfil…", ShowControllersMenu, Detail: "Configurar joysticks que não são reconhecidos como gamepad.", Icon: ActionIcon.ControllerSetup, Section: controls),
+            new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null, Icon: ActionIcon.Update, Section: app),
+        ];
     }
 
     // ---------- Criar pasta ----------

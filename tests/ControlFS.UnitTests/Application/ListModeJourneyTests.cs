@@ -67,6 +67,7 @@ public class ListModeJourneyTests : IDisposable
         Assert.Equal(new SortOrder(SortField.Size, Descending: true), app.ListHeader.Sort);
         Assert.Equal("b-grande.bin", app.Browser.List.Items[0].Name);
         d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Configurações"); // a ordenação mora em Menu → Configurações (#193)
         Assert.Contains(((MenuModal)app.TopModal!).Items, i => i.Label == "Ordenar por: tamanho");
         Assert.Contains(((MenuModal)app.TopModal!).Items, i => i.Label == "Ordem: decrescente");
         d.Press(InputAction.Back);

@@ -46,7 +46,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Layout responsivo** para portáteis 720p/800p, desktop e TVs 1080p/4K
 - **Tentar de novo** uma operação que falhou ou só os itens que falharam; restos de operações interrompidas são limpos na próxima abertura
 - **Ícones nativos do Windows** para arquivos, pastas, pastas especiais e unidades, carregados em segundo plano e no tamanho da escala da tela
-- **Exibição em lista ou grade** (Menu → Exibição ou Ctrl+G), com navegação 2D pelo controle entre os blocos
+- **Exibição em lista ou grade** (Menu → Configurações → Exibição, R3 ou Ctrl+G), com navegação 2D pelo controle entre os blocos
 - **Tipos de unidade** à primeira vista (local, USB, óptica, rede), atualizados ao conectar ou remover um pendrive
 - **Operações de arquivo:** renomear, copiar, recortar, colar, mover e excluir para a Lixeira, com conflitos (pular / manter ambos / substituir / mesclar pastas) e resultado por item
 - **Lixeira** na tela inicial: restaure itens para a pasta original ou exclua de vez (sempre com confirmação)

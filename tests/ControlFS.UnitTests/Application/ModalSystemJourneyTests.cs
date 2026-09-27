@@ -116,6 +116,13 @@ public class ModalSystemJourneyTests : IDisposable
         app.PushModal(new MenuModal("Teste", [new MenuItem("Excluir…", () => { }, Icon: ActionIcon.Delete), new MenuItem("Copiar", () => { }, Icon: ActionIcon.Copy)]));
         Assert.Equal("Copiar", ((MenuModal)app.TopModal!).Items[((MenuModal)app.TopModal!).FocusIndex].Label);
         d.Press(InputAction.Back);
+        // Na grade de ações rápidas também (#193): o bloco perigoso vai para o fim e nunca é o foco inicial.
+        var quick = new MenuModal("Teste", [new MenuItem("Excluir…", () => { }, Icon: ActionIcon.Delete, Placement: MenuPlacement.Quick),
+            new MenuItem("Copiar", () => { }, Icon: ActionIcon.Copy, Placement: MenuPlacement.Quick)]);
+        app.PushModal(quick);
+        Assert.Equal(["Copiar", "Excluir…"], quick.Items.Select(i => i.Label));
+        Assert.Equal("Copiar", quick.Items[quick.FocusIndex].Label);
+        d.Press(InputAction.Back);
         var dialog = new DialogModal("Teste?", [], sensitive: true);
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => app.CloseModal(dialog));
         dialog.Options.Add(new DialogOption("Excluir permanentemente", DialogOptionKind.Danger, () => { }));
@@ -177,5 +184,73 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.Null(app.TopModal);
         Assert.Equal("b.txt", app.Browser.List.Focused?.Name);
         Assert.Equal(PaneRegion.List, app.FocusRegion);
+    });
+
+    [Fact]
+    public void Quick_action_grid_moves_in_two_dimensions_and_activates_a_tile() => UiContext.Run(async () =>
+    {
+        var d = Boot();
+        var app = d.App;
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("a.txt");
+        d.Press(InputAction.OpenContextMenu);
+        var menu = await d.WaitMenu();
+        // Arquivo comum: 7 blocos em 2 linhas de 4; Excluir no fim da grade. O foco abre na lista, onde sempre abriu.
+        Assert.Equal(["Abrir", "Recortar", "Copiar", "Renomear", "Compactar", "Propriedades", "Excluir"], menu.Items.Take(menu.QuickCount).Select(i => i.TileLabel));
+        Assert.Equal((4, 2), (menu.QuickColumns, menu.QuickRows));
+        string Focused() => menu.Items[menu.FocusIndex].Label;
+        Assert.Equal("Visualizar como texto", Focused());
+
+        d.Press(InputAction.NavigateUp); // do topo da lista para a última linha da grade (coluna 1)
+        Assert.Equal("Compactar…", Focused());
+        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateRight); // borda: fica
+        Assert.Equal("Excluir…", Focused());
+        Assert.Same(menu, app.TopModal); // Direita num bloco nunca escolhe
+        d.Press(InputAction.NavigateLeft);
+        app.TakeAnnouncement();
+        d.Press(InputAction.NavigateRight);
+        Assert.Contains("Excluir…, ação perigosa, ação rápida 7 de 7", app.TakeAnnouncement(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateDown); // última linha: entra na lista
+        Assert.Equal("Visualizar como texto", Focused());
+        d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
+        Assert.Equal("Excluir…", Focused());
+        d.Press(InputAction.NavigateUp);
+        d.Press(InputAction.NavigateUp); // primeira linha: dá a volta para o último item da lista
+        Assert.Equal(menu.Items.Count - 1, menu.FocusIndex);
+        d.Press(InputAction.PageUp);
+        d.Press(InputAction.NavigateRight); // Recortar
+        d.Press(InputAction.Confirm);
+        Assert.Null(app.TopModal);
+        Assert.Equal(FileOperationKind.Move, app.Clipboard?.Kind);
+    });
+
+    [Fact]
+    public void Settings_live_in_Configuracoes_and_a_toggle_keeps_it_open() => UiContext.Run(async () =>
+    {
+        var d = Boot();
+        var app = d.App;
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.OpenAppMenu);
+        var menu = await d.WaitMenu();
+        Assert.DoesNotContain(menu.Items, i => i.Label.StartsWith("Densidade", StringComparison.Ordinal));
+        d.FocusMenu(menu, menu.Items.ToList().FindIndex(i => i.Label == "Configurações…"));
+        d.Press(InputAction.Confirm);
+        var settings = await d.WaitMenu();
+        Assert.Equal("Configurações", settings.Title);
+        // Todo ajuste que saiu do Menu continua alcançável aqui.
+        foreach (var label in new[] { "Exibição:", "Densidade da lista:", "Ocultar painel de detalhes", "Ordenar por:", "Ordem:", "Itens ocultos:", "Busca em subpastas:",
+                     "Recentes:", "Sugestões do teclado:", "Confirmar com:", "Legendas:", "Fluidez:", "Controle ativo:", "Teste de controles…", "Controles sem perfil…", "Atualizações" })
+            Assert.True(settings.Items.Any(i => i.Label.StartsWith(label, StringComparison.Ordinal)) || label == "Ocultar painel de detalhes" && settings.Items.Any(i => i.Label == "Mostrar painel de detalhes"), label);
+
+        d.FocusMenu(settings, settings.Items.ToList().FindIndex(i => i.Label == "Densidade da lista: confortável"));
+        d.Press(InputAction.Confirm);
+        Assert.Same(settings, app.TopModal);
+        Assert.Equal(ListDensity.Compact, app.Settings.Density);
+        Assert.Equal("Densidade da lista: compacta", settings.Items[settings.FocusIndex].Label);
+        d.Press(InputAction.Back);
+        Assert.Null(app.TopModal);
     });
 }

@@ -102,7 +102,11 @@ hardware, visual or timing checks that CI can't prove.
 Icons: `ActionIcon` (Core) is the only map from meaning to symbol (`ActionIcons.Glyph`, Segoe Fluent Icons / MDL2);
 `ActionIcons.IsDestructive` (Delete, DeleteForever, Erase) drives the red style and the "never initial focus" rule
 (`AppController.SafeInitialFocus`). `MenuItem.Icon`/`Section`, `DialogOption.Icon`, `Modal.Icon`/`Subtitle` are set by
-`AppController`; views never pick icons. `Theme.SolidSurfaces` comes from Windows transparency effects off or high
+`AppController`; views never pick icons. Menus (#193): `MenuItem.Placement = Quick` (set by `AppController`) puts an
+option in the quick-action grid (≤ 4 tiles per row, destructive tiles last, `ShortLabel` under the icon, full label for
+Narrator/UIA); the rest is a compact list (40 px rows, detail only on the focused row; with a grid, groups are separated by a divider
+only, without titles). Menu panel: 540 px wide with a grid, 460 without, `MenuPadding` 20, compact header. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
+menu open (`MenuModal.Reload`). The retained panel (#191) swaps only the tile/row that loses and gains focus. `Theme.SolidSurfaces` comes from Windows transparency effects off or high
 contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContrast`); `Theme.ReduceMotion` from
 `UISettings.AnimationsEnabled`.
 
@@ -113,17 +117,17 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Feature | Where | Shortcut / flow | Test |
 |---|---|---|---|
 | Semantic actions only (screens never see buttons) | all | `InputAction` → `AppController.Handle` | all journey tests (`Driver`) |
-| Default map by physical position; confirm/back convention swaps behavior and prompts | Menu → "Confirmar com" | South/East | `InputRouterTests::East_confirms_convention_swaps_behavior_by_position`, `PromptJourneyTests` |
-| R3 (right stick click) → Lista/Grade | footer "R Lista/Grade" | R3, Ctrl+G, Menu → Exibição | `PromptJourneyTests` (prompt + button), `GridViewJourneyTests`, `DensityJourneyTests` |
+| Default map by physical position; confirm/back convention swaps behavior and prompts | Menu → Configurações → "Confirmar com" | South/East | `InputRouterTests::East_confirms_convention_swaps_behavior_by_position`, `PromptJourneyTests` |
+| R3 (right stick click) → Lista/Grade | footer "R Lista/Grade" | R3, Ctrl+G, Menu → Configurações → Exibição | `PromptJourneyTests` (prompt + button), `GridViewJourneyTests`, `DensityJourneyTests` |
 | Confirm/menus never repeat; navigation repeats with acceleration | — | hold | `InputRouterTests::Confirm_fires_once_per_press_and_never_repeats`, `::Navigation_repeats_after_initial_delay_with_acceleration` |
 | Held button latched across context change | — | — | `InputRouterTests::Held_button_is_latched_on_context_change_until_released`, `::Latched_navigation_does_not_repeat_into_new_context`, `::Context_change_triggered_by_a_repeat_keeps_the_control_latched` |
 | Active device, hot swap, sensitive-context lock | footer header status | press on another controller | `InputRouterTests::Another_device_takes_over_only_with_a_new_press_while_the_active_one_is_idle`, `::Sensitive_context_blocks_automatic_device_takeover` |
 | Suspension when the window loses focus | — | Alt+Tab | `InputRouterTests::Suspended_router_ignores_input_and_resume_requires_new_press`; Manual (TESTING "Antes de cada release") |
 | Stick deadzone, hysteresis, diagonals | — | left stick | `StickNormalizerTests` (5 tests) |
-| Active controller menu, duplicates (Steam Input/DS4Windows) | Menu → Controle ativo | Start | `ActiveControllerJourneyTests`, `InputRouterTests::Explicitly_selected_device_is_the_only_one_routed_until_automatic_or_removed`; Manual "Controle ativo e duplicatas (#80)" |
-| Controller test screen + report | Menu → Teste de controles… | hold South/East | `ControllerTestJourneyTests`; Manual "Teste de controles (#78)" |
-| Raw joystick wizard, profiles import/export, two-button long press | Menu → Controles sem perfil… | — | `ControllerMappingWizardTests` (5), `ControllerMappingJourneyTests` (3), `ControllerProfileSerializerTests` (3); Manual "Joystick sem perfil (#79)" |
-| Family detection and label style (automatic/generic/Xbox/PS/Nintendo) | Menu → Legendas | — | `ControllerFamilyTests` (3), `PromptJourneyTests` |
+| Active controller menu, duplicates (Steam Input/DS4Windows) | Menu → Configurações → Controle ativo | Start | `ActiveControllerJourneyTests`, `InputRouterTests::Explicitly_selected_device_is_the_only_one_routed_until_automatic_or_removed`; Manual "Controle ativo e duplicatas (#80)" |
+| Controller test screen + report | Menu → Configurações → Teste de controles… | hold South/East | `ControllerTestJourneyTests`; Manual "Teste de controles (#78)" |
+| Raw joystick wizard, profiles import/export, two-button long press | Menu → Configurações → Controles sem perfil… | — | `ControllerMappingWizardTests` (5), `ControllerMappingJourneyTests` (3), `ControllerProfileSerializerTests` (3); Manual "Joystick sem perfil (#79)" |
+| Family detection and label style (automatic/generic/Xbox/PS/Nintendo) | Menu → Configurações → Legendas | — | `ControllerFamilyTests` (3), `PromptJourneyTests` |
 | Dynamic footer prompts, hot swap, keyboard keys when typing on a physical keyboard | footer | — | `PromptJourneyTests`, `HintJourneyTests` (4), `JourneyTests::Footer_hints_only_show_actions_that_work_in_context` |
 | Footer order (A1): Confirm, Back, Mark, Actions, Menu, Search, Lista/Grade, L1, R1 (screens only; modals keep theirs); L1/R1 glyphs at the ends of the top bar while the list has focus (#176) | footer, top bar | — | `PromptJourneyTests` |
 | Xbox face colors in glyphs (A green, B red, X blue, Y yellow) | footer, glyph gallery | — | Screens (`glyphs/`); Manual "Glifos dos botões" |
@@ -152,23 +156,28 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Go to folder above… | Menu | Start | `BreadcrumbJourneyTests` (same menu as the `…` segment) |
 | Go home | Menu → Ir para o início; top bar root chip "Locais" (A2) | Start / LB | `JourneyTests::Back_semantics_…`, `TopBarJourneyTests` |
 | Favorites: add/remove/reorder, missing kept until removed, first on Home and in the picker | Home, item actions, top bar (A2) | North → Adicionar aos favoritos | `FavoritesJourneyTests` |
-| Recents: bounded, persisted, clear, turn off | Home "Recentes", Menu → Recentes, top bar (A2) | North on Recentes | `RecentsJourneyTests` |
+| Recents: bounded, persisted, clear, turn off | Home "Recentes", Menu → Configurações → Recentes, top bar (A2) | North on Recentes | `RecentsJourneyTests` |
 | Recycle Bin: list, restore (never overwrite), permanent delete asks on Cancel | Home, top bar (A2) | South/North on an item | `RecycleBinJourneyTests`, `RecycleBinIntegrationTests` (2), `UndoJourneyTests::Undo_of_a_recycle_…` |
 | Search (on-screen keyboard, streaming, partial/complete, skipped folders, cancel keeps partial) | results in the current mode | Select/View, Ctrl+F | `SearchJourneyTests` (2), `SearchIntegrationTests` (3); Manual "Busca (#46)" |
 | Search filters (type/size/date), subfolders toggle | North on results | — | `SearchFilterJourneyTests` |
 | OneDrive files-on-demand folders searched without downloading | — | — | `SearchIntegrationTests::Reparse_tag_…`; Manual "OneDrive sob demanda (#126)" |
-| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more; counted from the width left by the details panel, #177: 2 at 1080p with it) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
-| Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |
-| Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem; list column header shows the arrow and sorts on click (C1) | Start; mouse on a column title | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity`, `ListModeJourneyTests::Column_header_follows_…`; Screens `2c` |
-| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List and grid (incl. Home/This PC cards), right side (C2, grid #177); automatic = shown where it fits (list: name stays legible; grid: ≥ 2 columns), hidden on handheld/narrow (`MainWindow.DetailsLayout`) | Menu → Mostrar/Ocultar painel de detalhes (per view, `AppSettings.ListDetails`/`GridDetails`, null = automatic) | — | `DetailsPanelJourneyTests` (4); Screens `1-home`, `1c`, `2d`, `2e`, `2f`, `3c`, `3d`; Manual "Painel de detalhes (redesenho, fase C2)", "Painel de detalhes na grade (#177)" |
+| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more; counted from the width left by the details panel, #177: 2 at 1080p with it) | Menu → Configurações → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
+| Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Configurações → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |
+| Sort by name/type/size/date, ascending/descending, natural sort | Menu → Configurações → Ordenar por / Ordem; list column header shows the arrow and sorts on click (C1) | Start; mouse on a column title | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity`, `ListModeJourneyTests::Column_header_follows_…`; Screens `2c` |
+| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List and grid (incl. Home/This PC cards), right side (C2, grid #177); automatic = shown where it fits (list: name stays legible; grid: ≥ 2 columns), hidden on handheld/narrow (`MainWindow.DetailsLayout`) | Menu → Configurações → Mostrar/Ocultar painel de detalhes (per view, `AppSettings.ListDetails`/`GridDetails`, null = automatic) | — | `DetailsPanelJourneyTests` (4); Screens `1-home`, `1c`, `2d`, `2e`, `2f`, `3c`, `3d`; Manual "Painel de detalhes (redesenho, fase C2)", "Painel de detalhes na grade (#177)" |
 | List rows: mark box (focus ≠ marking), icon, name, type ("Pasta do sistema" for Windows folders), size (real sums on Home), friendly date, chevron; compact density with the same columns | content, List (C1) | X marks; mouse on the header box = Marcar todos / Limpar | `ListModeJourneyTests::Friendly_dates_…`, `::Column_header_…`; Screens `1-home`, `2-folder`, `3-folder-compact`; Manual "Lista em colunas (redesenho, fase C1)" |
 | Opening another location focuses its first item; back/up/refresh restore the item | content | South, Right, East, Left | `ListModeJourneyTests::Opening_another_location_…`, `JourneyTests::Back_semantics_…` |
-| Hidden items show/hide (persisted) | Menu → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
+| Hidden items show/hide (persisted) | Menu → Configurações → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
 | Refresh | Menu → Atualizar | Start | journey tests that call Refresh indirectly (`FileOperationJourneyTests`) |
 | Folder picker (copy/move/extract destination, create folder, other places, go to path, cancel) | full-screen picker, same shell | Start = Escolher esta pasta… | `FileOperationJourneyTests::Copy_to_a_folder_with_the_picker_and_keep_both_on_conflict` |
 | Exit confirmation starts on Cancel | Home East, Menu → Sair | East | `JourneyTests::Back_semantics_…`, UIA |
 
 ### Item actions (North menus)
+
+Since #193 the frequent actions are quick-grid tiles (folder: Abrir, Recortar, Copiar, Renomear, Compactar, Colar,
+Propriedades, Excluir; file: Abrir/Executar/Jogar, the same file ops; marked items: Recortar, Copiar, Compactar, Excluir; drive: Abrir,
+Nova aba, Propriedades, Atualizar); everything else stays in the list below. Initial focus is unchanged (first item passed
+by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTests::Quick_action_grid_…`.
 
 | Feature | Where | Test |
 |---|---|---|
@@ -185,26 +194,32 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 
 ### App menu (Start)
 
-Every entry stays in the Menu (Start/F10); nothing moves out without a replacement in the same PR.
+Every entry stays reachable from the Menu (Start/F10); nothing moves out without a replacement in the same PR. Since
+#193 the Menu has a quick grid (Colar, Nova pasta, Nova aba, Atualizar, Ir para caminho, Operações, Configurações, Ir
+para o início) and a short list (Ir para pasta acima, Abas, Desfazer/Refazer, Esvaziar área de transferência, Sobre,
+Sair); every setting moved to **Menu → Configurações** (rows marked "→ Configurações"). `ModalSystemJourneyTests::
+Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.ChooseMenu` looks inside Configurações for them.
 
 | Entry | Test |
 |---|---|
 | Colar, Nova pasta, Atualizar, Ir para pasta acima…, Ir para caminho… | `ClipboardJourneyTests`, `JourneyTests::Vertical_journey_…`, `GoToPathJourneyTests` |
-| Ordenar por, Ordem | `StateTests` (sorting); Manual |
-| Busca em subpastas | `SearchJourneyTests` |
-| Recentes: lembrar/não lembrar | `RecentsJourneyTests` |
-| Itens ocultos | Manual "Lista: estados e densidade (#28)" |
-| Exibição: lista/grade | `GridViewJourneyTests` |
-| Densidade da lista | `DensityJourneyTests` |
+| Configurações (grouped: Exibição, Busca e privacidade, Controles, ControlFS; toggles keep it open) | `ModalSystemJourneyTests::Settings_live_in_Configuracoes_…`; Screens `4b-settings` |
+| → Configurações: Ordenar por, Ordem | `StateTests` (sorting), `ListModeJourneyTests`; Manual |
+| → Configurações: Busca em subpastas | `SearchJourneyTests` |
+| → Configurações: Recentes: lembrar/não lembrar | `RecentsJourneyTests` |
+| → Configurações: Itens ocultos | Manual "Lista: estados e densidade (#28)" |
+| → Configurações: Exibição: lista/grade | `GridViewJourneyTests` |
+| → Configurações: Densidade da lista | `DensityJourneyTests` |
 | Operações (N ativas) → operation → Pausar/Continuar/Cancelar operação/Tentar de novo; Limpar histórico… | `PauseJourneyTests`, `FileOperationJourneyTests::Retry_…` (2), `JourneyTests::Retry_failed_items_of_a_cancelled_extraction_…`, `HistoryJourneyTests` (2) |
 | Desfazer / Refazer | `UndoJourneyTests` (4) |
-| Confirmar com | `PromptJourneyTests`, `InputRouterTests` |
-| Legendas | `PromptJourneyTests`, `ControllerFamilyTests` |
-| Teste de controles…, Controle ativo, Controles sem perfil… | `ControllerTestJourneyTests`, `ActiveControllerJourneyTests`, `ControllerMappingJourneyTests` |
-| Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
+| → Configurações: Confirmar com | `PromptJourneyTests`, `InputRouterTests` |
+| → Configurações: Legendas | `PromptJourneyTests`, `ControllerFamilyTests` |
+| → Configurações: Fluidez (máxima / economia de bateria) | Manual "Fluidez máxima (leitura por quadro)" |
+| → Configurações: Teste de controles…, Controle ativo, Controles sem perfil… | `ControllerTestJourneyTests`, `ActiveControllerJourneyTests`, `ControllerMappingJourneyTests` |
+| → Configurações: Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
 | Esvaziar área de transferência | `ClipboardJourneyTests` |
 | Sobre o ControlFS | `AboutJourneyTests` |
-| Ir para o início, Sair | `JourneyTests::Back_semantics_…`, UIA |
+| Ir para o início (grid tile "Início"), Sair (last list row) | `JourneyTests::Back_semantics_…`, UIA |
 
 ### File operations and Central de Operações
 
@@ -244,7 +259,7 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 | On-screen keyboard: PT-BR/EN, shift/caps, numbers, symbols, accents, space, backspace (repeat), clear, caret, selection, OK/cancel, name/path/password fields, masking/reveal, controller navigation | modal; footer shows Selecionar/Apagar/…/Concluir/Cancelar | `VirtualKeyboardTests` (13), `HintJourneyTests::On_screen_keyboard_…`, UIA |
 | Dialogs name the focused choice; destructive dialogs start on the safe option | modal | `HintJourneyTests::Dialogs_and_menus_…`, UIA |
 | Modal system (#172): every menu option and dialog button has an icon; destructive ones flagged, red + warning symbol, never the initial focus; input never reaches the screen under a modal (buttons, list clicks, tabs); nested modals close one at a time and focus returns; prompts and status inside the panel; solid panel with transparency off/high contrast | every modal | `ModalSystemJourneyTests` (4), UIA; Screens `m1`–`m9`, `icons/action-icons`; Manual "Modais (#172)" |
-| Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
+| Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Configurações → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
 | About (version, license, source) | Menu → Sobre | `AboutJourneyTests` |
 
 ### Accessibility, layout and window

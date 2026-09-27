@@ -530,5 +530,22 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Com controle real, segurar baixo num menu longo (Menu, Ações): o foco anda sem piscar, sem "fantasma" na opção anterior e sem a rolagem pular para o topo.
 - [ ] No teclado virtual, andar rápido pelas teclas e digitar: sem piscar; a faixa de sugestões e o campo atualizam sem mexer nas teclas.
 ## Fluidez máxima (leitura por quadro) — não validado em hardware
-- [ ] Tela de 120/144 Hz: segurar o direcional numa lista longa e nos menus; o foco anda liso. Comparar com Menu → Fluidez: economia.
+- [ ] Tela de 120/144 Hz: segurar o direcional numa lista longa e nos menus; o foco anda liso. Comparar com Menu → Configurações → Fluidez: economia.
 - [ ] Portátil na bateria: uso de CPU/GPU com a janela parada em "máxima" vs "economia"; em segundo plano a leitura cai para o temporizador lento.
+
+## Menus com ações rápidas e Configurações (#193)
+Automático: `ModalSystemJourneyTests::Quick_action_grid_moves_in_two_dimensions_and_activates_a_tile` (grade 3×2 de um
+arquivo, navegação 2D, bordas, entrada e saída da lista, Narrador "ação rápida N de M", escolher um bloco),
+`::Destructive_actions_are_flagged_and_never_the_initial_focus` (bloco perigoso vai para o fim e nunca é o foco inicial) e
+`::Settings_live_in_Configuracoes_and_a_toggle_keeps_it_open` (todo ajuste que saiu do Menu está em Configurações; alternar
+mantém a tela aberta com o texto novo). Capturas `m1-menu-actions`, `m1b-menu-destructive-focus`, `4-menu` e
+`4b-settings`. O `Driver.ChooseMenu` dos testes procura em Configurações os ajustes que saíram do Menu.
+
+Não validado em hardware:
+- [ ] TV 1080p/4K a ~3 m: rótulos dos blocos legíveis; dá para ver qual bloco está focado (preenchido, maior, negrito);
+      o bloco vermelho (Excluir) se distingue sem depender da cor (símbolo e posição no fim).
+- [ ] Portátil 1280×720/800: ações de arquivo e Menu cabem sem rolar; Configurações rola até o ajuste focado.
+- [ ] Controle real: esquerda/direita param nas pontas da grade; baixo/cima entram e saem da lista voltando à mesma
+      coluna; segurar baixo percorre a lista sem piscar (só o bloco/linha que muda é redesenhado).
+- [ ] Mouse: clicar num bloco escolhe; clicar num ajuste em Configurações alterna e mantém a tela aberta.
+- [ ] Narrador: bloco lido com o nome completo, "ação perigosa"/"indisponível: motivo" e "ação rápida N de M".

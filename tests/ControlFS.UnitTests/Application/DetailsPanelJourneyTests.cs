@@ -254,8 +254,10 @@ public class DetailsPanelJourneyTests : IDisposable
         Assert.Equal(("Jogos", 2), (app.Browser.List.Focused!.Name, app.Browser.List.SelectionCount));
         Assert.Equal((false, (bool?)null), (store.Load().Settings.GridDetails, store.Load().Settings.ListDetails));
         d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Configurações"); // o ajuste mora em Menu → Configurações (#193)
         Assert.Contains((await d.WaitMenu()).Items, i => i.Label == "Mostrar painel de detalhes");
         await d.ChooseMenu("Mostrar painel de detalhes"); // de volta ao que cabe: automático
+        d.Press(InputAction.Back); // Configurações continua aberto depois de alternar
         Assert.True(app.DetailsPanelVisible);
         Assert.Null(store.Load().Settings.GridDetails);
 

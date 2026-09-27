@@ -381,22 +381,21 @@ public sealed partial class AppController
             return;
         }
         menu.FocusIndex = Math.Clamp(menu.FocusIndex, 0, count - 1);
+        if (menu.IsQuick(menu.FocusIndex) && MoveInQuickGrid(menu, action)) return;
         switch (action)
         {
-            case InputAction.NavigateUp: menu.FocusIndex = (menu.FocusIndex - 1 + count) % count; break;
+            case InputAction.NavigateUp:
+                // Topo da lista: sobe para a última linha da grade, na coluna de onde o foco saiu.
+                if (menu.FocusIndex == menu.QuickCount && menu.QuickCount > 0)
+                    menu.FocusIndex = Math.Min(menu.QuickCount - 1, (menu.QuickRows - 1) * menu.QuickColumns + menu.GridColumn);
+                else menu.FocusIndex = (menu.FocusIndex - 1 + count) % count;
+                break;
             case InputAction.NavigateDown: menu.FocusIndex = (menu.FocusIndex + 1) % count; break;
             case InputAction.PageUp: menu.FocusIndex = 0; break;
             case InputAction.PageDown: menu.FocusIndex = count - 1; break;
             case InputAction.Confirm:
-            case InputAction.NavigateRight:
-                var item = menu.Items[menu.FocusIndex];
-                if (!item.IsEnabled)
-                {
-                    StatusMessage = item.DisabledReason ?? "Ação indisponível.";
-                    break;
-                }
-                CloseModal(menu);
-                item.Execute!();
+            case InputAction.NavigateRight when !menu.IsQuick(menu.FocusIndex):
+                ChooseMenuItem(menu);
                 break;
             case InputAction.Back:
             case InputAction.NavigateLeft:
@@ -405,6 +404,62 @@ public sealed partial class AppController
                 CloseModal(menu);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Grade de ações rápidas (2D): Esquerda/Direita andam entre os blocos da linha e param nas bordas (nunca fecham nem
+    /// escolhem); Baixo desce uma linha e, da última, entra na lista (sem lista: volta à primeira linha); Cima sobe uma
+    /// linha e, da primeira, vai ao último item da lista (sem lista: à última linha). Devolve false para as demais ações.
+    /// </summary>
+    private static bool MoveInQuickGrid(MenuModal menu, InputAction action)
+    {
+        var index = menu.FocusIndex;
+        var columns = menu.QuickColumns;
+        var (row, column) = (index / columns, index % columns);
+        var lastRow = menu.QuickRows - 1;
+        var hasList = menu.Items.Count > menu.QuickCount;
+        switch (action)
+        {
+            case InputAction.NavigateLeft:
+                if (column > 0) menu.FocusIndex = index - 1;
+                return true;
+            case InputAction.NavigateRight:
+                if (column < columns - 1 && index + 1 < menu.QuickCount) menu.FocusIndex = index + 1;
+                return true;
+            case InputAction.NavigateDown:
+                menu.GridColumn = column;
+                menu.FocusIndex = row < lastRow ? Math.Min(menu.QuickCount - 1, index + columns)
+                    : hasList ? menu.QuickCount
+                    : column;
+                return true;
+            case InputAction.NavigateUp:
+                menu.GridColumn = column;
+                menu.FocusIndex = row > 0 ? index - columns
+                    : hasList ? menu.Items.Count - 1
+                    : Math.Min(menu.QuickCount - 1, lastRow * columns + column);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void ChooseMenuItem(MenuModal menu)
+    {
+        var item = menu.Items[menu.FocusIndex];
+        if (!item.IsEnabled)
+        {
+            StatusMessage = item.DisabledReason ?? "Ação indisponível.";
+            return;
+        }
+        if (item.KeepOpen)
+        {
+            // Ajuste (Configurações): aplica e continua no menu, com os textos novos e o foco no mesmo ajuste.
+            item.Execute!();
+            if (TopModal == menu) menu.Refresh();
+            return;
+        }
+        CloseModal(menu);
+        item.Execute!();
     }
 
     private void HandleKeyboard(KeyboardModal modal, InputAction action)

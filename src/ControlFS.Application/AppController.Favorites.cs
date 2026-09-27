@@ -132,7 +132,7 @@ public sealed partial class AppController
             [
                 new("Abrir", ShowRecents, Icon: ActionIcon.Recent),
                 new("Limpar recentes", ClearRecents, Detail: "Apaga as listas deste computador.", Icon: ActionIcon.Erase),
-                new("Desligar recentes", ToggleRememberRecents, Detail: "Para de lembrar e apaga as listas. Religue no Menu.", Icon: ActionIcon.Erase),
+                new("Desligar recentes", ToggleRememberRecents, Detail: "Para de lembrar e apaga as listas. Religue em Menu → Configurações.", Icon: ActionIcon.Erase),
             ]) { Icon = ActionIcon.Recent });
             return;
         }

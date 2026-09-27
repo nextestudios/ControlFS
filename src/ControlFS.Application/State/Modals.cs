@@ -18,25 +18,109 @@ public abstract class Modal(string title)
     public virtual bool IsSensitive => false;
 }
 
+/// <summary>Onde uma opção aparece no menu (#193): na grade de ações rápidas do topo ou na lista abaixo dela.</summary>
+public enum MenuPlacement
+{
+    List,
+
+    /// <summary>Ação frequente: bloco com ícone e rótulo curto na grade do topo (como o menu de contexto do Windows 11).</summary>
+    Quick,
+}
+
 /// <summary>
 /// Opção de menu. <paramref name="Icon"/> diz o que a ação faz (a tela desenha o símbolo ao lado do texto);
 /// <paramref name="Section"/> agrupa opções: quando muda de um item para o seguinte, a tela desenha um separador com o
-/// título do grupo (vazio: só a linha).
+/// título do grupo (vazio: só a linha). <paramref name="Placement"/> põe a opção na grade de ações rápidas, com
+/// <paramref name="ShortLabel"/> sob o ícone (o Narrador e o foco sempre usam <paramref name="Label"/> por extenso).
+/// <paramref name="KeepOpen"/>: a opção muda um ajuste e o menu continua aberto, com os textos atualizados.
 /// </summary>
 public sealed record MenuItem(string Label, Action? Execute, string? DisabledReason = null, string? Detail = null,
-    ActionIcon Icon = ActionIcon.None, string? Section = null)
+    ActionIcon Icon = ActionIcon.None, string? Section = null, MenuPlacement Placement = MenuPlacement.List, string? ShortLabel = null,
+    bool KeepOpen = false)
 {
     public bool IsEnabled => Execute is not null && DisabledReason is null;
 
     /// <summary>Apaga arquivos ou listas: desenhado em vermelho com alerta e nunca é o foco inicial.</summary>
     public bool IsDestructive => ActionIcons.IsDestructive(Icon);
+
+    public bool IsQuick => Placement == MenuPlacement.Quick;
+
+    /// <summary>Texto sob o ícone na grade: o curto escolhido ou o rótulo sem as reticências.</summary>
+    public string TileLabel => ShortLabel ?? Label.TrimEnd('…');
 }
 
-public sealed class MenuModal(string title, IReadOnlyList<MenuItem> items) : Modal(title)
+/// <summary>
+/// Menu com ações rápidas (grade no topo, <see cref="QuickCount"/> primeiros itens de <see cref="Items"/>) e a lista das
+/// demais. A ordem de quem montou o menu vale dentro de cada parte; o foco inicial é o primeiro item que ele passou (ou
+/// <see cref="FocusOn"/>), nunca uma ação perigosa (AppController.SafeInitialFocus).
+/// </summary>
+public sealed class MenuModal : Modal
 {
-    public IReadOnlyList<MenuItem> Items { get; } = items;
+    /// <summary>Máximo de blocos por linha da grade.</summary>
+    public const int MaxQuickColumns = 4;
+
+    public MenuModal(string title, IReadOnlyList<MenuItem> items) : base(title)
+    {
+        Icon = ActionIcon.Menu;
+        Arrange(items);
+        FocusIndex = items.Count == 0 ? 0 : IndexOf(items[0]);
+    }
+
+    public IReadOnlyList<MenuItem> Items { get; private set; } = [];
     public int FocusIndex { get; internal set; }
-    public override ActionIcon Icon { get; internal set; } = ActionIcon.Menu;
+
+    /// <summary>Quantos itens (do início de <see cref="Items"/>) são blocos da grade de ações rápidas.</summary>
+    public int QuickCount { get; private set; }
+
+    /// <summary>
+    /// Blocos por linha: até 4 numa linha só; mais que isso, duas (ou mais) linhas equilibradas de no máximo 4 (os rótulos
+    /// curtos cabem inteiros, legíveis de longe).
+    /// </summary>
+    public int QuickColumns => QuickCount <= MaxQuickColumns ? QuickCount : Math.Min(MaxQuickColumns, (QuickCount + 1) / 2);
+
+    public int QuickRows => QuickCount == 0 ? 0 : (QuickCount + QuickColumns - 1) / QuickColumns;
+
+    public bool IsQuick(int index) => index >= 0 && index < QuickCount;
+
+    /// <summary>Coluna da grade de onde o foco saiu para a lista: Cima volta a ela (navegação previsível).</summary>
+    internal int GridColumn { get; set; }
+
+    /// <summary>Remonta as opções depois de uma opção <see cref="MenuItem.KeepOpen"/> (ex.: Configurações).</summary>
+    internal Func<IReadOnlyList<MenuItem>>? Reload { get; init; }
+
+    /// <summary>Foco inicial numa opção específica (ex.: "Extrair para" num compactado).</summary>
+    internal MenuItem? FocusOn
+    {
+        init
+        {
+            if (value is not null && IndexOf(value) is var index and >= 0) FocusIndex = index;
+        }
+    }
+
+    internal void Refresh()
+    {
+        if (Reload is null) return;
+        var label = FocusIndex >= 0 && FocusIndex < Items.Count ? Items[FocusIndex].Label : null;
+        var previous = FocusIndex;
+        Arrange(Reload());
+        // O mesmo ajuste continua em foco mesmo com o texto novo (ex.: "Ordem: crescente" → "decrescente").
+        var same = Items.ToList().FindIndex(i => i.Label == label);
+        FocusIndex = same >= 0 ? same : Math.Clamp(previous, 0, Math.Max(0, Items.Count - 1));
+    }
+
+    private void Arrange(IReadOnlyList<MenuItem> items)
+    {
+        // Blocos perigosos (Excluir) sempre no fim da grade, longe do ponto de entrada.
+        Items = [.. items.Where(i => i.IsQuick && !i.IsDestructive), .. items.Where(i => i.IsQuick && i.IsDestructive), .. items.Where(i => !i.IsQuick)];
+        QuickCount = items.Count(i => i.IsQuick);
+    }
+
+    private int IndexOf(MenuItem item)
+    {
+        for (var i = 0; i < Items.Count; i++)
+            if (ReferenceEquals(Items[i], item)) return i;
+        return -1;
+    }
 }
 
 public sealed class KeyboardModal(VirtualKeyboard keyboard, Func<VirtualKeyboard, Task> onSubmit, Action? onCancel = null) : Modal(keyboard.Title)
