@@ -137,7 +137,7 @@ public class UndoJourneyTests : IDisposable
         await d.Idle();
 
         d.App.ConfirmTransfer(FileOperationKind.Move, [_tmp.Sub("Pasta"), _tmp.Sub("a.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Mover 2 item(ns)?"), "Mover");
+        d.ChooseOption(await d.WaitDialog("Mover 2 itens?"), "Mover");
         var done = await d.WaitDialog("Mover: concluído");
         d.ChooseOption(done, "Desfazer"); // ação no próprio resultado
         d.ChooseOption(await d.WaitDialog("Desfazer \""), "Desfazer");
@@ -148,7 +148,7 @@ public class UndoJourneyTests : IDisposable
 
         // Move de novo; depois alguém cria outro a.txt na origem: desfazer é recusado e nada muda.
         d.App.ConfirmTransfer(FileOperationKind.Move, [_tmp.Sub("a.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Mover 1 item(ns)?"), "Mover");
+        d.ChooseOption(await d.WaitDialog("Mover 1 item?"), "Mover");
         d.ChooseOption(await d.WaitDialog("Mover: concluído"), "Fechar");
         File.WriteAllText(_tmp.Sub("a.txt"), "novo");
         await Undo(d);
@@ -170,7 +170,7 @@ public class UndoJourneyTests : IDisposable
 
         // Cópia editada depois: não é removida.
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("nota.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         d.ChooseOption(await d.WaitDialog("Copiar: concluído"), "Fechar");
         File.AppendAllText(_tmp.Sub("Destino", "nota.txt"), " editada");
         await Undo(d);
@@ -181,7 +181,7 @@ public class UndoJourneyTests : IDisposable
 
         // Cópia intacta (mantida como "nota (2).txt"): desfazer remove só ela.
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("nota.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         d.ChooseOption(await d.WaitDialog("Já existe"), "Manter ambos");
         d.ChooseOption(await d.WaitDialog("Copiar: concluído"), "Fechar");
         Assert.True(File.Exists(_tmp.Sub("Destino", "nota (2).txt")));
@@ -196,7 +196,7 @@ public class UndoJourneyTests : IDisposable
         await d.FocusItem("nota.txt");
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Excluir…");
-        d.ChooseOption(await d.WaitDialog("Excluir 1 item(ns) permanentemente?"), "Excluir permanentemente");
+        d.ChooseOption(await d.WaitDialog("Excluir 1 item permanentemente?"), "Excluir permanentemente");
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("nota.txt")), "excluído");
         await d.Idle();
         var undo = await AppMenuItem(d, "Desfazer");
@@ -214,7 +214,7 @@ public class UndoJourneyTests : IDisposable
         await d.FocusItem("a.txt");
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Excluir…");
-        d.ChooseOption(await d.WaitDialog("Mover 1 item(ns) para a Lixeira?"), "Mover para a Lixeira");
+        d.ChooseOption(await d.WaitDialog("Mover 1 item para a Lixeira?"), "Mover para a Lixeira");
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("a.txt")), "na Lixeira");
         await d.Idle();
 

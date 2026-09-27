@@ -1,4 +1,5 @@
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application.State;
 
@@ -61,7 +62,7 @@ public sealed class SearchState(SearchLocation location)
                 SearchStatus.Failed => "Não foi possível ler a pasta da busca",
                 _ => $"Busca concluída: {count}",
             };
-            if (Skipped.Count > 0) text += $" · {Skipped.Count} pasta(s) sem permissão ou inacessível(is) foram puladas";
+            if (Skipped.Count > 0) text += $" · {Plural.Of(Skipped.Count, "pasta sem permissão ou inacessível foi pulada", "pastas sem permissão ou inacessíveis foram puladas")}";
             return text + ".";
         }
     }

@@ -43,7 +43,7 @@ public class DeleteJourneyTests : IDisposable
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Excluir…");
 
-        var dialog = await d.WaitDialog("Excluir 1 item(ns) permanentemente?");
+        var dialog = await d.WaitDialog("Excluir 1 item permanentemente?");
         Assert.Equal("Cancelar", dialog.Options[dialog.FocusIndex].Label);
         Assert.DoesNotContain(dialog.Options, o => o.Label.Contains("Lixeira", StringComparison.Ordinal));
         d.Press(InputAction.Confirm); // Cancelar
@@ -52,7 +52,7 @@ public class DeleteJourneyTests : IDisposable
 
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Excluir…");
-        d.ChooseOption(await d.WaitDialog("Excluir 1 item(ns) permanentemente?"), "Excluir permanentemente");
+        d.ChooseOption(await d.WaitDialog("Excluir 1 item permanentemente?"), "Excluir permanentemente");
         await UiContext.WaitUntil(() => app.Operations.Items.Count == 1 && !app.Operations.Items[0].IsActive, "exclusão concluída");
         await d.Idle();
 

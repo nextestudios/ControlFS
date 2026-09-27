@@ -42,14 +42,14 @@ public class PauseJourneyTests : IDisposable
         d.Press(InputAction.Confirm);
         await d.Idle();
         app.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("nota.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         var op = app.Operations.Items[^1];
         Assert.Equal(OperationState.Running, op.State);
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
-        await d.ChooseMenu("Copiar 1 item(ns) — em andamento");
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)"), "Pausar");
+        await d.ChooseMenu("Copiar 1 item — em andamento");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item"), "Pausar");
         Assert.Equal(OperationState.Paused, op.State);
 
         service.Release.SetResult(); // o motor chega ao primeiro ponto seguro e para ali
@@ -59,8 +59,8 @@ public class PauseJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
-        await d.ChooseMenu("Copiar 1 item(ns) — pausada");
-        var details = await d.WaitDialog("Copiar 1 item(ns)");
+        await d.ChooseMenu("Copiar 1 item — pausada");
+        var details = await d.WaitDialog("Copiar 1 item");
         Assert.DoesNotContain(details.Options, o => o.Label == "Pausar");
         d.ChooseOption(details, "Continuar");
         await d.WaitDialog("Copiar: concluído");

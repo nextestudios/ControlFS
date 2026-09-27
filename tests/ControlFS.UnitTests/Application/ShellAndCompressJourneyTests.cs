@@ -90,7 +90,7 @@ public class ShellAndCompressJourneyTests : IDisposable
         await d.FocusItem("b.txt");
         d.Press(InputAction.ToggleSelection);
         d.Press(InputAction.OpenContextMenu);
-        await d.ChooseMenu("Compactar 2 item(ns)");
+        await d.ChooseMenu("Compactar 2 itens");
 
         var dialog = await d.WaitDialog("Compactar");
         d.ChooseOption(dialog, "Formato: ZIP");  // alterna para TAR.GZ

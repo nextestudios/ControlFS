@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -26,15 +27,15 @@ public sealed partial class AppController
         Clipboard = new FileClipboard(kind, paths, here.FullPath);
         pane.List.ClearSelection();
         StatusMessage = kind == FileOperationKind.Move
-            ? $"{paths.Count} item(ns) recortado(s). Vá até o destino e use Colar (menu de ações)."
-            : $"{paths.Count} item(ns) copiado(s). Vá até o destino e use Colar (menu de ações).";
+            ? $"{Plural.Of(paths.Count, "item", "itens")} {Plural.Word(paths.Count, "recortado", "recortados")}. Vá até o destino e use Colar (menu de ações)."
+            : $"{Plural.Of(paths.Count, "item", "itens")} {Plural.Word(paths.Count, "copiado", "copiados")}. Vá até o destino e use Colar (menu de ações).";
     }
 
     private string? PasteUnavailable(PaneState pane) =>
         FileOpsUnavailable ?? (Clipboard is null ? "Nada para colar: use Copiar ou Recortar primeiro." :
             pane.Location is not PhysicalLocation ? "Abra uma pasta do disco para colar." : null);
 
-    private string PasteLabel => Clipboard is { } c ? $"Colar {c.Paths.Count} item(ns){(c.IsCut ? " (mover)" : string.Empty)}" : "Colar";
+    private string PasteLabel => Clipboard is { } c ? $"Colar {Plural.Of(c.Paths.Count, "item", "itens")}{(c.IsCut ? " (mover)" : string.Empty)}" : "Colar";
 
     internal void Paste(PaneState pane)
     {

@@ -1,5 +1,6 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -39,7 +40,7 @@ public sealed partial class AppController
         if (archives.Count > 8) lines.Add(("…", $"mais {archives.Count - 8}"));
         lines.Add(("Segurança", "conteúdos nunca se misturam; links bloqueados; nada é executado"));
 
-        var dialog = new DialogModal($"Extrair {archives.Count} compactado(s)", lines)
+        var dialog = new DialogModal($"Extrair {Plural.Of(archives.Count, "compactado", "compactados")}", lines)
         {
             Message = "Cada compactado entra na fila como uma operação própria. Os protegidos por senha pedem a senha na vez deles.",
         };
@@ -68,7 +69,7 @@ public sealed partial class AppController
             // Sem perguntar senha antes: a fila é serial, então quem precisar de senha pergunta na sua vez (uma de cada vez).
             Enqueue(new ExtractionPlan(archive, batch.Destination, Dedicated: true, Selected: null, BasePath: string.Empty, batch), password: null);
         }
-        StatusMessage = $"{batch.Archives.Count} extração(ões) na fila, cada uma na sua pasta.";
+        StatusMessage = $"{Plural.Of(batch.Archives.Count, "extração", "extrações")} na fila, cada uma na sua pasta.";
         RaiseChanged();
     }
 
@@ -78,8 +79,8 @@ public sealed partial class AppController
         var problems = result.Count(ItemOutcome.Failed) + result.Count(ItemOutcome.Blocked) + result.Count(ItemOutcome.NotProcessed);
         var detail = result.FinalState switch
         {
-            OperationState.Completed => $"concluída ({result.Count(ItemOutcome.Succeeded)} arquivo(s)){folder}",
-            OperationState.CompletedWithWarnings => $"com avisos ({problems} problema(s)){folder}",
+            OperationState.Completed => $"concluída ({Plural.Of(result.Count(ItemOutcome.Succeeded), "arquivo", "arquivos")}){folder}",
+            OperationState.CompletedWithWarnings => $"com avisos ({Plural.Of(problems, "problema", "problemas")}){folder}",
             OperationState.Cancelled => "cancelada" + folder,
             _ => "falhou: " + (result.Message ?? result.Error.ToString()),
         };
@@ -101,7 +102,7 @@ public sealed partial class AppController
         var lines = new List<(string, string)> { ("Destino", batch.Destination) };
         foreach (var archive in batch.Archives)
             lines.Add((Path.GetFileName(archive), batch.Results[archive].Detail));
-        var dialog = new DialogModal($"Extração de {batch.Archives.Count} compactado(s) " + (allOk ? "concluída" : "com problemas"), lines)
+        var dialog = new DialogModal($"Extração de {Plural.Of(batch.Archives.Count, "compactado", "compactados")} " + (allOk ? "concluída" : "com problemas"), lines)
         {
             Message = "Detalhes de cada compactado (e tentar de novo) em Menu → Operações.",
         };

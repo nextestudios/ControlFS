@@ -75,14 +75,14 @@ public class RecycleBinJourneyTests : IDisposable
         await d.FocusItem("Fotos");
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Excluir permanentemente");
-        var dialog = await d.WaitDialog("Excluir 1 item(ns) permanentemente?");
+        var dialog = await d.WaitDialog("Excluir 1 item permanentemente?");
         Assert.Equal("Cancelar", dialog.Options[dialog.FocusIndex].Label);
         d.Press(InputAction.Back);
         Assert.Contains(bin.Items, i => i.Name == "Fotos");
 
         d.Press(InputAction.Confirm);
         await d.ChooseMenu("Excluir permanentemente");
-        d.ChooseOption(await d.WaitDialog("Excluir 1 item(ns)"), "Excluir permanentemente");
+        d.ChooseOption(await d.WaitDialog("Excluir 1 item"), "Excluir permanentemente");
         await d.Idle();
         Assert.DoesNotContain(bin.Items, i => i.Name == "Fotos");
         Assert.Equal(["estranho.txt"], app.Browser.List.Items.Select(i => i.Name));

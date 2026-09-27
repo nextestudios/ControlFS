@@ -2,6 +2,7 @@ using ControlFS.Application.Operations;
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -101,9 +102,9 @@ public sealed partial class AppController
         return record.Steps[0].Kind switch
         {
             UndoStepKind.RenameBack => $"Volta o nome para \"{Path.GetFileName(record.Steps[0].Original)}\".",
-            UndoStepKind.MoveBack => $"Move {n} item(ns) de volta para {Path.GetDirectoryName(record.Steps[0].Original)}.",
-            UndoStepKind.DeleteCopy => $"Remove {n} cópia(s) criada(s) pela operação, só se continuarem idênticas e o original ainda existir.",
-            _ => $"Restaura {n} item(ns) da Lixeira para o local original.",
+            UndoStepKind.MoveBack => $"Move {Plural.Of(n, "item", "itens")} de volta para {Path.GetDirectoryName(record.Steps[0].Original)}.",
+            UndoStepKind.DeleteCopy => $"Remove {Plural.Of(n, "cópia criada", "cópias criadas")} pela operação, só se continuarem idênticas e o original ainda existir.",
+            _ => $"Restaura {Plural.Of(n, "item", "itens")} da Lixeira para o local original.",
         };
     }
 

@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -50,14 +51,14 @@ public sealed partial class AppController
         {
             var restorable = targets.Where(t => !t.IsBlocked).ToList();
             var single = targets.Count == 1;
-            items.Add(new MenuItem(single ? "Restaurar" : $"Restaurar {restorable.Count} item(ns)", () => Restore(pane, restorable),
+            items.Add(new MenuItem(single ? "Restaurar" : $"Restaurar {Plural.Of(restorable.Count, "item", "itens")}", () => Restore(pane, restorable),
                 restorable.Count == 0 ? targets[0].BlockedReason : null, single ? "Para " + OriginalPath(targets[0]) : "Cada item volta para a pasta de onde saiu."));
-            items.Add(new MenuItem(single ? "Excluir permanentemente…" : $"Excluir {targets.Count} item(ns) permanentemente…", () => ConfirmPurge(pane, targets)));
+            items.Add(new MenuItem(single ? "Excluir permanentemente…" : $"Excluir {Plural.Of(targets.Count, "item", "itens")} permanentemente…", () => ConfirmPurge(pane, targets)));
             if (targets.Count == 1) items.Add(new MenuItem("Propriedades", () => ShowRecycledProperties(targets[0])));
         }
         items.AddRange(SelectionItems(pane));
         items.Add(new MenuItem("Atualizar", () => Refresh(pane)));
-        PushModal(new MenuModal(marked.Count > 0 ? $"{marked.Count} item(ns) marcado(s)" : targets.Count == 1 ? targets[0].Name : "Lixeira", items));
+        PushModal(new MenuModal(marked.Count > 0 ? $"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}" : targets.Count == 1 ? targets[0].Name : "Lixeira", items));
     }
 
     private static string OriginalPath(FileEntry entry) => Path.Join(entry.FoundIn, entry.Name);
@@ -87,7 +88,7 @@ public sealed partial class AppController
     {
         var names = entries.Select(e => e.Name).Take(3).ToList();
         var itemsText = string.Join(", ", names) + (entries.Count > 3 ? $" e mais {entries.Count - 3}" : string.Empty);
-        var dialog = new DialogModal($"Excluir {entries.Count} item(ns) permanentemente?", [("Itens", itemsText), ("Local", "Lixeira")], sensitive: true)
+        var dialog = new DialogModal($"Excluir {Plural.Of(entries.Count, "item", "itens")} permanentemente?", [("Itens", itemsText), ("Local", "Lixeira")], sensitive: true)
         {
             Message = "Os itens saem da Lixeira e não há como desfazer.",
         };
