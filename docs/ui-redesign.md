@@ -14,7 +14,8 @@ mouse-only or lose its test.** A later phase that moves a feature updates its "W
 | A2 | Shared header (logo on every screen, tabs next to it) and top navigation bar (breadcrumb + quick access) | done |
 | B1 | Grid Home cards ("Pastas principais" with real counts/sizes, "Unidades e dispositivos" with usage bars, Favoritos, Outros locais), This PC view | done |
 | B2 | Grid tiles restyled as cards (icon · name · type/size · states or "em <pasta>" · chevron) in folders, search, archives and Recycle Bin; columns from the available width | done |
-| C | List mode: column header, friendly dates, details panel | planned |
+| C1 | List mode: rows in a card with column header (mark box · Nome · Tipo · Tamanho · Modificado em), sort arrow, friendly dates, real sizes of main folders on Home, new-location focus rule, taller footer/top bar at 1080p+ | done |
+| C2 | Details panel on the right of the list | planned |
 
 Legend for the matrix: **Where** is the place in the new shell (after the phase in brackets). **Test** names the automated
 test that protects the behavior (`File::Method`, unit tests under `tests/ControlFS.UnitTests`, Windows-only ones under
@@ -113,7 +114,7 @@ hardware, visual or timing checks that CI can't prove.
 | Feature | Where | Shortcut / flow | Test |
 |---|---|---|---|
 | Home with places (favorites, Recentes, known folders, drives, Lixeira) | List: rows as before. Grid (B1): sections Favoritos · Pastas principais · Unidades e dispositivos · Outros locais (Recentes, Lixeira) | South opens, North actions, 2D per section, LT/RT = section | `FavoritesJourneyTests`, `RecentsJourneyTests`, `RecycleBinJourneyTests`, `DriveJourneyTests`, `HomeGridJourneyTests`; Screens `1c`, `1d`; Manual "Início em grade e Meu computador (redesenho, fase B1)" |
-| Real item count and recursive size on main folder cards ("Calculando…", async, cancelled when leaving Home, one folder at a time, 20 s budget with "+", cached 10 min) | Home grid (B1) | — | `HomeGridJourneyTests::Main_folder_cards_show_real_counts_…` |
+| Real item count and recursive size on main folder cards ("Calculando…", async, cancelled when leaving Home, one folder at a time, 20 s budget with "+", cached 10 min) | Home grid (B1); Home list "Tamanho" column (C1) | — | `HomeGridJourneyTests::Main_folder_cards_show_real_counts_…` |
 | Drive cards: label, usage bar, "X livres de Y", file system (pt-BR numbers) | Home grid, This PC (B1) | — | `HomeGridJourneyTests::Home_sections_…`; Manual (B1 section) |
 | This PC (Meu computador): drives in a browser tab, with history; drive menu and properties (capacity, free, used, file system) | quick access / path root → tab (B1; was: Home on the first drive) | South, Back, North | `HomeGridJourneyTests::Home_sections_…`, `TopBarJourneyTests`; Screens `1e`, `1f` |
 | Real known folders (Downloads via Known Folder API) and drives with type/label/free space | Home, top bar (A2) | — | `WindowsBehaviorTests::Downloads_comes_from_known_folder_api`, `::Drives_are_listed_as_places`; Manual "Tipos de unidade (#25)" |
@@ -133,9 +134,11 @@ hardware, visual or timing checks that CI can't prove.
 | Search (on-screen keyboard, streaming, partial/complete, skipped folders, cancel keeps partial) | results in the current mode | Select/View, Ctrl+F | `SearchJourneyTests` (2), `SearchIntegrationTests` (3); Manual "Busca (#46)" |
 | Search filters (type/size/date), subfolders toggle | North on results | — | `SearchFilterJourneyTests` |
 | OneDrive files-on-demand folders searched without downloading | — | — | `SearchIntegrationTests::Reparse_tag_…`; Manual "OneDrive sob demanda (#126)" |
-| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
-| Density comfortable/compact, persisted | Menu → Densidade da lista | — | `DensityJourneyTests` |
-| Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem (C: column header) | Start | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity` |
+| Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more) | Menu → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
+| Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |
+| Sort by name/type/size/date, ascending/descending, natural sort | Menu → Ordenar por / Ordem; list column header shows the arrow and sorts on click (C1) | Start; mouse on a column title | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity`, `ListModeJourneyTests::Column_header_follows_…`; Screens `2c` |
+| List rows: mark box (focus ≠ marking), icon, name, type ("Pasta do sistema" for Windows folders), size (real sums on Home), friendly date, chevron; compact density with the same columns | content, List (C1) | X marks; mouse on the header box = Marcar todos / Limpar | `ListModeJourneyTests::Friendly_dates_…`, `::Column_header_…`; Screens `1-home`, `2-folder`, `3-folder-compact`; Manual "Lista em colunas (redesenho, fase C1)" |
+| Opening another location focuses its first item; back/up/refresh restore the item | content | South, Right, East, Left | `ListModeJourneyTests::Opening_another_location_…`, `JourneyTests::Back_semantics_…` |
 | Hidden items show/hide (persisted) | Menu → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
 | Refresh | Menu → Atualizar | Start | journey tests that call Refresh indirectly (`FileOperationJourneyTests`) |
 | Folder picker (copy/move/extract destination, create folder, other places, go to path, cancel) | full-screen picker, same shell | Start = Escolher esta pasta… | `FileOperationJourneyTests::Copy_to_a_folder_with_the_picker_and_keep_both_on_conflict` |

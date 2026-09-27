@@ -86,7 +86,9 @@ internal sealed class TopBarView
     public void ApplyLayout()
     {
         Root.Margin = new Thickness(Theme.SpaceL, 0, Theme.SpaceL, Theme.SpaceS);
-        Root.Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs, Theme.SpaceS, Theme.SpaceXs);
+        // Mais alta fora dos portáteis (a referência tem ~70 px a 1080p); em 720p/800p continua enxuta.
+        var vertical = Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? Theme.SpaceXs : Theme.Space(10);
+        Root.Padding = new Thickness(Theme.SpaceS, vertical, Theme.SpaceS, vertical);
         Root.CornerRadius = new CornerRadius(Theme.Radius.TopLeft + 4);
         Root.BorderThickness = Theme.Hairline;
         _grid.ColumnSpacing = Theme.SpaceS;

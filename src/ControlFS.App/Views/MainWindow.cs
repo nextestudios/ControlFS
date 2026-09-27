@@ -58,6 +58,11 @@ public sealed class MainWindow : Window
     private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly ListView _list = new();
+    /// <summary>Lista (fase C): cartão com o cabeçalho das colunas e as linhas.</summary>
+    private readonly Border _listCard = new();
+    private readonly ListHeaderView _listHeader;
+    private EntryRowTemplate.ListColumns? _columns;
+    private int _shownStatsVersion = -1;
     private readonly GridView _grid = new();
     private readonly WrapPanel _hints = new();
     private readonly StackPanel _footer = new();
@@ -102,6 +107,7 @@ public sealed class MainWindow : Window
         _topBar = new TopBarView(_app, _navIcons);
         _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
         _home = new HomeView(_app, _cardIcons);
+        _listHeader = new ListHeaderView(_app);
         _home.SizeChanged += Render;
         _cardIcons.Invalidated += () =>
         {
@@ -160,7 +166,7 @@ public sealed class MainWindow : Window
             if (settings.Density == _density && settings.View == _view) return;
             _density = settings.Density;
             _view = settings.View;
-            _list.ItemTemplate = EntryRowTemplate.Create(_density);
+            UpdateListColumns(force: true);
             _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
             ShowActiveView();
         };
@@ -206,14 +212,27 @@ public sealed class MainWindow : Window
         layout.Children.Add(_badge);
 
         // Lista e grade: as duas virtualizadas, preenchidas pelo mesmo código; só a ativa fica visível e com itens.
-        _list.ItemTemplate = EntryRowTemplate.Create(_density);
+        UpdateListColumns(force: true);
         _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
         _grid.Visibility = Visibility.Collapsed;
         ConfigureItems(_list, _icons);
         ConfigureItems(_grid, _tileIcons);
         _grid.SizeChanged += (_, _) => UpdateGridMetrics();
+        // Lista: cartão com o cabeçalho das colunas em cima das linhas; aparece e some junto com a lista.
+        var listBody = new Grid();
+        listBody.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        listBody.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        listBody.Children.Add(_listHeader.Root);
+        Grid.SetRow(_list, 1);
+        listBody.Children.Add(_list);
+        _listCard.Child = listBody;
+        _list.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => _listCard.Visibility = _list.Visibility);
+        _listCard.SizeChanged += (_, e) =>
+        {
+            if (e.NewSize.Width != e.PreviousSize.Width && UpdateListColumns(force: false)) Render();
+        };
         var content = new Grid();
-        content.Children.Add(_list);
+        content.Children.Add(_listCard);
         content.Children.Add(_grid);
         content.Children.Add(_home.Root);
         content.Children.Add(_empty);
@@ -251,8 +270,10 @@ public sealed class MainWindow : Window
             if (args.Item is not FileEntry entry) return;
             args.ItemContainer.HorizontalContentAlignment = HorizontalAlignment.Stretch; // o anel ocupa o bloco/linha inteiro
             args.ItemContainer.VerticalContentAlignment = VerticalAlignment.Stretch;
-            if (view == _grid) args.ItemContainer.Margin = args.ItemContainer.Padding = new Thickness(0); // o cartão desenha o próprio espaço
-            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), icons, _specialFolders);
+            // O cartão/linha desenha o próprio espaço (na lista, o cabeçalho usa as mesmas medidas para ficar alinhado).
+            args.ItemContainer.Margin = args.ItemContainer.Padding = new Thickness(0);
+            args.ItemContainer.MinHeight = 0;
+            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), icons, _specialFolders, RowContext());
         };
         view.ItemClick += (_, e) =>
         {
@@ -261,6 +282,45 @@ public sealed class MainWindow : Window
     }
 
     private ListViewBase ActiveList => _view == ViewMode.Grid ? _grid : _list;
+
+    private EntryRowTemplate.RowContext? _rowContext;
+
+    /// <summary>Contexto das linhas (tipo, soma das pastas do início, marcação, relógio), refeito a cada Render.</summary>
+    private EntryRowTemplate.RowContext RowContext() => _rowContext ??= new EntryRowTemplate.RowContext(
+        _app.TypeNameOf, HomeFolderSize, _app.ListHeader.CanMark, DateTime.Now);
+
+    /// <summary>Pastas principais no início: a mesma soma real dos cartões da grade ("Calculando…" enquanto roda).</summary>
+    private string? HomeFolderSize(FileEntry entry) =>
+        _app.Screen == Screen.Home && entry is { Kind: EntryKind.KnownFolder, FullPath: { } path, IsBlocked: false } && _app.IsHomeStatFolder(path)
+            ? EntryText.FolderSize(_app.FolderStatsFor(path))
+            : null;
+
+    /// <summary>
+    /// Colunas da lista pela largura do cartão e pela densidade. Só troca o modelo das linhas quando algo muda (a coluna de
+    /// tipo sai numa lista estreita; a caixa de marcação, onde não se marca).
+    /// </summary>
+    private bool UpdateListColumns(bool force)
+    {
+        var width = _listCard.ActualWidth - _listCard.Padding.Left - _listCard.Padding.Right - _list.Padding.Left - _list.Padding.Right;
+        var columns = EntryRowTemplate.Columns(_density, width, _app.Screen != Screen.Home && _app.ListHeader.CanMark);
+        if (!force && columns == _columns) return false;
+        var rebuild = force || columns.Key != _columns?.Key;
+        _columns = columns;
+        if (!rebuild) return false;
+        _list.ItemTemplate = EntryRowTemplate.Create(columns);
+        _shownItems = null; // recria as linhas no novo modelo
+        return true;
+    }
+
+    /// <summary>Refaz o conteúdo das linhas já criadas (somas do início chegando), sem recriar a lista.</summary>
+    private void RefillRealized(IReadOnlyList<FileEntry> items, HashSet<string> selection)
+    {
+        _shownStatsVersion = _app.FolderStatsVersion;
+        var context = RowContext();
+        for (var i = 0; i < items.Count; i++)
+            if (_list.ContainerFromIndex(i) is SelectorItem container)
+                EntryRowTemplate.Fill(container, items[i], i == _shownFocus, selection.Contains(items[i].Id), _app.IsCut(items[i]), _icons, _specialFolders, context);
+    }
 
     private void OnIconsInvalidated()
     {
@@ -380,12 +440,19 @@ public sealed class MainWindow : Window
 
     private void RenderItems(PaneState pane)
     {
+        _rowContext = null;
+        if (_view == ViewMode.List)
+        {
+            UpdateListColumns(force: false);
+            if (_columns is { } columns) _listHeader.Render(columns, _app.ListHeader, _list.Padding);
+        }
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
         if (_app.FocusRegion != PaneRegion.List) focus = -1; // um só foco visível: o da barra superior ou das abas
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
         if (focus >= items.Count) focus = -1;
         var sourceChanged = !ReferenceEquals(items, _shownItems);
+        if (sourceChanged) _shownStatsVersion = _app.FolderStatsVersion;
         if (sourceChanged || !selection.SetEquals(_shownSelection) || !ReferenceEquals(_app.Clipboard, _shownClipboard))
         {
             _shownClipboard = _app.Clipboard;
@@ -399,7 +466,12 @@ public sealed class MainWindow : Window
             if (_view == ViewMode.Grid) UpdateGridMetrics(); // o painel da grade só existe depois do primeiro layout
             if (focus >= 0) view.ScrollIntoView(items[focus]);
         }
-        else if (focus != _shownFocus)
+        else if (_app.FolderStatsVersion != _shownStatsVersion && _app.Screen == Screen.Home && _view == ViewMode.List)
+        {
+            // Somas das pastas principais chegando: só as linhas já criadas mudam (sem recriar a lista nem rolar).
+            RefillRealized(items, selection);
+        }
+        if (!sourceChanged && focus != _shownFocus)
         {
             var view = ActiveList;
             if (_shownFocus >= 0 && view.ContainerFromIndex(_shownFocus) is SelectorItem previous) EntryRowTemplate.SetFocused(previous, false);
@@ -452,7 +524,7 @@ public sealed class MainWindow : Window
                     Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
                     Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
                 });
-            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = Theme.FontBody, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
+            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = FooterLabelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, prompt.AccessibilityText);
             _hints.Children.Add(chip);
         }
@@ -465,7 +537,10 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>Glifos do rodapé grandes o bastante para ler a distância (a referência usa botões redondos de ~2,5× o texto).</summary>
-    private static double FooterGlyphHeight => Math.Round(Theme.FontBody * 1.9);
+    private static double FooterGlyphHeight => Math.Round(Theme.FontBody * (Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? 1.9 : 2.3));
+
+    /// <summary>Texto das legendas: um pouco maior fora dos portáteis, como na referência.</summary>
+    private static double FooterLabelSize => Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? Theme.FontBody : Theme.Font(20);
 
     /// <summary>
     /// Narrador: o foco do XAML fica na raiz, então cada mudança do foco lógico (item, menu, diálogo, tecla) vira uma
@@ -578,7 +653,7 @@ public sealed class MainWindow : Window
         var size = xamlRoot.Size;
         var profile = LayoutBreakpoints.Select(size.Width, size.Height, xamlRoot.RasterizationScale, _uiSettings.TextScaleFactor);
         var previous = Theme.Viewport;
-        if (Theme.SetLayout(profile, size) || EntryRowTemplate.IsNarrow(previous.Width) != EntryRowTemplate.IsNarrow(size.Width))
+        if (Theme.SetLayout(profile, size))
         {
             ApplyLayout();
         }
@@ -635,16 +710,24 @@ public sealed class MainWindow : Window
         _home.ApplyLayout();
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
-        _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
+        // Lista (fase C): cartão escuro com cantos arredondados, recuado como na referência; linhas quase até a borda.
+        _listCard.Background = Theme.SurfaceRaised;
+        _listCard.CornerRadius = new CornerRadius(Theme.Scaled(14));
+        _listCard.Margin = new Thickness(Theme.SpaceL, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
+        _listCard.Padding = new Thickness(0, Theme.Space(6), 0, Theme.Space(10));
+        _list.Padding = new Thickness(Theme.Space(10), Theme.Space(6), Theme.Space(10), 0);
         // Grade: cartões alinhados com os do início (margem lateral igual, meia distância entre cartões de cada lado).
         var gutter = Theme.SpaceL + Theme.Space(28) - (EntryRowTemplate.TileGap / 2);
         _grid.Padding = new Thickness(gutter, Theme.Space(16), gutter, Theme.Space(16));
-        _list.ItemTemplate = EntryRowTemplate.Create(_density);
+        UpdateListColumns(force: true);
         _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
         _footerBar.BorderThickness = new Thickness(0, Theme.Hairline.Top, 0, 0);
-        _footer.Padding = new Thickness(Theme.SpaceL + Theme.SpaceS, Theme.SpaceM, Theme.SpaceL, Theme.SpaceM);
+        // Rodapé mais alto fora dos portáteis (a referência tem ~110 px a 1080p); em 720p/800p a lista precisa do espaço.
+        var compact = Theme.Layout.Tier == Core.Layout.LayoutTier.Compact;
+        var footerVertical = compact ? Theme.SpaceM : Theme.Space(26);
+        _footer.Padding = new Thickness(Theme.SpaceL + Theme.SpaceS, footerVertical, Theme.SpaceL, footerVertical);
         _footer.Spacing = Theme.SpaceS;
-        _hints.HorizontalSpacing = Theme.SpaceXl;
+        _hints.HorizontalSpacing = compact ? Theme.SpaceXl : Theme.Space(52);
         _hints.VerticalSpacing = Theme.SpaceS;
         // Ícones do sistema no tamanho em pixels físicos da linha (DPI × escala da faixa).
         var iconScale = Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale;

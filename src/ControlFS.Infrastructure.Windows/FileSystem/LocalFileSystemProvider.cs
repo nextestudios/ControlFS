@@ -12,7 +12,7 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
     {
         var places = new List<FileEntry>();
         foreach (var (name, path) in KnownFolders.GetAll())
-            places.Add(new FileEntry("place:" + path, name, EntryKind.KnownFolder, FullPath: path, Detail: path));
+            places.Add(new FileEntry("place:" + path, name, EntryKind.KnownFolder, FullPath: path, Detail: path, Modified: Directory.Exists(path) ? SafeTime(new DirectoryInfo(path)) : null));
 
         foreach (var drive in SafeDrives())
         {

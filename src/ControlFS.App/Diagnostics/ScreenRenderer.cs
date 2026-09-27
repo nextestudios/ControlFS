@@ -126,6 +126,14 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.NavigateDown);
                 app.Handle(InputAction.NavigateDown); // foco no nome longo (mostra a quebra em até três linhas)
                 await CaptureAsync(stage, target, dir, "2-folder", window);
+                // Lista (fase C): ordenada por tamanho, do maior para o menor (seta no título "Tamanho").
+                ChooseAppMenu(app, "Ordenar por"); // tipo
+                ChooseAppMenu(app, "Ordenar por"); // tamanho
+                ChooseAppMenu(app, "Ordem");
+                await CaptureAsync(stage, target, dir, "2c-folder-sorted-size", window);
+                ChooseAppMenu(app, "Ordenar por"); // data
+                ChooseAppMenu(app, "Ordenar por"); // nome
+                ChooseAppMenu(app, "Ordem");
                 app.Handle(InputAction.PreviousRegion); // LB: pasta de cima na barra de caminho
                 await CaptureAsync(stage, target, dir, "2b-folder-path-bar", window);
                 app.Handle(InputAction.Back);
@@ -219,10 +227,14 @@ internal static class ScreenRenderer
             "dados.csv", "arquivo sem extensão", "ícones.7z", "roteiro.docx", "cronograma.xlsx",
         ];
         var size = 700;
-        foreach (var name in files)
+        var now = DateTime.Now;
+        for (var i = 0; i < files.Length; i++)
         {
-            File.WriteAllBytes(Path.Join(folder, name), new byte[size]);
+            var file = Path.Join(folder, files[i]);
+            File.WriteAllBytes(file, new byte[size]);
             size = size * 7 % 900_000 + 1_000;
+            // Datas variadas para as datas amigáveis da lista: hoje, ontem e dias anteriores.
+            File.SetLastWriteTime(file, (i % 3) switch { 0 => now.AddMinutes(-7 * i), 1 => now.Date.AddDays(-1).AddHours(18).AddMinutes(i), _ => now.Date.AddDays(-2 - i).AddHours(9).AddMinutes(45) });
         }
         return folder;
     }

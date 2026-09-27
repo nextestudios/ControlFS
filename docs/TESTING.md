@@ -163,6 +163,21 @@ Não validado em hardware.
 - [ ] 1280×720, 1920×1080 e 4K (100–200%) nas duas densidades: colunas não se sobrepõem e o texto fica legível a 3 m
       no modo confortável.
 
+## Lista em colunas (redesenho, fase C1)
+
+Não validado em hardware (controle real, TV a ~3 m, DPI real, mouse).
+- [ ] 1920×1080, 1280×720 e 4K (100/200/300%): cabeçalho alinhado com as colunas das linhas, nas densidades
+      confortável e compacta; seta da ordenação no título certo; capturas `1-home`, `2-folder`, `2c-folder-sorted-size`
+      e `3-folder-compact` do `--render-screens`.
+- [ ] Controle real: linha focada legível a distância (fundo azul, borda ciano, seta ciano); X marca e a caixa acende
+      âmbar sem mover o foco; foco nunca marca.
+- [ ] Mouse: clicar em "Tamanho" ordena por tamanho, clicar de novo inverte (Menu → Ordem acompanha); clicar na caixa do
+      cabeçalho marca todos / limpa; clicar numa linha abre como Sul.
+- [ ] Início em lista: "Pasta do sistema" com o tamanho real das pastas principais ("Calculando…" até terminar), sem
+      travar a navegação.
+- [ ] Abrir uma pasta pelo meio de outra lista: o foco começa no primeiro item; Voltar/Esquerda focam a pasta de origem.
+- [ ] Janela estreita: a coluna de tipo some antes do nome ficar ilegível.
+
 ## Grade (#29)
 
 - [ ] Menu → Exibição: grade (e Ctrl+G): o item focado continua o mesmo nas duas direções; fechar e abrir o app mantém.
