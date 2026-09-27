@@ -3,6 +3,7 @@ using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
+using ControlFS.Infrastructure.Windows.Settings;
 using ControlFS.UnitTests.Support;
 
 namespace ControlFS.UnitTests.Application;
@@ -10,8 +11,13 @@ namespace ControlFS.UnitTests.Application;
 public class TabsJourneyTests : IDisposable
 {
     private readonly TempDir _tmp = new();
+    private readonly TempDir _data = new();
 
-    public void Dispose() => _tmp.Dispose();
+    public void Dispose()
+    {
+        _tmp.Dispose();
+        _data.Dispose();
+    }
 
     [Fact]
     public void Each_tab_keeps_its_own_location_focus_and_selection_and_the_strip_is_reached_above_the_top_bar() => UiContext.Run(async () =>
@@ -127,5 +133,58 @@ public class TabsJourneyTests : IDisposable
         d.Press(InputAction.OpenAppMenu);
         d.Press(InputAction.PageDown);
         Assert.Equal(0, app.ActiveTab);
+    });
+
+    [Fact]
+    public void Open_tabs_are_restored_on_the_next_launch_a_missing_folder_shows_home_and_it_can_be_disabled() => UiContext.Run(async () =>
+    {
+        var music = _tmp.MakeDir("Músicas");
+        var games = _tmp.MakeDir("Jogos");
+        var store = new JsonSettingsStore(_data.Path);
+        Driver Boot()
+        {
+            var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store);
+            app.Start();
+            return new Driver(app);
+        }
+
+        // Sessão 1: três abas (pasta de teste, Jogos, Músicas), a ativa em Músicas.
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("Músicas");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Abrir em nova aba");
+        await d.Idle();
+        d.Press(InputAction.PageUp);
+        await d.FocusItem("Jogos");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Abrir em nova aba");
+        await d.Idle();
+        d.Press(InputAction.PageDown);
+        Assert.Equal(music, ((PhysicalLocation)d.App.Browser.Location!).FullPath);
+        Directory.Delete(games);
+
+        // Sessão 2: as abas voltam na mesma ordem e na aba ativa; a pasta que sumiu vira aba indisponível (sem travar).
+        d = Boot();
+        await d.Idle();
+        Assert.Equal(3, d.App.Tabs.Count);
+        Assert.Equal((2, Screen.Browser), (d.App.ActiveTab, d.App.Screen));
+        Assert.Equal(music, ((PhysicalLocation)d.App.Browser.Location!).FullPath);
+        Assert.Equal(_tmp.Path, ((PhysicalLocation)d.App.Tabs[0].Location!).FullPath);
+        Assert.True(d.App.Tabs[1].IsUnavailable);
+        Assert.Equal("Jogos (indisponível)", AppController.TabTitle(d.App.Tabs[1]));
+        Assert.Contains("indisponível", d.App.StatusMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain(d.App.Modals, m => m is DialogModal);
+        d.Press(InputAction.PageUp);
+        Assert.Equal((1, Screen.Home), (d.App.ActiveTab, d.App.Screen));
+
+        // Desligado: a próxima abertura começa no início com uma aba só.
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Restaurar abas ao abrir: sim");
+        Assert.Empty(store.Load().Settings.OpenTabs);
+        d = Boot();
+        await d.Idle();
+        Assert.Single(d.App.Tabs);
+        Assert.Equal(Screen.Home, d.App.Screen);
     });
 }
