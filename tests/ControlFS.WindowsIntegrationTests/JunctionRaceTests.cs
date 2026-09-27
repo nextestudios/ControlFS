@@ -126,6 +126,7 @@ public sealed class JunctionRaceTests : IDisposable
     }
 
     [Fact]
+    [Trait("Category", "Slow")] // fora da CI dos pull requests; roda na release (ver AGENTS.md)
     public async Task Racing_junction_swap_cannot_redirect_extraction_writes()
     {
         var (dest, outside) = await Arena();
@@ -155,6 +156,7 @@ public sealed class JunctionRaceTests : IDisposable
     }
 
     [Theory]
+    [Trait("Category", "Slow")] // fora da CI dos pull requests; roda na release (ver AGENTS.md)
     [InlineData(FileOperationKind.Copy)]
     [InlineData(FileOperationKind.Move)]
     public async Task Racing_junction_swap_cannot_redirect_copy_or_move_writes(FileOperationKind kind)

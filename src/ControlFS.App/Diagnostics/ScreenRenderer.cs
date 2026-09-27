@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using ControlFS.App.Controls;
 using ControlFS.App.Resources;
 using ControlFS.App.Views;
 using ControlFS.Application;
@@ -50,6 +51,23 @@ internal static class ScreenRenderer
 
     private static readonly StringBuilder Report = new();
 
+    /// <summary><c>--only a,b</c>: só as capturas cujo nome começa com um dos prefixos (ex.: <c>m1,2d,glyphs</c>).</summary>
+    private static string[]? _only;
+
+    /// <summary><c>--sizes a,b</c>: só estes alvos, pelo nome exato (ex.: <c>1920x1080,1280x720</c>).</summary>
+    private static string[]? _sizes;
+
+    private static string[]? ListArgument(string[] args, string name)
+    {
+        var index = Array.FindIndex(args, a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
+        if (index < 0 || index + 1 >= args.Length) return null;
+        var items = args[index + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return items.Length == 0 || items.Any(i => string.Equals(i, "all", StringComparison.OrdinalIgnoreCase)) ? null : items;
+    }
+
+    private static bool Wanted(string capture) =>
+        _only is null || _only.Any(p => capture.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Pasta de saída se o app foi aberto com <c>--render-screens &lt;pasta&gt;</c>.</summary>
     public static string? OutputDirectory(string[] args)
     {
@@ -57,8 +75,10 @@ internal static class ScreenRenderer
         return index >= 0 && index + 1 < args.Length ? Path.GetFullPath(args[index + 1]) : null;
     }
 
-    public static async Task RunAsync(string outputDirectory)
+    public static async Task RunAsync(string outputDirectory, string[] args)
     {
+        _only = ListArgument(args, "--only");
+        _sizes = ListArgument(args, "--sizes");
         var work = Path.Join(Path.GetTempPath(), "ControlFS-render-" + Guid.NewGuid().ToString("N")[..8]);
         try
         {
@@ -86,7 +106,9 @@ internal static class ScreenRenderer
             var app = window.Controller;
             app.SetActiveController(ControllerFamily.Xbox); // legendas com glifos, como com um controle em uso
             window.SimulateSolidSurfaces(false); // painel fosco; a reserva sólida tem a própria captura
-            foreach (var target in Targets)
+            var targets = Targets.Where(t => _sizes is null || _sizes.Contains(t.Name, StringComparer.OrdinalIgnoreCase)).ToArray();
+            if (targets.Length == 0 && _sizes is not null) throw new ArgumentException("--sizes: nenhum alvo conhecido (" + string.Join(", ", Targets.Select(t => t.Name)) + ")");
+            foreach (var target in targets)
             {
                 window.AppWindow.Resize(new SizeInt32(target.Width, target.Height)); // o Windows limita à tela; ajuda a virtualização
                 window.PinLayout(LayoutBreakpoints.Select(target.EffectiveWidth, target.EffectiveHeight, target.Scale, target.TextScale),
@@ -181,11 +203,11 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
                 app.Handle(InputAction.ChangeView);
 
-                if (target.Modals) await CaptureModalsAsync(app, window, stage, target, dir, modals);
+                if (target.Modals && Wanted("m")) await CaptureModalsAsync(app, window, stage, target, dir, modals);
             }
 
-            await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
-            await RenderIconGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "icons"));
+            if (Wanted("glyphs")) await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
+            if (Wanted("icons")) await RenderIconGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "icons"));
             await File.WriteAllTextAsync(Path.Join(outputDirectory, "report.txt"), Report.ToString());
             Environment.ExitCode = 0;
         }
@@ -465,19 +487,43 @@ internal static class ScreenRenderer
 
     private static async Task CaptureAsync(FrameworkElement stage, Target target, string directory, string name, MainWindow window)
     {
+        if (!Wanted(name)) return;
         await SettleAsync(stage);
         var file = Path.Join(directory, name + ".png");
         await SaveAsync(stage, target.Width, target.Height, file);
         Report.AppendLine($"  {name}: {window.DescribeFit()}");
     }
 
-    /// <summary>Deixa o layout, a virtualização da lista e os ícones do sistema (assíncronos) assentarem.</summary>
+    /// <summary>
+    /// Deixa o layout, a virtualização da lista e os ícones do sistema (assíncronos) assentarem: pelo menos dois quadros
+    /// desenhados e nenhum ícone a caminho (limite de ~3 s), em vez de esperas fixas.
+    /// </summary>
     private static async Task SettleAsync(FrameworkElement element)
     {
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 60; i++)
         {
             element.UpdateLayout();
-            await Task.Delay(250);
+            await NextFrameAsync();
+            if (i >= 1 && IconLoader.Loading == 0) break;
+            await Task.Delay(50);
+        }
+        element.UpdateLayout();
+        await NextFrameAsync();
+    }
+
+    /// <summary>Próximo quadro desenhado (ou 100 ms, se a janela não estiver desenhando).</summary>
+    private static async Task NextFrameAsync()
+    {
+        var frame = new TaskCompletionSource();
+        void OnRendering(object? sender, object e) => frame.TrySetResult();
+        CompositionTarget.Rendering += OnRendering;
+        try
+        {
+            await Task.WhenAny(frame.Task, Task.Delay(100));
+        }
+        finally
+        {
+            CompositionTarget.Rendering -= OnRendering;
         }
     }
 

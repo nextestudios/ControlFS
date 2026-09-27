@@ -10,6 +10,12 @@ The product spec lives outside the repo; the rules that matter are summarized he
 - **Tests run on Windows in CI** (`dotnet test tests/ControlFS.UnitTests`); ControlFS targets Windows only. They cover policies, input, the on-screen
   keyboard, the extractor on real temp files, and end-to-end journeys driven only by semantic actions. Run them before every push.
 - **Windows-only behavior** (known folders, junctions, Mark of the Web, long paths) lives in `tests/ControlFS.WindowsIntegrationTests`.
+- **Slow tests** (> ~2 s: 4 GiB ZIP64, 70k-entry ZIP64, junction race loops) carry `[Trait("Category", "Slow")]`. PR CI
+  runs `--filter "Category!=Slow"`; `release.yml` runs the full suite before publishing. Keep at least one fast test per
+  security boundary in PR CI.
+- **Smoke (screenshots) only when the UI changes.** Run it with `mode=screens` and only the captures/sizes you need
+  (`gh workflow run smoke.yml -f mode=screens -f screens=m1,2d -f sizes=1920x1080,1280x720`; about 3 min). At most two
+  visual iterations per PR; `mode=full` (packages, install, UIA, every screen) is for release checks.
 - **Controllers, TVs, DPI** can't be tested in CI. Add manual checks to `docs/TESTING.md` instead of claiming they work.
 
 ## Layout
@@ -36,7 +42,7 @@ temporary rule:
 - `release/X.Y.Z[-pre]`: branch from `develop` when a release is ready; only fixes, docs and changelog entries. Pull request into `main`, tag the merge on `main` (this publishes the release), then merge `main` back into `develop`.
 - `hotfix/X.Y.Z[-pre]`: branch from `main` for urgent fixes; pull request into `main`, tag, then merge back into `develop`.
 
-CI runs only at the Gitflow integration points: pull requests (build + tests), tags on `main` (release, which builds the packages and launches the real app before publishing) and CodeQL on `main`/weekly. Pull requests don't build packages; the Smoke workflow is manual.
+CI runs only at the Gitflow integration points: pull requests (build + tests), tags on `main` (release, which builds the packages and launches the real app before publishing) and CodeQL on `main`/weekly. Pull requests don't build packages; the Smoke workflow is manual (`mode=full|screens`, `screens` and `sizes` filters).
 
 **Releases:** merge pull requests as they are ready; publish a release only when the maintainer asks. Versions stay `0.x.y-alpha.N` until the maintainer says to go to 1.0. Releases are published as regular (not pre-release) GitHub releases so the newest shows as "Latest". Tags that don't point to a commit on `main` fail the release workflow.
 

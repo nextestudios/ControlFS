@@ -22,8 +22,10 @@ public class HintJourneyTests : IDisposable
         var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
         app.Start();
         var d = new Driver(app);
+        Assert.Equal("Sair", Label(app, InputAction.Back)); // no início, Voltar sai do app
         d.Press(InputAction.Confirm);
         await d.Idle();
+        Assert.Equal("Buscar", Label(app, InputAction.Search));
         return d;
     }
 

@@ -1,7 +1,8 @@
 name: CI
 
-# Builds the app and runs all tests on Windows (the only platform ControlFS targets)
-# for every pull request into develop or main (Gitflow integration points).
+# Builds the app and runs the tests on Windows (the only platform ControlFS targets), except the ones marked
+# [Trait("Category", "Slow")] (4 GiB ZIP64, junction races); release.yml runs the full suite before publishing.
+# Runs for every pull request into develop or main (Gitflow integration points).
 on:
   # Before 1.0: feature/* and hotfix/* pull requests go straight into main. From 1.0 on (Gitflow): feature/* → develop,
   # release/* and hotfix/* → main. Pushes to other branches don't run CI.
@@ -49,10 +50,10 @@ jobs:
         run: dotnet build ControlFS.slnx -c Release --no-restore --nologo
 
       - name: Unit tests and journeys
-        run: dotnet test tests/ControlFS.UnitTests -c Release --no-build --nologo
+        run: dotnet test tests/ControlFS.UnitTests -c Release --no-build --nologo --filter "Category!=Slow"
 
       - name: Windows integration tests
-        run: dotnet test tests/ControlFS.WindowsIntegrationTests -c Release --no-build --nologo
+        run: dotnet test tests/ControlFS.WindowsIntegrationTests -c Release --no-build --nologo --filter "Category!=Slow"
 
       - name: Vulnerable packages
         shell: pwsh

@@ -11,7 +11,11 @@
 | UI WinUI (foco, diálogos, teclado virtual na tela) | `build/Test-UiAutomation.ps1` (UI Automation) | Windows (workflow Smoke, manual) | 16 verificações no app real: anel de foco no menu, confirmação com foco na opção segura, escopo do modal, teclado virtual desenhado e recebendo texto (ver `TESTING.md`) |
 | Hardware real | manual | Windows | matriz em `controller-compatibility.md`, tudo "não testado" |
 
-Comandos: `dotnet test ControlFS.slnx`.
+Comandos: `dotnet test ControlFS.slnx` (suíte completa, como na release). A CI dos pull requests usa
+`--filter "Category!=Slow"`: testes marcados com `[Trait("Category", "Slow")]` (entrada ZIP64 de 4 GiB, 70 mil entradas,
+corridas de junction) rodam só no `release.yml`, antes de publicar. Marque como `Slow` o que passar de ~2 s na CI; cada
+fronteira de segurança continua com pelo menos um teste rápido na CI (ex.: `A_junction_in_the_chain_is_refused_by_handle`,
+`Entry_limit_still_applies_to_zip64_archives`).
 
 ## Matriz obrigatória (seção 20 da especificação)
 

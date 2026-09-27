@@ -84,6 +84,10 @@ monta as telas reais (início, pasta, lista compacta, menu com foco abaixo da do
 1280×800 (e com texto a 150%), 1920×1080 (100% e 150%) e 3840×2160 (100%, 200% e 300%), além da galeria de glifos
 (escuro/claro, 100/200/300%), e publica os PNGs no artefato `smoke-screens` com um `report.txt` das alturas medidas.
 A resolução é simulada (a tela do runner é pequena); o modo usa uma pasta temporária, não acessa a rede e fecha sozinho.
+Para iterar rápido: `mode=screens` pula instalador, lançamentos e UIA (só publica a pasta do app), e os filtros
+`screens` (prefixos das capturas, ex. `m1,2d,glyphs`) e `sizes` (alvos, ex. `1920x1080,1280x720`) viram
+`--only`/`--sizes` do `--render-screens`. Cada captura espera o layout, dois quadros desenhados e os ícones do sistema
+chegarem, em vez de esperas fixas.
 
 Ainda manual, num aparelho real:
 

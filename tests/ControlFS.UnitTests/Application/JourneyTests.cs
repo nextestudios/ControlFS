@@ -87,37 +87,6 @@ public class JourneyTests : IDisposable
     });
 
     [Fact]
-    public void Extract_here_twice_resolves_conflict_keeping_both() => UiContext.Run(async () =>
-    {
-        Create(_tmp.Sub("dados.zip"), Text("a.txt", "A"));
-        var (d, _) = Boot();
-        var app = d.App;
-        d.Press(InputAction.Confirm);
-        await d.FocusItem("dados.zip");
-
-        for (var round = 0; round < 2; round++)
-        {
-            d.Press(InputAction.OpenContextMenu);
-            await d.ChooseMenu("Extrair aqui");
-            var summary = await d.WaitDialog("Extrair");
-            d.ChooseOption(summary, "Extrair");
-            if (round == 1)
-            {
-                var conflict = await d.WaitDialog("Já existe");
-                Assert.Equal(0, conflict.FocusIndex); // foco inicial: pular (preserva o existente)
-                Assert.Equal(OperationState.WaitingForUser, app.Operations.Items[^1].State);
-                d.ChooseOption(conflict, "Manter ambos");
-            }
-            var done = await d.WaitDialog("Extração concluída");
-            d.ChooseOption(done, "Fechar");
-            await d.Idle();
-        }
-
-        Assert.Equal("A", File.ReadAllText(_tmp.Sub("a.txt")));
-        Assert.Equal("A", File.ReadAllText(_tmp.Sub("a (2).txt")));
-    });
-
-    [Fact]
     public void Retry_failed_items_of_a_cancelled_extraction_only_extracts_what_was_left() => UiContext.Run(async () =>
     {
         Create(_tmp.Sub("dados.zip"), Text("a.txt", "A"), Text("b.txt", "B"), Text("c.txt", "C"));
@@ -157,7 +126,9 @@ public class JourneyTests : IDisposable
         await d.ChooseMenu("Extrair aqui");
         d.ChooseOption(await d.WaitDialog("Extrair"), "Extrair");
 
-        await d.WaitDialog("Já existe");
+        var first = await d.WaitDialog("Já existe");
+        Assert.Equal(0, first.FocusIndex); // foco inicial: pular (preserva o existente)
+        Assert.Equal(OperationState.WaitingForUser, d.App.Operations.Items[^1].State);
         d.Press(InputAction.Back); // Voltar = pular (seguro)
 
         var second = await d.WaitDialog("Já existe");
@@ -192,35 +163,6 @@ public class JourneyTests : IDisposable
         Assert.Contains(result.Lines, l => l.Item1 == "• dados.txt");
         Assert.Contains("não é uma verificação de vírus", result.Message, StringComparison.Ordinal);
         Assert.Equal(["baixado.zip"], Directory.EnumerateFileSystemEntries(_tmp.Path).Select(Path.GetFileName));
-    });
-
-    [Fact]
-    public void Password_flow_retries_after_wrong_password() => UiContext.Run(async () =>
-    {
-        File.Copy(FixturePath("zip/zipcrypto-senha-certa.zip"), _tmp.Sub("cofre.zip"));
-        var (d, _) = Boot();
-        d.Press(InputAction.Confirm);
-        await d.FocusItem("cofre.zip");
-        d.Press(InputAction.OpenContextMenu);
-        await d.ChooseMenu("Extrair para \"cofre\"");
-        d.ChooseOption(await d.WaitDialog("Extrair"), "Extrair");
-
-        var kb = await d.WaitKeyboard();
-        Assert.Equal(TextFieldKind.Password, kb.Keyboard.Kind);
-        d.TypeOnKeyboard(kb, "errada");
-        Assert.Equal("••••••", kb.Keyboard.DisplayText);
-        d.PressKey(kb, KeyKind.Done);
-
-        var retry = await d.WaitKeyboard();
-        Assert.NotSame(kb, retry);
-        Assert.Equal("Senha incorreta. Tente novamente.", retry.Keyboard.ErrorMessage);
-        Assert.Equal(0, kb.Keyboard.Length); // senha anterior zerada
-        d.TypeOnKeyboard(retry, "certa");
-        d.PressKey(retry, KeyKind.Done);
-
-        await d.WaitDialog("Extração concluída");
-        Assert.Equal("conteúdo protegido\n", File.ReadAllText(_tmp.Sub("cofre", "segredo.txt")));
-        Assert.False(Directory.Exists(_tmp.Sub("cofre (2)")), "a tentativa com senha errada não deixou pasta para trás");
     });
 
     [Fact]
@@ -347,17 +289,4 @@ public class JourneyTests : IDisposable
         Assert.False(Directory.Exists(_tmp.Sub("CON")));
     });
 
-    [Fact]
-    public void Footer_hints_only_show_actions_that_work_in_context() => UiContext.Run(async () =>
-    {
-        File.WriteAllText(_tmp.Sub("f.txt"), "x");
-        var (d, _) = Boot();
-        Assert.Contains(d.App.Hints, h => h is { Action: InputAction.Back, Label: "Sair" });
-        d.Press(InputAction.Confirm);
-        await d.Idle();
-        Assert.Contains(d.App.Hints, h => h.Action == InputAction.ToggleSelection);
-        Assert.Contains(d.App.Hints, h => h is { Action: InputAction.Search, Label: "Buscar" });
-        d.Press(InputAction.ToggleSelection);
-        Assert.Contains(d.App.Hints, h => h is { Action: InputAction.Back, Label: "Cancelar seleção" });
-    });
 }

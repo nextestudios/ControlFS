@@ -52,6 +52,7 @@ public class Zip64Tests : IDisposable
     }
 
     [Fact]
+    [Trait("Category", "Slow")] // fora da CI dos pull requests; roda na release (ver AGENTS.md)
     public async Task Entry_larger_than_4_GiB_extracts_with_correct_size_crc_and_content()
     {
         var pattern = Pattern();
@@ -100,6 +101,7 @@ public class Zip64Tests : IDisposable
     }
 
     [Fact]
+    [Trait("Category", "Slow")] // fora da CI dos pull requests; roda na release (ver AGENTS.md)
     public async Task Archive_with_more_than_65535_entries_lists_all_and_extracts_entries_past_the_16_bit_limit()
     {
         var zip = _tmp.Sub("muitas.zip");

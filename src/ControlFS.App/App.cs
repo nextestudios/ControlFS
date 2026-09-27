@@ -32,7 +32,7 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
             {
                 // Modo de desenvolvimento (workflow Smoke): gera as capturas e fecha. Ver docs/TESTING.md.
                 AppLog.Info("OnLaunched: gerando capturas em " + renderTo);
-                _ = ScreenRenderer.RunAsync(renderTo);
+                _ = ScreenRenderer.RunAsync(renderTo, Environment.GetCommandLineArgs());
                 return;
             }
             AppLog.Info("OnLaunched: criando janela");
