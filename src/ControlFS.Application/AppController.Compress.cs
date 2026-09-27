@@ -43,7 +43,12 @@ public sealed partial class AppController
                 ("Itens", $"{plan.Sources.Count}: {string.Join(", ", names)}{more}"),
                 ("Destino", plan.Folder),
                 ("Arquivo", plan.FileName(Exists) + (Exists(plan.BaseName + CompressionRequest.Extension(plan.Format)) ? "  (o nome já existia: numerado)" : string.Empty)),
-                ("Formato", plan.Format == CompressionFormat.Zip ? "ZIP — abre em qualquer Windows" : "TAR.GZ — comum em Linux/macOS"),
+                ("Formato", plan.Format switch
+                {
+                    CompressionFormat.Zip => "ZIP — abre em qualquer Windows",
+                    CompressionFormat.SevenZip => "7z — menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)",
+                    _ => "TAR.GZ — comum em Linux/macOS",
+                }),
                 ("Compressão", StrengthLabel(plan.Strength)),
                 ("Segurança", "links e junctions não são seguidos; nada é sobrescrito"),
             ];
@@ -58,7 +63,7 @@ public sealed partial class AppController
         }), icon: ActionIcon.Rename);
         format = new DialogOption(FormatLabel(plan.Format), DialogOptionKind.Toggle, () =>
         {
-            plan = plan with { Format = plan.Format == CompressionFormat.Zip ? CompressionFormat.TarGZip : CompressionFormat.Zip };
+            plan = plan with { Format = plan.Format switch { CompressionFormat.Zip => CompressionFormat.TarGZip, CompressionFormat.TarGZip => CompressionFormat.SevenZip, _ => CompressionFormat.Zip } };
             format!.Label = FormatLabel(plan.Format);
             Refill();
         }, icon: ActionIcon.Archive);
@@ -151,7 +156,12 @@ public sealed partial class AppController
             Refresh(Browser, result.Destination is { } d ? Path.GetFileName(d) : null);
     }
 
-    private static string FormatLabel(CompressionFormat format) => format == CompressionFormat.Zip ? "Formato: ZIP" : "Formato: TAR.GZ";
+    private static string FormatLabel(CompressionFormat format) => format switch
+    {
+        CompressionFormat.Zip => "Formato: ZIP",
+        CompressionFormat.SevenZip => "Formato: 7z",
+        _ => "Formato: TAR.GZ",
+    };
 
     private static string StrengthOption(CompressionStrength strength) => $"Compressão: {StrengthLabel(strength)}";
 

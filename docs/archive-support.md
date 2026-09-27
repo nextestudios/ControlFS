@@ -45,7 +45,7 @@ têm CRC por entrada para conferir. Não é antivírus.
 |---|---|---|
 | ZIP (Deflate, nomes UTF-8) | **validado** (ida e volta, byte a byte) | Rápida/normal/máxima. |
 | TAR.GZ (PAX) | **validado** (ida e volta) | — |
-| 7z | não disponível | Exigiria embutir o 7-Zip; decisão futura. |
+| 7z (LZMA, sólido) | **validado** (ida e volta pelo próprio extrator; o 7-Zip do runner Windows testa e extrai byte a byte, nos três níveis; pastas e arquivos vazios preservados) | Sem senha, sem LZMA2 e sem filtros; mais lento que o 7-Zip nativo. Ver `docs/decisions/0008-criacao-de-7z.md`. |
 | RAR | **nunca** | Formato proprietário: só o WinRAR pode criar. |
 
 Links e junctions na origem não são seguidos (listados como ignorados); o compactado é gravado num temporário e só
