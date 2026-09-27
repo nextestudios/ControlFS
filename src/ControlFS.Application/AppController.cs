@@ -374,6 +374,16 @@ public sealed partial class AppController
         }
     }
 
+    /// <summary>Ctrl+A no teclado físico: seleciona todo o texto do teclado virtual ativo.</summary>
+    public void TypeSelectAll()
+    {
+        if (TopModal is KeyboardModal { IsBusy: false } modal)
+        {
+            modal.Keyboard.SelectAll();
+            RaiseChanged();
+        }
+    }
+
     public void TypeBackspace()
     {
         if (TopModal is KeyboardModal { IsBusy: false } modal)

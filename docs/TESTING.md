@@ -30,6 +30,7 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Com controle real: segurar Oeste por 2 s apaga vários caracteres e para na hora ao soltar; segurar LB/RB move o cursor continuamente; segurar Sul em Concluir não repete.
 - [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
+- [ ] Seleção no teclado virtual (#44): ao renomear `example-file.zip`, `example-file` aparece destacado e sublinhado, visível a 3 m e em 4K; digitar `novo` resulta em `novo.zip`; `Sel. tudo` na página `…` e Ctrl+A selecionam tudo; o Narrador lê "N de M caracteres selecionados".
 
 ## Layout responsivo (#36)
 

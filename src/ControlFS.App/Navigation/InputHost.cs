@@ -225,6 +225,13 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
             e.Handled = true;
             return;
         }
+        if (typing && ctrl && key == VirtualKey.A)
+        {
+            _app.SetActiveController(null);
+            _app.TypeSelectAll();
+            e.Handled = true;
+            return;
+        }
         if (action is null) return;
         e.Handled = true;
         if (e.KeyStatus.WasKeyDown && !_app.IsRepeatableInContext(action.Value)) return;

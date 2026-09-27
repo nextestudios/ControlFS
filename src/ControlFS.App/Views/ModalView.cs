@@ -200,13 +200,33 @@ public static class ModalView
             AutomationNotificationKind.Other, AutomationNotificationProcessing.MostRecent, spoken, "ControlFS.KeyboardCaret");
     }
 
-    /// <summary>Texto com um cursor fixo (sem piscar) na cor de destaque, largo o bastante para ser visto a distância.</summary>
-    private static TextBlock CaretText(string display, int caret)
+    /// <summary>
+    /// Texto com um cursor fixo (sem piscar) na cor de destaque, largo o bastante para ser visto a distância. O trecho
+    /// selecionado ganha fundo de destaque e sublinhado (não depende só de cor).
+    /// </summary>
+    private static TextBlock CaretText(string display, int caret, int selectionStart, int selectionLength)
     {
         var text = new TextBlock { FontSize = Theme.FontItem, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
-        if (caret > 0) text.Inlines.Add(new Run { Text = display[..caret] });
-        text.Inlines.Add(new Run { Text = "┃", Foreground = Theme.Accent, FontWeight = FontWeights.Bold });
-        if (caret < display.Length) text.Inlines.Add(new Run { Text = display[caret..] });
+        var selStart = Math.Clamp(selectionStart, 0, display.Length);
+        var selEnd = Math.Clamp(selStart + selectionLength, selStart, display.Length);
+        int[] cuts = [.. new[] { 0, selStart, selEnd, caret, display.Length }.Distinct().Order()];
+        for (var i = 0; i < cuts.Length; i++)
+        {
+            if (cuts[i] == caret) text.Inlines.Add(new Run { Text = "┃", Foreground = Theme.Accent, FontWeight = FontWeights.Bold });
+            if (i + 1 >= cuts.Length || cuts[i + 1] == cuts[i]) continue;
+            var selected = cuts[i] >= selStart && cuts[i + 1] <= selEnd && selEnd > selStart;
+            text.Inlines.Add(new Run { Text = display[cuts[i]..cuts[i + 1]], TextDecorations = selected ? Windows.UI.Text.TextDecorations.Underline : Windows.UI.Text.TextDecorations.None });
+        }
+        if (selEnd > selStart)
+        {
+            // O cursor é um caractere a mais no texto: índices depois dele andam uma posição.
+            text.TextHighlighters.Add(new TextHighlighter
+            {
+                Background = Theme.AccentSoft,
+                Foreground = Theme.Text,
+                Ranges = { new TextRange { StartIndex = selStart >= caret ? selStart + 1 : selStart, Length = selEnd - selStart } },
+            });
+        }
         return text;
     }
 
@@ -340,7 +360,7 @@ public static class ModalView
 
         var display = kb.DisplayText;
         var caret = Math.Min(kb.Caret, display.Length);
-        var fieldText = CaretText(display, caret);
+        var fieldText = CaretText(display, caret, kb.SelectionStart, kb.SelectionLength);
         var field = new Border
         {
             Background = Theme.SurfaceRaised,
@@ -350,7 +370,7 @@ public static class ModalView
             Padding = new Thickness(Theme.SpaceM),
             Child = fieldText,
         };
-        var caretSpoken = kb.Length == 0 ? "campo vazio" : caret == 0 ? "cursor no início" : caret >= kb.Length ? "cursor no fim" : $"cursor na posição {caret} de {kb.Length}";
+        var caretSpoken = kb.Length == 0 ? "campo vazio" : kb.HasSelection ? $"{kb.SelectionLength} de {kb.Length} caracteres selecionados" : caret == 0 ? "cursor no início" : caret >= kb.Length ? "cursor no fim" : $"cursor na posição {caret} de {kb.Length}";
         AutomationProperties.SetName(field, (kb.Kind == TextFieldKind.Password ? $"Senha, {kb.Length} caracteres" : $"Texto: {kb.Text}") + ", " + caretSpoken);
         AnnounceCaretMove(fieldText, kb, caretSpoken); // o TextBlock tem peer de automação; o Border não
         stack.Children.Add(field);

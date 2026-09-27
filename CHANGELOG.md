@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Novidades
+- **Seleção de texto** no teclado virtual: **Selecionar tudo** na página `…` (ou Ctrl+A), trecho selecionado destacado e sublinhado, digitar substitui, `⌫` apaga e `◀ ▶` desfazem a seleção. Renomear já abre com o nome sem a extensão selecionado (`example-file.zip` → digitar `novo` → `novo.zip`). (#44)
 
 ## [0.4.0-alpha.1]
 ### Novidades

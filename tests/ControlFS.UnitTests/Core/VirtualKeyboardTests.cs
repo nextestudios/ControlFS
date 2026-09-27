@@ -101,6 +101,28 @@ public class VirtualKeyboardTests
     }
 
     [Fact]
+    public void Selection_is_replaced_by_typing_deleted_by_backspace_and_collapsed_by_cursor_keys()
+    {
+        var kb = new VirtualKeyboard(TextFieldKind.FileName, "n", "foto.jpg", initialSelection: (0, 4));
+        kb.Press(VirtualKey.Character(":")); // recusado: a seleção continua
+        Assert.Equal((0, 4), (kb.SelectionStart, kb.SelectionLength));
+        kb.Handle(InputAction.NextRegion); // ▶ desfaz a seleção no fim dela, sem mexer no texto
+        Assert.Equal((4, 0), (kb.Caret, kb.SelectionLength));
+        Assert.Equal("foto.jpg", kb.Text);
+
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.SelectAll); // tecla na página "…"
+        Assert.Equal((0, 8), (kb.SelectionStart, kb.SelectionLength));
+        kb.Handle(InputAction.ToggleSelection); // ⌫ apaga o trecho todo
+        Assert.Equal("", kb.Text);
+
+        var limited = new VirtualKeyboard(TextFieldKind.Generic, "t", "abcd", maxLength: 4);
+        limited.SelectAll();
+        limited.InsertText("xy"); // substituir a seleção cabe no limite
+        Assert.Equal("xy", limited.Text);
+        Assert.Equal(2, limited.Caret);
+    }
+
+    [Fact]
     public void Backspace_removes_whole_surrogate_pair()
     {
         var kb = new VirtualKeyboard(TextFieldKind.Generic, "t", "a😀");

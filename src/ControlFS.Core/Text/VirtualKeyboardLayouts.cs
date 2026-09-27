@@ -6,6 +6,7 @@ public enum KeyKind
     Shift,
     Backspace,
     Clear,
+    SelectAll,
     Space,
     CaretLeft,
     CaretRight,
@@ -74,8 +75,9 @@ public static class VirtualKeyboardLayouts
                 rows.Add(
                 [
                     .. Chars("æœøå«»"),
-                    new VirtualKey(KeyKind.Clear, "Limpar", Span: 2, AccessibleName: "Limpar texto"),
-                    new VirtualKey(KeyKind.SwitchLanguage, language == KeyboardLanguage.PortugueseBrazil ? "PT-BR → EN" : "EN → PT-BR", Span: 3,
+                    new VirtualKey(KeyKind.SelectAll, "Sel. tudo", Span: 2, AccessibleName: "Selecionar todo o texto"),
+                    new VirtualKey(KeyKind.Clear, "Limpar", AccessibleName: "Limpar texto"),
+                    new VirtualKey(KeyKind.SwitchLanguage, language == KeyboardLanguage.PortugueseBrazil ? "→ EN" : "→ PT-BR", Span: 2,
                         AccessibleName: "Trocar idioma do teclado"),
                 ]);
                 break;
@@ -92,7 +94,7 @@ public static class VirtualKeyboardLayouts
 
         var left = new VirtualKey(KeyKind.CaretLeft, "◀", AccessibleName: "Mover cursor para a esquerda");
         var right = new VirtualKey(KeyKind.CaretRight, "▶", AccessibleName: "Mover cursor para a direita");
-        var more = new VirtualKey(KeyKind.PageAccents, "…", Span: 2, AccessibleName: "Mais: acentos, idioma e limpar");
+        var more = new VirtualKey(KeyKind.PageAccents, "…", Span: 2, AccessibleName: "Mais: acentos, selecionar tudo, limpar e idioma");
         var cancel = new VirtualKey(KeyKind.Cancel, "Cancelar", Span: 2);
         rows.Add(isPassword
             ? [left, right, more, new VirtualKey(KeyKind.Reveal, "Mostrar", Span: 2, AccessibleName: "Mostrar senha temporariamente"), cancel,
