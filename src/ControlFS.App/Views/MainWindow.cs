@@ -645,8 +645,14 @@ public sealed class MainWindow : Window
         _hints.Opacity = _app.TopModal is null ? 1 : 0;
 
         // Camada modal
-        _overlay.Children.Clear();
-        if (ModalView.Build(_app) is { } modal) _overlay.Children.Add(modal);
+        // O mesmo painel mantido (só o foco mudou) fica na árvore: tirar e recolocar refaria a rolagem e o painel fosco.
+        var modal = ModalView.Build(_app);
+        if (modal is null) _overlay.Children.Clear();
+        else if (_overlay.Children.Count != 1 || !ReferenceEquals(_overlay.Children[0], modal))
+        {
+            _overlay.Children.Clear();
+            _overlay.Children.Add(modal);
+        }
         RestoreKeyboardFocus();
         Announce();
     }

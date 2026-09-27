@@ -4,6 +4,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 ### Correções
+- Menus, confirmações e o teclado virtual ficaram fluidos: ao mover o foco só as opções/teclas que ganham ou perdem o foco mudam, sem recriar o painel, a sombra e a rolagem a cada movimento (o que deixava um "fantasma" e um pulo na rolagem).
 - A linha que acabou de perder o foco não fica mais com um destaque cinza "fantasma" quando o ponteiro do mouse está parado sobre a lista ou a grade: só o item focado tem o anel; marcados e recortados mantêm os próprios desenhos. (#182)
 - O ícone do ControlFS não aparece mais num quadrado preto: o executável, a janela, a barra de tarefas, o menu Iniciar, os atalhos e o instalador usam a arte com fundo transparente e o brilho neon, em todos os tamanhos do Windows (16–256 px). Se o Windows ainda mostrar o ícone antigo, é o cache de ícones dele. (#187)
 

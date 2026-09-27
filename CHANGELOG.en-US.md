@@ -4,6 +4,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 ### Fixes
+- Menus, confirmations and the on-screen keyboard are now smooth: moving the focus only changes the options/keys that gain or lose it, instead of rebuilding the panel, shadow and scroll area on every move (which left a "ghost" and a scroll jump).
 - The row that just lost focus no longer keeps a grey "ghost" highlight when the mouse pointer rests over the list or grid: only the focused item has the ring; marked and cut items keep their own marks. (#182)
 - The ControlFS icon no longer sits on a black square: the executable, window, taskbar, Start menu, shortcuts and installer use the artwork with a transparent background and the neon glow, at every Windows size (16–256 px). If Windows still shows the old icon, that's its icon cache. (#187)
 
