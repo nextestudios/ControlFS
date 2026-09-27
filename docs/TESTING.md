@@ -30,6 +30,17 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Com controle real: segurar Oeste por 2 s apaga vários caracteres e para na hora ao soltar; segurar LB/RB move o cursor continuamente; segurar Sul em Concluir não repete.
 - [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 
+## Ícones do Windows (#24)
+
+- [ ] Início: Downloads, Documentos, Área de trabalho, Imagens, Vídeos e Músicas com o ícone próprio; unidade fixa, pendrive,
+      leitor óptico e unidade de rede com ícones diferentes.
+- [ ] Pasta com .txt, .pdf, .docx, .zip, .exe e .ico: cada um com o ícone do programa associado; .exe com o ícone do próprio programa.
+- [ ] Dentro de um ZIP: ícones por extensão (nenhum emoji na lista).
+- [ ] Pasta com 10.000 arquivos: rolar com o gatilho e o analógico; a rolagem não trava enquanto os ícones aparecem.
+- [ ] 1080p 100%, 4K 200% e portátil (1280×800 a 150%): ícones nítidos, sem serrilhado; mover a janela para um monitor
+      com outra escala troca os ícones para o novo tamanho.
+- [ ] Anel de foco e marcação continuam legíveis sobre os ícones.
+
 ## Formatos, compactar e abrir com o Windows
 
 - [ ] Abrir e extrair um RAR e um 7z reais baixados da internet (conferir a marca de origem nos extraídos).

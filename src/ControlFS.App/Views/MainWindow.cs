@@ -28,6 +28,10 @@ public sealed class MainWindow : Window
     private readonly AppController _app;
     private readonly InputHost _input;
     private readonly GitHubReleaseUpdateService _updates;
+    private readonly ShellIconProvider _iconProvider = new();
+    private readonly IconLoader _icons;
+    private IReadOnlyList<FileEntry>? _shownPlaces;
+    private HashSet<string> _specialFolders = new(StringComparer.OrdinalIgnoreCase);
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
@@ -54,6 +58,12 @@ public sealed class MainWindow : Window
         _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService(), new FileOperationService());
         _input = new InputHost(_app, DispatcherQueue);
+        _icons = new IconLoader(_iconProvider);
+        _icons.Invalidated += () =>
+        {
+            _shownItems = null; // força recriar as linhas com ícones no novo tamanho
+            Render();
+        };
 
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
@@ -65,7 +75,12 @@ public sealed class MainWindow : Window
             _input.OnKeyDown(e);
         };
         _root.CharacterReceived += (_, e) => _input.OnCharacter(e.Character);
-        _root.Loaded += (_, _) => _root.Focus(FocusState.Programmatic);
+        _root.Loaded += (_, _) =>
+        {
+            _root.Focus(FocusState.Programmatic);
+            _icons.SetScale(_root.XamlRoot.RasterizationScale);
+            _root.XamlRoot.Changed += (root, _) => _icons.SetScale(root.RasterizationScale);
+        };
 
         Activated += (_, e) =>
         {
@@ -78,6 +93,7 @@ public sealed class MainWindow : Window
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
             _updates.Dispose();
+            _iconProvider.Dispose();
         };
 
         _app.Changed += Render;
@@ -123,8 +139,13 @@ public sealed class MainWindow : Window
         _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
         _list.ContainerContentChanging += (_, args) =>
         {
-            if (args.InRecycleQueue || args.Item is not FileEntry entry) return;
-            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry));
+            if (args.InRecycleQueue)
+            {
+                EntryRowTemplate.Recycle(args.ItemContainer, _icons);
+                return;
+            }
+            if (args.Item is not FileEntry entry) return;
+            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), _icons, _specialFolders);
         };
         _list.ItemClick += (_, e) =>
         {
@@ -188,6 +209,12 @@ public sealed class MainWindow : Window
             : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State == OperationState.WaitingForUser ? "aguardando você" : "em andamento")})";
 
         // Lista (a identidade dos itens decide se o ItemsSource muda)
+        if (!ReferenceEquals(_app.Places, _shownPlaces))
+        {
+            // Pastas especiais (Downloads, Documentos…) mostram o ícone próprio também dentro das pastas do disco.
+            _shownPlaces = _app.Places;
+            _specialFolders = new HashSet<string>(_app.Places.Where(p => p.Kind == EntryKind.KnownFolder && p.FullPath is not null).Select(p => p.FullPath!), StringComparer.OrdinalIgnoreCase);
+        }
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();

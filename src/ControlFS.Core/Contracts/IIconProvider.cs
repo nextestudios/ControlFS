@@ -1,0 +1,57 @@
+using ControlFS.Core.Models;
+
+namespace ControlFS.Core.Contracts;
+
+/// <summary>Ícone já rasterizado: pixels BGRA de 32 bits com alfa pré-multiplicado, linha a linha de cima para baixo.</summary>
+public sealed record IconImage(int Width, int Height, ReadOnlyMemory<byte> Pixels);
+
+public enum IconSourceKind
+{
+    /// <summary>Ícone do tipo de arquivo pela extensão, sem tocar no disco.</summary>
+    Extension,
+
+    /// <summary>Pasta genérica, sem tocar no disco.</summary>
+    Folder,
+
+    /// <summary>Ícone do item real (unidade, pasta especial, programa): o único caso que consulta o disco.</summary>
+    Path,
+}
+
+/// <summary>
+/// Pedido de ícone. <see cref="Key"/> identifica o ícone no cache: por tipo/extensão para os casos comuns e por caminho
+/// só onde o ícone é próprio do item (unidades, pastas especiais, .exe/.ico).
+/// </summary>
+public sealed record IconRequest(string Key, IconSourceKind Kind, string Value)
+{
+    private static readonly HashSet<string> PerFileExtensions = new(StringComparer.OrdinalIgnoreCase) { ".exe", ".ico" };
+
+    /// <summary>Ícone de uma linha da lista, ou <c>null</c> quando a linha usa só o símbolo de aviso (entrada bloqueada).</summary>
+    public static IconRequest? For(FileEntry entry, IReadOnlySet<string>? specialFolders = null)
+    {
+        if (entry.IsBlocked) return null;
+        switch (entry.Kind)
+        {
+            case EntryKind.Drive or EntryKind.KnownFolder when entry.FullPath is { } place:
+                return ForPath(place);
+            case EntryKind.Directory when entry.FullPath is { } dir && specialFolders is not null && specialFolders.Contains(dir):
+                return ForPath(dir);
+            case EntryKind.Drive or EntryKind.KnownFolder or EntryKind.Directory or EntryKind.ArchiveDirectory:
+                return new IconRequest("folder", IconSourceKind.Folder, string.Empty);
+            case EntryKind.File when entry.FullPath is { } file && PerFileExtensions.Contains(entry.Extension):
+                return ForPath(file);
+            default:
+                // Entradas de compactados e arquivos comuns: só a extensão (nunca lê o disco).
+                var extension = entry.Extension.ToLowerInvariant();
+                return new IconRequest("ext:" + extension, IconSourceKind.Extension, extension);
+        }
+    }
+
+    private static IconRequest ForPath(string path) => new("path:" + path.ToUpperInvariant(), IconSourceKind.Path, path);
+}
+
+/// <summary>Ícones do sistema. Implementações nunca bloqueiam quem chama: o trabalho acontece fora da thread de UI.</summary>
+public interface IIconProvider
+{
+    /// <summary>Ícone com lado de <paramref name="sizePx"/> pixels físicos, ou <c>null</c> quando não há (o chamador usa um símbolo).</summary>
+    Task<IconImage?> GetIconAsync(IconRequest request, int sizePx, CancellationToken cancellationToken);
+}
