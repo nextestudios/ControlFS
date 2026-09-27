@@ -30,6 +30,12 @@ public sealed class InputRouter
 
     public bool IsSuspended { get; private set; }
 
+    /// <summary>
+    /// Regra de repetição do contexto atual (ex.: teclado virtual repete apagar e cursor). Consultada a cada
+    /// repetição, então parar de valer interrompe a repetição. Sem regra, só navegação repete.
+    /// </summary>
+    public Func<InputAction, bool>? RepeatPolicy { get; set; }
+
     public event Action<string?>? ActiveDeviceChanged;
 
     public void UpdateMap(ActionMap map) => _map = map;
@@ -76,7 +82,7 @@ public sealed class InputRouter
         foreach (var control in _held.Keys.ToArray())
         {
             var state = _held[control];
-            if (!state.Action.IsRepeatable() || now < state.NextRepeat) continue;
+            if (now < state.NextRepeat || !(RepeatPolicy?.Invoke(state.Action) ?? state.Action.IsRepeatable())) continue;
             _emit(state.Action);
             // A ação pode ter trocado o contexto (LatchHeld): não reative um controle travado.
             if (!_held.ContainsKey(control)) continue;

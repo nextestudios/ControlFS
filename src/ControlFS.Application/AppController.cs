@@ -294,6 +294,13 @@ public sealed partial class AppController
         }
     }
 
+    /// <summary>
+    /// Ações que repetem quando mantidas no contexto atual: navegação em qualquer tela e, no teclado virtual,
+    /// apagar e mover o cursor. Confirmar/Concluir fora de ⌫ ◀ ▶ nunca repetem.
+    /// </summary>
+    public bool IsRepeatableInContext(InputAction action) =>
+        action.IsRepeatable() || TopModal is KeyboardModal { IsBusy: false } modal && modal.Keyboard.IsRepeatable(action);
+
     /// <summary>Entrada de texto do teclado físico no teclado virtual ativo.</summary>
     public void TypeText(string text)
     {

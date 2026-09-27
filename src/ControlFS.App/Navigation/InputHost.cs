@@ -31,6 +31,7 @@ public sealed class InputHost : IInputSink, IDisposable
     {
         _app = app;
         Router = new InputRouter(new ActionMap(app.Settings.Convention), InputSettings.Default, app.Handle);
+        Router.RepeatPolicy = app.IsRepeatableInContext;
         Router.ActiveDeviceChanged += _ =>
         {
             app.SetActiveController(ActiveDevice?.Family); // troca de controle muda as legendas na hora
@@ -145,7 +146,7 @@ public sealed class InputHost : IInputSink, IDisposable
         }
         if (action is null) return;
         e.Handled = true;
-        if (e.KeyStatus.WasKeyDown && !action.Value.IsRepeatable()) return;
+        if (e.KeyStatus.WasKeyDown && !_app.IsRepeatableInContext(action.Value)) return;
         _app.Handle(action.Value);
     }
 

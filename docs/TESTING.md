@@ -27,6 +27,7 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Foco (#31): marcar vários itens no meio de uma pasta grande, excluir; o foco vai para o item seguinte e fica
       visível sem rolar manualmente. Voltar de uma subpasta numa pasta com milhares de itens: o item de origem aparece
       focado já no primeiro quadro.
+- [ ] Com controle real: segurar Oeste por 2 s apaga vários caracteres e para na hora ao soltar; segurar LB/RB move o cursor continuamente; segurar Sul em Concluir não repete.
 
 ## Formatos, compactar e abrir com o Windows
 
