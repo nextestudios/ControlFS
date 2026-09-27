@@ -20,6 +20,9 @@ jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 40
+    # Assinatura de código (#84): os secrets de assinatura ficam no ambiente "release"; com revisores obrigatórios nele,
+    # cada release espera a aprovação manual do mantenedor antes de rodar. Sem secrets, publica sem assinatura (como antes).
+    environment: release
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_NOLOGO: "1"
@@ -90,6 +93,35 @@ jobs:
           ) -join "`n"
           Set-Content -LiteralPath "release-notes.md" -Value $releaseNotes -Encoding utf8
 
+      # Só builds de tag são assinados. O modo sai das variáveis presentes (build/CodeSigning.ps1); nada é impresso.
+      - name: Code signing mode
+        id: signing
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ARTIFACT_SIGNING_ENDPOINT: ${{ vars.ARTIFACT_SIGNING_ENDPOINT }}
+          ARTIFACT_SIGNING_ACCOUNT: ${{ vars.ARTIFACT_SIGNING_ACCOUNT }}
+          ARTIFACT_SIGNING_PROFILE: ${{ vars.ARTIFACT_SIGNING_PROFILE }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          SIGNING_PFX_BASE64: ${{ secrets.SIGNING_PFX_BASE64 }}
+          SIGNING_PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
+        run: |
+          . .\build\CodeSigning.ps1
+          $mode = Get-CodeSigningMode
+          if ($env:EVENT_NAME -ne "push") { $mode = "none"; Write-Host "Build manual: sem assinatura (só builds de tag são assinados)." }
+          elseif ($mode -eq "none") { Write-Host "::warning::Release sem assinatura de código: nenhum provedor configurado (docs/build-and-release.md)." }
+          else { Write-Host "Release será assinada (provedor: $mode)." }
+          "mode=$mode" >> $env:GITHUB_OUTPUT
+
+      # O cliente do Artifact Signing (dlib do signtool) precisa do runtime do .NET 8.
+      - name: Setup .NET 8 runtime (Artifact Signing client)
+        if: steps.signing.outputs.mode == 'artifact'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Restore (locked)
         run: dotnet restore ControlFS.slnx --locked-mode
 
@@ -101,9 +133,22 @@ jobs:
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
 
+      # Com assinatura: ControlFS.exe (antes de empacotar), instalador e portátil, antes do SHA256SUMS e do manifesto.
+      # O script tira os secrets do ambiente antes do dotnet publish e do ISCC; só o signtool os recebe.
       - name: Build installer + portable
         shell: pwsh
-        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version "${{ steps.version.outputs.version }}"
+        env:
+          SIGN: ${{ steps.signing.outputs.mode != 'none' }}
+          ARTIFACT_SIGNING_ENDPOINT: ${{ steps.signing.outputs.mode == 'artifact' && vars.ARTIFACT_SIGNING_ENDPOINT || '' }}
+          ARTIFACT_SIGNING_ACCOUNT: ${{ steps.signing.outputs.mode == 'artifact' && vars.ARTIFACT_SIGNING_ACCOUNT || '' }}
+          ARTIFACT_SIGNING_PROFILE: ${{ steps.signing.outputs.mode == 'artifact' && vars.ARTIFACT_SIGNING_PROFILE || '' }}
+          AZURE_TENANT_ID: ${{ steps.signing.outputs.mode == 'artifact' && secrets.AZURE_TENANT_ID || '' }}
+          AZURE_CLIENT_ID: ${{ steps.signing.outputs.mode == 'artifact' && secrets.AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ steps.signing.outputs.mode == 'artifact' && secrets.AZURE_CLIENT_SECRET || '' }}
+          SIGNING_PFX_BASE64: ${{ steps.signing.outputs.mode == 'pfx' && secrets.SIGNING_PFX_BASE64 || '' }}
+          SIGNING_PFX_PASSWORD: ${{ steps.signing.outputs.mode == 'pfx' && secrets.SIGNING_PFX_PASSWORD || '' }}
+          SIGNING_TIMESTAMP_URL: ${{ vars.SIGNING_TIMESTAMP_URL }}
+        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version "${{ steps.version.outputs.version }}" -Sign:($env:SIGN -eq 'true')
 
       # Abre o app de verdade antes de publicar: o .exe portátil e a versão instalada (instalar, abrir, desinstalar).
       - name: Smoke-test portable exe (launch)
@@ -117,6 +162,14 @@ jobs:
       - name: Smoke-test installer (install, launch, uninstall)
         shell: pwsh
         run: .\build\Test-Installed.ps1 -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-installed
+
+      # Antes de publicar: assinatura Authenticode válida e com carimbo de tempo no instalador, no portátil e no app.
+      - name: Verify Authenticode signatures
+        if: steps.signing.outputs.mode != 'none'
+        shell: pwsh
+        run: |
+          . .\build\CodeSigning.ps1
+          Assert-Authenticode @("dist\ControlFS-Setup-x64.exe", "dist\ControlFS-Portable-x64.exe", "artifacts\publish-x64-app\ControlFS.exe")
 
       # A chave privada existe só no secret UPDATE_SIGNING_KEY; o script confere a assinatura contra a chave
       # pública embutida no app e falha se não bater. Sem manifesto assinado, o app não aceita a atualização.

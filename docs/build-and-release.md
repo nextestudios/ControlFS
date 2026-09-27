@@ -30,8 +30,8 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   **Precisa ser demonstrada em máquina limpa** antes de anunciar "portátil".
 - Nativos: `SDL3.dll` (win-x64) vem do pacote `ppy.SDL3-CS` e é copiado para a saída (verificado no build).
 - Manifesto: `asInvoker` (nunca pede elevação), PerMonitorV2, `longPathAware`.
-- Sem assinatura de código: o artefato da CI chama-se `...-nao-assinado`. Instalador/MSIX somente com estratégia de
-  assinatura definida. Nunca instruir usuários a desabilitar proteções ou importar certificados-raiz.
+- Assinatura de código: o `release.yml` já assina quando há secrets configurados (ver "Assinatura de código" abaixo);
+  até lá as releases saem sem assinatura. Nunca instruir usuários a desabilitar proteções ou importar certificados-raiz.
 
 ## CI
 
@@ -62,3 +62,53 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
 Releases só quando o mantenedor pede (PRs são mergeados sem publicar). Versões `0.x.y-alpha.N` até a 1.0, publicadas como release normal (aparece como "Latest"), com dois downloads (`ControlFS-Setup-x64.exe`, `ControlFS-Portable-x64.exe`) mais o manifesto assinado de atualização. Para publicar antes da 1.0: PRs de feature já estão na `main`; adicione a seção da versão nos dois changelogs num PR para `main` e crie a tag `vX.Y.Z` no merge. A partir da 1.0 (Gitflow completo): crie `release/X.Y.Z` a partir de `develop`, adicione a seção da versão nos dois changelogs, abra PR para `main`, crie a tag `vX.Y.Z` no merge em `main` e faça merge de `main` de volta em `develop` (somente mantenedores). O workflow de release recusa tags fora da `main`.
+
+## Assinatura de código (#84)
+
+O `release.yml` assina, **só em builds de tag**, o `ControlFS.exe` do instalador (antes de empacotar), o
+`ControlFS-Setup-x64.exe` e o `ControlFS-Portable-x64.exe`, com carimbo de tempo, antes do `SHA256SUMS.txt` e do
+manifesto de atualização. Depois do teste de abertura, o passo **Verify Authenticode signatures** confere
+(`Get-AuthenticodeSignature`) que os três têm assinatura válida e carimbo de tempo; se não, a release não é publicada.
+Sem nenhum secret configurado, o passo "Code signing mode" deixa um aviso e a release sai sem assinatura, como antes.
+Configuração pela metade faz a release falhar (melhor do que publicar sem assinatura sem perceber).
+
+A lógica fica em `build/CodeSigning.ps1` (usado por `Publish-ControlFS.ps1 -Sign`). O script tira os secrets do
+ambiente antes do `dotnet publish` e do Inno Setup e só os devolve para o `signtool`. Nenhum certificado, senha ou
+chave fica no repositório. Validado uma vez no Smoke (branch do #84, commit temporário revertido) com um certificado
+autoassinado de teste confiado no runner: os três arquivos foram assinados, passaram no `Assert-Authenticode`, e o
+portátil e o app instalado assinados abriram normalmente. A assinatura com um certificado real depende do mantenedor.
+
+### Aprovação manual
+
+O job de release usa o ambiente do GitHub **`release`** (criado sozinho na primeira execução). Em Settings →
+Environments → `release`: marque **Required reviewers** (o mantenedor) para cada release esperar aprovação, e em
+"Deployment branches and tags" permita as tags `v*` e a branch `main` (o build manual sem publicar roda na `main`).
+Coloque os secrets de assinatura **nesse ambiente** (não no repositório): só o job aprovado os recebe.
+
+### Opção A: Microsoft Artifact Signing (antigo Trusted Signing), recomendada
+
+1. No Azure: crie uma conta **Artifact Signing** e faça a validação de identidade (pessoa física ou organização).
+   Crie um **perfil de certificado** "Public Trust".
+2. Crie um registro de aplicativo (service principal) no Microsoft Entra ID, gere um segredo de cliente e dê a ele o
+   papel **Artifact Signing Certificate Profile Signer** (antigo "Trusted Signing Certificate Profile Signer") na conta.
+3. No ambiente `release` do GitHub:
+   - Variables: `ARTIFACT_SIGNING_ENDPOINT` (ex.: `https://eus.codesigning.azure.net`, a região da conta),
+     `ARTIFACT_SIGNING_ACCOUNT` (nome da conta), `ARTIFACT_SIGNING_PROFILE` (nome do perfil).
+   - Secrets: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`.
+
+O workflow baixa `Microsoft.ArtifactSigning.Client` (versão e SHA-512 fixados em `build/CodeSigning.ps1`), instala o
+runtime do .NET 8 que ele exige e assina com `signtool /dlib`, carimbo `http://timestamp.acs.microsoft.com`.
+
+### Opção B: certificado .pfx (ex.: de um programa de assinatura para código aberto)
+
+No ambiente `release`: secrets `SIGNING_PFX_BASE64` (o `.pfx` em Base64:
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes("cert.pfx"))`) e `SIGNING_PFX_PASSWORD`. Opcional: variable
+`SIGNING_TIMESTAMP_URL` (padrão `http://timestamp.digicert.com`). Certificados em token/HSM que não exportam `.pfx`
+precisam da opção A ou de outro provedor.
+
+### Depois de configurar
+
+Na próxima release, confira no log "Release será assinada (provedor: …)" e as linhas "Authenticode OK", e depois
+atualize `docs/CODE_SIGNING.md` (que ainda diz "ainda não têm assinatura"). O desinstalador do Inno Setup
+(`unins000.exe`) não é assinado nesta etapa.
+

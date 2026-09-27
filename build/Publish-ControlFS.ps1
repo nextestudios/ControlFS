@@ -4,13 +4,16 @@
     ControlFS-Portable-x64.exe  um único .exe portátil (dados em ControlFS_Data ao lado dele)
     ControlFS-Setup-x64.exe     instalador por usuário (Inno Setup; dados em %LOCALAPPDATA%\ControlFS)
     SHA256SUMS.txt
+  -Sign assina (Authenticode) o ControlFS.exe do instalador antes de empacotar, o instalador e o portátil, antes do
+  SHA256SUMS; o provedor vem das variáveis de ambiente (build/CodeSigning.ps1). Só o release.yml usa, em builds de tag.
 .EXAMPLE
   .\build\Publish-ControlFS.ps1 -Version 0.1.0-alpha.3
 #>
 param(
     [ValidateSet("x64")] [string] $Runtime = "x64",
     [Parameter(Mandatory = $true)] [string] $Version,
-    [ValidateSet("All", "Portable", "Installer")] [string] $Target = "All"
+    [ValidateSet("All", "Portable", "Installer")] [string] $Target = "All",
+    [switch] $Sign
 )
 $ErrorActionPreference = "Stop"
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.\-]+)?$') { throw "Versão inválida: $Version" }
@@ -40,28 +43,43 @@ function Invoke-Publish([string]$OutDir, [bool]$SingleFile) {
     if (-not (Test-Path -LiteralPath (Join-Path $OutDir "ControlFS.exe"))) { throw "Publish não gerou ControlFS.exe em $OutDir" }
 }
 
-$files = @()
-if ($Target -in "All", "Installer") {
-    Write-Host "Publicando versão para o instalador (pasta)..."
-    Invoke-Publish $appDir $false
-    foreach ($required in "ControlFS.exe", "resources.pri", "SDL3.dll", "SharpCompress.dll") {
-        if (-not (Test-Path -LiteralPath (Join-Path $appDir $required))) { throw "Pacote incompleto: falta $required" }
-    }
-    Copy-Item -LiteralPath (Join-Path $root "LICENSE"), (Join-Path $root "THIRD_PARTY_NOTICES.md") -Destination $appDir
-    $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe", "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") |
-        Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-    if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) não encontrado." }
-    & $iscc /Q "/DAppVersion=$Version" "/DNumericVersion=$numeric.0" "/DSourceDir=$appDir" "/DOutputDir=$dist" (Join-Path $PSScriptRoot "ControlFS.iss")
-    if ($LASTEXITCODE -ne 0) { throw "ISCC falhou" }
-    $files += Join-Path $dist "ControlFS-Setup-$Runtime.exe"
+# Antes de qualquer processo filho: tira os secrets do ambiente (voltam só para o signtool).
+$signing = $null
+if ($Sign) {
+    . (Join-Path $PSScriptRoot "CodeSigning.ps1")
+    $signing = Initialize-CodeSigning
 }
 
-if ($Target -in "All", "Portable") {
-    Write-Host "Publicando versão portátil (um único .exe)..."
-    Invoke-Publish $singleDir $true
-    $portable = Join-Path $dist "ControlFS-Portable-$Runtime.exe"
-    Copy-Item -LiteralPath (Join-Path $singleDir "ControlFS.exe") -Destination $portable
-    $files += $portable
+$files = @()
+try {
+    if ($Target -in "All", "Installer") {
+        Write-Host "Publicando versão para o instalador (pasta)..."
+        Invoke-Publish $appDir $false
+        foreach ($required in "ControlFS.exe", "resources.pri", "SDL3.dll", "SharpCompress.dll") {
+            if (-not (Test-Path -LiteralPath (Join-Path $appDir $required))) { throw "Pacote incompleto: falta $required" }
+        }
+        Copy-Item -LiteralPath (Join-Path $root "LICENSE"), (Join-Path $root "THIRD_PARTY_NOTICES.md") -Destination $appDir
+        if ($signing) { Invoke-CodeSigning $signing @(Join-Path $appDir "ControlFS.exe") } # o app instalado, antes de empacotar
+        $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe", "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") |
+            Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        if (-not $iscc) { throw "Inno Setup 6 (ISCC.exe) não encontrado." }
+        & $iscc /Q "/DAppVersion=$Version" "/DNumericVersion=$numeric.0" "/DSourceDir=$appDir" "/DOutputDir=$dist" (Join-Path $PSScriptRoot "ControlFS.iss")
+        if ($LASTEXITCODE -ne 0) { throw "ISCC falhou" }
+        $setup = Join-Path $dist "ControlFS-Setup-$Runtime.exe"
+        if ($signing) { Invoke-CodeSigning $signing @($setup) }
+        $files += $setup
+    }
+
+    if ($Target -in "All", "Portable") {
+        Write-Host "Publicando versão portátil (um único .exe)..."
+        Invoke-Publish $singleDir $true
+        $portable = Join-Path $dist "ControlFS-Portable-$Runtime.exe"
+        Copy-Item -LiteralPath (Join-Path $singleDir "ControlFS.exe") -Destination $portable
+        if ($signing) { Invoke-CodeSigning $signing @($portable) }
+        $files += $portable
+    }
+} finally {
+    if ($signing) { Remove-CodeSigning $signing }
 }
 # LF explícito: "sha256sum -c" / "shasum -c" falham com CRLF no nome do arquivo.
 $lines = foreach ($f in $files) { "$((Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash.ToLowerInvariant())  $(Split-Path -Leaf $f)" }
