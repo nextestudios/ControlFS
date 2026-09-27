@@ -604,3 +604,10 @@ Detalhes e o que medir: `docs/decisions/0007`.
 - [ ] Digitando só com o direcional, com a mira ligada: o foco não "escapa" por tremor ao apertar botões com força.
 - [ ] Cronometrar um nome de 10–15 letras com o direcional e com a mira; anotar o resultado em `docs/decisions/0007`.
 - [ ] Xbox (sem giroscópio) e mira ligada: nada muda, sem legenda de recentralizar. Mira desligada: o sensor não é ligado (bateria do DualSense igual).
+
+## Imagens de disco (#73, #74) — não validado em hardware
+Automático: `DiskImageIntegrationTests` monta e desmonta uma ISO 9660 mínima gerada no teste com a API nativa (no CI, que roda como administrador).
+- [ ] Usuário comum (sem administrador): montar uma ISO de jogo real pelo menu; a unidade abre; desmontar pelo Meu computador.
+- [ ] VHDX sem administrador: a mensagem explica que precisa de administrador; como administrador, monta e abre.
+- [ ] ISO montada pelo Explorador ("Montar"): o ControlFS oferece "Desmontar imagem…" nela.
+- [ ] Com um arquivo da imagem aberto em outro programa, desmontar: a confirmação avisa; o resultado (desmonta ou erro explicado) é legível.

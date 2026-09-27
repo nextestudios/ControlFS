@@ -124,7 +124,7 @@ public sealed partial class AppController
 
     // ---------- Início ----------
 
-    private void ShowHomeMenu()
+    private void ShowHomeMenu(string? image = null, bool imageChecked = false)
     {
         if (PlacesFocus >= 0 && PlacesFocus < Places.Count && IsRecentPlace(Places[PlacesFocus]))
         {
@@ -137,6 +137,7 @@ public sealed partial class AppController
             return;
         }
         if (PlacesFocus < 0 || PlacesFocus >= Places.Count || Places[PlacesFocus] is not { FullPath: { } path } place) return;
+        if (!imageChecked && place.Kind == EntryKind.Drive && DeferForImage(path, found => ShowHomeMenu(found, imageChecked: true))) return;
         var items = new List<MenuItem>
         {
             new("Abrir", () => OpenPlace(place), place.IsBlocked ? "Pasta indisponível no momento." : null, Icon: ActionIcon.OpenFolder),
@@ -149,6 +150,7 @@ public sealed partial class AppController
             items.Add(new MenuItem("Mover favorito para baixo", () => MoveFavorite(path, 1),
                 index >= Settings.Favorites.Count - 1 ? "Já é o último favorito." : null, Icon: ActionIcon.MoveDown));
         }
+        if (image is not null) items.Add(UnmountItem(path, image));
         PushModal(new MenuModal(place.Name, items) { Icon = PlaceIcon(place), Subtitle = place.Detail });
     }
 
