@@ -14,6 +14,11 @@ public sealed partial class AppController
     {
         if (HandleRegionSwitch(pane, action)) return;
         var list = pane.List;
+        if (IsGrid && GridNavigation.Move(list.FocusIndex, list.Items.Count, GridColumns, GridRowsPerPage, action) is { } cell)
+        {
+            list.FocusAt(cell);
+            return;
+        }
         switch (action)
         {
             case InputAction.NavigateUp: list.Move(-1); break;
@@ -47,9 +52,32 @@ public sealed partial class AppController
                 if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
                 else ShowAppMenu();
                 break;
-            case InputAction.ChangeView: ToggleDensity(); break;
+            case InputAction.ChangeView: ToggleView(); break;
         }
     }
+
+    /// <summary>A grade ocupa a tela toda: esquerda/direita andam entre blocos (Voltar e a barra de caminho sobem de pasta).</summary>
+    public bool IsGrid => Settings.View == ViewMode.Grid;
+
+    /// <summary>Colunas da grade e linhas visíveis (LB/RB/gatilhos paginam por tela), publicadas pela view ao medir.</summary>
+    public int GridColumns { get; private set; } = 1;
+
+    public int GridRowsPerPage { get; private set; } = 1;
+
+    public void SetGridLayout(int columns, int rowsPerPage)
+    {
+        GridColumns = Math.Max(1, columns);
+        GridRowsPerPage = Math.Max(1, rowsPerPage);
+    }
+
+    /// <summary>Alterna lista/grade (preferência salva). O foco continua no mesmo item: ele é guardado pela identidade.</summary>
+    internal void ToggleView()
+    {
+        UpdateSettings(s => s with { View = s.View == ViewMode.Grid ? ViewMode.List : ViewMode.Grid });
+        StatusMessage = $"Exibição em {ViewName(Settings.View)}.";
+    }
+
+    private static string ViewName(ViewMode view) => view == ViewMode.Grid ? "grade" : "lista";
 
     /// <summary>Alterna a densidade da lista (preferência salva): confortável para TV, compacta para ver mais itens.</summary>
     internal void ToggleDensity()
@@ -430,8 +458,9 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
             }),
+            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também em Select/View)."),
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
-                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data."),
+                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores."),
             new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 ? "Nenhuma operação nesta sessão." : null),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),

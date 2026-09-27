@@ -14,10 +14,13 @@ namespace ControlFS.App.Controls;
 /// chega. Pedidos iguais (mesma extensão) viram um só; linhas recicladas cancelam o pedido. Cache limitado, por tipo e
 /// tamanho em pixels; trocar a escala (DPI) esvazia o cache. Usar somente na thread de UI.
 /// </summary>
-public sealed class IconLoader(IIconProvider provider)
+public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoader.RowIconSize)
 {
     /// <summary>Tamanho do ícone na linha, em pixels independentes de dispositivo.</summary>
-    public const double IconSize = 32;
+    public const double RowIconSize = 32;
+
+    /// <summary>Tamanho do ícone no bloco da grade (a lista de 256 px do Shell, reduzida com nitidez).</summary>
+    public const double TileIconSize = 64;
 
     private readonly LruCache<string, ImageSource?> _cache = new(512);
     private readonly Dictionary<string, Flight> _inflight = [];
@@ -30,14 +33,14 @@ public sealed class IconLoader(IIconProvider provider)
         public int Waiters { get; set; }
     }
 
-    public int SizePx { get; private set; } = (int)IconSize;
+    public int SizePx { get; private set; } = (int)iconSize;
 
     /// <summary>A escala mudou (outro monitor, outro DPI): os ícones em cache ficaram do tamanho errado.</summary>
     public event Action? Invalidated;
 
     public void SetScale(double scale)
     {
-        var px = Math.Max(16, (int)Math.Round(IconSize * scale));
+        var px = Math.Max(16, (int)Math.Round(iconSize * scale));
         if (px == SizePx) return;
         SizePx = px;
         _cache.Clear();

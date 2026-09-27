@@ -74,6 +74,17 @@ Ainda manual, num aparelho real:
 - [ ] 1280×720, 1920×1080 e 4K (100–200%) nas duas densidades: colunas não se sobrepõem e o texto fica legível a 3 m
       no modo confortável.
 
+## Grade (#29)
+
+- [ ] Menu → Exibição: grade (e Ctrl+G): o item focado continua o mesmo nas duas direções; fechar e abrir o app mantém.
+- [ ] Controle real: direcional e analógico andam em 2D; na ponta da linha passam para a linha seguinte/anterior;
+      descer para a última linha incompleta vai ao último item; gatilhos paginam; LB entra na barra de caminho.
+- [ ] Pasta com 10.000 arquivos em grade: rolagem sem travar enquanto os ícones grandes aparecem.
+- [ ] 1280×720, 1080p e 4K (100–300%), confortável e compacta: blocos sem cortes, anel de foco inteiro, nomes em até
+      duas linhas; as capturas `3b-folder-grid-compact` e `3c-folder-grid` do `--render-screens` conferem.
+- [ ] Redimensionar a janela: o número de colunas acompanha e a navegação usa as colunas que aparecem.
+- [ ] Narrador lê nome e estado do bloco focado.
+
 ## Ícones do Windows (#24)
 
 - [ ] Início: Downloads, Documentos, Área de trabalho, Imagens, Vídeos e Músicas com o ícone próprio; unidade fixa, pendrive,

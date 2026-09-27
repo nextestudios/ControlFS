@@ -54,6 +54,7 @@ public static class ButtonGlyphs
         InputAction.OpenContextMenu => "F2",
         InputAction.OpenAppMenu => "F10",
         InputAction.Search => "Ctrl+F",
+        InputAction.ChangeView => "Ctrl+G",
         InputAction.PreviousRegion => "Ctrl+←",
         InputAction.NextRegion => "Ctrl+→",
         InputAction.PageUp => "PgUp",

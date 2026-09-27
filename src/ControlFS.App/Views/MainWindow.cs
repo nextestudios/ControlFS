@@ -16,6 +16,7 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 
@@ -36,9 +37,11 @@ public sealed class MainWindow : Window
     private readonly ShellIconProvider _iconProvider = new();
     private readonly DriveWatcher _drives = new();
     private readonly IconLoader _icons;
+    private readonly IconLoader _tileIcons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
     private HashSet<string> _specialFolders = new(StringComparer.OrdinalIgnoreCase);
     private ListDensity _density = ListDensity.Comfortable;
+    private ViewMode _view = ViewMode.List;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0) };
@@ -48,6 +51,7 @@ public sealed class MainWindow : Window
     private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly ListView _list = new();
+    private readonly GridView _grid = new();
     private readonly WrapPanel _hints = new();
     private readonly StackPanel _footer = new() { Background = Theme.Surface };
     private readonly Grid _header = new();
@@ -84,11 +88,9 @@ public sealed class MainWindow : Window
             new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries);
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
-        _icons.Invalidated += () =>
-        {
-            _shownItems = null; // força recriar as linhas com ícones no novo tamanho
-            Render();
-        };
+        _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
+        _icons.Invalidated += OnIconsInvalidated;
+        _tileIcons.Invalidated += OnIconsInvalidated;
 
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
@@ -130,10 +132,12 @@ public sealed class MainWindow : Window
         _input.StatusChanged += Render;
         _app.SettingsChanged += settings =>
         {
-            if (settings.Density == _density) return;
+            if (settings.Density == _density && settings.View == _view) return;
             _density = settings.Density;
+            _view = settings.View;
             _list.ItemTemplate = EntryRowTemplate.Create(_density);
-            _shownItems = null; // recria as linhas no novo modelo
+            _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
+            ShowActiveView();
         };
         _app.Start();
         // Pendrive conectado ou removido com o app aberto: os locais se atualizam sem reiniciar.
@@ -169,29 +173,16 @@ public sealed class MainWindow : Window
         header.Children.Add(right);
         layout.Children.Add(header);
 
-        // Lista
+        // Lista e grade: as duas virtualizadas, preenchidas pelo mesmo código; só a ativa fica visível e com itens.
         _list.ItemTemplate = EntryRowTemplate.Create(_density);
-        _list.SelectionMode = ListViewSelectionMode.None; // o foco é desenhado pelo anel da linha (mesmo token dos menus)
-        _list.IsItemClickEnabled = true;
-        _list.IsTabStop = false;
-        _list.AllowFocusOnInteraction = false;
-        _list.ItemContainerTransitions = new TransitionCollection(); // sem animações de lista
-        _list.ContainerContentChanging += (_, args) =>
-        {
-            if (args.InRecycleQueue)
-            {
-                EntryRowTemplate.Recycle(args.ItemContainer, _icons);
-                return;
-            }
-            if (args.Item is not FileEntry entry) return;
-            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), _icons, _specialFolders);
-        };
-        _list.ItemClick += (_, e) =>
-        {
-            if (e.ClickedItem is FileEntry entry && _shownItems is { } items) _app.PointerActivateListItem(IndexOf(items, entry));
-        };
+        _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
+        _grid.Visibility = Visibility.Collapsed;
+        ConfigureItems(_list, _icons);
+        ConfigureItems(_grid, _tileIcons);
+        _grid.SizeChanged += (_, _) => UpdateGridMetrics();
         var content = new Grid();
         content.Children.Add(_list);
+        content.Children.Add(_grid);
         content.Children.Add(_empty);
         Grid.SetRow(content, 1);
         layout.Children.Add(content);
@@ -207,6 +198,69 @@ public sealed class MainWindow : Window
         Grid.SetRowSpan(_overlay, 3);
         layout.Children.Add(_overlay);
         return layout;
+    }
+
+    private void ConfigureItems(ListViewBase view, IconLoader icons)
+    {
+        view.SelectionMode = ListViewSelectionMode.None; // o foco é desenhado pelo anel da linha (mesmo token dos menus)
+        view.IsItemClickEnabled = true;
+        view.IsTabStop = false;
+        view.AllowFocusOnInteraction = false;
+        view.ItemContainerTransitions = new TransitionCollection(); // sem animações de lista
+        view.ContainerContentChanging += (_, args) =>
+        {
+            if (args.InRecycleQueue)
+            {
+                EntryRowTemplate.Recycle(args.ItemContainer, icons);
+                return;
+            }
+            if (args.Item is not FileEntry entry) return;
+            args.ItemContainer.HorizontalContentAlignment = HorizontalAlignment.Stretch; // o anel ocupa o bloco/linha inteiro
+            args.ItemContainer.VerticalContentAlignment = VerticalAlignment.Stretch;
+            EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), icons, _specialFolders);
+        };
+        view.ItemClick += (_, e) =>
+        {
+            if (e.ClickedItem is FileEntry entry && _shownItems is { } items) _app.PointerActivateListItem(IndexOf(items, entry));
+        };
+    }
+
+    private ListViewBase ActiveList => _view == ViewMode.Grid ? _grid : _list;
+
+    private void OnIconsInvalidated()
+    {
+        _shownItems = null; // força recriar as linhas com ícones no novo tamanho
+        Render();
+    }
+
+    /// <summary>Lista ↔ grade: a outra fica vazia e escondida; o item focado continua o mesmo (foco pela identidade).</summary>
+    private void ShowActiveView()
+    {
+        var inactive = _view == ViewMode.Grid ? (ListViewBase)_list : _grid;
+        inactive.ItemsSource = null;
+        inactive.Visibility = Visibility.Collapsed;
+        ActiveList.Visibility = Visibility.Visible;
+        _shownItems = null; // recria os itens no novo modelo
+        UpdateGridMetrics();
+    }
+
+    /// <summary>
+    /// Blocos de tamanho fixo e número de colunas fixado pela largura: o AppController navega em 2D com as mesmas
+    /// colunas que aparecem na tela, e pagina pelas linhas visíveis.
+    /// </summary>
+    private void UpdateGridMetrics()
+    {
+        var (width, height, _) = EntryRowTemplate.TileSize(_density);
+        var available = _grid.ActualWidth - _grid.Padding.Left - _grid.Padding.Right;
+        var columns = available > 0 ? Math.Max(1, (int)Math.Floor(available / width)) : 1;
+        var rows = _grid.ActualHeight > 0 ? Math.Max(1, (int)Math.Floor(_grid.ActualHeight / height)) : 1;
+        if (_grid.ItemsPanelRoot is ItemsWrapGrid panel)
+        {
+            panel.ItemWidth = width;
+            panel.ItemHeight = height;
+            panel.MaximumRowsOrColumns = columns;
+        }
+        _app.SetGridLayout(columns, rows);
     }
 
     private void Render()
@@ -274,19 +328,22 @@ public sealed class MainWindow : Window
             _shownItems = items;
             _shownSelection = selection;
             _shownFocus = focus;
-            _list.ItemsSource = items.ToList();
+            var view = ActiveList;
+            view.ItemsSource = items.ToList();
             // Pasta nova: mede a lista antes de rolar, para o item focado já aparecer no primeiro quadro.
-            if (sourceChanged && focus >= 0) _list.UpdateLayout();
-            if (focus >= 0) _list.ScrollIntoView(items[focus]);
+            if (sourceChanged && focus >= 0) view.UpdateLayout();
+            if (_view == ViewMode.Grid) UpdateGridMetrics(); // o painel da grade só existe depois do primeiro layout
+            if (focus >= 0) view.ScrollIntoView(items[focus]);
         }
         else if (focus != _shownFocus)
         {
-            if (_shownFocus >= 0 && _list.ContainerFromIndex(_shownFocus) is ListViewItem previous) EntryRowTemplate.SetFocused(previous, false);
+            var view = ActiveList;
+            if (_shownFocus >= 0 && view.ContainerFromIndex(_shownFocus) is SelectorItem previous) EntryRowTemplate.SetFocused(previous, false);
             _shownFocus = focus;
             if (focus >= 0)
             {
-                _list.ScrollIntoView(items[focus]);
-                if (_list.ContainerFromIndex(focus) is ListViewItem current) EntryRowTemplate.SetFocused(current, true);
+                view.ScrollIntoView(items[focus]);
+                if (view.ContainerFromIndex(focus) is SelectorItem current) EntryRowTemplate.SetFocused(current, true);
             }
         }
         var search = _app.Screen == Screen.Home ? null : pane.ActiveSearch;
@@ -456,7 +513,7 @@ public sealed class MainWindow : Window
     internal string DescribeFit()
     {
         var viewport = Theme.Viewport;
-        var fit = $"cabeçalho {_header.ActualHeight:0}, lista {_list.ActualHeight:0}, rodapé {_footer.ActualHeight:0} de {viewport.Height:0} px efetivos";
+        var fit = $"cabeçalho {_header.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footer.ActualHeight:0} de {viewport.Height:0} px efetivos";
         if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
         {
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
@@ -479,14 +536,18 @@ public sealed class MainWindow : Window
         _crumbs.Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0);
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
-        _list.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
+        _list.Padding = _grid.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
         _list.ItemTemplate = EntryRowTemplate.Create(_density);
+        _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
         _footer.Padding = new Thickness(Theme.SpaceL, Theme.SpaceS, Theme.SpaceL, Theme.SpaceM);
         _footer.Spacing = Theme.SpaceXs;
         _hints.HorizontalSpacing = Theme.SpaceL;
         _hints.VerticalSpacing = Theme.SpaceXs;
         // Ícones do sistema no tamanho em pixels físicos da linha (DPI × escala da faixa).
-        _icons.SetScale(Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale);
+        var iconScale = Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale;
+        _icons.SetScale(iconScale);
+        _tileIcons.SetScale(iconScale);
+        UpdateGridMetrics();
         _shownItems = null; // recria as linhas com as novas medidas
         Render();
     }

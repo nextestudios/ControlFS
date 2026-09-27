@@ -236,6 +236,11 @@ public sealed partial class AppController
 
     private void HandleHome(InputAction action)
     {
+        if (IsGrid && GridNavigation.Move(PlacesFocus, Places.Count, GridColumns, GridRowsPerPage, action) is { } cell)
+        {
+            PlacesFocus = cell;
+            return;
+        }
         switch (action)
         {
             case InputAction.NavigateUp: PlacesFocus = Math.Max(0, PlacesFocus - 1); break;
@@ -249,7 +254,7 @@ public sealed partial class AppController
             case InputAction.OpenContextMenu: ShowHomeMenu(); break;
             case InputAction.Back: ShowExitDialog(); break;
             case InputAction.OpenAppMenu: ShowAppMenu(); break;
-            case InputAction.ChangeView: ToggleDensity(); break;
+            case InputAction.ChangeView: ToggleView(); break;
         }
     }
 

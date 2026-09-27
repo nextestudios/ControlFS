@@ -44,8 +44,8 @@ public static class EntryRowTemplate
         $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(text)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\"/>" +
         "</StackPanel>";
 
-    private static string Frame(string body) =>
-        $"<DataTemplate {Ns}><Border x:Name=\"Ring\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"6\"><Grid>" +
+    private static string Frame(string body, string tag = "row") =>
+        $"<DataTemplate {Ns}><Border x:Name=\"Ring\" Tag=\"{tag}\" BorderThickness=\"{N(Theme.FocusRing.Left)}\" CornerRadius=\"6\"><Grid>" +
         $"<Border x:Name=\"MarkBar\" Width=\"{W(6)}\" HorizontalAlignment=\"Left\" CornerRadius=\"3\" Margin=\"2,6,0,6\"/>" +
         body + "</Grid></Border></DataTemplate>";
 
@@ -81,6 +81,33 @@ public static class EntryRowTemplate
             "</Grid>");
     }
 
+    /// <summary>Medidas do bloco da grade (largura, altura e ícone), já na escala da faixa de layout.</summary>
+    public static (double Width, double Height, double Icon) TileSize(ListDensity density) => density == ListDensity.Compact
+        ? (Theme.Scaled(150), Theme.Scaled(150), 48)
+        : (Theme.Scaled(200), Theme.Scaled(196), 64);
+
+    /// <summary>
+    /// Bloco da grade: ícone grande, nome em até duas linhas, tipo e tamanho, e a mesma linha de estados da lista
+    /// (marcado, recortado, com senha). Mesmos nomes de elementos da linha: <see cref="Fill"/> preenche os dois.
+    /// </summary>
+    private static string TileXaml(ListDensity density)
+    {
+        var compact = density == ListDensity.Compact;
+        var (_, _, iconSize) = TileSize(density);
+        return Frame(
+            $"<StackPanel x:Name=\"Body\" Padding=\"{S(10)},{S(10)},{S(10)},{S(6)}\" Spacing=\"{S(4)}\" HorizontalAlignment=\"Stretch\">" +
+            IconCell(iconSize, iconSize * 0.75).Replace("VerticalAlignment=\"Center\">", "HorizontalAlignment=\"Center\">", StringComparison.Ordinal) +
+            $"<TextBlock x:Name=\"Title\" FontSize=\"{F(compact ? 14 : 16)}\" TextAlignment=\"Center\" TextWrapping=\"WrapWholeWords\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"2\"/>" +
+            $"<TextBlock x:Name=\"TileDetail\" FontSize=\"{F(compact ? 12 : 13)}\" TextAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+            $"<StackPanel Orientation=\"Horizontal\" Spacing=\"{S(4)}\" HorizontalAlignment=\"Center\">" +
+            $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(compact ? 13 : 15)}\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(compact ? 12 : 13)}\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\"/>" +
+            "</StackPanel></StackPanel>", "tile");
+    }
+
+    /// <summary>Modelo do bloco da grade na densidade pedida (recriar quando a faixa de layout mudar).</summary>
+    public static DataTemplate CreateTile(ListDensity density) => (DataTemplate)XamlReader.Load(TileXaml(density));
+
     /// <summary>Janela estreita demais para a coluna de tipo da lista compacta.</summary>
     public static bool IsNarrow(double viewportWidth) => viewportWidth < 1200;
 
@@ -112,6 +139,14 @@ public static class EntryRowTemplate
         {
             detail.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason : string.Join(" · ", DetailParts(entry));
             detail.Foreground = muted;
+        }
+        if (root.FindName("TileDetail") is TextBlock tileDetail)
+        {
+            var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
+            tileDetail.Text = entry.IsBlocked ? "Bloqueado"
+                : place ? entry.Detail ?? TypeName(entry)
+                : entry.Size is long bytes && !entry.IsContainer ? $"{TypeName(entry)} · {Format(bytes)}" : TypeName(entry);
+            tileDetail.Foreground = muted;
         }
         if (root.FindName("TypeColumn") is TextBlock type)
         {
@@ -179,7 +214,8 @@ public static class EntryRowTemplate
     {
         if (container.ContentTemplateRoot is not Border ring) return;
         Theme.ApplyFocus(ring, focused);
-        if (ring.FindName("Title") is TextBlock title)
+        // Bloco da grade: altura fixa, o nome fica sempre em até duas linhas (o Narrador lê o nome inteiro).
+        if (ring.FindName("Title") is TextBlock title && !Equals(ring.Tag, "tile"))
         {
             title.TextWrapping = focused ? TextWrapping.WrapWholeWords : TextWrapping.NoWrap;
             title.MaxLines = focused ? 3 : 1;

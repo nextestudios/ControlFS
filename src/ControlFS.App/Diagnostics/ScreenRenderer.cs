@@ -109,8 +109,16 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.NavigateDown); // foco no nome longo (mostra a quebra em até três linhas)
                 await CaptureAsync(stage, target, dir, "2-folder", window);
 
-                app.Handle(InputAction.ChangeView);
+                ChooseAppMenu(app, "Densidade");
                 await CaptureAsync(stage, target, dir, "3-folder-compact", window);
+
+                // Grade (#29): compacta e confortável, com o foco uma linha abaixo (navegação 2D).
+                app.Handle(InputAction.ChangeView);
+                app.Handle(InputAction.NavigateDown);
+                await CaptureAsync(stage, target, dir, "3b-folder-grid-compact", window);
+                ChooseAppMenu(app, "Densidade");
+                await CaptureAsync(stage, target, dir, "3c-folder-grid", window);
+                app.Handle(InputAction.NavigateUp);
                 app.Handle(InputAction.ChangeView);
 
                 app.Handle(InputAction.OpenAppMenu);
@@ -140,6 +148,21 @@ internal static class ScreenRenderer
             try { Directory.Delete(work, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             Microsoft.UI.Xaml.Application.Current.Exit();
         }
+    }
+
+    /// <summary>Abre o menu do app e escolhe o item que começa com <paramref name="prefix"/>, só com ações semânticas.</summary>
+    private static void ChooseAppMenu(AppController app, string prefix)
+    {
+        app.Handle(InputAction.OpenAppMenu);
+        if (app.TopModal is not Application.State.MenuModal menu) return;
+        var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(prefix, StringComparison.Ordinal));
+        if (index < 0)
+        {
+            CloseModals(app);
+            return;
+        }
+        while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
+        app.Handle(InputAction.Confirm);
     }
 
     private static void CloseModals(AppController app)

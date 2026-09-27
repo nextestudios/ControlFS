@@ -88,6 +88,14 @@ public sealed class FileListState
         return true;
     }
 
+    /// <summary>Foco numa posição (navegação 2D da grade); fora da lista, nada muda.</summary>
+    public bool FocusAt(int index)
+    {
+        if (index < 0 || index >= _items.Count || index == FocusIndex) return false;
+        FocusIndex = index;
+        return true;
+    }
+
     public bool FocusById(string id)
     {
         if (FindIndex(id) is not int index) return false;
