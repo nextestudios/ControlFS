@@ -37,6 +37,11 @@ internal sealed class TopBarView
     private readonly ScrollViewer _quickScroll = Scroller();
     private readonly Border _divider = new() { VerticalAlignment = VerticalAlignment.Stretch };
     private readonly List<Border> _crumbRings = [];
+    private readonly List<Border> _crumbGlows = [];
+    private readonly List<TextBlock> _crumbSeparators = [];
+    private readonly TextBlock _overflow = new() { Text = "…", VerticalAlignment = VerticalAlignment.Center };
+    private double[] _crumbWidths = [];
+    private double _pathMax = double.PositiveInfinity;
     private readonly List<Border> _quickRings = [];
     private readonly List<TextBlock> _quickLabels = [];
     private readonly List<bool> _quickActive = [];
@@ -117,6 +122,7 @@ internal sealed class TopBarView
         if (_shownFocus == focus) return;
         _shownFocus = focus;
         for (var i = 0; i < _crumbRings.Count; i++) SetCrumbFocus(_crumbRings[i], crumbs[i], i == crumbFocus);
+        LayoutCrumbs(crumbFocus);
         for (var i = 0; i < _quickRings.Count; i++)
         {
             Theme.ApplyFocus(_quickRings[i], i == quickFocus);
@@ -142,6 +148,8 @@ internal sealed class TopBarView
         var bar = Theme.Viewport.Width - Root.Margin.Left - Root.Margin.Right - Root.Padding.Left - Root.Padding.Right - (2 * Root.BorderThickness.Left)
             - _lb.DesiredSize.Width - _lb.Margin.Left - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
         var path = _crumbs.DesiredSize.Width;
+        _crumbWidths = [.. _crumbGlows.Select((g, i) => g.DesiredSize.Width + _crumbs.Spacing
+            + (i > 0 ? _crumbSeparators[i - 1].DesiredSize.Width + _crumbSeparators[i - 1].Margin.Left + _crumbSeparators[i - 1].Margin.Right + _crumbs.Spacing : 0))];
         var labeled = _quick.DesiredSize.Width;
         _iconsOnly = _quickLabels.Count > 0 && path + labeled > bar;
         var widestLabel = 0.0;
@@ -156,7 +164,43 @@ internal sealed class TopBarView
         }
         var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel; // o focado mostra o nome
         var max = Math.Max(Theme.Scaled(240), bar - quickWidth);
-        _crumbScroll.MaxWidth = double.IsFinite(max) ? max : double.PositiveInfinity; // antes da primeira faixa de layout há medidas NaN
+        _pathMax = double.IsFinite(max) ? max : double.PositiveInfinity; // antes da primeira faixa de layout há medidas NaN
+        _crumbScroll.MaxWidth = _pathMax;
+    }
+
+    /// <summary>
+    /// Caminho maior que o espaço: some o começo (depois da raiz) atrás de um "…", nunca o segmento focado nem, com o foco
+    /// fora do caminho, a pasta atual. Só visibilidade: os índices do caminho continuam os do AppController.
+    /// </summary>
+    private void LayoutCrumbs(int focus)
+    {
+        var count = _crumbGlows.Count;
+        if (count == 0 || _crumbWidths.Length != count) return;
+        var total = _crumbWidths.Sum();
+        int start = 1, end = count - 1;
+        if (total > _pathMax && count > 2)
+        {
+            var budget = _pathMax - _crumbWidths[0] - (Theme.FontBody * 1.2) - _crumbs.Spacing;
+            var anchor = focus >= 1 ? focus : end;
+            // Janela contígua que termina na pasta atual; se o foco ficou à esquerda dela, a janela começa no foco.
+            start = end;
+            var used = _crumbWidths[end];
+            while (start > 1 && used + _crumbWidths[start - 1] <= budget) used += _crumbWidths[--start];
+            if (anchor < start)
+            {
+                start = anchor;
+                end = anchor;
+                used = _crumbWidths[anchor];
+                while (end < count - 1 && used + _crumbWidths[end + 1] <= budget) used += _crumbWidths[++end];
+            }
+        }
+        _overflow.Visibility = start > 1 ? Visibility.Visible : Visibility.Collapsed;
+        for (var i = 1; i < count; i++)
+        {
+            var visible = i >= start && i <= end ? Visibility.Visible : Visibility.Collapsed;
+            _crumbGlows[i].Visibility = visible;
+            _crumbSeparators[i - 1].Visibility = visible;
+        }
     }
 
     private static double FontSize => Theme.FontCaption + 1;
@@ -179,28 +223,36 @@ internal sealed class TopBarView
 
         _crumbs.Children.Clear();
         _crumbRings.Clear();
+        _crumbGlows.Clear();
+        _crumbSeparators.Clear();
+        _overflow.FontSize = Theme.FontBody;
+        _overflow.Foreground = Theme.TextMuted;
+        _overflow.Margin = new Thickness(Theme.SpaceXs, 0, 0, 0);
+        _overflow.Visibility = Visibility.Collapsed;
         for (var i = 0; i < crumbs.Count; i++)
         {
             var crumb = crumbs[i];
             if (i > 0)
             {
                 var boundary = crumb.Kind == BreadcrumbKind.Archive;
-                _crumbs.Children.Add(new TextBlock
+                var separator = new TextBlock
                 {
-                    Text = boundary ? "▸" : "", // compactado: ▸; pastas: chevron do Windows
-                    FontFamily = boundary ? null : new FontFamily(IconFont),
+                    Text = boundary ? "▸" : "\uE76C", // compactado: ▸; pastas: chevron do Windows
                     FontSize = boundary ? Theme.FontItem : Theme.FontCaption,
                     Foreground = boundary ? Theme.Accent : Theme.TextMuted,
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(Theme.SpaceXs / 2, 0, Theme.SpaceXs / 2, 0),
-                });
+                };
+                if (!boundary) separator.FontFamily = new FontFamily(IconFont);
+                _crumbSeparators.Add(separator);
+                _crumbs.Children.Add(separator);
             }
             var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
             if (crumb.Kind == BreadcrumbKind.Root)
                 content.Children.Add(Icon(crumb.Label == "Meu computador" ? new IconRequest("thispc", IconSourceKind.Path, ThisPcParsingName) : null,
-                    crumb.Label == "Meu computador" ? "" : "", Theme.Accent));
+                    crumb.Label == "Meu computador" ? "\uE977" : "\uE80F", Theme.Accent));
             else if (crumb.Kind == BreadcrumbKind.Archive)
-                content.Children.Add(new TextBlock { Text = "", FontFamily = new FontFamily(IconFont), FontSize = Theme.FontBody, Foreground = Theme.Accent, VerticalAlignment = VerticalAlignment.Center });
+                content.Children.Add(new TextBlock { Text = "\uE7B8", FontFamily = new FontFamily(IconFont), FontSize = Theme.FontBody, Foreground = Theme.Accent, VerticalAlignment = VerticalAlignment.Center });
             content.Children.Add(new TextBlock
             {
                 Text = crumb.Label,
@@ -222,7 +274,9 @@ internal sealed class TopBarView
                 _ => crumb.Label,
             } + (crumb.IsCurrent ? ", pasta atual" : string.Empty));
             _crumbRings.Add(ring);
+            _crumbGlows.Add(glow);
             _crumbs.Children.Add(glow);
+            if (i == 0) _crumbs.Children.Add(_overflow); // "…" quando o começo do caminho não cabe
         }
 
         _quick.Children.Clear();
@@ -282,11 +336,11 @@ internal sealed class TopBarView
         var brush = active ? Theme.Accent : Theme.TextMuted;
         return item.Kind switch
         {
-            QuickAccessKind.Favorites => Icon(null, "", Theme.Selected),
-            QuickAccessKind.Recents => Icon(null, "", brush),
-            QuickAccessKind.ThisPc => Icon(new IconRequest("thispc", IconSourceKind.Path, ThisPcParsingName), "", brush),
-            QuickAccessKind.RecycleBin => Icon(item.Place is { } bin ? IconRequest.For(bin) : null, "", brush),
-            _ => Icon(item.Place is { } place ? IconRequest.For(place) : null, "", brush),
+            QuickAccessKind.Favorites => Icon(null, "\uE734", Theme.Selected),
+            QuickAccessKind.Recents => Icon(null, "\uE81C", brush),
+            QuickAccessKind.ThisPc => Icon(new IconRequest("thispc", IconSourceKind.Path, ThisPcParsingName), "\uE977", brush),
+            QuickAccessKind.RecycleBin => Icon(item.Place is { } bin ? IconRequest.For(bin) : null, "\uE74D", brush),
+            _ => Icon(item.Place is { } place ? IconRequest.For(place) : null, "\uE8B7", brush),
         };
     }
 
