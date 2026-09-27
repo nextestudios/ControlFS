@@ -137,6 +137,11 @@ public sealed partial class AppController
 
     private void OnOperationCompleted(OperationItem item)
     {
+        if (item.Result is { } fileResult && _fileOperations.Remove(item.Id, out var fileOp))
+        {
+            OnFileOperationCompleted(fileOp, fileResult);
+            return;
+        }
         if (item.Result is { } compressed && _compressions.Remove(item.Id, out var compressPlan))
         {
             OnCompressionCompleted(item, compressPlan, compressed);
@@ -211,7 +216,7 @@ public sealed partial class AppController
             ("Existente", conflict.ExistingPath),
             ("  tamanho/data", Describe(conflict.ExistingIsDirectory ? null : conflict.ExistingSize, conflict.ExistingModified, conflict.ExistingIsDirectory)),
             ("Recebido", conflict.IncomingName),
-            ("  tamanho/data", Describe(conflict.IncomingSize, conflict.IncomingModified, false)),
+            ("  tamanho/data", Describe(conflict.IncomingSize, conflict.IncomingModified, conflict.IncomingIsDirectory)),
         };
         var dialog = new DialogModal("Já existe um item com esse nome", lines, sensitive: true);
         void Answer(ConflictChoice choice)
@@ -223,7 +228,8 @@ public sealed partial class AppController
         var skip = new DialogOption("Pular (manter existente)", DialogOptionKind.Safe, () => Answer(ConflictChoice.Skip));
         dialog.Options.Add(skip);
         dialog.Options.Add(new DialogOption("Manter ambos", DialogOptionKind.Primary, () => Answer(ConflictChoice.KeepBoth)));
-        dialog.Options.Add(new DialogOption("Substituir…", DialogOptionKind.Danger, () => ConfirmReplace(conflict, applyToRest, () => Answer(ConflictChoice.Replace))));
+        dialog.Options.Add(new DialogOption(conflict.IsFolderMerge ? "Mesclar pastas…" : "Substituir…", DialogOptionKind.Danger,
+            () => ConfirmReplace(conflict, applyToRest, () => Answer(ConflictChoice.Replace))));
         DialogOption? applyToggle = null;
         applyToggle = new DialogOption("Aplicar aos demais conflitos desta operação: não", DialogOptionKind.Toggle, () =>
         {
@@ -232,7 +238,7 @@ public sealed partial class AppController
             applyToggle.IsChecked = applyToRest;
         });
         dialog.Options.Add(applyToggle);
-        dialog.Options.Add(new DialogOption("Cancelar extração", DialogOptionKind.Safe, () => Answer(ConflictChoice.Cancel)));
+        dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Safe, () => Answer(ConflictChoice.Cancel)));
         dialog.BackOption = skip;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -240,15 +246,20 @@ public sealed partial class AppController
 
     private void ConfirmReplace(ConflictInfo conflict, bool applyToRest, Action confirmed)
     {
-        var dialog = new DialogModal("Substituir arquivo existente?", [("Será substituído", conflict.ExistingPath)], sensitive: true)
+        var merge = conflict.IsFolderMerge;
+        var dialog = new DialogModal(merge ? "Mesclar com a pasta existente?" : "Substituir arquivo existente?",
+            [(merge ? "Pasta existente" : "Será substituído", conflict.ExistingPath)], sensitive: true)
         {
-            Message = applyToRest
-                ? "O conteúdo existente será perdido — e a mesma escolha valerá para os demais conflitos desta operação."
-                : "O conteúdo existente será perdido.",
+            Message = merge
+                ? "O conteúdo será colocado dentro da pasta existente; arquivos com o mesmo nome continuarão perguntando." +
+                  (applyToRest ? " A mesma escolha valerá para as demais pastas desta operação." : string.Empty)
+                : applyToRest
+                    ? "O conteúdo existente será perdido — e a mesma escolha valerá para os demais conflitos desta operação."
+                    : "O conteúdo existente será perdido.",
         };
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
         dialog.Options.Add(cancel);
-        dialog.Options.Add(new DialogOption("Substituir", DialogOptionKind.Danger, () =>
+        dialog.Options.Add(new DialogOption(merge ? "Mesclar" : "Substituir", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             confirmed();

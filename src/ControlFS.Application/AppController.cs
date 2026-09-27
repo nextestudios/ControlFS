@@ -33,9 +33,10 @@ public sealed partial class AppController
     private Action? _pickerCancel;
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
-        IShellService? shell = null)
+        IShellService? shell = null, IFileOperationService? fileOperations = null)
     {
         _shell = shell;
+        _fileOps = fileOperations;
         _fs = fileSystem;
         _archives = archives;
         _settingsStore = settingsStore;

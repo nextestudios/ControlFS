@@ -4,7 +4,7 @@ using ControlFS.Core.Models;
 namespace ControlFS.Application.Operations;
 
 /// <summary>Leva um conflito da thread de trabalho para a UI e aguarda a decisão do usuário.</summary>
-internal sealed class UiConflictInteraction(AppController controller, OperationItem operation) : IExtractionInteraction
+internal sealed class UiConflictInteraction(AppController controller, OperationItem operation) : IExtractionInteraction, IConflictInteraction
 {
     public Task<ConflictDecision> ResolveConflictAsync(ConflictInfo conflict, CancellationToken cancellationToken)
     {

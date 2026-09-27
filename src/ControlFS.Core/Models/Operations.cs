@@ -97,4 +97,9 @@ public sealed record ConflictInfo(
     bool ExistingIsDirectory,
     string IncomingName,
     long? IncomingSize,
-    DateTimeOffset? IncomingModified);
+    DateTimeOffset? IncomingModified,
+    bool IncomingIsDirectory = false)
+{
+    /// <summary>Pasta chegando onde já existe pasta: "substituir" significa mesclar o conteúdo.</summary>
+    public bool IsFolderMerge => ExistingIsDirectory && IncomingIsDirectory;
+}
