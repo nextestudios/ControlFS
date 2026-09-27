@@ -149,6 +149,11 @@ public sealed partial class AppController
     private void OnOperationCompleted(OperationItem item)
     {
         RecordHistory(item);
+        if (_undoRuns.Remove(item.Id, out var undone))
+        {
+            OnUndoCompleted(item, undone);
+            return;
+        }
         if (item.Result is { } fileResult && _fileOperations.Remove(item.Id, out var fileOp))
         {
             OnFileOperationCompleted(item, fileOp, fileResult);

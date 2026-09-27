@@ -58,11 +58,14 @@ public sealed partial class AppController
 
     internal void EnqueueFileOperation(FileOperationPlan plan) => EnqueueFileOperation(plan, [plan], retryOfFailed: false);
 
+    /// <summary>Refazer (#22): o pedido original de novo, sem esvaziar a lista de refazer.</summary>
+    private void EnqueueRedo(FileOperationPlan plan) => EnqueueFileOperation(plan, [plan], retryOfFailed: false, redo: true);
+
     /// <summary>
     /// Enfileira uma operação. <paramref name="parts"/> tem mais de um pedido só ao refazer itens com falha que iam para
     /// pastas diferentes (ex.: subpastas do destino); eles rodam em sequência como uma única operação.
     /// </summary>
-    private void EnqueueFileOperation(FileOperationPlan summary, List<FileOperationPlan> parts, bool retryOfFailed)
+    private void EnqueueFileOperation(FileOperationPlan summary, List<FileOperationPlan> parts, bool retryOfFailed, bool redo = false)
     {
         if (_fileOps is null) return;
         var count = parts.Sum(p => p.Sources.Count);
@@ -79,7 +82,14 @@ public sealed partial class AppController
         {
             var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
             var interaction = new UiConflictInteraction(this, op);
-            if (parts.Count == 1) return await _fileOps.RunAsync(ToRequest(parts[0], op.PauseGate), interaction, progress, ct);
+            if (parts.Count == 1)
+            {
+                var single = await _fileOps.RunAsync(ToRequest(parts[0], op.PauseGate), interaction, progress, ct);
+                // Desfazer uma cópia só remove o que continuar idêntico: a impressão é tirada logo ao terminar.
+                if (summary.Kind == FileOperationKind.Copy && single.FinalState == OperationState.Completed && !retryOfFailed)
+                    _copyFingerprints[op.Id] = await Task.Run(() => single.Placed.Select(p => UndoFingerprint.Compute(p.FinalPath)).ToList(), CancellationToken.None);
+                return single;
+            }
             var results = new List<OperationResult>();
             foreach (var part in parts)
             {
@@ -93,6 +103,7 @@ public sealed partial class AppController
             return Merge(results, parts);
         }, pausable: true);
         item.RetryAction = () => RetryFileOperation(summary, parts, retryOfFailed);
+        if (!retryOfFailed && parts.Count == 1) _undoCandidates[item.Id] = redo;
         item.Source = summary.SourceFolder;
         item.Destination = summary.Destination;
         _fileOperations[item.Id] = summary with { Sources = parts.SelectMany(p => p.Sources).ToList() };
@@ -211,6 +222,15 @@ public sealed partial class AppController
         var dialog = new DialogModal(title, lines) { Message = result.Message };
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
         AddRetryFailedOption(dialog, item);
+        if (RegisterFileUndo(item, plan, result) is { } undo)
+        {
+            dialog.Options.Add(new DialogOption("Desfazer", DialogOptionKind.Primary, () =>
+            {
+                CloseModal(dialog);
+                ConfirmUndo(undo);
+            }));
+            if (plan.Kind == FileOperationKind.Delete) title += " (Menu → Desfazer restaura)";
+        }
         if (plan.Destination is { } dest && Directory.Exists(dest) && plan.Kind != FileOperationKind.Delete &&
             !(Browser.Location is PhysicalLocation current && string.Equals(current.FullPath, dest, StringComparison.OrdinalIgnoreCase)))
         {

@@ -235,4 +235,23 @@ public class FileOperationServiceTests : IDisposable
         Assert.Empty(Directory.EnumerateFileSystemEntries(dest));
         Assert.Equal(4_000_000, new FileInfo(source).Length);
     }
+
+    [Fact]
+    public async Task A_folder_merged_into_an_existing_one_is_never_reported_as_placed()
+    {
+        // Desfazer uma cópia remove o que foi "colocado": uma pasta mesclada tem conteúdo do usuário e não pode entrar.
+        var tree = MakeTree();
+        var dest = _tmp.MakeDir("destino");
+        Directory.CreateDirectory(Path.Join(dest, "Fotos"));
+        File.WriteAllText(Path.Join(dest, "Fotos", "do-usuario.txt"), "meu");
+
+        var merged = await Run(FileOperationKind.Copy, dest, new Scripted(new ConflictDecision(ConflictChoice.Replace)), default, tree);
+        Assert.Equal(OperationState.Completed, merged.FinalState);
+        Assert.Empty(merged.Placed);
+
+        var kept = await Run(FileOperationKind.Copy, dest, new Scripted(new ConflictDecision(ConflictChoice.KeepBoth)), default, tree);
+        var placed = Assert.Single(kept.Placed);
+        Assert.Equal(Path.Join(dest, "Fotos (2)"), placed.FinalPath);
+        Assert.True(placed.IsDirectory);
+    }
 }

@@ -99,13 +99,25 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                         }
                         if (IsLink(source))
                         {
-                            if (move && SameVolume(source, destination)) await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                            if (move && SameVolume(source, destination))
+                            {
+                                await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                                RecordPlacedFile(run, mark, source);
+                            }
                             else run.Results.Add(new ItemResult(name, ItemOutcome.Skipped, OperationErrorKind.LinkOrSpecialBlocked, "Link ou junction: não é seguido."));
                             continue;
                         }
                         enteredFolder = Directory.Exists(source);
-                        if (enteredFolder) await TransferDirectoryAsync(source, destination, name, move, run).ConfigureAwait(false);
-                        else await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                        if (enteredFolder)
+                        {
+                            if (await TransferDirectoryAsync(source, destination, name, move, run).ConfigureAwait(false) is { } created)
+                                run.Placed.Add(new PlacedItem(source, created, IsDirectory: true));
+                        }
+                        else
+                        {
+                            await TransferFileAsync(source, destination, name, move, run).ConfigureAwait(false);
+                            RecordPlacedFile(run, mark, source);
+                        }
                     }
                     catch (Exception ex) when (ex is OperationCanceledException or FatalException)
                     {
@@ -136,7 +148,8 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
             return new OperationResult(OperationState.Cancelled, run.Results, OperationErrorKind.Cancelled,
                 "Operação cancelada. Itens já concluídos foram mantidos; temporários foram removidos.", destination);
         var warnings = run.Results.Any(r => r.Outcome is ItemOutcome.Failed or ItemOutcome.Blocked);
-        return new OperationResult(warnings ? OperationState.CompletedWithWarnings : OperationState.Completed, run.Results, Destination: destination);
+        return new OperationResult(warnings ? OperationState.CompletedWithWarnings : OperationState.Completed, run.Results, Destination: destination)
+            { Placed = run.Placed };
     }
 
     // ---------------- Arquivos ----------------
@@ -318,8 +331,10 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
 
     // ---------------- Pastas ----------------
 
-    private static async Task TransferDirectoryAsync(string source, string destDir, string name, bool move, Run run, string? relative = null)
+    /// <returns>A pasta criada por esta operação no destino (null: mesclada numa existente, pulada ou com falha).</returns>
+    private static async Task<string?> TransferDirectoryAsync(string source, string destDir, string name, bool move, Run run, string? relative = null)
     {
+        var merged = false;
         var label = relative is null ? name + "/" : relative + "/";
         var target = Path.Join(destDir, name);
         var mark = run.Results.Count;
@@ -335,7 +350,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                     run.Results.Add(new ItemResult(label, ItemOutcome.Succeeded, FinalPath: target));
                     run.Report(name, bytes, fileDone: false);
                     run.FilesDone += files;
-                    return;
+                    return target;
                 }
                 // Surgiu um item com o mesmo nome: segue pelo fluxo de conflito abaixo.
             }
@@ -347,25 +362,26 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                 {
                     case ConflictChoice.Skip:
                         run.Results.Add(new ItemResult(label, ItemOutcome.Skipped, Message: "Pasta existente preservada."));
-                        return;
+                        return null;
                     case ConflictChoice.KeepBoth:
                         target = Path.Join(destDir, UniqueNames.Next(name, n => Exists(Path.Join(destDir, n)), isDirectory: true));
                         using (Pin(run, target, create: true)) { }
                         break;
                     case ConflictChoice.Replace when !Directory.Exists(target):
                         run.Results.Add(new ItemResult(label, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe um arquivo com esse nome; ele não é substituído por uma pasta."));
-                        return;
+                        return null;
                     case ConflictChoice.Replace:
                         if (IsLink(target))
                         {
                             run.Results.Add(new ItemResult(label, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "A pasta de destino é um link; não será usada."));
-                            return;
+                            return null;
                         }
+                        merged = true;
                         break; // mesclar: conflitos de arquivos dentro dela continuam perguntando
                     default:
                         run.Cancelled = true;
                         run.Results.Add(new ItemResult(label, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; nada foi alterado."));
-                        return;
+                        return null;
                 }
             }
             else
@@ -381,7 +397,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                 if (run.Cancelled)
                 {
                     MarkNotProcessed(children.Skip(i).Select(c => c.FullName), target, prefix, run);
-                    return;
+                    return null;
                 }
                 var child = children[i];
                 var childLabel = prefix + "/" + child.Name;
@@ -415,6 +431,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                 if (!Directory.EnumerateFileSystemEntries(source).Any()) Directory.Delete(source);
                 else run.Results.Add(new ItemResult(label, ItemOutcome.Failed, OperationErrorKind.Unknown, "A pasta de origem ficou com itens que não foram movidos."));
             }
+            return merged ? null : target;
         }
         catch (OperationCanceledException)
         {
@@ -429,11 +446,19 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
             var (kind, message) = Map(ex);
             if (kind is OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable) throw new FatalException(kind, message);
             run.Results.Add(new ItemResult(label, OutcomeOf(kind), kind, message));
+            return null;
         }
         finally
         {
             run.Tag(mark, source, destDir);
         }
+    }
+
+    /// <summary>Arquivo (ou link) de nível superior que chegou ao destino sem substituir nada: base para desfazer.</summary>
+    private static void RecordPlacedFile(Run run, int mark, string source)
+    {
+        if (run.Results.Count == mark + 1 && run.Results[mark] is { Outcome: ItemOutcome.Succeeded or ItemOutcome.Renamed, FinalPath: { } final })
+            run.Placed.Add(new PlacedItem(source, final, IsDirectory: false));
     }
 
     /// <summary>Itens que a interrupção (cancelamento ou falha fatal) impediu de começar.</summary>
@@ -724,6 +749,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         public IConflictInteraction Conflicts { get; } = conflicts;
         public CancellationToken Ct { get; } = ct;
         public List<ItemResult> Results { get; } = [];
+        public List<PlacedItem> Placed { get; } = [];
         public (ConflictDecision Decision, bool FolderMerge)? ApplyToAll { get; set; }
         public bool Cancelled { get; set; }
         public int Total { get; set; }

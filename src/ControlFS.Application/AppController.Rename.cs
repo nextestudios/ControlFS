@@ -47,6 +47,7 @@ public sealed partial class AppController
             var renamed = await Task.Run(() => _fileOps!.Rename(path, newName));
             CloseModal(modal);
             RecordRename(path, renamed);
+            RegisterRenameUndo(path, renamed.FullPath ?? Path.Join(Path.GetDirectoryName(path), renamed.Name), redo: false);
             await NavigateAsync(pane, here, pushHistory: false, focusId: renamed.Id);
             StatusMessage = $"Renomeado para \"{renamed.Name}\".";
         }

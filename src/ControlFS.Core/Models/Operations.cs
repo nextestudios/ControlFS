@@ -96,7 +96,16 @@ public sealed record OperationResult(
     string? Destination = null)
 {
     public int Count(ItemOutcome outcome) => Items.Count(i => i.Outcome == outcome);
+
+    /// <summary>
+    /// Cópia/movimentação: itens de nível superior que chegaram ao destino como itens novos (sem substituir nem mesclar),
+    /// com o caminho final. Base para desfazer (#22).
+    /// </summary>
+    public IReadOnlyList<PlacedItem> Placed { get; init; } = [];
 }
+
+/// <summary>Item de nível superior colocado no destino: de <see cref="SourcePath"/> para <see cref="FinalPath"/>.</summary>
+public sealed record PlacedItem(string SourcePath, string FinalPath, bool IsDirectory);
 
 public enum ConflictChoice
 {
