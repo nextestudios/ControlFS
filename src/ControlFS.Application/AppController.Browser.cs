@@ -401,8 +401,9 @@ public sealed partial class AppController
     }
 
     /// <summary>Meu computador: só o que vale para uma unidade (nada de marcar, colar ou criar pasta aqui).</summary>
-    private void ShowDriveMenu(PaneState pane)
+    private void ShowDriveMenu(PaneState pane, string? image = null, bool imageChecked = false)
     {
+        if (!imageChecked && DeferForImage(pane.List.Focused?.FullPath, found => ShowDriveMenu(pane, found, imageChecked: true))) return;
         var items = new List<MenuItem>();
         if (pane.List.Focused is { FullPath: { } path } drive)
         {
@@ -412,6 +413,7 @@ public sealed partial class AppController
             items.Add(FavoriteToggleItem(path));
             items.Add(new MenuItem("Propriedades", () => ShowProperties(drive), Icon: ActionIcon.Properties, Placement: MenuPlacement.Quick));
             items.Add(DiskUsageItem(path));
+            if (image is not null) items.Add(UnmountItem(path, image));
         }
         items.Add(new MenuItem("Atualizar", () => Refresh(pane), Icon: ActionIcon.Refresh, Placement: MenuPlacement.Quick));
         PushModal(new MenuModal(pane.List.Focused?.Name ?? "Meu computador", items) { Icon = pane.List.Focused is null ? ActionIcon.ThisPc : ActionIcon.Drive });
@@ -462,6 +464,7 @@ public sealed partial class AppController
         items.Add(new MenuItem(entry.IsSteamGame ? "Jogar…" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
             () => OpenExternally(entry, file), ShellUnavailable, Icon: entry.IsSteamGame ? ActionIcon.Game : ExecutableFiles.IsPotentiallyExecutable(file) ? ActionIcon.Run : ActionIcon.Open, Section: "Abrir",
             Placement: MenuPlacement.Quick, ShortLabel: entry.IsSteamGame ? "Jogar" : ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar" : "Abrir"));
+        if (MountItem(file) is { } mount) items.Add(mount);
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,
             Detail: "Escolher o programa na caixa do Windows.", Icon: ActionIcon.OpenWith, Section: "Abrir"));
         items.Add(new MenuItem("Mostrar no Explorador de Arquivos", () => RunShell(s => s.RevealInExplorer(file), external: true), ShellUnavailable, Icon: ActionIcon.Reveal, Section: "Abrir"));

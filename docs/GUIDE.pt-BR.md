@@ -194,6 +194,12 @@ Se o ControlFS for fechado no meio de uma operação (travamento, falta de energ
 
 **Sul** num arquivo de texto (.txt, .md, .log, .json, .xml, .csv, .ini, .yaml, código-fonte…) abre o arquivo dentro do ControlFS, somente leitura; para qualquer outro arquivo, Norte → **Visualizar como texto**. Isso vale também para scripts como .ps1 ou .bat, que o Sul pediria para executar: ler nunca executa nada. **Cima/Baixo** rolam uma linha, **LT/RT** uma página, **LB/RB** vão ao início/fim, **Esquerda/Direita** deslocam linhas longas para o lado, **Sul** alterna entre fonte fixa e proporcional e **Leste/B** fecha. A codificação é detectada (UTF-8 com ou sem BOM, UTF-16 ou, se não for nenhuma, a página de código ANSI do Windows) e aparece com o número de linhas. Só os primeiros 2 MB e 10.000 linhas são lidos; um arquivo maior mostra um aviso claro de "prévia parcial". Arquivos binários são recusados com uma mensagem. Arquivos dentro de compactados não são visualizados.
 
+## Imagens de disco (ISO, IMG, VHD, VHDX)
+
+Norte num arquivo `.iso`, `.img`, `.vhd` ou `.vhdx` → **Montar imagem** usa a montagem do próprio Windows, a mesma do "Montar" do Explorador (sem drivers extras), e abre a unidade nova assim que ela aparece. ISO/IMG são montadas somente leitura; discos rígidos virtuais VHD/VHDX exigem o ControlFS aberto como administrador, como no Windows. Se a imagem já estiver montada, o ControlFS só abre a unidade dela. Erros vêm explicados (não é uma imagem de disco, danificada, arquivo compactado ou esparso, em uso por outro programa, permissão).
+
+Para ejetar, vá a **Meu computador** ou ao início, Norte na unidade → **Desmontar imagem…**. Funciona para imagens montadas pelo ControlFS ou pelo Windows. A confirmação começa em **Cancelar** e avisa que programas com arquivos abertos na unidade perdem o acesso a eles; o arquivo da imagem nunca é alterado. Abas que mostravam a unidade voltam para Meu computador.
+
 ## Abrindo arquivos com o Windows
 
 **Sul** num arquivo que não é compactado, imagem visualizável, PDF, áudio tocável nem texto abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.

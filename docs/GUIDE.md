@@ -194,6 +194,12 @@ If ControlFS is closed in the middle of an operation (crash, power loss), the ne
 
 **South** on a text file (.txt, .md, .log, .json, .xml, .csv, .ini, .yaml, source code…) opens it read-only inside ControlFS; for any other file, North → **Visualizar como texto** (view as text). That includes scripts such as .ps1 or .bat, which South would ask to run: reading them never executes anything. **Up/Down** scroll one line, **LT/RT** a page, **LB/RB** jump to the start/end, **Left/Right** shift long lines sideways, **South** switches between a fixed-width and a proportional font, **East/B** closes. The encoding is detected (UTF-8 with or without BOM, UTF-16, otherwise the Windows ANSI code page) and shown with the line count. Only the first 2 MB and 10,000 lines are read; a larger file shows a clear "partial preview" notice. Binary files are refused with a message. Files inside archives aren't previewed.
 
+## Disk images (ISO, IMG, VHD, VHDX)
+
+North on an `.iso`, `.img`, `.vhd` or `.vhdx` file → **Montar imagem** (mount image) uses Windows' own mounting, the same as Explorer's "Mount" (no extra drivers), and opens the new drive when it appears. ISO/IMG images are mounted read-only; VHD/VHDX virtual hard disks need ControlFS running as administrator, as in Windows. If an image is already mounted, ControlFS just opens its drive. Errors are explained (not a disk image, damaged, compressed or sparse file, in use by another program, permission).
+
+To eject it, go to **Meu computador** (This PC) or the home screen, North on the drive → **Desmontar imagem…** (unmount image). This works for images mounted by ControlFS or by Windows. The confirmation starts on **Cancelar** and warns that programs with files open on the drive lose access to them; the image file itself is never changed. Tabs showing that drive go back to This PC.
+
 ## Opening files with Windows
 
 **South** on a file that isn't an archive, a previewable image, a PDF, a playable audio file or a text file opens it in the default Windows program. North on a file also offers **Open with…** and **Show in File Explorer**. The other program may not work with the controller: come back with Alt+Tab or the system button. Programs and scripts (.exe, .msi, .bat, .ps1, .lnk…) ask first, starting on **Cancel**. Nothing is ever opened automatically after extracting.

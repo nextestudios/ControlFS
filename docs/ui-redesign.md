@@ -196,6 +196,7 @@ by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTes
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
 | Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
 | Tab strip: Nova aba, Duplicar aba, Fechar aba, Reabrir aba fechada, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
+| Mount/unmount disk images (#73, #74): Y Ações on .iso/.img/.vhd/.vhdx → Montar imagem (opens the new drive); Y on a mounted drive (This PC, Home) → Desmontar imagem… (confirmation starts on Cancelar) | `DiskImageJourneyTests`, `DiskImageIntegrationTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |
 
 ### App menu (Start)

@@ -108,6 +108,7 @@ public sealed class MainWindow : Window
         {
             PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
+            DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
         };
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
