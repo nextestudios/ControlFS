@@ -478,7 +478,26 @@ public sealed class TextPreviewModal : Modal
     /// <summary>Linhas que cabem na tela; informado pela tela (usado para paginar e limitar a rolagem).</summary>
     public int PageLines { get; internal set; } = 20;
 
-    private int LineCount => Document?.Lines.Count ?? 0;
+    /// <summary>Edição leve em andamento (#62); null: só leitura.</summary>
+    public TextEditor? Editor { get; internal set; }
+
+    /// <summary>Abrindo o arquivo para editar (conferindo tamanho, codificação e permissão).</summary>
+    public bool IsOpeningEditor { get; internal set; }
+
+    private int LineCount => Editor?.Lines.Count ?? Document?.Lines.Count ?? 0;
+
+    /// <summary>Texto de uma linha como é desenhado (tabulações expandidas na edição; a prévia já vem expandida).</summary>
+    public string DisplayLine(int index) => Editor is { } editor ? Core.Preview.TextPreview.ExpandTabs(editor.Lines[index].Text) : Document!.Lines[index];
+
+    public int DisplayLineCount => LineCount;
+
+    /// <summary>Mantém a linha em foco da edição à vista (rola o mínimo).</summary>
+    internal void RevealCursor()
+    {
+        if (Editor is not { } editor) return;
+        if (editor.Cursor < Top) ScrollTo(editor.Cursor);
+        else if (editor.Cursor >= Top + PageLines) ScrollTo(editor.Cursor - PageLines + 1);
+    }
 
     internal void ScrollTo(int top) => Top = Math.Clamp(top, 0, Math.Max(0, LineCount - PageLines));
 
@@ -487,8 +506,8 @@ public sealed class TextPreviewModal : Modal
     internal void ShiftColumns(int delta)
     {
         var longest = 0;
-        if (Document is { } document)
-            for (var i = Top; i < Math.Min(LineCount, Top + PageLines); i++) longest = Math.Max(longest, document.Lines[i].Length);
+        if (Document is not null || Editor is not null)
+            for (var i = Top; i < Math.Min(LineCount, Top + PageLines); i++) longest = Math.Max(longest, DisplayLine(i).Length);
         Column = Math.Clamp(Column + delta, 0, Math.Max(0, longest - ColumnStep));
     }
 }

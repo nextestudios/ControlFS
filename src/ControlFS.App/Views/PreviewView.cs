@@ -205,14 +205,19 @@ public static partial class ModalView
     private static Border BuildTextPreview(AppController app, TextPreviewModal modal)
     {
         var document = modal.Document;
-        string? Details(int pageLines) => document is null ? null
+        var editor = modal.Editor;
+        var count = modal.DisplayLineCount;
+        string? Details(int pageLines) => editor is not null
+            ? string.Create(CultureInfo.CurrentCulture, $"Editando · {editor.Document.EncodingName} · {count:N0} linhas · linha {editor.Cursor + 1:N0}") +
+                (editor.IsModified ? " · modificado (Start salva)" : " · sem alterações")
+            : document is null ? null
             : string.Create(CultureInfo.CurrentCulture,
                 $"{document.EncodingName} · {document.Lines.Count:N0} linhas · mostrando {(document.Lines.Count == 0 ? 0 : modal.Top + 1):N0}–{Math.Min(document.Lines.Count, modal.Top + pageLines):N0}") +
                 (modal.Column > 0 ? string.Create(CultureInfo.CurrentCulture, $" · a partir da coluna {modal.Column + 1}") : string.Empty) +
                 (modal.Monospace ? " · fonte fixa" : " · fonte proporcional");
         var body = new StackPanel { Spacing = Theme.SpaceS };
         var reserved = 0.0;
-        if (document is not null && Core.Preview.TextPreview.TruncationNotice(document) is { } notice)
+        if (editor is null && document is not null && Core.Preview.TextPreview.TruncationNotice(document) is { } notice)
         {
             var truncated = new TextBlock { Text = "⚠ " + notice, FontSize = Theme.FontCaption, Foreground = Theme.Warning, TextWrapping = TextWrapping.Wrap };
             truncated.Measure(new Size(Math.Max(200, Theme.Viewport.Width - (2 * PanelMargin) - (2 * PanelPadding)), double.PositiveInfinity));
@@ -236,8 +241,23 @@ public static partial class ModalView
             Clip = new RectangleGeometry { Rect = new Rect(0, 0, boxWidth, boxHeight) },
             CornerRadius = Theme.RowRadius,
         };
-        if (document is not null && document.Lines.Count > 0)
+        if (count > 0)
         {
+            // Edição (#62): a linha em foco ganha uma faixa atrás do texto (a mesma cor do foco dos menus, suave).
+            if (editor is not null && editor.Cursor >= modal.Top && editor.Cursor < modal.Top + pageLines)
+            {
+                var band = new Border
+                {
+                    Background = Theme.AccentSoft,
+                    BorderBrush = Theme.Accent,
+                    BorderThickness = new Thickness(Theme.Scaled(3), 0, 0, 0),
+                    Height = lineHeight,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(-Theme.SpaceM, (editor.Cursor - modal.Top) * lineHeight, -Theme.SpaceM, 0),
+                };
+                Grid.SetColumnSpan(band, 2);
+                area.Children.Add(band);
+            }
             area.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             area.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             var numbers = new TextBlock { FontSize = fontSize, FontFamily = MonospaceFont, Foreground = Theme.TextMuted, TextAlignment = TextAlignment.Right, Margin = new Thickness(0, 0, Theme.SpaceM, 0) };
@@ -250,10 +270,10 @@ public static partial class ModalView
             }
             var numberBuilder = new System.Text.StringBuilder();
             var textBuilder = new System.Text.StringBuilder();
-            var end = Math.Min(document.Lines.Count, modal.Top + pageLines);
+            var end = Math.Min(count, modal.Top + pageLines);
             for (var i = modal.Top; i < end; i++)
             {
-                var line = document.Lines[i];
+                var line = modal.DisplayLine(i);
                 var visible = modal.Column >= line.Length ? string.Empty : line.Substring(modal.Column, Math.Min(VisibleColumns, line.Length - modal.Column));
                 if (i > modal.Top)
                 {
@@ -265,7 +285,9 @@ public static partial class ModalView
             }
             numbers.Text = numberBuilder.ToString();
             text.Text = textBuilder.ToString();
-            AutomationProperties.SetName(text, string.Create(CultureInfo.CurrentCulture, $"Linhas {modal.Top + 1} a {end} de {document.Lines.Count}: ") + text.Text);
+            AutomationProperties.SetName(text, editor is not null
+                ? string.Create(CultureInfo.CurrentCulture, $"Editando a linha {editor.Cursor + 1} de {count}: ") + editor.Lines[editor.Cursor].Text
+                : string.Create(CultureInfo.CurrentCulture, $"Linhas {modal.Top + 1} a {end} de {count}: ") + text.Text);
             Grid.SetColumn(text, 1);
             area.Children.Add(numbers);
             area.Children.Add(text);
