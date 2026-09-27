@@ -51,6 +51,12 @@ public sealed record AppSettings
     /// <summary>Arquivos e compactados abertos recentemente, o mais recente primeiro (lista limitada).</summary>
     public IReadOnlyList<string> RecentFiles { get; init; } = [];
 
+    /// <summary>Sugestões locais no teclado virtual (nunca em senhas). Desligar apaga <see cref="TypedTexts"/>.</summary>
+    public bool KeyboardSuggestions { get; init; } = true;
+
+    /// <summary>Nomes e buscas concluídos no teclado virtual, o mais recente primeiro (lista limitada; nunca senhas).</summary>
+    public IReadOnlyList<string> TypedTexts { get; init; } = [];
+
     /// <summary>Verifica novas versões ao abrir (no máximo uma vez por dia). Desligável no menu.</summary>
     public bool AutoCheckUpdates { get; init; } = true;
 

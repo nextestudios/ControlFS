@@ -514,3 +514,8 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Sul alterna fonte fixa/proporcional; Norte → Visualizar como texto num `.ps1` mostra o script sem executar.
 - [ ] Um `.exe` ou `.png` pelo menu "Visualizar como texto" é recusado como binário.
 - [ ] O Narrador lê as linhas visíveis e a posição.
+
+## Sugestões do teclado (#45) — não validado em hardware
+- [ ] Com controle real: em Nova pasta, digitar parte de um nome da pasta → faixa aparece; cima na primeira linha foca, Sul usa, baixo volta; cima na faixa leva à última linha.
+- [ ] Senha de compactado: nenhuma faixa aparece; após concluir, o histórico (Menu → Sugestões do teclado) não contém a senha.
+- [ ] Ir para caminho: favoritos e pastas recentes aparecem como sugestões; legível a 3 m e em 1280×720.

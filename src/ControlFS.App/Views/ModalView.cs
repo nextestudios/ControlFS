@@ -568,6 +568,46 @@ public static partial class ModalView
         }
 
         var gap = Theme.Scaled(6);
+        if (kb.Suggestions is { Count: > 0 } suggestions)
+        {
+            // Faixa de sugestões locais (#45): acima das teclas; cima a partir da primeira linha foca, Sul usa.
+            var strip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = gap, Margin = new Thickness(0, Theme.SpaceS, 0, 0) };
+            strip.Children.Add(Glyph(ActionIcon.Keyboard, Theme.FontBody, Theme.TextMuted));
+            for (var i = 0; i < suggestions.Count; i++)
+            {
+                var focused = kb.SuggestionIndex == i;
+                var index = i;
+                var chip = new Border
+                {
+                    Background = focused ? Theme.FocusFill : Theme.ModalInset,
+                    BorderBrush = focused ? Theme.Text : Theme.Transparent,
+                    BorderThickness = Theme.Hairline,
+                    CornerRadius = new CornerRadius(Theme.Scaled(10)),
+                    Padding = new Thickness(Theme.SpaceM, Theme.SpaceS, Theme.SpaceM, Theme.SpaceS),
+                    Child = new TextBlock
+                    {
+                        Text = suggestions[i],
+                        FontSize = Theme.FontBody,
+                        FontWeight = focused ? FontWeights.SemiBold : FontWeights.Normal,
+                        Foreground = focused ? Theme.FocusText : Theme.Text,
+                        MaxWidth = Theme.Scaled(320),
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                    },
+                };
+                AutomationProperties.SetName(chip, $"Sugestão: {suggestions[i]}");
+                if (focused) KeepInView(chip);
+                chip.Tapped += (_, _) => app.PointerPressSuggestion(index);
+                strip.Children.Add(chip);
+            }
+            stack.Children.Add(new ScrollViewer
+            {
+                Content = strip,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                HorizontalScrollMode = ScrollMode.Enabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollMode = ScrollMode.Disabled,
+            });
+        }
         var grid = new Grid { ColumnSpacing = gap, RowSpacing = gap, Margin = new Thickness(0, Theme.SpaceS, 0, 0) };
         for (var c = 0; c < VirtualKeyboardLayouts.Columns; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         for (var r = 0; r < kb.Rows.Count; r++)
@@ -577,7 +617,7 @@ public static partial class ModalView
             for (var k = 0; k < kb.Rows[r].Count; k++)
             {
                 var key = kb.Rows[r][k];
-                var focused = r == kb.Row && k == kb.Column;
+                var focused = kb.SuggestionIndex is null && r == kb.Row && k == kb.Column;
                 var enabled = kb.IsKeyEnabled(key);
                 var row = r;
                 var keyIndex = k;

@@ -89,6 +89,70 @@ public sealed class VirtualKeyboard
 
     public VirtualKey FocusedKey => Rows[Row][Column];
 
+    private Func<string, IReadOnlyList<string>>? _suggestionSource;
+    private string? _suggestionsFor;
+    private IReadOnlyList<string> _suggestions = [];
+
+    /// <summary>
+    /// Fonte de sugestões locais para o texto atual (null = sem sugestões). Campos de senha nunca usam sugestões:
+    /// atribuir uma fonte a eles não tem efeito.
+    /// </summary>
+    public Func<string, IReadOnlyList<string>>? SuggestionSource
+    {
+        get => _suggestionSource;
+        set
+        {
+            _suggestionSource = Kind == TextFieldKind.Password ? null : value;
+            _suggestionsFor = null;
+            ClampSuggestionFocus();
+        }
+    }
+
+    /// <summary>Sugestões para o texto atual (sem repetir o próprio texto). Sempre vazia em campos de senha.</summary>
+    public IReadOnlyList<string> Suggestions
+    {
+        get
+        {
+            if (_suggestionSource is null) return [];
+            var text = Text;
+            if (_suggestionsFor != text)
+            {
+                _suggestionsFor = text;
+                _suggestions = [.. _suggestionSource(text).Where(s => !string.Equals(s, text, StringComparison.Ordinal)).Take(MaxSuggestions)];
+            }
+            return _suggestions;
+        }
+    }
+
+    public const int MaxSuggestions = 5;
+
+    /// <summary>Sugestão focada na faixa acima das teclas; null quando o foco está nas teclas.</summary>
+    public int? SuggestionIndex { get; private set; }
+
+    public string? FocusedSuggestion => SuggestionIndex is { } i && i < Suggestions.Count ? Suggestions[i] : null;
+
+    /// <summary>Troca o texto inteiro pela sugestão focada e devolve o foco às teclas.</summary>
+    public void ApplySuggestion()
+    {
+        if (FocusedSuggestion is not { } suggestion || Outcome != KeyboardOutcome.None) return;
+        SelectAll();
+        InsertText(suggestion);
+        SuggestionIndex = null;
+        Row = 0;
+    }
+
+    /// <summary>Foca uma sugestão (toque/clique na faixa).</summary>
+    public void FocusSuggestion(int index)
+    {
+        if (index >= 0 && index < Suggestions.Count) SuggestionIndex = index;
+    }
+
+    private void ClampSuggestionFocus()
+    {
+        if (SuggestionIndex is { } i && Suggestions.Count == 0) SuggestionIndex = null;
+        else if (SuggestionIndex is { } j) SuggestionIndex = Math.Min(j, Suggestions.Count - 1);
+    }
+
     /// <summary>Texto para exibição. Senhas são mascaradas, exceto durante revelação explícita.</summary>
     public string DisplayText => Kind == TextFieldKind.Password && !IsRevealed ? new string('•', _length) : new string(_buffer, 0, _length);
 
@@ -126,7 +190,26 @@ public sealed class VirtualKeyboard
     public bool Handle(InputAction action)
     {
         if (Outcome != KeyboardOutcome.None) return false;
-        _confirmedKey = action == InputAction.Confirm ? FocusedKey : null;
+        _confirmedKey = action == InputAction.Confirm && SuggestionIndex is null ? FocusedKey : null;
+        ClampSuggestionFocus();
+        if (SuggestionIndex is { } index)
+        {
+            // Faixa de sugestões: esquerda/direita escolhem, Sul usa, baixo volta à primeira linha e cima segue a volta até a
+            // última (como antes da faixa existir); o resto age como nas teclas.
+            switch (action)
+            {
+                case InputAction.NavigateLeft: SuggestionIndex = (index - 1 + Suggestions.Count) % Suggestions.Count; return true;
+                case InputAction.NavigateRight: SuggestionIndex = (index + 1) % Suggestions.Count; return true;
+                case InputAction.NavigateDown: SuggestionIndex = null; Row = 0; return true;
+                case InputAction.NavigateUp: SuggestionIndex = null; Row = 0; MoveVertical(-1); return true; // continua a volta até a última linha
+                case InputAction.Confirm: ApplySuggestion(); return true;
+            }
+        }
+        else if (action == InputAction.NavigateUp && Row == 0 && Suggestions.Count > 0)
+        {
+            SuggestionIndex = 0;
+            return true;
+        }
         switch (action)
         {
             case InputAction.NavigateUp: MoveVertical(-1); return true;
@@ -312,6 +395,7 @@ public sealed class VirtualKeyboard
     /// <summary>Foco direto em uma tecla (mouse/toque). O acionamento continua passando por <see cref="Handle"/>.</summary>
     public void FocusKey(int row, int column)
     {
+        SuggestionIndex = null;
         Row = Math.Clamp(row, 0, Rows.Count - 1);
         Column = Math.Clamp(column, 0, Rows[Row].Count - 1);
     }
