@@ -42,6 +42,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 ## Recursos
 
 - Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação, propriedades
+- **Ícones nativos do Windows** para arquivos, pastas, pastas especiais e unidades, carregados em segundo plano e no tamanho da escala da tela
 - **Operações de arquivo:** renomear, copiar, recortar, colar, mover e excluir para a Lixeira, com conflitos (pular / manter ambos / substituir / mesclar pastas) e resultado por item
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor, senha mascarada) usável só com direções + confirmar + voltar
 - **Criar pasta** com as regras de nomes do Windows
@@ -55,7 +56,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** ícones nativos do Windows, botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Mais
 

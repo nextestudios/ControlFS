@@ -13,6 +13,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Hold to repeat** on the on-screen keyboard: holding West (backspace), LB/RB (cursor) or South on `⌫ ◀ ▶` repeats with acceleration; Done never repeats. (#42)
 - **Favorites**: pin folders from the actions menu (North → "Add to favorites"). They come first on the home screen and in the folder picker's "Go to another place", can be reordered from the home screen and are saved with your settings (portable mode included). A favorite that went missing shows as unavailable and is only removed when you say so. (#48)
 - **Retry failed items**: from the result of a copy, move, delete or extraction, run again only the items that failed or were not processed; what already succeeded is never redone. Items interrupted by a cancel are now reported as "not processed". (#19)
+- **Native Windows icons** in the list (home, folders, picker and archives): file types, folders, special folders and drives. Icons load in the background without stalling scrolling and follow the display scale; no emoji left in the list. (#24)
 
 ### Improvements
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)

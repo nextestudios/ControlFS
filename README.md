@@ -42,6 +42,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 ## Features
 
 - Real folders and drives, history, sorting, hidden items, marking, properties
+- **Native Windows icons** for files, folders, special folders and drives, loaded in the background and sized for the screen's scale
 - **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, cursor, masked passwords) usable with only directions + confirm + back
 - **Create folder** with Windows naming rules
@@ -55,7 +56,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** native Windows icons, controller button prompts, virtual keyboard redesign, search, favorites ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** controller button prompts, virtual keyboard redesign, search, favorites ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## More
 

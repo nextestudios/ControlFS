@@ -35,7 +35,9 @@ Monólito modular desktop. O núcleo não depende de WinUI, SDL3 nem SharpCompre
 
 ## Onde está cada contrato pedido
 
-`IFileSystemProvider`, `IArchiveService`, `IInputBackend`, `ISettingsStore` em `Core/Contracts`; `IArchiveEngine` em
+`IFileSystemProvider`, `IArchiveService`, `IInputBackend`, `ISettingsStore`, `IIconProvider` em `Core/Contracts`
+(ícones do Shell: `Infrastructure.Windows/Shell/ShellIconProvider`, numa thread STA própria; cache LRU por tipo e
+tamanho em `App/Controls/IconLoader`); `IArchiveEngine` em
 `Infrastructure.Archives/Engines` (detalhe de adaptador). `IFileOperationService`, `IControllerProfileStore`,
 `IThumbnailService` e uma interface pública para a fila **ainda não existem**: serão criados quando houver implementação
 real (Etapas 2–3), não como classes vazias.
