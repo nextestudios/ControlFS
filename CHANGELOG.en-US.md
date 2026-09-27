@@ -8,6 +8,8 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Drive types**: local disk, USB stick, optical drive and network drive each get their own symbol and text on the home screen and in the folder picker (with label, letter and free/total space), and Narrator reads the type. Plugging in or removing a USB stick while the app is open updates the list without restarting and keeps the focus on the same place. (#25)
 - **Active controller**: Menu → Controle ativo (active controller) lists the connected controllers (name, family, type, VID:PID, physical or virtual) and South/A on one makes it the only controller driving ControlFS until you switch back to automatic. When Steam Input or DS4Windows expose the physical controller and a virtual copy at the same time, the bottom bar warns about the duplicate (each button could act twice) and the menu shows which one looks like the copy. The controller test also flags virtual devices. (#80)
 - **Recent** on the home screen: the last folders you visited and files/archives you opened (up to 10 of each), one press away with Home → Recent → South/A. They stay on this computer only, in your settings; North on "Recent" clears the lists, and Menu → "Recent" turns the feature off (which also erases what was stored). (#49)
+### Improvements
+- **ZIP64 validated**: ZIP archives with entries over 4 GB or more than 65,535 entries extract with sizes and CRCs checked; the safety limits still apply. (#63)
 
 ## [0.4.0-alpha.1]
 ### What's new

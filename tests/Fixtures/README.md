@@ -11,4 +11,6 @@ Demais fixtures (ZIP simples, nomes maliciosos, symlink Unix, colisões, bombas 
 truncamento) são **geradas durante os testes** em diretórios temporários por `ZipFixtures` (tests/ControlFS.UnitTests),
 usando `System.IO.Compression` do BCL, para manter o repositório pequeno e o conteúdo auditável.
 
-TAR, TAR.GZ e GZ também são gerados durante os testes (`System.Formats.Tar`/`GZipStream`). Pendente: ZIP AES (AE-2), ZIP64 e volumes divididos — ver `docs/archive-support.md`.
+TAR, TAR.GZ e GZ também são gerados durante os testes (`System.Formats.Tar`/`GZipStream`). ZIP64 (entrada acima de 4 GiB e
+70.000 entradas) é gerado em `Zip64Tests` com o BCL, em diretório temporário apagado ao final: nada grande vai para o
+repositório. Pendente: ZIP AES (AE-2) e volumes divididos — ver `docs/archive-support.md`.
