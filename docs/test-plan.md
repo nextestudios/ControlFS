@@ -4,7 +4,7 @@
 
 | Camada | Projeto | Onde roda | Estado |
 |---|---|---|---|
-| Unidade (políticas, entrada, teclado, lista, estados) | `tests/ControlFS.UnitTests` | qualquer SO | 133 testes passando (macOS arm64, Windows e Linux na CI, 2026-09-26) |
+| Unidade (políticas, entrada, teclado, lista, estados) | `tests/ControlFS.UnitTests` | Windows (CI) | 214 testes passando na CI `windows-latest` |
 | Integração do extrator com arquivos reais | idem (`Archives/`) | qualquer SO | incluídos acima |
 | Jornadas ponta a ponta por ações semânticas | idem (`Application/JourneyTests`) | qualquer SO | incluídos acima; **não** substituem UI nem hardware |
 | Integração Windows (pastas conhecidas, junction, MOTW, nomes reservados, caminhos longos) | `tests/ControlFS.WindowsIntegrationTests` | Windows | 6 testes, **passaram** na CI `windows-latest`; pulados fora do Windows |

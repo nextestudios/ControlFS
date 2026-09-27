@@ -7,7 +7,7 @@ The product spec lives outside the repo; the rules that matter are summarized he
 
 - **The app runs only on Windows.** `src/ControlFS.App` targets `net10.0-windows` with the Windows App SDK.
   It *compiles* elsewhere (PRI/manifest steps are skipped), but it can't run. The **CI** workflow builds and tests on Windows.
-- **The unit tests run anywhere:** `dotnet test tests/ControlFS.UnitTests`. They cover policies, input, the on-screen
+- **Tests run on Windows in CI** (`dotnet test tests/ControlFS.UnitTests`); ControlFS targets Windows only. They cover policies, input, the on-screen
   keyboard, the extractor on real temp files, and end-to-end journeys driven only by semantic actions. Run them before every push.
 - **Windows-only behavior** (known folders, junctions, Mark of the Web, long paths) lives in `tests/ControlFS.WindowsIntegrationTests`.
 - **Controllers, TVs, DPI** can't be tested in CI. Add manual checks to `docs/TESTING.md` instead of claiming they work.

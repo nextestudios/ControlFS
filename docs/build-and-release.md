@@ -35,8 +35,9 @@ artifacts\ControlFS-win-x64\ControlFS.exe
 ## CI
 
 - `ci.yml` (PR e `main`): Windows — restore travado por lock files, build de toda a solução (inclui o app WinUI), testes
-  unitários/jornadas, testes de integração Windows e checagem de pacotes vulneráveis; Linux — núcleo portátil.
-  Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows, 133 no Linux.
+  unitários/jornadas, testes de integração Windows e checagem de pacotes vulneráveis.
+  Primeira execução (2026-09-26): verde; 133 + 6 testes no Windows. (Um job extra em Linux existiu até 2026-09-27 e
+  foi removido: o produto é só para Windows e os mesmos testes já rodam lá.)
 - `release.yml`: push de tag `vX.Y.Z` ou `vX.Y.Z-pre.N` roda os testes, gera `ControlFS-Portable-x64.zip` +
   `SHA256SUMS.txt` com `build/Publish-ControlFS.ps1` e publica a release (pré-lançamento quando há sufixo). As notas vêm
   de `CHANGELOG.en-US.md`, com link para `CHANGELOG.md`; o workflow falha se faltar a seção em algum dos dois.
@@ -45,6 +46,12 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   `build/Test-Installed.ps1`: processo vivo, janela, eventos do Windows, logs e print). O workflow `smoke.yml` faz o
   mesmo em PRs, na `main` e sob demanda para uma release já publicada. Inclui também e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
   (`build/New-ReleaseManifest.ps1` confere a assinatura com a chave pública do app antes de publicar).
+- Velocidade: CI e smoke usam cache de pacotes NuGet (chave nos lock files) e não rodam em mudanças só de documentação
+  (`**/*.md`, `docs/**`). A release não usa cache (pacotes sempre baixados na hora). O teste dos arquivos já
+  publicados (`smoke.yml` com `release_tag`) roda em versões estáveis ou sob demanda — a release já abre o app antes
+  de publicar.
+- Desenvolvimento: `dotnet build ControlFS.slnx` local serve só como checagem rápida de compilação; testes, abertura do
+  app, pacotes e releases valem apenas quando executados na CI.
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
 Para publicar: adicione a seção da versão nos dois changelogs, faça merge na `main` e crie a tag (somente mantenedores).
