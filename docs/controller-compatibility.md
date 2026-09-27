@@ -33,6 +33,13 @@ instalador ou o portátil da release. Passo a passo em `docs/TESTING.md` → "Te
 O relatório leva versão do app, do Windows e do SDL, os campos de cada controle e as linhas "controle → ação". Não leva
 nome de usuário, caminhos do dispositivo, GUID nem número de série. Com o relatório, esta tabela é atualizada.
 
+### Remapeadores e duplicatas (#80)
+
+Steam Input e DS4Windows/ViGEm expõem o controle físico e uma cópia virtual. O ControlFS marca como virtual só o que
+dá para reconhecer sem o nome: joystick virtual do SDL, "Steam Virtual Gamepad" (28DE:11FF) e, como **provável**, um
+Xbox 360 com fio (045E:028E) conectado junto de um controle PlayStation ou Nintendo. Não observado em hardware ainda:
+registre no relatório do teste de controles se a cópia aparece e se Menu → Controle ativo elimina a ação dupla.
+
 ### Joystick sem perfil (assistente, #79)
 
 Com um joystick que o SDL não reconhece como gamepad (a tela de teste mostra `raw joystick, no profile`), registre: tipo

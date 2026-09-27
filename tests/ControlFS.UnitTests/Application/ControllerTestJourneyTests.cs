@@ -31,6 +31,8 @@ public class ControllerTestJourneyTests : IDisposable
         public IReadOnlyCollection<InputDeviceInfo> Devices { get; } = [Xbox, Pad];
         public string? ActiveDeviceKey { get; set; }
         public string BackendDescription => "SDL 3.2.0";
+        public bool IsActiveDeviceLocked => false;
+        public void SelectActiveDevice(string? deviceKey) => throw new NotSupportedException();
     }
 
     [Fact]

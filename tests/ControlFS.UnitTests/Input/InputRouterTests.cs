@@ -101,6 +101,41 @@ public class InputRouterTests
     }
 
     [Fact]
+    public void Explicitly_selected_device_is_the_only_one_routed_until_automatic_or_removed()
+    {
+        var r = Router();
+        r.OnControl("physical", PhysicalControl.South, true, Ms(0));
+        r.OnControl("physical", PhysicalControl.South, false, Ms(10));
+        r.SelectActiveDevice("virtual"); // Menu → Controle ativo
+        Assert.True(r.IsActiveDeviceLocked);
+        Assert.Equal("virtual", r.ActiveDeviceKey);
+
+        // O par físico+virtual manda a mesma pressão pelos dois: só o escolhido age, e o outro não assume nem ocioso.
+        r.OnControl("physical", PhysicalControl.DPadDown, true, Ms(20));
+        r.OnControl("virtual", PhysicalControl.DPadDown, true, Ms(21));
+        r.OnControl("physical", PhysicalControl.DPadDown, false, Ms(30));
+        r.OnControl("virtual", PhysicalControl.DPadDown, false, Ms(31));
+        r.OnControl("physical", PhysicalControl.East, true, Ms(40));
+        Assert.Equal("virtual", r.ActiveDeviceKey);
+        Assert.Equal([InputAction.Confirm, InputAction.NavigateDown], _actions);
+
+        // Automático: o escolhido continua até outro assumir com uma nova pressão.
+        r.OnControl("physical", PhysicalControl.East, false, Ms(50));
+        r.SelectActiveDevice(null);
+        Assert.False(r.IsActiveDeviceLocked);
+        Assert.Equal("virtual", r.ActiveDeviceKey);
+        r.OnControl("physical", PhysicalControl.East, true, Ms(60));
+        Assert.Equal("physical", r.ActiveDeviceKey);
+
+        // O escolhido desconectado não deixa a UI sem controle.
+        r.SelectActiveDevice("virtual");
+        r.OnDeviceRemoved("virtual");
+        Assert.False(r.IsActiveDeviceLocked);
+        r.OnControl("physical", PhysicalControl.South, true, Ms(70));
+        Assert.Equal("physical", r.ActiveDeviceKey);
+    }
+
+    [Fact]
     public void Sensitive_context_blocks_automatic_device_takeover()
     {
         var r = Router();

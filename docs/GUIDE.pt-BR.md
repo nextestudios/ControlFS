@@ -32,6 +32,12 @@ Toda ação essencial está nos menus (Start / Norte). Num joystick mapeado só 
 
 Menu → **Teste de controles…** lista os controles conectados (nome, tipo, família, VID:PID, se é gamepad ou joystick sem perfil e qual está ativo) e mostra, a cada botão apertado, o controle físico e a ação que ele faz no ControlFS. Nada é executado nessa tela: segure Confirmar 1 s para copiar um relatório (sem dados pessoais) e segure Voltar 1 s para sair; no teclado, Enter e Esc.
 
+### Controle ativo
+
+Por padrão, qualquer controle assume o comando ao apertar um botão nele (exceto dentro de confirmações sensíveis). Menu → **Controle ativo…** lista os controles conectados com família, tipo, VID:PID e se parecem físicos ou virtuais; aperte Sul/A num deles e só ele comanda o ControlFS até você escolher **Automático** de novo ou ele desconectar. O teclado sempre funciona.
+
+Remapeadores como o Steam Input e o DS4Windows expõem o controle físico *e* uma cópia virtual (ex.: "Steam Virtual Gamepad" ou um controle Xbox 360 emulado), então cada botão poderia chegar duas vezes. O ControlFS avisa no rodapé quando vê isso e marca a provável cópia no menu: escolha um deles ali.
+
 ### Joysticks sem perfil
 
 Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos como gamepad. O ControlFS os detecta, mas eles só navegam depois de mapeados:

@@ -31,6 +31,12 @@ public sealed class InputRouter
     public bool IsSuspended { get; private set; }
 
     /// <summary>
+    /// Dispositivo escolhido explicitamente (Menu → Controle ativo): só ele comanda a UI e nenhum outro assume,
+    /// nem com uma nova pressão. Evita ação dupla quando um remapeador expõe o controle físico e uma cópia virtual.
+    /// </summary>
+    public bool IsActiveDeviceLocked { get; private set; }
+
+    /// <summary>
     /// Regra de repetição do contexto atual (ex.: teclado virtual repete apagar e cursor). Consultada a cada
     /// repetição, então parar de valer interrompe a repetição. Sem regra, só navegação repete.
     /// </summary>
@@ -46,6 +52,8 @@ public sealed class InputRouter
     public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan now)
     {
         if (IsSuspended) return;
+
+        if (IsActiveDeviceLocked && !string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return;
 
         if (ActiveDeviceKey is null)
         {
@@ -121,15 +129,20 @@ public sealed class InputRouter
         if (!string.Equals(ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return;
         _held.Clear();
         _latched.Clear();
+        IsActiveDeviceLocked = false; // o escolhido saiu: qualquer controle volta a poder assumir
         SetActive(null);
     }
 
-    /// <summary>Troca explícita de dispositivo ativo (ação documentada na UI).</summary>
+    /// <summary>
+    /// Troca explícita de dispositivo ativo (Menu → Controle ativo): o escolhido fica fixo até voltar ao automático.
+    /// null volta ao automático; o ativo atual continua comandando até outro assumir com uma nova pressão.
+    /// </summary>
     public void SelectActiveDevice(string? deviceKey)
     {
         _held.Clear();
         _latched.Clear();
-        SetActive(deviceKey);
+        IsActiveDeviceLocked = deviceKey is not null;
+        if (deviceKey is not null) SetActive(deviceKey);
     }
 
     private void SetActive(string? deviceKey)

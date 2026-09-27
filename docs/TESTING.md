@@ -147,6 +147,14 @@ Bluetooth), DualShock 4, DualSense, Switch Pro, 8BitDo (em cada modo X/D/S que t
 - [ ] Joystick genérico sem perfil: as pressões aparecem como `botão N`/`direcional N ↑`/`eixo N ±` → `nenhuma ação`, e
       sair com Esc funciona.
 
+## Controle ativo e duplicatas (#80)
+
+- [ ] Com o Steam aberto (Steam Input ligado para controles PlayStation/Nintendo) e um DualSense ou Switch Pro conectado: o rodapé avisa que "Steam Virtual Gamepad" parece uma cópia; Menu → Controle ativo mostra os dois, com `virtual (Steam Input)` na cópia.
+- [ ] Escolher um deles com Sul/A: navegar não pula dois itens por pressão, e botões do outro não fazem nada (nem ocioso). Escolher **Automático** volta a deixar qualquer um assumir.
+- [ ] DS4Windows (ViGEm) com um DualShock 4: o Xbox 360 emulado aparece como `provável DS4Windows/ViGEm` e escolher um deles elimina a ação dupla.
+- [ ] Desconectar o controle escolhido: o rodapé avisa e outro controle assume com uma nova pressão.
+- [ ] Com o controle escolhido, abrir uma confirmação sensível (ex.: excluir): outro controle continua sem assumir; no automático, a regra antiga vale (nenhum outro assume dentro da confirmação).
+
 ## Controles da matriz
 
 Xbox (USB/BT), DualShock 4, DualSense, Switch Pro, 8BitDo, um genérico. Para cada um: navegação, confirmar/voltar na

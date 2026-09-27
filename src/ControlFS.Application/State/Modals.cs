@@ -87,7 +87,8 @@ public sealed class MappingWizardModal(Core.Contracts.InputDeviceInfo device, Co
 }
 
 /// <summary>Um dispositivo na tela de teste: número estável na sessão e se ainda está conectado.</summary>
-public sealed record ControllerTestDevice(int Number, Core.Contracts.InputDeviceInfo Info, bool IsConnected, bool IsActive, string? Profile);
+public sealed record ControllerTestDevice(int Number, Core.Contracts.InputDeviceInfo Info, bool IsConnected, bool IsActive, string? Profile,
+    Core.Input.VirtualSource Source = Core.Input.VirtualSource.None);
 
 /// <summary>
 /// Uma pressão registrada no teste: o controle físico (gamepad ou perfil) e/ou a entrada crua, e a ação semântica que
