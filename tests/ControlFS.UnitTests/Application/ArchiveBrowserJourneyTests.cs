@@ -3,6 +3,7 @@ using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
+using ControlFS.Core.Text;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.UnitTests.Support;
 using static ControlFS.UnitTests.Support.ZipFixtures;
@@ -57,6 +58,34 @@ public class ArchiveBrowserJourneyTests : IDisposable
 
         Assert.Equal(["c.txt"], Directory.EnumerateFileSystemEntries(_tmp.Sub("pacote"), "*", SearchOption.AllDirectories).Select(Path.GetFileName));
         Assert.Equal("gama", File.ReadAllText(_tmp.Sub("pacote", "c.txt")));
+    });
+
+    [Fact]
+    public void Header_encrypted_7z_asks_for_the_password_before_listing_and_again_after_a_wrong_one() => UiContext.Run(async () =>
+    {
+        // 7z não tem verificador de senha: antes, a senha errada virava "arquivo corrompido" e o usuário não podia tentar de novo.
+        File.Copy(FixturePath("7z/cabecalho-protegido.7z"), _tmp.Sub("cofre.7z"));
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("cofre.7z");
+        d.Press(InputAction.Confirm);
+
+        var kb = await d.WaitKeyboard();
+        Assert.Equal(TextFieldKind.Password, kb.Keyboard.Kind);
+        Assert.Null(app.ActivePane.Archive);
+        d.TypeOnKeyboard(kb, "errada");
+        d.PressKey(kb, KeyKind.Done);
+        var retry = await d.WaitKeyboard();
+        Assert.NotSame(kb, retry);
+        Assert.Equal("Senha incorreta. Tente novamente.", retry.Keyboard.ErrorMessage);
+        d.TypeOnKeyboard(retry, "certa");
+        d.PressKey(retry, KeyKind.Done);
+        await d.Idle();
+
+        Assert.NotNull(app.ActivePane.Archive);
+        Assert.Equal(["docs", "segredo.txt"], app.ActivePane.List.Items.Select(i => i.Name).Order(StringComparer.Ordinal));
     });
 
     [Fact]

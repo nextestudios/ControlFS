@@ -89,6 +89,38 @@ public class FormatTests : IDisposable
         Assert.All(HashesUnder(ok.Destination!), h => Assert.Contains(h, OriginalHashes));
     }
 
+    [Theory]
+    [InlineData("rar/Rar5.encrypted_filesAndHeader.rar", "test")]
+    [InlineData("7z/cabecalho-protegido.7z", "certa")]
+    public async Task Header_encrypted_archive_lists_and_extracts_only_with_the_right_password(string fixture, string password)
+    {
+        // A própria lista de arquivos é criptografada: sem a senha certa nem os nomes podem ser lidos.
+        HashSet<string> known =
+        [
+            .. OriginalHashes,
+            "1d23c69cf6c61f433b6470152d59a3cec7a5212f9b338c89a15373a679d0a67d", // segredo.txt ("conteúdo protegido\n")
+            "150f2a4850496ec22fce5335e5d56f1ffef5eefd0816dfd0af905a531b24fb6f", // docs/nota.txt ("nota\n")
+        ];
+        var path = ZipFixtures.FixturePath(fixture);
+        var limits = ControlFS.Core.Policies.ExtractionLimits.Default;
+
+        var missing = await Assert.ThrowsAsync<ArchiveAccessException>(() => _service.InspectAsync(path, null, limits, CancellationToken.None));
+        Assert.Equal(OperationErrorKind.PasswordRequired, missing.Kind);
+        var wrong = await Assert.ThrowsAsync<ArchiveAccessException>(() => _service.InspectAsync(path, "errada", limits, CancellationToken.None));
+        Assert.Equal(OperationErrorKind.WrongPassword, wrong.Kind);
+        Assert.Equal(OperationErrorKind.WrongPassword, (await Extract(path, "errada")).Error);
+
+        var info = await _service.InspectAsync(path, password, limits, CancellationToken.None);
+        var files = info.Entries.Where(e => !e.IsDirectory).ToList();
+        Assert.NotEmpty(files);
+        Assert.All(files, e => Assert.True(e.IsEncrypted, e.RawKey));
+        var ok = await Extract(path, password);
+        Assert.True(ok.FinalState == OperationState.Completed, $"{ok.FinalState} {ok.Error} {ok.Message} :: {string.Join(" | ", ok.Items.Where(i => i.Outcome != ItemOutcome.Succeeded).Select(i => $"{i.Name}={i.Outcome}/{i.Error}/{i.Message}"))}");
+        var hashes = HashesUnder(ok.Destination!);
+        Assert.Equal(files.Count, hashes.Count);
+        Assert.All(hashes, h => Assert.Contains(h, known));
+    }
+
     [Fact]
     public async Task Winzip_aes256_ae2_fixture_needs_the_right_password_and_extracts_identical_files()
     {
