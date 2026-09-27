@@ -22,7 +22,13 @@ The product spec lives outside the repo; the rules that matter are summarized he
 
 ## Branching: Gitflow
 
-ControlFS follows [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+ControlFS follows [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow), with one
+temporary rule:
+
+> **Before 1.0 (current phase):** there is no `develop` branch. `feature/*` and `hotfix/*` pull requests go straight into
+> `main`; releases are tagged on `main`. The full model below (with `develop` and `release/*`) starts with the first
+> stable release.
+
 
 - `main`: released history only. Every commit on `main` is a release and is tagged `vX.Y.Z[-pre]`.
 - `develop`: integration branch for the next release.

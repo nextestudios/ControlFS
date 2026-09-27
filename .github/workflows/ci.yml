@@ -3,7 +3,8 @@ name: CI
 # Builds the app and runs all tests on Windows (the only platform ControlFS targets)
 # for every pull request into develop or main (Gitflow integration points).
 on:
-  # Gitflow: feature/* → develop and release/* or hotfix/* → main. Pushes to other branches don't run CI.
+  # Before 1.0: feature/* and hotfix/* pull requests go straight into main. From 1.0 on (Gitflow): feature/* → develop,
+  # release/* and hotfix/* → main. Pushes to other branches don't run CI.
   pull_request:
     branches: [develop, main]
     paths-ignore:

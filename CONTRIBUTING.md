@@ -11,7 +11,13 @@
 
 ## Fluxo de branches (Gitflow)
 
-Seguimos o [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+Seguimos o [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow), com uma regra
+temporária:
+
+> **Antes da 1.0 (fase atual):** não existe `develop`. PRs de `feature/*` e `hotfix/*` vão direto para `main`; as
+> versões são marcadas com tag na `main`. O modelo completo abaixo (com `develop` e `release/*`) começa na primeira versão
+> estável.
+
 
 - `main` guarda só versões publicadas (cada commit tem tag `vX.Y.Z`). `develop` integra o que vai para a próxima versão.
 - **Nova funcionalidade/correção comum:** `feature/<issue>-<nome>` a partir de `develop` → pull request para `develop`.
