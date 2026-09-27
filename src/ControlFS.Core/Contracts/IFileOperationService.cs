@@ -32,6 +32,12 @@ public sealed class FileOperationRequest
     /// </summary>
     public IReadOnlyList<string>? LeftoverSourceFolders { get; init; }
 
+    /// <summary>
+    /// Pausa cooperativa: respeitada entre itens e, na cópia, entre blocos de um arquivo. Um arquivo parcial fica no
+    /// temporário oculto até continuar ou cancelar; nada aparece no destino pela metade.
+    /// </summary>
+    public PauseGate? Pause { get; init; }
+
     public override string ToString() => $"{Kind} {Sources.Count} item(s)";
 }
 

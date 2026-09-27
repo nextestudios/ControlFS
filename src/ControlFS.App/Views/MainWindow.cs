@@ -315,7 +315,7 @@ public sealed class MainWindow : Window
                 UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
                 _ => _app.Clipboard is { } clip ? $"📋 {clip.Paths.Count} item(ns) {(clip.IsCut ? "recortado(s)" : "copiado(s)")} — Ações → Colar" : string.Empty,
             }
-            : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State == OperationState.WaitingForUser ? "aguardando você" : "em andamento")})";
+            : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State switch { OperationState.WaitingForUser => "aguardando você", OperationState.Paused => "pausada", _ => "em andamento" })})";
 
         // Lista (a identidade dos itens decide se o ItemsSource muda)
         if (!ReferenceEquals(_app.Places, _shownPlaces))

@@ -32,6 +32,12 @@ public sealed class OperationItem
     /// <summary>Destino para o histórico. Definido por quem enfileirou; o resultado pode trazer o destino real.</summary>
     public string? Destination { get; internal set; }
 
+    /// <summary>Pausa cooperativa, só para motores que sabem parar num ponto seguro (null: não pausa; a opção fica oculta).</summary>
+    internal PauseGate? PauseGate { get; set; }
+
+    public bool CanPause => PauseGate is not null && State == OperationState.Running;
+    public bool CanResume => PauseGate is not null && State == OperationState.Paused;
+
     /// <summary>Entrada do histórico gravada ao concluir.</summary>
     public string? HistoryEntryId { get; internal set; }
 
@@ -81,15 +87,16 @@ public sealed class OperationQueue
     private bool _running;
 
     public IReadOnlyList<OperationItem> Items => _items;
-    public OperationItem? Current => _items.FirstOrDefault(i => i.State is OperationState.Planning or OperationState.Running or OperationState.WaitingForUser or OperationState.CancelRequested);
+    public OperationItem? Current => _items.FirstOrDefault(i => i.State is OperationState.Planning or OperationState.Running or OperationState.WaitingForUser or OperationState.Paused or OperationState.CancelRequested);
     public int ActiveCount => _items.Count(i => i.IsActive);
 
     public event Action? Changed;
     public event Action<OperationItem>? Completed;
 
-    public OperationItem Enqueue(string title, OperationKind kind, Func<OperationItem, CancellationToken, Task<OperationResult>> work)
+    /// <param name="pausable">O motor respeita <see cref="OperationItem.PauseGate"/> (pausa cooperativa num ponto seguro).</param>
+    public OperationItem Enqueue(string title, OperationKind kind, Func<OperationItem, CancellationToken, Task<OperationResult>> work, bool pausable = false)
     {
-        var item = new OperationItem(_nextId++, title, kind, work);
+        var item = new OperationItem(_nextId++, title, kind, work) { PauseGate = pausable ? new PauseGate() : null };
         _items.Add(item);
         Changed?.Invoke();
         _ = PumpAsync();
@@ -106,7 +113,7 @@ public sealed class OperationQueue
             return true;
         }
         if (!item.TryTransition(OperationState.CancelRequested)) return false;
-        item.Cts.Cancel();
+        item.Cts.Cancel(); // uma operação pausada sai da espera pelo cancelamento; não precisa continuar antes
         Changed?.Invoke();
         return true;
     }
@@ -127,8 +134,31 @@ public sealed class OperationQueue
         return true;
     }
 
+    /// <summary>
+    /// Pausa no próximo ponto seguro do motor (entre itens ou blocos). A fila é serial: as seguintes esperam a
+    /// operação pausada continuar ou ser cancelada.
+    /// </summary>
+    public bool Pause(OperationItem item)
+    {
+        if (!item.CanPause || !item.TryTransition(OperationState.Paused)) return false;
+        item.PauseGate!.Pause();
+        Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Continua do item atual (sem refazer o que já terminou).</summary>
+    public bool Resume(OperationItem item)
+    {
+        if (!item.CanResume || !item.TryTransition(OperationState.Running)) return false;
+        item.PauseGate!.Resume();
+        Changed?.Invoke();
+        return true;
+    }
+
     internal void SetWaiting(OperationItem item, bool waiting)
     {
+        // Um conflito perguntado pouco antes da pausa não tira a operação do estado "pausada".
+        if (!waiting && item.State != OperationState.WaitingForUser) return;
         if (item.TryTransition(waiting ? OperationState.WaitingForUser : OperationState.Running)) Changed?.Invoke();
     }
 

@@ -79,7 +79,7 @@ public sealed partial class AppController
         {
             var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
             var interaction = new UiConflictInteraction(this, op);
-            if (parts.Count == 1) return await _fileOps.RunAsync(ToRequest(parts[0]), interaction, progress, ct);
+            if (parts.Count == 1) return await _fileOps.RunAsync(ToRequest(parts[0], op.PauseGate), interaction, progress, ct);
             var results = new List<OperationResult>();
             foreach (var part in parts)
             {
@@ -88,10 +88,10 @@ public sealed partial class AppController
                     results.Add(new OperationResult(OperationState.Cancelled, part.Sources.Select(s => NotProcessed(s, part.Destination)).ToList()));
                     continue;
                 }
-                results.Add(await _fileOps.RunAsync(ToRequest(part), interaction, progress, ct));
+                results.Add(await _fileOps.RunAsync(ToRequest(part, op.PauseGate), interaction, progress, ct));
             }
             return Merge(results, parts);
-        });
+        }, pausable: true);
         item.RetryAction = () => RetryFileOperation(summary, parts, retryOfFailed);
         item.Source = summary.SourceFolder;
         item.Destination = summary.Destination;
@@ -100,8 +100,9 @@ public sealed partial class AppController
         RaiseChanged();
     }
 
-    private static FileOperationRequest ToRequest(FileOperationPlan plan) => new()
+    private static FileOperationRequest ToRequest(FileOperationPlan plan, PauseGate? pause) => new()
     {
+        Pause = pause,
         Kind = plan.Kind,
         Sources = plan.Sources,
         DestinationFolder = plan.Destination,

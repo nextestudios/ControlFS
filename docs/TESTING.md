@@ -299,6 +299,15 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
       Referência automática: galeria `glyphs/` no artefato `smoke-screens` do workflow Smoke (ver "Layout responsivo").
 - [ ] Narrador lê o nome do botão (ex.: "Botão cruz", "Botão A", "Botão Menu").
 
+## Pausar e continuar (#21)
+
+- [ ] Copiar vários GB para um pendrive lento; Menu → Operações → a cópia → Pausar: a luz do pendrive para em até ~1 s
+      e o Gerenciador de Tarefas mostra o disco sem atividade do ControlFS. No destino só existe o temporário oculto
+      `.controlfs-copy-*.part` do arquivo atual.
+- [ ] Continuar: a cópia termina e os arquivos abrem normalmente (comparar tamanho/hash de um arquivo grande).
+- [ ] Pausar e depois Cancelar (sem continuar): o temporário some, os arquivos já concluídos ficam.
+- [ ] Extração e compactação não mostram "Pausar".
+
 ## Limpeza após queda
 
 - [ ] Durante uma extração grande (e, em outra rodada, uma cópia grande), encerrar o ControlFS pelo Gerenciador de
