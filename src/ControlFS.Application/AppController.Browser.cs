@@ -295,7 +295,7 @@ public sealed partial class AppController
                 new MenuItem($"Mover {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
                 new MenuItem($"Compactar {marked.Count} item(ns)…", () => BeginCompress(pane, marked)),
                 new MenuItem($"Excluir {marked.Count} item(ns)…", () => BeginDelete(pane, marked), FileOpsUnavailable),
-                new MenuItem("Limpar marcação", () => pane.List.ClearSelection()),
+                .. SelectionItems(pane),
             ]));
             return;
         }
@@ -323,8 +323,30 @@ public sealed partial class AppController
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco."));
+        items.AddRange(SelectionItems(pane));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items));
+    }
+
+    /// <summary>
+    /// "Marcar todos (N)" e "Limpar marcação (N)", com as contagens. Unidades, pastas especiais e entradas bloqueadas
+    /// nunca são marcadas. Só no navegador (o seletor de pasta não marca).
+    /// </summary>
+    private List<MenuItem> SelectionItems(PaneState pane)
+    {
+        var items = new List<MenuItem>();
+        if (pane.Mode != PaneMode.Browse) return items;
+        var list = pane.List;
+        var selectable = list.SelectableCount;
+        if (list.SelectionCount < selectable || selectable == 0)
+            items.Add(new MenuItem($"Marcar todos ({selectable})", () =>
+            {
+                list.SelectAll();
+                StatusMessage = $"{list.SelectionCount} item(ns) marcado(s).";
+            }, selectable == 0 ? "Nada aqui pode ser marcado." : null));
+        if (list.SelectionCount > 0)
+            items.Add(new MenuItem($"Limpar marcação ({list.SelectionCount})", list.ClearSelection));
+        return items;
     }
 
     private async Task ShowFileMenuAsync(PaneState pane, FileEntry entry, string file)
@@ -355,6 +377,7 @@ public sealed partial class AppController
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
+        items.AddRange(SelectionItems(pane));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>".
         PushModal(new MenuModal(entry.Name, items) { FocusIndex = ArchiveFormats.CanExtract(format) ? 1 : 0 });
@@ -375,6 +398,7 @@ public sealed partial class AppController
         var noSelection = selected.Count == 0 ? "Marque entradas primeiro (botão de marcar)." : null;
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection));
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para…", () => PickDestinationThenExtract(path, folder, selected, archive.InnerPath), noSelection));
+        items.AddRange(SelectionItems(pane));
         items.Add(new MenuItem("Informações do compactado", () => ShowArchiveInfo(pane)));
         PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items));
     }
