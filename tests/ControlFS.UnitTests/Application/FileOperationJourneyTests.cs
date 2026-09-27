@@ -40,7 +40,7 @@ public class FileOperationJourneyTests : IDisposable
         await d.Idle();
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Escolher esta pasta");
-        var summary = await d.WaitDialog("Copiar 1 item(ns)?");
+        var summary = await d.WaitDialog("Copiar 1 item?");
         Assert.Contains(summary.Lines, l => l.Label == "Para" && l.Value.EndsWith("Backup", StringComparison.Ordinal));
         d.ChooseOption(summary, "Copiar");
 
@@ -67,14 +67,14 @@ public class FileOperationJourneyTests : IDisposable
         await d.FocusItem("b.txt");
         d.Press(InputAction.ToggleSelection);
         d.Press(InputAction.OpenContextMenu);
-        await d.ChooseMenu("Mover 2 item(ns) para…");
+        await d.ChooseMenu("Mover 2 itens para…");
         await d.Idle();
         await d.FocusItem("Destino");
         d.Press(InputAction.Confirm);
         await d.Idle();
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Escolher esta pasta");
-        d.ChooseOption(await d.WaitDialog("Mover 2 item(ns)?"), "Mover");
+        d.ChooseOption(await d.WaitDialog("Mover 2 itens?"), "Mover");
         await UiContext.WaitUntil(() => d.App.Operations.Items.Count == 1 && !d.App.Operations.Items[0].IsActive, "operação concluída");
         await d.Idle();
 
@@ -93,7 +93,7 @@ public class FileOperationJourneyTests : IDisposable
         await d.Idle();
         var locked = new FileStream(_tmp.Sub("travado.txt"), FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("travado.txt")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         var failed = await d.WaitDialog("Copiar: concluído com avisos");
         Assert.False(File.Exists(_tmp.Sub("Destino", "travado.txt")));
         d.ChooseOption(failed, "Fechar");
@@ -101,8 +101,8 @@ public class FileOperationJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
-        await d.ChooseMenu("Copiar 1 item(ns)");
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)"), "Tentar de novo");
+        await d.ChooseMenu("Copiar 1 item");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item"), "Tentar de novo");
         await d.WaitDialog("Copiar: concluído");
         Assert.Equal("conteúdo", File.ReadAllText(_tmp.Sub("Destino", "travado.txt")));
 
@@ -113,8 +113,8 @@ public class FileOperationJourneyTests : IDisposable
         d.ChooseOption((DialogModal)d.App.TopModal!, "Fechar");
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
-        await d.ChooseMenu("Copiar 1 item(ns) — concluída");
-        Assert.DoesNotContain((await d.WaitDialog("Copiar 1 item(ns)")).Options, o => o.Label == "Tentar de novo");
+        await d.ChooseMenu("Copiar 1 item — concluída");
+        Assert.DoesNotContain((await d.WaitDialog("Copiar 1 item")).Options, o => o.Label == "Tentar de novo");
     });
 
     [Fact]
@@ -129,7 +129,7 @@ public class FileOperationJourneyTests : IDisposable
         await d.Idle();
         var locked = new FileStream(_tmp.Sub("Pasta", "travado.txt"), FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("Pasta")], _tmp.Sub("Destino"), _tmp.Path);
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         var partial = await d.WaitDialog("Copiar: concluído com avisos");
         locked.Dispose();
         File.WriteAllText(_tmp.Sub("Destino", "Pasta", "livre.txt"), "editado depois"); // já copiado: não pode ser refeito

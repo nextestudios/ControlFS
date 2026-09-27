@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -25,7 +26,7 @@ public sealed partial class AppController
                 "Este local não tem Lixeira (ex.: pasta de rede ou unidade removível): os itens serão excluídos permanentemente e não há como desfazer.");
             return;
         }
-        var dialog = new DialogModal($"Mover {sources.Count} item(ns) para a Lixeira?", [("Itens", itemsText), ("Pasta", here.FullPath)], sensitive: true)
+        var dialog = new DialogModal($"Mover {Plural.Of(sources.Count, "item", "itens")} para a Lixeira?", [("Itens", itemsText), ("Pasta", here.FullPath)], sensitive: true)
         {
             Message = "Dá para restaurar depois em Início → Lixeira.",
         };
@@ -48,7 +49,7 @@ public sealed partial class AppController
 
     private void ConfirmPermanentDelete(List<string> sources, string itemsText, string folder, string message)
     {
-        var dialog = new DialogModal($"Excluir {sources.Count} item(ns) permanentemente?", [("Itens", itemsText), ("Pasta", folder)], sensitive: true)
+        var dialog = new DialogModal($"Excluir {Plural.Of(sources.Count, "item", "itens")} permanentemente?", [("Itens", itemsText), ("Pasta", folder)], sensitive: true)
         {
             Message = message,
         };

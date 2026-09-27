@@ -150,7 +150,7 @@ public sealed partial class AppController
             pane.Location = new ArchiveLocation(archivePath, string.Empty);
             pane.List.SetItems(tree.Children(string.Empty), newLocation: true);
             if (pane.Mode == PaneMode.Browse) RecordRecentFile(archivePath);
-            if (tree.BlockedCount > 0) StatusMessage = $"{tree.BlockedCount} entrada(s) com nome inseguro foram bloqueadas.";
+            if (tree.BlockedCount > 0) StatusMessage = $"{Plural.Of(tree.BlockedCount, "entrada", "entradas")} com nome inseguro {Plural.Word(tree.BlockedCount, "foi bloqueada", "foram bloqueadas")}.";
         }
         catch (ArchiveAccessException ex) when (generation == pane.Generation && ex.Kind is OperationErrorKind.PasswordRequired or OperationErrorKind.WrongPassword)
         {
@@ -342,19 +342,19 @@ public sealed partial class AppController
         {
             // Compactados marcados: "extrair cada um" vem primeiro, então Norte e depois Sul extraem o lote (#69).
             var markedArchives = MarkedArchives(marked);
-            PushModal(new MenuModal($"{marked.Count} item(ns) marcado(s)",
+            PushModal(new MenuModal($"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}",
             [
                 .. markedArchives.Count == 0 ? Array.Empty<MenuItem>() :
                 [
                     new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
                         Detail: markedArchives.Count < marked.Count ? "Itens que não são compactados ficam de fora." : null),
                 ],
-                new MenuItem($"Copiar {marked.Count} item(ns)", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
-                new MenuItem($"Recortar {marked.Count} item(ns)", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
-                new MenuItem($"Copiar {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
-                new MenuItem($"Mover {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
-                new MenuItem($"Compactar {marked.Count} item(ns)…", () => BeginCompress(pane, marked)),
-                new MenuItem($"Excluir {marked.Count} item(ns)…", () => BeginDelete(pane, marked), FileOpsUnavailable),
+                new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
+                new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
+                new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
+                new MenuItem($"Mover {Plural.Of(marked.Count, "item", "itens")} para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
+                new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked)),
+                new MenuItem($"Excluir {Plural.Of(marked.Count, "item", "itens")}…", () => BeginDelete(pane, marked), FileOpsUnavailable),
                 .. SelectionItems(pane),
             ]));
             return;
@@ -420,7 +420,7 @@ public sealed partial class AppController
             items.Add(new MenuItem($"Marcar todos ({selectable})", () =>
             {
                 list.SelectAll();
-                StatusMessage = $"{list.SelectionCount} item(ns) marcado(s).";
+                StatusMessage = $"{Plural.Of(list.SelectionCount, "item", "itens")} {Plural.Word(list.SelectionCount, "marcado", "marcados")}.";
             }, selectable == 0 ? "Nada aqui pode ser marcado." : null));
         if (list.SelectionCount > 0)
             items.Add(new MenuItem($"Limpar marcação ({list.SelectionCount})", list.ClearSelection));
@@ -521,7 +521,7 @@ public sealed partial class AppController
             new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G)."),
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
                 Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores."),
-            new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null),
+            new($"Operações ({Plural.Of(Operations.ActiveCount, "ativa", "ativas")})", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
                 Detail: "Troca comportamento e legendas de confirmar/voltar."),
@@ -680,7 +680,7 @@ public sealed partial class AppController
             ("Entradas", info.Entries.Count.ToString()),
             ("Arquivos", tree.FileCount.ToString()),
             ("Tamanho descompactado", info.DeclaredTotalSize is long total ? FormatBytes(total) + " (declarado)" : "desconhecido"),
-            ("Senha", tree.EncryptedCount > 0 ? $"{tree.EncryptedCount} entrada(s) protegida(s)" : info.HasEncryptedEntries ? "há entradas protegidas" : "não"),
+            ("Senha", tree.EncryptedCount > 0 ? $"{Plural.Of(tree.EncryptedCount, "entrada protegida", "entradas protegidas")}" : info.HasEncryptedEntries ? "há entradas protegidas" : "não"),
             ("Bloqueadas (nome recusado)", tree.BlockedCount.ToString()),
             ("Bloqueadas (links/especiais)", tree.LinkCount.ToString()),
             ("Verificação", info.Capabilities.CanVerifyIntegrity ? "CRC durante a extração" : "indisponível"),

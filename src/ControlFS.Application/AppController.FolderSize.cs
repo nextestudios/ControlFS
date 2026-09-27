@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -68,11 +69,11 @@ public sealed partial class AppController
     private static IEnumerable<(string, string)> SizeLines(FolderSize size, string prefix)
     {
         yield return ("Tamanho", $"{prefix}{FormatBytes(size.Bytes)} ({size.Bytes:N0} bytes)");
-        yield return ("Conteúdo", $"{size.Files:N0} arquivo(s), {size.Folders:N0} pasta(s)");
+        yield return ("Conteúdo", $"{Plural.Of(size.Files, "arquivo", "arquivos")}, {Plural.Of(size.Folders, "pasta", "pastas")}");
         if (size.Inaccessible.Count > 0)
-            yield return ("Sem acesso", $"{size.Inaccessible.Count} pasta(s) não lida(s), fora da soma: "
+            yield return ("Sem acesso", $"{Plural.Of(size.Inaccessible.Count, "pasta não lida", "pastas não lidas")}, fora da soma: "
                 + string.Join(", ", size.Inaccessible.Take(3).Select(p => Path.GetFileName(Path.TrimEndingDirectorySeparator(p)))) + (size.Inaccessible.Count > 3 ? "…" : string.Empty));
         if (size.LinksNotFollowed > 0)
-            yield return ("Links", $"{size.LinksNotFollowed} junção(ões) ou link(s) não seguido(s)");
+            yield return ("Links", $"{Plural.Of(size.LinksNotFollowed, "junção ou link não seguido", "junções ou links não seguidos")}");
     }
 }

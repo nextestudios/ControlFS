@@ -34,7 +34,7 @@ public class FolderSizeJourneyTests : IDisposable
         d.ChooseOption(dialog, "Calcular tamanho");
         await d.Idle();
         Assert.Contains($"({1234:N0} bytes)", Line(dialog, "Tamanho"));
-        Assert.Equal("2 arquivo(s), 1 pasta(s)", Line(dialog, "Conteúdo"));
+        Assert.Equal("2 arquivos, 1 pasta", Line(dialog, "Conteúdo"));
 
         // Recalcular preso no meio: Voltar (Leste/B) cancela e mantém o parcial, sem fechar o diálogo
         fs.HoldMeasureUntilCancelled = true;

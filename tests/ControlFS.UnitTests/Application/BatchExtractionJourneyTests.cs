@@ -42,9 +42,9 @@ public class BatchExtractionJourneyTests : IDisposable
         var menu = await d.WaitMenu();
         Assert.StartsWith("Extrair cada um para a própria pasta (3)", menu.Items[0].Label, StringComparison.Ordinal); // notas.txt fica de fora
         d.Press(InputAction.Confirm);
-        d.ChooseOption(await d.WaitDialog("Extrair 3 compactado(s)"), "Extrair");
+        d.ChooseOption(await d.WaitDialog("Extrair 3 compactados"), "Extrair");
 
-        var summary = await d.WaitDialog("Extração de 3 compactado(s) concluída");
+        var summary = await d.WaitDialog("Extração de 3 compactados concluída");
         Assert.Contains(summary.Lines, l => l.Label == "docs.zip" && l.Value.EndsWith("→ docs", StringComparison.Ordinal));
         Assert.Contains(summary.Lines, l => l.Label == "fotos.tar.gz" && l.Value.StartsWith("concluída", StringComparison.Ordinal));
         Assert.Contains(summary.Lines, l => l.Label == "fotos.zip" && l.Value.StartsWith("concluída", StringComparison.Ordinal));

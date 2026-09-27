@@ -51,7 +51,7 @@ public class ArchiveBrowserJourneyTests : IDisposable
         Assert.StartsWith("Extrair seleção (1) para \"pacote\"", menu.Items[menu.FocusIndex].Label, StringComparison.Ordinal);
         d.Press(InputAction.Confirm);
         var summary = await d.WaitDialog("Extrair");
-        Assert.Contains(summary.Lines, l => l.Label == "Entradas" && l.Value.StartsWith("1 selecionada(s)", StringComparison.Ordinal));
+        Assert.Contains(summary.Lines, l => l.Label == "Entradas" && l.Value.StartsWith("1 selecionada", StringComparison.Ordinal));
         d.ChooseOption(summary, "Extrair");
         await d.WaitDialog("Extração concluída");
 

@@ -5,6 +5,7 @@ using ControlFS.Core.Policies;
 using ControlFS.Infrastructure.Archives.Engines;
 using ControlFS.Infrastructure.Archives.Security;
 using ControlFS.Infrastructure.Windows.FileSystem;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Infrastructure.Archives.Extraction;
 
@@ -157,7 +158,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
             var failures = results.Count(r => r.Outcome != ItemOutcome.Succeeded);
             return failures == 0
                 ? new OperationResult(OperationState.Completed, results, Message: "Nenhum problema encontrado.")
-                : new OperationResult(OperationState.CompletedWithWarnings, results, Message: $"{failures} entrada(s) com problema.");
+                : new OperationResult(OperationState.CompletedWithWarnings, results, Message: $"{Plural.Of(failures, "entrada com problema", "entradas com problema")}.");
         }
     }
 

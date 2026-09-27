@@ -40,8 +40,8 @@ public class ClipboardJourneyTests : IDisposable
 
         await GoInto(d, "Álbum");
         d.Press(InputAction.OpenContextMenu);
-        await d.ChooseMenu("Colar 1 item(ns)");
-        d.ChooseOption(await d.WaitDialog("Copiar 1 item(ns)?"), "Copiar");
+        await d.ChooseMenu("Colar 1 item");
+        d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         await d.WaitDialog("Copiar: concluído");
 
         Assert.Equal("img", File.ReadAllText(_tmp.Sub("Álbum", "foto.jpg")));
@@ -64,8 +64,8 @@ public class ClipboardJourneyTests : IDisposable
 
         await GoInto(d, "Destino");
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Colar 1 item(ns) (mover)");
-        d.ChooseOption(await d.WaitDialog("Mover 1 item(ns)?"), "Mover");
+        await d.ChooseMenu("Colar 1 item (mover)");
+        d.ChooseOption(await d.WaitDialog("Mover 1 item?"), "Mover");
         await UiContext.WaitUntil(() => d.App.Operations.Items.Count == 1 && !d.App.Operations.Items[0].IsActive, "movimentação concluída");
         await d.Idle();
 

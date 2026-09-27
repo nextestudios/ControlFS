@@ -65,7 +65,7 @@ public class HintJourneyTests : IDisposable
         Assert.Equal("Operações (2)", Label(d.App, InputAction.OpenContextMenu));
         Assert.Equal("Cancelar seleção", Label(d.App, InputAction.Back));
         d.Press(InputAction.OpenContextMenu);
-        Assert.Equal("2 item(ns) marcado(s)", (await d.WaitMenu()).Title);
+        Assert.Equal("2 itens marcados", (await d.WaitMenu()).Title);
     });
 
     [Fact]

@@ -1,5 +1,6 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -20,7 +21,7 @@ public sealed partial class AppController
     {
         if (!Settings.RememberRecents || Settings.RecentFolders.Count + Settings.RecentFiles.Count == 0) yield break;
         yield return new FileEntry(RecentPlaceId, "Recentes", EntryKind.KnownFolder,
-            Detail: $"{Settings.RecentFolders.Count} pasta(s) · {Settings.RecentFiles.Count} arquivo(s) abertos recentemente");
+            Detail: $"{Plural.Of(Settings.RecentFolders.Count, "pasta", "pastas")} · {Plural.Of(Settings.RecentFiles.Count, "arquivo", "arquivos")} abertos recentemente");
     }
 
     private static bool IsRecentPlace(FileEntry entry) => entry.Id == RecentPlaceId;

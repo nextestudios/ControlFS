@@ -6,6 +6,7 @@ using ControlFS.Core.Contracts;
 using ControlFS.Core.Input;
 using ControlFS.Core.Input.Mapping;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -57,7 +58,7 @@ public sealed partial class AppController
         _controllerProfiles.Clear();
         _controllerProfiles.AddRange(loaded.Profiles);
         if (loaded.Problems.Count > 0)
-            StatusMessage ??= $"{loaded.Problems.Count} perfil(is) de controle inválido(s) ignorado(s): {loaded.Problems[0]}";
+            StatusMessage ??= $"{Plural.Of(loaded.Problems.Count, "perfil de controle inválido ignorado", "perfis de controle inválidos ignorados")}: {loaded.Problems[0]}";
         ControllerProfilesChanged?.Invoke();
     }
 

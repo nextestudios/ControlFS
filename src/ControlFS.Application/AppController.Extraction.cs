@@ -33,7 +33,7 @@ public sealed partial class AppController
             [
                 ("Origem", plan.ArchivePath),
                 ("Destino", plan.Dedicated ? Path.Join(plan.Destination, stem) + "  (nova pasta; se existir, \"(2)\")" : plan.Destination),
-                ("Entradas", plan.Selected is null ? "todas" : $"{plan.Selected.Count} selecionada(s)" + (plan.BasePath.Length > 0 ? $" de /{plan.BasePath}" : string.Empty)),
+                ("Entradas", plan.Selected is null ? "todas" : $"{Plural.Of(plan.Selected.Count, "selecionada", "selecionadas")}" + (plan.BasePath.Length > 0 ? $" de /{plan.BasePath}" : string.Empty)),
                 ("Conflitos", "perguntar a cada conflito (padrão: manter o existente)"),
                 ("Segurança", "caminhos contidos no destino; links bloqueados; nada é executado"),
             ];

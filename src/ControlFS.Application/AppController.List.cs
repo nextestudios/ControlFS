@@ -1,6 +1,7 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -60,7 +61,7 @@ public sealed partial class AppController
         else
         {
             list.SelectAll();
-            StatusMessage = $"{list.SelectionCount} item(ns) marcado(s).";
+            StatusMessage = $"{Plural.Of(list.SelectionCount, "item", "itens")} {Plural.Word(list.SelectionCount, "marcado", "marcados")}.";
         }
         RaiseChanged();
     }

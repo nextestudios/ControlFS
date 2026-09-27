@@ -2,6 +2,7 @@ using ControlFS.Application.Operations;
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -37,7 +38,7 @@ public sealed partial class AppController
     {
         var names = sources.Select(Path.GetFileName).Take(3).ToList();
         var more = sources.Count > 3 ? $" e mais {sources.Count - 3}" : string.Empty;
-        var dialog = new DialogModal($"{Verb(kind)} {sources.Count} item(ns)?",
+        var dialog = new DialogModal($"{Verb(kind)} {Plural.Of(sources.Count, "item", "itens")}?",
         [
             ("Itens", string.Join(", ", names) + more),
             ("De", sourceFolder),
@@ -70,8 +71,8 @@ public sealed partial class AppController
         if (_fileOps is null) return;
         var count = parts.Sum(p => p.Sources.Count);
         var title = retryOfFailed
-            ? $"{Verb(summary.Kind, summary.Permanent)} {count} item(ns) com falha"
-            : $"{Verb(summary.Kind, summary.Permanent)} {count} item(ns)";
+            ? $"{Verb(summary.Kind, summary.Permanent)} {Plural.Of(count, "item", "itens")} com falha"
+            : $"{Verb(summary.Kind, summary.Permanent)} {Plural.Of(count, "item", "itens")}";
         var kind = summary.Kind switch
         {
             FileOperationKind.Copy => OperationKind.Copy,

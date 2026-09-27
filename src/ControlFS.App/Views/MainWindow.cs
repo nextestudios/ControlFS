@@ -12,6 +12,7 @@ using ControlFS.Infrastructure.Updates;
 using ControlFS.Infrastructure.Windows.FileSystem;
 using ControlFS.Infrastructure.Windows.Shell;
 using ControlFS.Infrastructure.Windows.Settings;
+using ControlFS.Core.Text;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -400,7 +401,7 @@ public sealed class MainWindow : Window
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"
             : device is not null
                 ? device.Name + (_input.Devices.Count > 1 ? $" (+{_input.Devices.Count - 1})" : string.Empty)
-                : _input.Devices.Count > 0 ? $"{_input.Devices.Count} controle(s) — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
+                : _input.Devices.Count > 0 ? $"{Plural.Of(_input.Devices.Count, "controle", "controles")} — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
         var op = _app.Operations.Current;
         _operation.Text = op is null
             ? _app.UpdateState switch
@@ -408,7 +409,7 @@ public sealed class MainWindow : Window
                 UpdateState.Ready => $"⬆ Atualização {_app.ReadyUpdate!.Manifest.Version} pronta (Menu → Atualizações)",
                 UpdateState.Downloading => "⬆ Baixando atualização…",
                 UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
-                _ => _app.Clipboard is { } clip ? $"Área de transferência: {clip.Paths.Count} item(ns) {(clip.IsCut ? "recortado(s)" : "copiado(s)")} — Ações → Colar" : string.Empty,
+                _ => _app.Clipboard is { } clip ? $"Área de transferência: {Plural.Of(clip.Paths.Count, "item", "itens")} {(clip.IsCut ? Plural.Word(clip.Paths.Count, "recortado", "recortados") : Plural.Word(clip.Paths.Count, "copiado", "copiados"))} — Ações → Colar" : string.Empty,
             }
             : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State switch { OperationState.WaitingForUser => "aguardando você", OperationState.Paused => "pausada", _ => "em andamento" })})";
 
@@ -554,7 +555,7 @@ public sealed class MainWindow : Window
         if (search is not null && _app.StatusMessage is null)
             _status.Text = search.Summary; // parcial, concluída ou cancelada, e as pastas puladas
         else if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
-            _status.Text = $"{pane.InaccessibleCount} item(ns) sem permissão de leitura foram omitidos.";
+            _status.Text = $"{Plural.Of(pane.InaccessibleCount, "item", "itens")} sem permissão de leitura {Plural.Word(pane.InaccessibleCount, "foi omitido", "foram omitidos")}.";
         else
             _status.Text = _app.StatusMessage ?? string.Empty;
         _status.Visibility = _status.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed; // sem aviso, o rodapé fica só com as legendas
