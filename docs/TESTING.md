@@ -653,3 +653,8 @@ Automático: `ThemeContrastTests` (contraste de todo tema × destaque), `Appeara
 - [ ] TV a ~3 m e portátil: no tema claro, o item focado (anel + fundo) e a opção focada preenchida são fáceis de achar com cada cor de destaque; marcados (âmbar escuro) continuam distintos do foco com o destaque âmbar.
 - [ ] Menus, diálogos, teclado virtual, painel de detalhes, visualizações e a barra de rolagem do sistema seguem o tema; nada fica com fundo escuro "esquecido" no claro.
 - [ ] Transparência desligada / alto contraste com o tema claro: painel sólido legível.
+
+## Terminal (#76) — não validado em hardware
+- [ ] Com Windows Terminal instalado: Norte → Abrir terminal aqui… → Abrir terminal: abre na pasta atual (também numa pasta com espaço, `;` e acento no nome, e na raiz de uma unidade).
+- [ ] Sem Windows Terminal: abre o Windows PowerShell na pasta.
+- [ ] "Abrir terminal e o teclado virtual do Windows": o teclado na tela do Windows aparece e digita no terminal.

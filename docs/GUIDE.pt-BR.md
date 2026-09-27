@@ -226,6 +226,10 @@ Para ejetar, vá a **Meu computador** ou ao início, Norte na unidade → **Desm
 
 **Atalhos de jogos e ícones de atalhos.** Atalhos de jogos da Steam (arquivos `.url` que abrem `steam://…`, como os que a Steam coloca na Área de trabalho) aparecem pelo título do jogo, sem `.url` (ex.: "Valheim"), com o tipo **Jogo da Steam** e o ícone que o atalho declara (o `.ico` do próprio jogo na pasta local da Steam); se esse ícone não existir, o ControlFS procura o mesmo arquivo na instalação local da Steam e, se não achar, mostra um símbolo de jogo. O painel de detalhes e as Propriedades mantêm o nome real do arquivo, o que o atalho abre (`steam://rungameid/…`) e o tipo real. **Sul** (ou Norte → **Jogar…**) pergunta antes, começando em **Cancelar**, e então entrega o próprio arquivo do atalho ao Windows, que o passa para a Steam; sem a Steam instalada aparece um erro legível. Atalhos de sites comuns (`https://…`) continuam arquivos `.url` normais. Atalhos `.lnk` do Windows mostram o próprio ícone (o que declaram ou o do programa de destino) em vez de um documento em branco. Ícones só são lidos de caminhos locais em unidades fixas: um atalho cujo ícone aponta para a rede (`\\servidor\…`), um endereço da web ou um link aparece com o símbolo genérico e nunca é acessado.
 
+## Terminal
+
+Norte → **Abrir terminal aqui…** abre o **Windows Terminal** na pasta atual, ou o **Windows PowerShell** se o Windows Terminal não estiver instalado. Ele pergunta antes, começando em **Cancelar**, porque o terminal é um programa do Windows fora do ControlFS: não funciona com o controle e precisa de um teclado. **Abrir terminal e o teclado virtual do Windows** abre junto o teclado na tela do Windows (o teclado do ControlFS só funciona dentro do ControlFS). Nada é executado sozinho: o terminal só abre na pasta, esperando você. O terminal é externo de propósito; ver `docs/decisions/0009`.
+
 ## Atualizações
 
 A versão **instalada** se atualiza sozinha:

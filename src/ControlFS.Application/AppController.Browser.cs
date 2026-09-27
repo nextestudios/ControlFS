@@ -395,6 +395,7 @@ public sealed partial class AppController
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco.", Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
+        if (TerminalItem(pane) is { } terminal) items.Add(terminal);
         items.AddRange(SelectionItems(pane));
         if (entry is { Kind: EntryKind.Directory or EntryKind.KnownFolder or EntryKind.Drive, FullPath: { } usagePath }) items.Add(DiskUsageItem(usagePath, "Informações"));
         else if (entry is null && pane.Location is PhysicalLocation usageHere) items.Add(DiskUsageItem(usageHere.FullPath, "Esta pasta"));
@@ -481,6 +482,7 @@ public sealed partial class AppController
         if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
+        if (TerminalItem(pane) is { } terminal) items.Add(terminal);
         items.AddRange(SelectionItems(pane));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
         // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>".
