@@ -285,6 +285,10 @@ public sealed class MainWindow : Window
         view.IsTabStop = false;
         view.AllowFocusOnInteraction = false;
         view.ItemContainerTransitions = new TransitionCollection(); // sem animações de lista
+        // #182: o fundo cinza de "mouse em cima"/"pressionado" do próprio ListViewItem/GridViewItem fica na linha sob o
+        // ponteiro parado enquanto o controle move o foco (a lista rola por baixo dele) e parece um segundo foco. O único
+        // foco visível é o anel do ControlFS; marcação, recorte e bloqueio têm os próprios desenhos na linha.
+        foreach (var key in SystemItemHighlightKeys) view.Resources[key] = Theme.Transparent;
         view.ContainerContentChanging += (_, args) =>
         {
             if (args.InRecycleQueue)
@@ -298,6 +302,7 @@ public sealed class MainWindow : Window
             // O cartão/linha desenha o próprio espaço (na lista, o cabeçalho usa as mesmas medidas para ficar alinhado).
             args.ItemContainer.Margin = args.ItemContainer.Padding = new Thickness(0);
             args.ItemContainer.MinHeight = 0;
+            args.ItemContainer.UseSystemFocusVisuals = false;
             EntryRowTemplate.Fill(args.ItemContainer, entry, args.ItemIndex == _shownFocus, _shownSelection.Contains(entry.Id), _app.IsCut(entry), icons, _specialFolders, RowContext());
         };
         view.ItemClick += (_, e) =>
@@ -307,6 +312,17 @@ public sealed class MainWindow : Window
     }
 
     private ListViewBase ActiveList => _view == ViewMode.Grid ? _grid : _list;
+
+    /// <summary>Recursos de destaque do contêiner da lista/grade anulados (ver <see cref="ConfigureItems"/>).</summary>
+    private static readonly string[] SystemItemHighlightKeys =
+    [
+        "ListViewItemBackgroundPointerOver", "ListViewItemBackgroundPressed",
+        "ListViewItemBackgroundSelected", "ListViewItemBackgroundSelectedPointerOver", "ListViewItemBackgroundSelectedPressed",
+        "GridViewItemBackgroundPointerOver", "GridViewItemBackgroundPressed",
+        "GridViewItemBackgroundSelected", "GridViewItemBackgroundSelectedPointerOver", "GridViewItemBackgroundSelectedPressed",
+        "ListViewItemRevealBackgroundPointerOver", "ListViewItemRevealBackgroundPressed",
+        "GridViewItemRevealBackgroundPointerOver", "GridViewItemRevealBackgroundPressed",
+    ];
 
     private EntryRowTemplate.RowContext? _rowContext;
 

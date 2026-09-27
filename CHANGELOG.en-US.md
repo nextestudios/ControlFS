@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Fixes
+- The row that just lost focus no longer keeps a grey "ghost" highlight when the mouse pointer rests over the list or grid: only the focused item has the ring; marked and cut items keep their own marks. (#182)
 
 ## [0.8.0-alpha.1]
 ### Improvements
