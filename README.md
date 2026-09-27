@@ -52,6 +52,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Recycle Bin** on the home screen: restore items to their original folder or delete them permanently (always confirmed)
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, visible caret, hold-to-repeat, masked passwords) usable with only directions + confirm + back
 - **Image preview** (JPG, PNG, GIF, BMP, WebP) with zoom, pan and next/previous on the controller; size and resolution limits checked before decoding
+- **Text preview** (logs, notes, configs, code): read-only, encoding detection, size and line limits, binary files refused
 - **Search by name** in the current folder, with or without subfolders: results stream in, can be cancelled, open in their folder; no indexing, links never followed
 - **Create folder** with Windows naming rules
 - **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; test integrity without extracting; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results

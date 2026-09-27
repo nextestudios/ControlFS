@@ -123,9 +123,13 @@ If ControlFS is closed in the middle of an operation (crash, power loss), the ne
 
 **South** on a JPG, PNG, GIF, BMP or WebP image opens it inside ControlFS (North → **Open with the default app** still opens it in Windows). **Left/Right** or **LB/RB** go to the previous/next image in list order; **RT** zooms in and **LT** zooms out; while zoomed, the D-pad moves around the image and **South** fits it back to the screen; **East/B** closes, leaving the focus on the last image viewed. Images are decoded in the background (the screen never freezes) and reduced to at most 4096 px on the long side; only the first frame of an animated GIF is shown and phone photos are turned upright. Before decoding, ControlFS checks the real format from the file's content (not the extension) and refuses files over 100 MB or over 80 megapixels with a clear message. Nothing is ever executed. Images inside archives aren't previewed: extract them first. WebP needs the Windows WebP codec (built into Windows 11 and recent Windows 10).
 
+## Text preview
+
+**South** on a text file (.txt, .md, .log, .json, .xml, .csv, .ini, .yaml, source code…) opens it read-only inside ControlFS; for any other file, North → **Visualizar como texto** (view as text). That includes scripts such as .ps1 or .bat, which South would ask to run: reading them never executes anything. **Up/Down** scroll one line, **LT/RT** a page, **LB/RB** jump to the start/end, **Left/Right** shift long lines sideways, **South** switches between a fixed-width and a proportional font, **East/B** closes. The encoding is detected (UTF-8 with or without BOM, UTF-16, otherwise the Windows ANSI code page) and shown with the line count. Only the first 2 MB and 10,000 lines are read; a larger file shows a clear "partial preview" notice. Binary files are refused with a message. Files inside archives aren't previewed.
+
 ## Opening files with Windows
 
-**South** on a file that isn't an archive or a previewable image opens it in the default Windows program. North on a file also offers **Open with…** and **Show in File Explorer**. The other program may not work with the controller: come back with Alt+Tab or the system button. Programs and scripts (.exe, .msi, .bat, .ps1, .lnk…) ask first, starting on **Cancel**. Nothing is ever opened automatically after extracting.
+**South** on a file that isn't an archive, a previewable image or a text file opens it in the default Windows program. North on a file also offers **Open with…** and **Show in File Explorer**. The other program may not work with the controller: come back with Alt+Tab or the system button. Programs and scripts (.exe, .msi, .bat, .ps1, .lnk…) ask first, starting on **Cancel**. Nothing is ever opened automatically after extracting.
 
 ## Updates
 

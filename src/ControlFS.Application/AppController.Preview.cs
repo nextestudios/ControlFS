@@ -2,6 +2,7 @@ using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Policies;
 using ControlFS.Core.Preview;
 
 namespace ControlFS.Application;
@@ -123,5 +124,75 @@ public sealed partial class AppController
         modal.Generation++;
         CloseModal(modal);
         modal.Pane.List.FocusById(modal.Current.Id);
+    }
+
+    // ---------- Texto (#58) ----------
+
+    /// <summary>Sul abre direto a visualização de texto: extensões de texto que não executam nada ao abrir no Windows.</summary>
+    internal static bool OpensAsText(FileEntry entry) =>
+        entry is { Kind: EntryKind.File, FullPath: { } path, IsBlocked: false } && TextPreview.IsTextExtension(entry.Extension) &&
+        !ExecutableFiles.IsPotentiallyExecutable(path);
+
+    /// <summary>Visualização somente leitura do início do arquivo, dentro dos limites; binários são recusados com mensagem.</summary>
+    internal void OpenTextPreview(PaneState pane, FileEntry entry)
+    {
+        if (entry.FullPath is not { } path) return;
+        var modal = new TextPreviewModal(pane, entry);
+        PushModal(modal);
+        Track(LoadTextPreviewAsync(modal, path));
+    }
+
+    private async Task LoadTextPreviewAsync(TextPreviewModal modal, string path)
+    {
+        var limits = PreviewLimits;
+        try
+        {
+            modal.Document = await Task.Run(() =>
+            {
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 64 * 1024, FileOptions.SequentialScan);
+                return TextPreview.Read(stream, limits);
+            });
+        }
+        catch (PreviewException ex)
+        {
+            modal.Error = ex.Message;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+        }
+        modal.IsLoading = false;
+        RaiseChanged();
+    }
+
+    /// <summary>Publicado pela tela: quantas linhas cabem (para paginar). Não redesenha.</summary>
+    public void ReportTextPreviewPage(int lines)
+    {
+        if (TopModal is TextPreviewModal modal && lines > 0 && modal.PageLines != lines)
+        {
+            modal.PageLines = lines;
+            modal.ScrollBy(0);
+        }
+    }
+
+    private void HandleTextPreview(TextPreviewModal modal, InputAction action)
+    {
+        var page = Math.Max(1, modal.PageLines - 1); // uma linha de contexto entre as páginas
+        switch (action)
+        {
+            case InputAction.Back:
+                CloseModal(modal);
+                modal.Pane.List.FocusById(modal.Entry.Id);
+                break;
+            case InputAction.NavigateUp: modal.ScrollBy(-1); break;
+            case InputAction.NavigateDown: modal.ScrollBy(1); break;
+            case InputAction.PageUp: modal.ScrollBy(-page); break;
+            case InputAction.PageDown: modal.ScrollBy(page); break;
+            case InputAction.PreviousRegion: modal.ScrollTo(0); break;
+            case InputAction.NextRegion: modal.ScrollTo(int.MaxValue); break;
+            case InputAction.NavigateLeft: modal.ShiftColumns(-TextPreviewModal.ColumnStep); break;
+            case InputAction.NavigateRight: modal.ShiftColumns(TextPreviewModal.ColumnStep); break;
+            case InputAction.Confirm: modal.Monospace = !modal.Monospace; break;
+        }
     }
 }

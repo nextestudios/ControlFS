@@ -252,3 +252,13 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
 - [ ] PNG com transparência, GIF animado (primeiro quadro), BMP e WebP (Windows 11) aparecem corretamente.
 - [ ] Um `.exe` renomeado para `.png` e uma imagem acima de 80 megapixels mostram o motivo da recusa, sem abrir nada.
 - [ ] O Narrador lê o nome da imagem, a posição e a resolução.
+
+## Visualização de texto (#58)
+
+- [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem
+      com Cima/Baixo mantidos, LT/RT e LB/RB é fluida.
+- [ ] Arquivos do Bloco de Notas em UTF-8, UTF-8 com BOM, UTF-16 e ANSI (acentos corretos em PT-BR), e o nome da codificação no topo.
+- [ ] Linha muito longa (JSON minificado): Esquerda/Direita deslocam; nada quebra o layout em 1080p e 4K a ~3 m.
+- [ ] Sul alterna fonte fixa/proporcional; Norte → Visualizar como texto num `.ps1` mostra o script sem executar.
+- [ ] Um `.exe` ou `.png` pelo menu "Visualizar como texto" é recusado como binário.
+- [ ] O Narrador lê as linhas visíveis e a posição.
