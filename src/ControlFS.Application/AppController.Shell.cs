@@ -25,6 +25,7 @@ public sealed partial class AppController
         }
         if (!ExecutableFiles.IsPotentiallyExecutable(path))
         {
+            RecordRecentFile(path);
             RunShell(s => s.Open(path), external: true);
             return;
         }
@@ -42,6 +43,7 @@ public sealed partial class AppController
         dialog.Options.Add(new DialogOption("Executar", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
+            RecordRecentFile(path);
             RunShell(s => s.Open(path), external: true);
         }));
         dialog.BackOption = cancel;
