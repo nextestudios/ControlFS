@@ -4,6 +4,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 ### What's new
+- **Narrator**: the logical focus is now announced as you move with the controller or keyboard: the context when you enter it (home, folder, menu, dialog, on-screen keyboard, path bar, tabs), then just the item, with type, size, position and states in words (marked, cut, blocked, password-protected, unavailable with the reason). Bottom-bar messages are a live region read without moving the focus. (#40)
 - **Recycle Bin** on the home screen: lists deleted items with their original folder and deletion date; South/A on an item offers **Restore** (back to the original folder, never overwriting) and **Delete permanently**, which always asks first with the focus on Cancel. Marking several works. An invalid original location recorded in the bin is refused. (#26)
 - **Text preview**: South on .txt, .md, .log, .json, .xml, .csv, .ini, code etc. (or North → Visualizar como texto (view as text) on any file, scripts included, without running them) opens it read-only. Up/Down scroll, LT/RT page, LB/RB jump to the start/end, Left/Right shift long lines and South toggles a fixed-width/proportional font. Encoding detected (UTF-8, UTF-16, ANSI); only the first 2 MB and 10,000 lines, with a partial-preview notice; binary files are refused. (#58)
 - **Smaller downloads**: the portable exe went from 97 MB to 72 MB and the installer from 65 MB to 48 MB by dropping the Windows App SDK AI/ML components the app doesn't use. (#85)

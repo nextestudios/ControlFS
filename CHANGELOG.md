@@ -4,6 +4,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 ### Novidades
+- **Narrador**: o foco lógico agora é anunciado ao andar com o controle ou o teclado — contexto ao entrar (início, pasta, menu, diálogo, teclado virtual, barra de caminho, abas) e depois só o item, com tipo, tamanho, posição e estados por extenso (marcado, recortado, bloqueado, com senha, indisponível com o motivo). Avisos do rodapé são uma região viva lida sem mover o foco. (#40)
 - **Lixeira** no início: lista os itens excluídos com a pasta de origem e a data da exclusão; Sul/A num item oferece **Restaurar** (volta à pasta original, sem nunca sobrescrever) e **Excluir permanentemente**, que sempre pergunta antes com o foco em Cancelar. Marcar vários funciona. Um local original inválido registrado na Lixeira é recusado. (#26)
 - **Visualização de texto**: Sul em .txt, .md, .log, .json, .xml, .csv, .ini, código etc. (ou Norte → Visualizar como texto em qualquer arquivo, inclusive scripts, sem executar) abre o arquivo somente leitura. Cima/Baixo rolam, LT/RT paginam, LB/RB vão ao início/fim, Esquerda/Direita deslocam linhas longas e Sul alterna fonte fixa/proporcional. Codificação detectada (UTF-8, UTF-16, ANSI); só os primeiros 2 MB e 10.000 linhas, com aviso de prévia parcial; binários são recusados. (#58)
 - **Downloads menores**: o portátil caiu de 97 MB para 72 MB e o instalador de 65 MB para 48 MB, sem os componentes de IA/ML do Windows App SDK que o app não usa. (#85)

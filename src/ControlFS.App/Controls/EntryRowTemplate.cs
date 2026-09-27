@@ -1,5 +1,6 @@
 using System.Globalization;
 using ControlFS.App.Resources;
+using ControlFS.Application;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using Microsoft.UI.Xaml;
@@ -258,25 +259,7 @@ public static class EntryRowTemplate
         if (entry.IsReparsePoint) yield return "link";
     }
 
-    private static string TypeName(FileEntry entry) => entry.Kind switch
-    {
-        EntryKind.Drive => entry.Drive switch
-        {
-            DriveKind.Removable => "Unidade removível (USB)",
-            DriveKind.Optical => "Unidade óptica",
-            DriveKind.Network => "Unidade de rede",
-            _ => "Unidade local",
-        },
-        EntryKind.KnownFolder => "Pasta especial",
-        EntryKind.Directory or EntryKind.ArchiveDirectory => "Pasta",
-        _ => entry.Extension.Length > 1 ? "Arquivo " + entry.Extension[1..].ToUpperInvariant() : "Arquivo",
-    };
+    private static string TypeName(FileEntry entry) => EntryText.TypeName(entry);
 
-    private static string Format(long bytes) => bytes switch
-    {
-        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.#} GB",
-        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.#} MB",
-        >= 1L << 10 => $"{bytes / 1024.0:0.#} KB",
-        _ => $"{bytes} B",
-    };
+    private static string Format(long bytes) => EntryText.Size(bytes);
 }

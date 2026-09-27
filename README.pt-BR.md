@@ -54,6 +54,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima no controle; limites de tamanho e resolução conferidos antes de decodificar
 - **Visualização de texto** (logs, notas, configurações, código): somente leitura, detecção de codificação, limites de tamanho e de linhas, binários recusados
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos
+- **Leitor de tela:** o Narrador anuncia o item focado, a posição e os estados (marcado, recortado, bloqueado) enquanto você anda com o controle
 - **Criar pasta** com as regras de nomes do Windows
 - **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; vários compactados de uma vez, cada um na sua pasta; testar integridade sem extrair; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
 - **Compactar** em ZIP ou TAR.GZ a partir dos itens marcados, com o nome digitado no teclado virtual

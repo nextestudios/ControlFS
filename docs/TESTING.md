@@ -32,6 +32,23 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
 - [ ] Seleção no teclado virtual (#44): ao renomear `example-file.zip`, `example-file` aparece destacado e sublinhado, visível a 3 m e em 4K; digitar `novo` resulta em `novo.zip`; `Sel. tudo` na página `…` e Ctrl+A selecionam tudo; o Narrador lê "N de M caracteres selecionados".
 
+## Narrador (#40)
+
+Com o Narrador ligado (Ctrl+Win+Enter), usando só o controle:
+
+- [ ] Início: ao abrir, lê "Início" e o local focado com o tipo e a posição ("… 2 de 9"); cada movimento lê o novo local.
+- [ ] Pasta: ao entrar, lê "Pasta <caminho>" e o item focado com tipo e tamanho; ao andar, só o item (sem repetir o contexto).
+- [ ] Estados por extenso: marcar (Oeste/X) lê "marcado"; recortar lê "recortado"; entrada bloqueada lê "bloqueado: motivo";
+      compactado com senha lê "com senha".
+- [ ] Grade: mover em 2D lê cada bloco; trocar lista/grade não perde nem repete o item.
+- [ ] Menu (Start e Norte): lê "Menu <título>" e o item; item indisponível lê "indisponível: motivo".
+- [ ] Diálogo de exclusão: lê o título, os itens, a mensagem e "Cancelar, botão 1 de 3"; ao andar, só o botão.
+- [ ] Teclado virtual: lê "Teclado virtual: <título>" e cada tecla focada; o cursor lê a posição.
+- [ ] Barra de caminho (LB) e abas (RB): lê o segmento/aba focado e "pasta atual"/"ativa".
+- [ ] Avisos do rodapé (ex.: "3 itens restaurados") são lidos sem mover o foco; nenhuma informação depende só de som,
+      vibração ou cor.
+- [ ] Caps+Tab (ler o item atual) repete o último foco anunciado.
+
 ## Layout responsivo (#36)
 
 A faixa de layout sai do tamanho **efetivo** da janela (pixels ÷ escala do Windows) e do tamanho do texto do Windows
