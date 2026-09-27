@@ -68,6 +68,17 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 **Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: light theme, two panes, PDF preview, split volumes, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org) (application in progress: until it is approved, releases are unsigned and Windows SmartScreen may warn on first run).
+
+- **Committers and reviewers:** [@nextestudios](https://github.com/nextestudios) (maintainer; every change goes through a pull request and CI)
+- **Approvers:** [@nextestudios](https://github.com/nextestudios) (each release is approved manually before signing)
+- **Build:** releases are built only by the public [release workflow](.github/workflows/release.yml) on GitHub Actions from a tag on `main`; the certificate never leaves the signing service.
+- **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The only network access is the optional update check against GitHub ([privacy policy](docs/PRIVACY.md)).
+
+Details: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
+
 ## More
 
 - [Guide](docs/GUIDE.md): controls, extraction, privacy, troubleshooting, building from source

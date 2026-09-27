@@ -87,6 +87,8 @@ jobs:
             ''
             '`release-manifest.json` and `release-manifest.json.sig` are the signed update manifest the installed app verifies (SHA-256 of both downloads).'
             ""
+            "**Code signing policy:** [README → Code signing policy](https://github.com/$($env:REPO)/blob/$tag/README.md#code-signing-policy) · [Privacy policy](https://github.com/$($env:REPO)/blob/$tag/docs/PRIVACY.md)"
+            ""
             "---"
             ""
             "🇧🇷 Notas em português: [CHANGELOG.md](https://github.com/$($env:REPO)/blob/$tag/CHANGELOG.md)"
