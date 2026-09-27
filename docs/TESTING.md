@@ -519,3 +519,7 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Com controle real: em Nova pasta, digitar parte de um nome da pasta → faixa aparece; cima na primeira linha foca, Sul usa, baixo volta; cima na faixa leva à última linha.
 - [ ] Senha de compactado: nenhuma faixa aparece; após concluir, o histórico (Menu → Sugestões do teclado) não contém a senha.
 - [ ] Ir para caminho: favoritos e pastas recentes aparecem como sugestões; legível a 3 m e em 1280×720.
+
+## Destaque fantasma na lista (#182) — não validado em hardware
+- [ ] Com o ponteiro do mouse parado sobre a lista (e sobre a grade), mover o foco para cima/baixo com o controle, inclusive rolando: nenhuma linha além da focada fica destacada; itens marcados continuam com faixa/caixa marcada.
+- [ ] Clicar numa linha com o mouse continua abrindo/focando como antes.
