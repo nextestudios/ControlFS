@@ -38,14 +38,19 @@ public static class BreadcrumbTrail
     public const int MaxVisible = 6;
 
     /// <summary>
-    /// Recolhe o meio de caminhos longos. Sempre visíveis: a raiz, a fronteira do compactado e os três últimos segmentos.
+    /// Recolhe o meio de caminhos longos. Sempre visíveis: a raiz, a fronteira do compactado (e a pasta do disco que o
+    /// contém) e os três últimos segmentos.
     /// </summary>
     public static IReadOnlyList<Breadcrumb> Collapse(IReadOnlyList<Breadcrumb> all)
     {
         if (all.Count <= MaxVisible) return all;
         var keep = new HashSet<int> { 0, all.Count - 3, all.Count - 2, all.Count - 1 };
         for (var i = 0; i < all.Count; i++)
-            if (all[i].Kind == BreadcrumbKind.Archive) keep.Add(i);
+            if (all[i].Kind == BreadcrumbKind.Archive)
+            {
+                keep.Add(i);
+                if (i > 0) keep.Add(i - 1);
+            }
         var visible = new List<Breadcrumb>();
         var hidden = new List<Breadcrumb>();
         for (var i = 0; i < all.Count; i++)

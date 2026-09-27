@@ -97,15 +97,15 @@ public class BreadcrumbJourneyTests : IDisposable
     });
 
     [Fact]
-    public void Long_paths_collapse_the_middle_but_keep_the_root_the_archive_and_the_last_three()
+    public void Long_paths_collapse_the_middle_but_keep_the_root_the_archive_with_its_folder_and_the_last_three()
     {
         static Breadcrumb F(string n, BreadcrumbKind k = BreadcrumbKind.Folder) => new(n, k, null, null);
         var all = new[] { F("C:\\"), F("u"), F("ana"), F("jogos"), F("roms.zip", BreadcrumbKind.Archive), F("snes", BreadcrumbKind.ArchiveFolder),
             F("rpg", BreadcrumbKind.ArchiveFolder), F("x", BreadcrumbKind.ArchiveFolder), F("y", BreadcrumbKind.ArchiveFolder) };
         var visible = BreadcrumbTrail.Collapse(all);
-        Assert.Equal(["C:\\", "…", "roms.zip", "…", "rpg", "x", "y"], visible.Select(c => c.Label));
-        Assert.Equal(["u", "ana", "jogos"], visible[1].Hidden.Select(c => c.Label));
-        Assert.Equal(["snes"], visible[3].Hidden.Select(c => c.Label));
+        Assert.Equal(["C:\\", "…", "jogos", "roms.zip", "…", "rpg", "x", "y"], visible.Select(c => c.Label));
+        Assert.Equal(["u", "ana"], visible[1].Hidden.Select(c => c.Label));
+        Assert.Equal(["snes"], visible[4].Hidden.Select(c => c.Label));
         Assert.Equal(6, BreadcrumbTrail.Collapse(all[..6]).Count); // curto: nada recolhido
     }
 }
