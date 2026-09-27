@@ -28,6 +28,7 @@ public sealed partial class AppController
     private readonly IShellService? _shell;
     private readonly IArchiveService _archives;
     private readonly ISettingsStore? _settingsStore;
+    private readonly ITemporaryJournal? _temporaries;
     private readonly SynchronizationContext _ui;
     private readonly List<Modal> _modals = [];
     private readonly List<Task> _pending = [];
@@ -35,9 +36,11 @@ public sealed partial class AppController
     private Action? _pickerCancel;
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
-        IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null)
+        IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null,
+        ITemporaryJournal? temporaries = null)
     {
         _profileStore = controllerProfiles;
+        _temporaries = temporaries;
         Clock = () => _stopwatch.Elapsed;
         _shell = shell;
         _fileOps = fileOperations;
@@ -93,6 +96,30 @@ public sealed partial class AppController
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
         StartAutomaticUpdateCheck();
+        if (_temporaries is not null) Track(CleanUpLeftoversAsync(_temporaries));
+    }
+
+    /// <summary>
+    /// Na inicialização: remove temporários deixados por operações interrompidas (queda, falta de energia) que o
+    /// registro prova serem do ControlFS, e avisa no rodapé o que foi limpo.
+    /// </summary>
+    private async Task CleanUpLeftoversAsync(ITemporaryJournal journal)
+    {
+        LeftoverCleanup cleanup;
+        try
+        {
+            cleanup = await Task.Run(journal.CleanUpLeftovers);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+        if (cleanup.Removed.Count == 0) return;
+        var where = string.Join(", ", cleanup.Removed.Select(Path.GetDirectoryName).Distinct(StringComparer.OrdinalIgnoreCase).Take(2));
+        StatusMessage = cleanup.Removed.Count == 1
+            ? $"Limpeza: 1 temporário deixado por uma operação interrompida foi removido (em {where})."
+            : $"Limpeza: {cleanup.Removed.Count} temporários deixados por operações interrompidas foram removidos (em {where}).";
+        RaiseChanged();
     }
 
     /// <summary>Aguarda tarefas assíncronas iniciadas pela UI (usado em testes e no encerramento).</summary>

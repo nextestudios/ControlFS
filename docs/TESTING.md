@@ -112,3 +112,11 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
       Options/Create, +/−. Nintendo: A à direita e B embaixo.
 - [ ] Glifos nítidos e alinhados ao texto do rodapé em 1080p e 4K, com escala 100%, 150%, 200% e 300%.
 - [ ] Narrador lê o nome do botão (ex.: "Botão cruz", "Botão A", "Botão Menu").
+
+## Limpeza após queda
+
+- [ ] Durante uma extração grande (e, em outra rodada, uma cópia grande), encerrar o ControlFS pelo Gerenciador de
+      Tarefas. Reabrir: o rodapé avisa "Limpeza: … removido(s)" e a pasta oculta `.controlfs-staging-*` (ou o arquivo
+      `.controlfs-copy-*.part`) sumiu do destino; nada mais na pasta mudou.
+- [ ] Com duas janelas do ControlFS abertas, iniciar uma extração numa e reabrir a outra no meio: a extração em andamento
+      não é afetada (os temporários de uma instância viva nunca são limpos).

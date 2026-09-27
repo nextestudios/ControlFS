@@ -58,8 +58,10 @@ public sealed class MainWindow : Window
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
         var settingsStore = new JsonSettingsStore(AppPaths.DataDirectory);
         _updates = GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(AppPaths.DataDirectory, "updates"));
-        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(), settingsStore, _updates, new WindowsShellService(), new FileOperationService(),
-            new JsonControllerProfileStore(AppPaths.DataDirectory));
+        // Temporários (staging, cópias parciais) registrados para limpeza na próxima inicialização se o app cair no meio.
+        var temporaries = new TemporaryJournal(Path.Join(AppPaths.DataDirectory, "operations"));
+        _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(temporaries), settingsStore, _updates, new WindowsShellService(),
+            new FileOperationService(temporaries), new JsonControllerProfileStore(AppPaths.DataDirectory), temporaries);
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _icons.Invalidated += () =>
