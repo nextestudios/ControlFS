@@ -1,4 +1,4 @@
-# 0008 — Criação de 7z com o codificador LZMA do SharpCompress
+# 0010 — Criação de 7z com o codificador LZMA do SharpCompress
 
 - **Data:** 2026-09-27
 - **Estado:** aceita

@@ -34,7 +34,14 @@ public class UndoJourneyTests : IDisposable
     private sealed class FolderRecycleBin(string folder) : IFileOperationService, IRecycleBin
     {
         private readonly FileOperationService _real = new();
-        public List<RecycledItem> Items { get; } = [];
+        private readonly List<RecycledItem> _items = [];
+        private readonly Lock _gate = new();
+
+        /// <summary>Cópia (a operação roda noutra thread: ler a lista enquanto ela muda falhava com "Collection was modified").</summary>
+        public IReadOnlyList<RecycledItem> Items
+        {
+            get { lock (_gate) return [.. _items]; }
+        }
         public bool CanRecycle(string path) => true;
         public FileEntry Rename(string path, string newName) => _real.Rename(path, newName);
 
@@ -47,20 +54,20 @@ public class UndoJourneyTests : IDisposable
             {
                 var stored = Path.Join(folder, Guid.NewGuid().ToString("N"));
                 File.Move(source, stored);
-                Items.Add(new RecycledItem(stored, Path.GetFileName(source), source, false, new FileInfo(stored).Length, DateTimeOffset.Now));
+                lock (_gate) _items.Add(new RecycledItem(stored, Path.GetFileName(source), source, false, new FileInfo(stored).Length, DateTimeOffset.Now));
                 results.Add(new ItemResult(Path.GetFileName(source), ItemOutcome.Succeeded, Message: "Movido para a Lixeira.") { SourcePath = source });
             }
             return new OperationResult(OperationState.Completed, results);
         }
 
-        public IReadOnlyList<RecycledItem> List(CancellationToken cancellationToken) => [.. Items];
+        public IReadOnlyList<RecycledItem> List(CancellationToken cancellationToken) => Items;
 
         public string Restore(string id)
         {
             var item = Items.Single(i => i.Id == id);
             if (File.Exists(item.OriginalPath)) throw new FileOperationException(OperationErrorKind.AlreadyExists, "Já existe.");
             File.Move(item.Id, item.OriginalPath);
-            Items.Remove(item);
+            lock (_gate) _items.Remove(item);
             return item.OriginalPath;
         }
 
@@ -220,9 +227,9 @@ public class UndoJourneyTests : IDisposable
         await d.Idle();
 
         await Undo(d);
-        await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("a.txt")), "restaurado");
+        // O arquivo volta à pasta antes de sair da lista da Lixeira: espera os dois.
+        await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("a.txt")) && bin.Items.Count == 0, "restaurado");
         await d.Idle();
-        Assert.Empty(bin.Items);
 
         await UiContext.WaitUntil(() => d.App.RedoTitle is not null, "refazer disponível"); // o arquivo volta antes de a operação terminar
         await ChooseAppMenu(d, "Refazer: ");

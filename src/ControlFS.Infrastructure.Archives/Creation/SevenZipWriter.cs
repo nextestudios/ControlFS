@@ -12,7 +12,7 @@ namespace ControlFS.Infrastructure.Archives.Creation;
 /// Grava um 7z sólido com um único bloco LZMA (codificador do SDK LZMA, domínio público, distribuído no SharpCompress).
 /// O contêiner segue o 7zFormat.txt do SDK: cabeçalho de assinatura, fluxo compactado e cabeçalho final sem compressão
 /// com tamanhos, CRC-32 de cada arquivo, nomes (UTF-16), datas e atributos. Sem criptografia nem filtros.
-/// Decisão e alternativas em docs/decisions/0008-criacao-de-7z.md.
+/// Decisão e alternativas em docs/decisions/0010-criacao-de-7z.md.
 /// </summary>
 internal static class SevenZipWriter
 {
