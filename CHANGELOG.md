@@ -12,6 +12,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Recentes** no início: as últimas pastas visitadas e os últimos arquivos/compactados abertos (até 10 de cada), para voltar com Início → Recentes → Sul/A. Ficam só neste computador, nas preferências; Norte em "Recentes" limpa as listas, e Menu → "Recentes" desliga (o que também apaga o que estava guardado). (#49)
 ### Melhorias
 - **ZIP64 validado**: compactados ZIP com entradas acima de 4 GB ou mais de 65.535 entradas extraem com tamanho e CRC conferidos; os limites de segurança continuam valendo. (#63)
+- **ZIP com criptografia AES (WinZip AE-1/AE-2, 128/192/256 bits) validado**: sem senha o app pede, com a senha certa o conteúdo sai idêntico e a senha errada agora é reconhecida como "Senha incorreta" (pede de novo) em vez de "senha ou dados corrompidos". (#64)
 
 ## [0.4.0-alpha.1]
 ### Novidades

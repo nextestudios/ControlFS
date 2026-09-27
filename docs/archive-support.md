@@ -10,7 +10,8 @@ SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 |---|---|---|---|---|---|
 | ZIP | Stored, Deflate | — | gerada no teste | **validado** (tudo, seleção, conflitos, CRC, truncado, maliciosos) | — |
 | ZIP | Deflate | ZipCrypto | `zip/zipcrypto-senha-certa.zip` | **validado** (sem/errada/certa) | ZipCrypto aceita senha errada ~1/256; aí o CRC acusa "senha ou dados". |
-| ZIP | AES (AE-2) | — | nenhuma | não testado | Obrigatório na 1.0. |
+| ZIP | Deflate, WinZip AES-256 (AE-2) | `test` | `zip/Zip.deflate.WinzipAES.zip` | **validado** (sem → pede; errada → "Senha incorreta" e pede de novo; certa → SHA-256 idêntico aos originais) | AE-2 guarda CRC 0 e o motor não confere o código de autenticação HMAC: dados adulterados só são percebidos se a descompressão falhar. |
+| ZIP | Deflate, WinZip AES-128 (AE-1) e AES-192 (AE-2) | gerada | gerada no teste (`AesZipFixtures`) | **validado** (sem/errada/certa; AE-1 adulterado recusado pelo CRC sem gravar nada) | — |
 | ZIP64 | entrada > 4 GiB (Deflate) e entrada seguinte | — | gerada no teste (≈4,0 GiB descompactados) | **validado** (tamanho exato, CRC-32 conferido, amostras em volta da fronteira de 4 GiB) | Não testado: arquivo compactado com mais de 4 GiB em disco (deslocamentos ZIP64). |
 | ZIP64 | 70.000 entradas (registro final ZIP64) | — | gerada no teste | **validado** (lista todas; extrai entradas além da 65.535ª; limite de entradas continua valendo) | Extrair tudo não foi medido (70 mil arquivos no runner). |
 | 7z | LZMA2 | — | `7z/7Zip.LZMA2.7z` | **validado** (SHA-256 de cada arquivo) | — |
