@@ -22,6 +22,7 @@ public sealed partial class AppController
         ArchiveLocation archive => Path.GetFileName(archive.ArchivePath),
         SearchLocation search => $"Busca: {search.Query}",
         RecycleBinLocation => "Lixeira",
+        ThisPcLocation => "Meu computador",
         _ => "Nova aba",
     };
 

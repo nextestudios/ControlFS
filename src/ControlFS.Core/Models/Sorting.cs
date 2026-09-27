@@ -31,6 +31,8 @@ public sealed record SortOrder(SortField Field = SortField.Name, bool Descending
                 SortField.Type => StringComparer.OrdinalIgnoreCase.Compare(x.Extension, y.Extension),
                 SortField.Size => Nullable.Compare(x.Size, y.Size),
                 SortField.Modified => Nullable.Compare(x.Modified, y.Modified),
+                // Unidades (Meu computador) pela letra, como no Explorador, não pelo rótulo.
+                _ when x.Kind == EntryKind.Drive && y.Kind == EntryKind.Drive => StringComparer.OrdinalIgnoreCase.Compare(x.FullPath, y.FullPath),
                 _ => 0,
             };
             if (result == 0) result = NaturalNameComparer.Instance.Compare(x.Name, y.Name);

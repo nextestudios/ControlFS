@@ -70,6 +70,7 @@ public sealed partial class AppController
         QuickAccessKind.Folder => Browser.Location is PhysicalLocation here && string.Equals(
             Path.TrimEndingDirectorySeparator(here.FullPath), Path.TrimEndingDirectorySeparator(item.Path ?? string.Empty), StringComparison.OrdinalIgnoreCase),
         QuickAccessKind.RecycleBin => Browser.Location is RecycleBinLocation,
+        QuickAccessKind.ThisPc => Browser.Location is ThisPcLocation,
         _ => false,
     };
 
@@ -78,6 +79,7 @@ public sealed partial class AppController
     {
         var path = BreadcrumbTrail.Collapse(BuildBreadcrumbs(pane));
         var root = new Breadcrumb(pane.Location is PhysicalLocation or ArchiveLocation ? "Meu computador" : "Locais", BreadcrumbKind.Root, null, null);
+        if (pane.Location is ThisPcLocation) return [root, new Breadcrumb("Meu computador", BreadcrumbKind.Folder, null, null, IsCurrent: true)];
         if (path.Count > 0) return [root, .. path];
         var current = pane.Location is null ? "Carregando…" : TabTitle(pane);
         return [root, new Breadcrumb(current, BreadcrumbKind.Folder, null, null, IsCurrent: true)];
@@ -167,7 +169,7 @@ public sealed partial class AppController
         }
     }
 
-    /// <summary>Raiz do caminho: início (Meu computador foca a primeira unidade); no seletor de pasta, os outros locais.</summary>
+    /// <summary>Raiz do caminho: "Locais" leva ao início e "Meu computador" às unidades; no seletor de pasta, aos outros locais.</summary>
     private void ActivateRoot(PaneState pane, Breadcrumb root)
     {
         pane.Region = PaneRegion.List;
@@ -217,19 +219,7 @@ public sealed partial class AppController
             return;
         }
         if (target is PhysicalLocation physical) OpenPhysical(physical.FullPath);
-        else OpenRecycleBin();
-    }
-
-    /// <summary>Meu computador: o início com o foco na primeira unidade (os cartões de unidades vêm na fase B).</summary>
-    private void ShowThisPc()
-    {
-        GoHome();
-        for (var i = 0; i < Places.Count; i++)
-        {
-            if (Places[i].Kind != EntryKind.Drive) continue;
-            PlacesFocus = i;
-            break;
-        }
+        else OpenVirtual(target);
     }
 
     private void ShowFavoritesMenu()

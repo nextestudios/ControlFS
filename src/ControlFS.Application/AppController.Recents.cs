@@ -10,7 +10,8 @@ namespace ControlFS.Application;
 public sealed partial class AppController
 {
     internal const int MaxRecents = 10;
-    internal const string RecentPlaceId = "recent:";
+    /// <summary>Id do local "Recentes" entre os locais do início.</summary>
+    public const string RecentPlaceId = "recent:";
 
     public IReadOnlyList<string> RecentFolders => Settings.RecentFolders;
     public IReadOnlyList<string> RecentFiles => Settings.RecentFiles;

@@ -75,9 +75,11 @@ public static class Theme
         return changed;
     }
 
-    private static double Space(double value) => Layout.Snap(value * Layout.SpaceScale);
+    /// <summary>Espaço na escala da faixa de layout (padding, margens, espaçamentos).</summary>
+    public static double Space(double value) => Layout.Snap(value * Layout.SpaceScale);
 
-    private static double Font(double value) => Math.Round(value * Layout.FontScale * SimulatedTextScale);
+    /// <summary>Tamanho de fonte na escala da faixa de layout.</summary>
+    public static double Font(double value) => Math.Round(value * Layout.FontScale * SimulatedTextScale);
 
     /// <summary>Medida fixa (largura máxima, altura de linha, ícone) na escala da faixa atual.</summary>
     public static double Scaled(double value) => Layout.Snap(value * Math.Max(Layout.SpaceScale, Layout.FontScale * SimulatedTextScale));
@@ -117,6 +119,35 @@ public static class Theme
     }
 
     private const string GlowTag = "glow";
+
+    /// <summary>Aumento do cartão focado (discreto: 1%).</summary>
+    public const float CardFocusScale = 1.01f;
+
+    /// <summary>
+    /// Cartão (início, grade): sem foco, fundo de cartão com borda discreta; focado, a borda vira ciano, o fundo fica azul
+    /// mais claro, o halo aparece e o cartão cresce 1% (as duas mudanças animadas em <see cref="MotionFocus"/>). A
+    /// espessura da borda é a mesma nos dois estados (sem pulo de layout).
+    /// </summary>
+    public static void ApplyCardFocus(Microsoft.UI.Xaml.Controls.Border card, bool focused)
+    {
+        card.BorderThickness = FocusRing;
+        card.BorderBrush = focused ? Accent : Border;
+        card.Background = focused ? AccentSoft : SurfaceRaised;
+        if (card.Parent is Microsoft.UI.Xaml.Controls.Border { Tag: GlowTag } glow)
+        {
+            glow.BorderBrush = focused ? FocusGlow : Transparent;
+            glow.Scale = focused ? new System.Numerics.Vector3(CardFocusScale, CardFocusScale, 1) : System.Numerics.Vector3.One;
+        }
+    }
+
+    /// <summary>Halo de um cartão, com o aumento do foco animado a partir do centro.</summary>
+    public static Microsoft.UI.Xaml.Controls.Border CardWithGlow(Microsoft.UI.Xaml.Controls.Border card)
+    {
+        var glow = WithGlow(card);
+        glow.ScaleTransition = new Vector3Transition { Duration = MotionFocus };
+        glow.SizeChanged += (_, e) => glow.CenterPoint = new System.Numerics.Vector3((float)(e.NewSize.Width / 2), (float)(e.NewSize.Height / 2), 0);
+        return glow;
+    }
 
     /// <summary>Envolve um anel num halo (ver <see cref="ApplyFocus"/>) e anima a troca de fundo em <see cref="MotionFocus"/>.</summary>
     public static Microsoft.UI.Xaml.Controls.Border WithGlow(Microsoft.UI.Xaml.Controls.Border ring)

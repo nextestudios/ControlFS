@@ -110,14 +110,19 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 
 ## Foco
 
+- Início em grade (fase B): seções de cartões (`AppController.HomeSections`: Favoritos, Pastas principais, Unidades e
+  dispositivos, Outros locais), cada uma com as colunas que a tela mostra (`SetHomeGridLayout`). Esquerda/direita seguem
+  a ordem visual e passam de seção; cima/baixo trocam de linha na mesma coluna (limitada às colunas da seção de destino);
+  LT/RT vão ao começo da seção anterior/seguinte (`SectionGridNavigation`). O foco continua sendo um índice de
+  `Places` (a lista mostra a mesma coleção na ordem original), então trocar lista ↔ grade mantém o local focado.
 - Regiões (#30, #50, redesenho): conteúdo, barra superior (caminho + acesso rápido) e abas (`AppController.FocusRegion`:
   `PaneState.Region` no navegador, estado próprio no início). A barra superior é uma linha só:
   `[LB] [Locais|Meu computador] › segmentos │ Favoritos · Arquivos recentes · pastas do Windows · Meu computador · Lixeira`.
   - LB no conteúdo: no navegador, foco na pasta de cima (como antes); no início, no primeiro atalho.
   - Esquerda/direita percorrem a linha toda: do último segmento a direita passa ao primeiro atalho e do primeiro atalho
     a esquerda volta ao último segmento. LT/RT: primeiro/último item da parte atual (caminho ou atalhos).
-  - Sul: segmento navega (com histórico) e foca o filho de onde viemos; a raiz vai ao início ("Meu computador" foca a
-    primeira unidade; no seletor de pasta, abre os outros locais); atalho de pasta/Lixeira abre na aba atual com
+  - Sul: segmento navega (com histórico) e foca o filho de onde viemos; a raiz "Locais" vai ao início e "Meu computador"
+    abre as unidades na aba atual com histórico (fase B; no seletor de pasta, abre os outros locais); atalho de pasta/Lixeira abre na aba atual com
     histórico (no início, abre o navegador); Favoritos e Arquivos recentes abrem um menu, e fechar o menu devolve o foco
     ao atalho.
   - Norte num segmento: caminho completo em menu. Baixo, Leste, LB e RB voltam ao conteúdo; Start abre o menu.
