@@ -15,6 +15,8 @@ using ControlFS.Infrastructure.Windows.Settings;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
@@ -104,6 +106,7 @@ public sealed class MainWindow : Window
             _input.OnKeyDown(e);
         };
         _root.CharacterReceived += (_, e) => _input.OnCharacter(e.Character);
+        AutomationProperties.SetLiveSetting(_status, AutomationLiveSetting.Polite); // avisos e resultados são lidos sem mover o foco
         _root.Loaded += (_, _) =>
         {
             _root.Focus(FocusState.Programmatic);
@@ -389,7 +392,27 @@ public sealed class MainWindow : Window
         _overlay.Children.Clear();
         if (ModalView.Build(_app) is { } modal) _overlay.Children.Add(modal);
         RestoreKeyboardFocus();
+        Announce();
     }
+
+    /// <summary>
+    /// Narrador: o foco do XAML fica na raiz, então cada mudança do foco lógico (item, menu, diálogo, tecla) vira uma
+    /// notificação de UI Automation com o texto que o AppController descreve. Mensagens do rodapé são uma região viva.
+    /// </summary>
+    private void Announce()
+    {
+        if (_status.Text != _announcedStatus)
+        {
+            _announcedStatus = _status.Text;
+            if (_status.Text.Length > 0) (FrameworkElementAutomationPeer.FromElement(_status) ?? FrameworkElementAutomationPeer.CreatePeerForElement(_status))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
+        }
+        if (_app.TakeAnnouncement() is not { Length: > 0 } text) return;
+        AutomationProperties.SetName(_root, text);
+        (FrameworkElementAutomationPeer.FromElement(_root) ?? FrameworkElementAutomationPeer.CreatePeerForElement(_root))?.RaiseNotificationEvent(
+            AutomationNotificationKind.ActionCompleted, AutomationNotificationProcessing.ImportantMostRecent, text, "ControlFS.Focus");
+    }
+
+    private string? _announcedStatus;
 
     /// <summary>
     /// Ao fechar um modal, o elemento que tinha o foco do XAML pode sair da árvore e o teclado ficaria sem destino.

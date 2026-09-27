@@ -143,6 +143,10 @@ The **installed** version updates itself:
 Menu → **Updates**: check now, automatic check on/off, install on quit on/off, pre-releases (automatic / yes / no).
 The **portable** version only tells you a new version exists; download it from the release page.
 
+## Screen readers
+
+With Narrator (or another UI Automation screen reader) on, the app announces where the focus is and the focused item as you move with the controller or keyboard: the home screen, folder, menu, dialog or on-screen keyboard when you enter it, then just the item as you move (name, type, size and position such as "3 of 20"). States are spoken in words: marked, cut, blocked (with the reason), password-protected, unavailable (with the reason). Bottom-bar messages are read without moving the focus. Nothing depends on sound, vibration or color alone.
+
 ## Privacy
 
 Everything stays on your PC. Settings and logs live in `%LOCALAPPDATA%\ControlFS` (installed) or in `ControlFS_Data` next to `ControlFS-Portable-x64.exe` (portable). Passwords are never saved or logged. Core features never use the network. The only network access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off.

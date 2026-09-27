@@ -143,6 +143,10 @@ A versão **instalada** se atualiza sozinha:
 Menu → **Atualizações**: verificar agora, verificação automática sim/não, instalar ao sair sim/não, pré-lançamentos (automático / sim / não).
 A versão **portátil** só avisa que existe versão nova; baixe-a na página da release.
 
+## Leitores de tela
+
+Com o Narrador (ou outro leitor de tela com UI Automation) ligado, o app anuncia onde está o foco e o item focado enquanto você anda com o controle ou o teclado: a tela inicial, a pasta, o menu, o diálogo ou o teclado virtual ao entrar, depois só o item a cada movimento (nome, tipo, tamanho e posição, como "3 de 20"). Estados são ditos por extenso: marcado, recortado, bloqueado (com o motivo), com senha, indisponível (com o motivo). Mensagens do rodapé são lidas sem mover o foco. Nada depende só de som, vibração ou cor.
+
 ## Privacidade
 
 Tudo fica no seu PC. Preferências e logs ficam em `%LOCALAPPDATA%\ControlFS` (instalado) ou em `ControlFS_Data` ao lado do `ControlFS-Portable-x64.exe` (portátil). Senhas nunca são gravadas nem registradas. As funções centrais nunca usam a rede. O único acesso à rede é a verificação de atualizações, que envia ao GitHub apenas o User-Agent `ControlFS/<versão>` e pode ser desligada.

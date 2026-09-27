@@ -1,0 +1,119 @@
+using ControlFS.Application.State;
+using ControlFS.Core.Models;
+
+namespace ControlFS.Application;
+
+/// <summary>O que o Narrador deve dizer: onde o foco lógico está (<see cref="Context"/>) e o item focado nele.</summary>
+public sealed record FocusAnnouncement(string Context, string Item);
+
+/// <summary>
+/// Leitores de tela: o foco do XAML fica na raiz da janela e o foco lógico vive aqui, então a janela pede, a cada
+/// mudança, o texto a anunciar. Estados (marcado, recortado, bloqueado, indisponível) sempre vão por extenso — nada
+/// depende só de cor, som ou vibração.
+/// </summary>
+public sealed partial class AppController
+{
+    private FocusAnnouncement? _lastAnnouncement;
+
+    /// <summary>Descrição do foco lógico atual (tela, modal, lista, barra de caminho ou abas).</summary>
+    public FocusAnnouncement DescribeFocus()
+    {
+        switch (TopModal)
+        {
+            case MenuModal menu:
+                if (menu.Items.Count == 0) return new($"Menu {menu.Title}", "sem opções");
+                var item = menu.Items[Math.Clamp(menu.FocusIndex, 0, menu.Items.Count - 1)];
+                var state = item.IsEnabled ? string.Empty : ", indisponível" + (item.DisabledReason is { } why ? ": " + why : string.Empty);
+                var detail = item.Detail is { Length: > 0 } d ? ", " + d : string.Empty;
+                return new($"Menu {menu.Title}", $"{item.Label}{state}{detail}, {Position(menu.FocusIndex, menu.Items.Count)}");
+            case DialogModal dialog:
+                var body = string.Join(" ", dialog.Lines.Select(l => $"{l.Label}: {l.Value}.").Append(dialog.Message ?? string.Empty).Where(t => t.Length > 0));
+                var context = Sentence($"Diálogo {dialog.Title}", body);
+                if (dialog.Options.Count == 0) return new(context, string.Empty);
+                var option = dialog.Options[Math.Clamp(dialog.FocusIndex, 0, dialog.Options.Count - 1)];
+                var toggle = option.Kind == DialogOptionKind.Toggle ? (option.IsChecked ? ", marcado" : ", desmarcado") : string.Empty;
+                return new(context, $"{option.Label}{toggle}, botão {Position(dialog.FocusIndex, dialog.Options.Count)}");
+            case KeyboardModal keyboard:
+                var kb = keyboard.Keyboard;
+                var key = kb.FocusedKey;
+                return new($"Teclado virtual: {kb.Title}", "tecla " + key.Name + (kb.IsKeyEnabled(key) ? string.Empty : ", indisponível neste campo"));
+            case MappingWizardModal wizard:
+                return new(wizard.Title, wizard.Wizard.Phase == Core.Input.Mapping.MappingPhase.Review
+                    ? MappingWizardModal.ReviewOptions[wizard.ReviewFocus]
+                    : wizard.Wizard.Current is { } target ? "Pressione: " + target.Label : string.Empty);
+            case { } other:
+                return new(other.Title, string.Empty);
+        }
+
+        if (Screen == Screen.Home)
+        {
+            if (Places.Count == 0) return new("Início", "nenhum local");
+            var place = Places[Math.Clamp(PlacesFocus, 0, Places.Count - 1)];
+            var about = place.IsBlocked ? "bloqueado: " + place.BlockedReason : place.Detail ?? EntryText.TypeName(place);
+            return new("Início", $"{place.Name}, {about}, {Position(PlacesFocus, Places.Count)}");
+        }
+
+        var pane = ActivePane;
+        if (pane.Region == PaneRegion.Tabs)
+        {
+            var tabs = Tabs;
+            return new("Abas", $"Aba {ActiveTab + 1} de {tabs.Count}: {TabTitle(Browser)}");
+        }
+        var crumbs = Breadcrumbs;
+        if (pane.Region == PaneRegion.Breadcrumbs && crumbs.Count > 0)
+        {
+            var index = Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1);
+            var crumb = crumbs[index];
+            var label = crumb.Kind == BreadcrumbKind.Collapsed ? $"{crumb.Hidden.Count} pastas recolhidas" : crumb.Label;
+            return new("Barra de caminho", $"{label}{(crumb.IsCurrent ? ", pasta atual" : string.Empty)}, {Position(index, crumbs.Count)}");
+        }
+
+        var where = (Screen == Screen.FolderPicker ? "Escolher pasta: " : string.Empty) + pane.Location switch
+        {
+            null => "Carregando",
+            ArchiveLocation archive => "Compactado " + Path.GetFileName(archive.ArchivePath) + (archive.InnerPath.Length > 0 ? ", " + archive.InnerPath : string.Empty),
+            SearchLocation => "Resultados da busca",
+            RecycleBinLocation => "Lixeira",
+            PhysicalLocation physical => "Pasta " + physical.FullPath,
+            { } location => location.DisplayPath,
+        };
+        var list = pane.List;
+        if (pane.IsLoading) return new(where, "carregando");
+        if (list.Focused is not { } entry) return new(where, pane.ActiveSearch is { IsRunning: true } ? "buscando" : "vazia");
+        return new(where, $"{DescribeEntry(entry)}, {Position(list.FocusIndex, list.Items.Count)}");
+    }
+
+    /// <summary>Nome, tipo, tamanho e estados por extenso.</summary>
+    private string DescribeEntry(FileEntry entry)
+    {
+        if (entry.IsBlocked) return $"{entry.Name}, bloqueado: {entry.BlockedReason}";
+        var parts = new List<string> { entry.Name, EntryText.TypeName(entry).ToLowerInvariant() };
+        if (entry.Size is long size && !entry.IsContainer) parts.Add(EntryText.Size(size));
+        if (entry.FoundIn is { } folder) parts.Add("em " + folder);
+        if (ActivePane.List.IsSelected(entry)) parts.Add("marcado");
+        if (IsCut(entry)) parts.Add("recortado");
+        if (entry.IsEncrypted) parts.Add("com senha");
+        if (entry.IsHidden) parts.Add("oculto");
+        return string.Join(", ", parts);
+    }
+
+    private static string Position(int index, int count) => $"{Math.Clamp(index, 0, Math.Max(0, count - 1)) + 1} de {count}";
+
+    /// <summary>
+    /// Texto novo para o Narrador desde a última chamada, ou <c>null</c> se nada mudou: o contexto inteiro quando ele
+    /// muda (abriu um menu, entrou numa pasta), só o item quando o foco anda dentro do mesmo contexto.
+    /// </summary>
+    public string? TakeAnnouncement()
+    {
+        var now = DescribeFocus();
+        var previous = _lastAnnouncement;
+        _lastAnnouncement = now;
+        if (previous == now) return null;
+        if (previous is null || previous.Context != now.Context) return Sentence(now.Context, now.Item);
+        return now.Item;
+    }
+
+    /// <summary>Junta duas frases sem pontuação dobrada ("Sair?" + "Cancelar" → "Sair? Cancelar").</summary>
+    private static string Sentence(string first, string second) =>
+        second.Length == 0 ? first : first.Length > 0 && first[^1] is '.' or '?' or '!' or ':' ? $"{first} {second}" : $"{first}. {second}";
+}
