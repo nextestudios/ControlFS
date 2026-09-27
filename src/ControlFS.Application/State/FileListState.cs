@@ -23,15 +23,33 @@ public sealed class FileListState
 
     public IReadOnlyList<FileEntry> SelectedEntries => _items.Where(i => _selected.Contains(i.Id)).ToList();
 
-    /// <summary>Substitui os itens preservando o foco pelo Id; se o item sumiu, foca o vizinho no mesmo índice.</summary>
+    /// <summary>
+    /// Substitui os itens preservando o foco pelo Id. Se o item focado sumiu (excluído, movido, renomeado fora do app),
+    /// o foco vai para o próximo item que sobreviveu na ordem anterior; sem próximo, para o anterior. Com itens na lista,
+    /// o foco nunca fica vazio.
+    /// </summary>
     public void SetItems(IEnumerable<FileEntry> items, string? preferFocusId = null, bool keepSelection = false)
     {
+        var previous = _items;
         var previousIndex = FocusIndex;
         var targetId = preferFocusId ?? FocusedId;
         _items = items.OrderBy(i => i, Sort.CreateComparer()).ToList();
         if (keepSelection) _selected.IntersectWith(_items.Select(i => i.Id));
         else _selected.Clear();
-        FocusIndex = FindIndex(targetId) ?? (_items.Count == 0 ? -1 : Math.Clamp(previousIndex, 0, _items.Count - 1));
+        FocusIndex = FindIndex(targetId) ?? FindSurvivingNeighbor(previous, previousIndex)
+            ?? (_items.Count == 0 ? -1 : Math.Clamp(previousIndex, 0, _items.Count - 1));
+    }
+
+    private int? FindSurvivingNeighbor(List<FileEntry> previous, int previousIndex)
+    {
+        if (previousIndex < 0 || previousIndex >= previous.Count || _items.Count == 0) return null;
+        var positions = new Dictionary<string, int>(_items.Count, StringComparer.Ordinal);
+        for (var i = 0; i < _items.Count; i++) positions.TryAdd(_items[i].Id, i);
+        for (var i = previousIndex + 1; i < previous.Count; i++)
+            if (positions.TryGetValue(previous[i].Id, out var next)) return next;
+        for (var i = previousIndex - 1; i >= 0; i--)
+            if (positions.TryGetValue(previous[i].Id, out var before)) return before;
+        return null;
     }
 
     public void SetSort(SortOrder sort)

@@ -53,7 +53,15 @@ Guide/Home não é mapeado. L3/R3 não são usados.
 
 ## Foco
 
-- Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização; item removido → vizinho.
+- Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização. Item focado removido (excluir,
+  mover, mudança externa) → o **próximo item que sobreviveu** na ordem anterior; sem próximo, o anterior. Com itens na
+  lista, o foco nunca fica vazio (`StateTests`).
+- Anel de foco único (`Theme.ApplyFocus`: borda de destaque de 3 px + fundo suave) na lista, nos menus e nos diálogos; o
+  teclado virtual usa os mesmos tokens. A seleção nativa do `ListView` fica desligada para não haver dois realces.
+- Ao trocar de pasta, a lista é medida e rola até o item focado antes do primeiro quadro; ao mover o foco, só as duas
+  linhas afetadas são redesenhadas.
+- Ao fechar um modal, se o foco do XAML ficou em um elemento que saiu da árvore, a raiz recebe o foco de volta (o teclado
+  físico nunca fica sem destino).
 - Após criar pasta: foco na pasta criada. Ao sair de um compactado ou subir de nível: foco no item de origem.
 - Diálogos destrutivos iniciam na opção segura; conflito inicia em "Pular (manter existente)".
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas

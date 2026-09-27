@@ -40,4 +40,15 @@ public static class Theme
     public static readonly CornerRadius Radius = new(6);
     public static readonly Thickness FocusRing = new(3);
     public static readonly Thickness Hairline = new(1);
+
+    /// <summary>
+    /// Anel de foco único para lista, menus e diálogos: borda de destaque + fundo suave. A espessura não muda entre
+    /// focado e não focado (sem "pulo" de layout); o foco nunca depende só da cor de fundo.
+    /// </summary>
+    public static void ApplyFocus(Microsoft.UI.Xaml.Controls.Border border, bool focused)
+    {
+        border.BorderThickness = FocusRing;
+        border.BorderBrush = focused ? Accent : Transparent;
+        border.Background = focused ? AccentSoft : Transparent;
+    }
 }

@@ -34,6 +34,20 @@ public class StateTests
     }
 
     [Fact]
+    public void Deleting_marked_items_moves_focus_to_the_next_survivor_not_the_same_index()
+    {
+        // Bug: com b e c excluídos e o foco em c, o foco caía no índice antigo (e), pulando d.
+        var list = new FileListState();
+        list.SetItems([F("a"), F("b"), F("c"), F("d"), F("e")]);
+        list.FocusById("c");
+        list.SetItems([F("a"), F("d"), F("e")]);
+        Assert.Equal("d", list.FocusedId);
+        list.FocusById("e");
+        list.SetItems([F("a"), F("d")]);
+        Assert.Equal("d", list.FocusedId);
+    }
+
+    [Fact]
     public void Natural_sort_orders_numbers_numerically()
     {
         var list = new FileListState();

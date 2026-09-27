@@ -234,6 +234,13 @@ public sealed partial class AppController
     private void HandleMenu(MenuModal menu, InputAction action)
     {
         var count = menu.Items.Count;
+        if (count == 0)
+        {
+            // Menu sem itens (ex.: lista de locais vazia): só fechar faz sentido; nunca há foco "em nada".
+            if (action is InputAction.Back or InputAction.NavigateLeft or InputAction.OpenAppMenu or InputAction.OpenContextMenu) CloseModal(menu);
+            return;
+        }
+        menu.FocusIndex = Math.Clamp(menu.FocusIndex, 0, count - 1);
         switch (action)
         {
             case InputAction.NavigateUp: menu.FocusIndex = (menu.FocusIndex - 1 + count) % count; break;
