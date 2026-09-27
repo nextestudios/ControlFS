@@ -114,9 +114,13 @@ Quando só alguns itens falharam ou não foram processados (por exemplo, depois 
 
 Se o ControlFS for fechado no meio de uma operação (travamento, falta de energia), a próxima abertura remove os temporários ocultos que ele tinha criado (`.controlfs-staging-*`, `.controlfs-copy-*.part`) e avisa no rodapé. Só é removido o que o ControlFS registrou antes de criar; nada é apagado só por causa do nome.
 
+## Visualizar imagens
+
+**Sul** numa imagem JPG, PNG, GIF, BMP ou WebP abre a imagem dentro do ControlFS (Norte → **Abrir com o aplicativo padrão** continua abrindo no Windows). **Esquerda/Direita** ou **LB/RB** vão para a imagem anterior/próxima na ordem da lista; **RT** aumenta o zoom e **LT** diminui; com zoom, o direcional percorre a imagem e **Sul** volta a ajustar à tela; **Leste/B** fecha, com o foco na última imagem vista. A decodificação acontece em segundo plano (a tela nunca trava) e reduz a imagem a no máximo 4096 px no lado maior; de GIFs animados aparece só o primeiro quadro, e fotos de celular aparecem em pé. Antes de decodificar, o ControlFS confere o formato real pelo conteúdo (não pela extensão) e recusa arquivos acima de 100 MB ou de 80 megapixels com uma mensagem clara. Nada é executado. Imagens dentro de compactados não são visualizadas: extraia antes. WebP depende do codec WebP do Windows (incluído no Windows 11 e no Windows 10 recente).
+
 ## Abrindo arquivos com o Windows
 
-**Sul** num arquivo que não é compactado abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.
+**Sul** num arquivo que não é compactado nem imagem visualizável abre no programa padrão do Windows. Norte num arquivo oferece também **Abrir com…** e **Mostrar no Explorador de Arquivos**. O outro programa pode não funcionar com o controle: volte com Alt+Tab ou o botão do sistema. Programas e scripts (.exe, .msi, .bat, .ps1, .lnk…) perguntam antes, começando em **Cancelar**. Nada é aberto automaticamente depois de extrair.
 
 ## Atualizações
 

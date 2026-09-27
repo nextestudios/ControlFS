@@ -122,6 +122,7 @@ public sealed partial class AppController
     {
         var format = await Task.Run(() => _archives.Detect(path));
         if (ArchiveFormats.CanExtract(format)) await OpenArchiveAsync(pane, path);
+        else if (IsPreviewableImage(entry) && _imageDecoder is not null) OpenImagePreview(pane, entry);
         else OpenExternally(entry, path);
     }
 
@@ -393,6 +394,7 @@ public sealed partial class AppController
             items.Add(new MenuItem("Extrair aqui", () => BeginExtraction(file, folder, dedicated: false, null, string.Empty)));
             items.Add(new MenuItem("Extrair para…", () => PickDestinationThenExtract(file, folder, null, string.Empty)));
         }
+        if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable));
         items.Add(new MenuItem(ExecutableFiles.IsPotentiallyExecutable(file) ? "Executar…" : "Abrir com o aplicativo padrão",
             () => OpenExternally(entry, file), ShellUnavailable));
         items.Add(new MenuItem("Abrir com…", () => RunShell(s => s.OpenWith(file), external: true), ShellUnavailable,

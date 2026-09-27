@@ -120,3 +120,62 @@ internal sealed record PendingTestInput(string DeviceKey, int Device, PhysicalCo
 {
     public bool Handled { get; set; }
 }
+
+/// <summary>
+/// Visualização de imagens da pasta (#57). A decodificação acontece fora da thread de UI e só depois de conferir tamanho e
+/// resolução; nada é executado. Zoom e posição são lógicos: a tela só desenha.
+/// </summary>
+public sealed class ImagePreviewModal : Modal
+{
+    /// <summary>Níveis de zoom sobre a imagem ajustada à tela (1 = inteira na tela).</summary>
+    public static IReadOnlyList<double> ZoomLevels { get; } = [1, 1.5, 2, 3, 4, 6, 8];
+
+    internal ImagePreviewModal(PaneState pane, IReadOnlyList<Core.Models.FileEntry> images, int index) : base("Visualizar imagem")
+    {
+        Pane = pane;
+        Images = images;
+        Index = index;
+    }
+
+    internal PaneState Pane { get; }
+
+    /// <summary>Imagens da pasta, na ordem da lista.</summary>
+    public IReadOnlyList<Core.Models.FileEntry> Images { get; }
+    public int Index { get; internal set; }
+    public Core.Models.FileEntry Current => Images[Index];
+
+    public bool IsLoading { get; internal set; }
+    public Core.Contracts.PreviewImage? Image { get; internal set; }
+    public Core.Preview.ImageHeaderInfo? Info { get; internal set; }
+    public string? Error { get; internal set; }
+
+    public int ZoomIndex { get; private set; }
+    public double Zoom => ZoomLevels[ZoomIndex];
+
+    /// <summary>Centro da área visível, em frações da imagem (0–1). Sempre dentro da imagem para o zoom atual.</summary>
+    public double CenterX { get; private set; } = 0.5;
+    public double CenterY { get; private set; } = 0.5;
+
+    internal int Generation { get; set; }
+    internal CancellationTokenSource? Loading { get; set; }
+
+    internal void ChangeZoom(int delta)
+    {
+        ZoomIndex = Math.Clamp(ZoomIndex + delta, 0, ZoomLevels.Count - 1);
+        Pan(0, 0);
+    }
+
+    /// <summary>Move a área visível em passos de 1/4 da tela; nunca sai da imagem.</summary>
+    internal void Pan(int dx, int dy)
+    {
+        var half = 0.5 / Zoom;
+        CenterX = Math.Clamp(CenterX + dx * 0.25 / Zoom, half, 1 - half);
+        CenterY = Math.Clamp(CenterY + dy * 0.25 / Zoom, half, 1 - half);
+    }
+
+    internal void ResetView()
+    {
+        ZoomIndex = 0;
+        CenterX = CenterY = 0.5;
+    }
+}

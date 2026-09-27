@@ -29,6 +29,7 @@ public sealed partial class AppController
     private readonly IArchiveService _archives;
     private readonly ISettingsStore? _settingsStore;
     private readonly ITemporaryJournal? _temporaries;
+    private readonly IImageDecoder? _imageDecoder;
     private readonly SynchronizationContext _ui;
     private readonly List<Modal> _modals = [];
     private readonly List<Task> _pending = [];
@@ -38,9 +39,10 @@ public sealed partial class AppController
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
         IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null,
-        ITemporaryJournal? temporaries = null, IOperationHistoryStore? history = null)
+        ITemporaryJournal? temporaries = null, IOperationHistoryStore? history = null, IImageDecoder? imageDecoder = null)
     {
         _historyStore = history;
+        _imageDecoder = imageDecoder;
         _profileStore = controllerProfiles;
         _temporaries = temporaries;
         Clock = () => _stopwatch.Elapsed;
@@ -309,6 +311,7 @@ public sealed partial class AppController
             case AboutModal about: HandleAbout(about, action); break;
             case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
             case ControllerTestModal test: HandleControllerTest(test, action); break;
+            case ImagePreviewModal preview: HandleImagePreview(preview, action); break;
         }
     }
 

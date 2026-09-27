@@ -14,7 +14,7 @@ using Microsoft.UI.Xaml.Media;
 namespace ControlFS.App.Views;
 
 /// <summary>Constrói a camada modal a partir do estado do AppController (escopo exclusivo de entrada).</summary>
-public static class ModalView
+public static partial class ModalView
 {
     public static UIElement? Build(AppController app)
     {
@@ -27,6 +27,7 @@ public static class ModalView
             AboutModal about => BuildAbout(about),
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             ControllerTestModal test => BuildControllerTest(app, test),
+            ImagePreviewModal preview => BuildImagePreview(preview),
             _ => null,
         };
         if (panel is null) return null;

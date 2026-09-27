@@ -52,6 +52,21 @@ public sealed partial class AppController
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
+            case ImagePreviewModal preview:
+                if (preview.ZoomIndex > 0)
+                {
+                    hints.Add(new(InputAction.NavigateLeft, "Mover"));
+                    hints.Add(new(InputAction.Confirm, "Ajustar à tela"));
+                }
+                if (preview.Images.Count > 1)
+                {
+                    hints.Add(new(InputAction.PreviousRegion, "Anterior"));
+                    hints.Add(new(InputAction.NextRegion, "Próxima"));
+                }
+                if (preview.ZoomIndex > 0) hints.Add(new(InputAction.PageUp, "Menos zoom"));
+                if (preview.Image is not null && preview.ZoomIndex < ImagePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
             case DialogModal dialog:
                 // Confirmar executa a opção em foco; diálogo sem opções só fecha com Voltar.
                 if (dialog.Options.Count > 0) hints.Add(new(InputAction.Confirm, dialog.Options[dialog.FocusIndex].Label));
