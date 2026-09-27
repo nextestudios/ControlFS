@@ -67,7 +67,7 @@ To jump anywhere, use Menu → **Go to path…** (also in the folder picker's St
 
 ## Tabs
 
-Each tab keeps its own folder, history, marked items and focus. With two or more tabs, the tab strip shows in the header next to the logo (with one tab it would only repeat the path, so it is hidden). To reach it, enter the top bar (LB or RB) and press **Up**; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab), **Close tab** and the list of tabs. **South**, **Down** or **East** go back to the list. Menu → **Abas** (tabs) does the same without the strip, and North on a folder has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it.
+Each tab keeps its own folder, history, marked items and focus. With two or more tabs, the tab strip shows in the header next to the logo (with one tab it would only repeat the path, so it is hidden). To reach it, enter the top bar (LB or RB) and press **Up**; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab), **Close tab** and the list of tabs. **South**, **Down** or **East** go back to the list. Menu → **Abas** (tabs) does the same without the strip, and North on a folder has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it. Menu → **Nova aba** (new tab) opens the current folder in a new tab from anywhere. **With two or more tabs, LT/RT (L2/R2) switch to the previous/next tab** while browsing (wrapping around at the ends); with a single tab they keep paging the list and jumping between Home sections. L1/R1 always stay on the top bar, and inside menus, the keyboard and previews the triggers belong to them.
 
 ## The list
 

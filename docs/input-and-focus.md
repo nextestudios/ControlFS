@@ -164,3 +164,10 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 
 Troca explícita de dispositivo ativo pela UI, preferência de físico sobre virtual na troca a quente (ex.: Steam Input), recuperação após suspensão do sistema (testar), duplicidade físico+virtual
 com diagnóstico, remapeamento de gamepads conhecidos, rumble opcional.
+
+## Abas nos gatilhos (#185)
+
+No navegador (lista, grade e início) com 2+ abas, LT/RT (L2/R2) trocam para a aba anterior/seguinte, dando a volta nas
+pontas (`HandleTabTrigger`). Com uma aba só, os gatilhos mantêm a paginação da lista e o pulo entre seções do início.
+Modais, teclado virtual, visualizações e a barra superior tratam os gatilhos antes (primeiro/último alvo na barra) e
+nunca trocam de aba; L1/R1 nunca trocam de aba. Coberto por `TabsJourneyTests`.

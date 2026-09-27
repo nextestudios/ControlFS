@@ -83,4 +83,49 @@ public class TabsJourneyTests : IDisposable
         d.Press(InputAction.NavigateUp);
         Assert.Equal(PaneRegion.QuickAccess, app.Browser.Region);
     });
+
+    [Fact]
+    public void New_tab_from_the_main_menu_and_L2_R2_switch_tabs_while_L1_R1_stay_on_the_top_bar() => UiContext.Run(async () =>
+    {
+        for (var i = 0; i < 40; i++) File.WriteAllText(_tmp.Sub($"f{i:00}.txt"), "x");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+
+        // Uma aba só: os gatilhos continuam paginando.
+        d.Press(InputAction.PageDown);
+        Assert.True(app.Browser.List.FocusIndex > 1);
+        await d.FocusItem("f05.txt");
+
+        // Menu → Nova aba abre a pasta atual numa aba nova, já ativa.
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Nova aba");
+        await d.Idle();
+        Assert.Equal((2, 1), (app.Tabs.Count, app.ActiveTab));
+        await d.FocusItem("f30.txt");
+        Assert.Contains(app.Hints, h => h.Action == InputAction.PageDown && h.Label == "Próxima aba");
+
+        // L2 volta à aba 1 com o foco dela; R2 dá a volta e L2 de novo também.
+        d.Press(InputAction.PageUp);
+        Assert.Equal(0, app.ActiveTab);
+        Assert.Equal("f05.txt", app.Browser.List.Focused?.Name);
+        d.Press(InputAction.PageUp);
+        Assert.Equal(1, app.ActiveTab);
+        Assert.Equal("f30.txt", app.Browser.List.Focused?.Name);
+        d.Press(InputAction.PageDown);
+        Assert.Equal(0, app.ActiveTab);
+
+        // L1/R1 levam à barra superior e nunca trocam de aba.
+        d.Press(InputAction.NextRegion);
+        Assert.Equal(0, app.ActiveTab);
+        Assert.NotEqual(PaneRegion.List, app.FocusRegion);
+        d.Press(InputAction.NavigateDown);
+
+        // Com um menu aberto os gatilhos são dele: a aba não muda.
+        d.Press(InputAction.OpenAppMenu);
+        d.Press(InputAction.PageDown);
+        Assert.Equal(0, app.ActiveTab);
+    });
 }

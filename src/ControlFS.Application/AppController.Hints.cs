@@ -136,6 +136,7 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.Confirm, "Abrir"));
                 hints.Add(new(InputAction.OpenContextMenu, "Ações"));
             }
+            AddTabTriggerHints(hints);
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             if (Places.Count > 0) hints.Add(ChangeViewHint);
             hints.Add(new(InputAction.Back, "Sair"));
@@ -214,6 +215,7 @@ public sealed partial class AppController
             hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
         if (pane.Location is PhysicalLocation) hints.Add(new(InputAction.Search, "Buscar"));
+        AddTabTriggerHints(hints);
         hints.Add(new(InputAction.OpenAppMenu, "Menu"));
         hints.Add(ChangeViewHint);
         hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
