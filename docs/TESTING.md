@@ -55,6 +55,9 @@ posição certa, gatilhos (página), Start (menu), reconexão, família detectad
       sem reiniciar; voltar ao Xbox faz o mesmo.
 - [ ] Com um controle ativo, apertar uma seta do teclado: o rodapé passa a mostrar teclas (Enter, Esc…); apertar um
       botão do controle volta aos glifos.
+- [ ] Rodapé por contexto com controle: pasta, compactado (Explorar/Extrair…), dentro do compactado, itens marcados
+      (Operações (N)/Cancelar seleção), teclado virtual (Selecionar/Apagar/Concluir/Cancelar) e diálogos; cada legenda faz
+      o que diz.
 - [ ] Trocar "Confirmar com" no menu: o glifo de Abrir passa para o botão direito e o de Voltar para o inferior.
 - [ ] Segurar o direcional no controle ativo e apertar um botão no outro: o outro **não** assume até o primeiro ser solto.
 - [ ] Menu → Legendas fixada em "PlayStation" com um Xbox ativo: legendas continuam PlayStation.

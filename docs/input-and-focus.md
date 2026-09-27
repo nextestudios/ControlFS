@@ -45,6 +45,27 @@ Guide/Home não é mapeado. L3/R3 não são usados.
   confirmar/voltar (`ActionMap.ControlFor`), então trocar a convenção troca comportamento e legenda. Sem controle ativo,
   ou depois de uma tecla do teclado físico, mostra teclas; a próxima pressão do controle volta aos glifos. A UI nunca
   testa nomes de dispositivo.
+
+## Rodapé por contexto
+
+`AppController.BuildHints` é a fonte única; `HintJourneyTests` cobre os contextos. Ação que não funciona não aparece.
+
+| Contexto | Legendas |
+|---|---|
+| Pasta / arquivo | Abrir · Marcar/Desmarcar · Ações · Menu · Voltar |
+| Compactado no disco | Explorar · Marcar · Extrair… (o menu abre em "Extrair para \"nome\"") · Menu · Voltar |
+| Dentro de um compactado | Abrir/Detalhes · Marcar · Extrair… · Menu · Voltar |
+| Itens marcados | Abrir · Desmarcar/Marcar · Operações (N) · Menu · Cancelar seleção |
+| Carregando | Menu · Cancelar |
+| Item bloqueado | Motivo · Ações · Menu · Voltar |
+| Teclado virtual | Selecionar (só com controle) · Apagar · Maiúsculas · Cursor · Símbolos · Concluir (Start/Options) · Cancelar |
+| Menu | Escolher (oculto em item indisponível: o motivo aparece no item) · Fechar |
+| Diálogo | nome da opção em foco · opção segura de Voltar |
+
+**Decisão (extrair direto, #35):** Oeste continua sendo Marcar também em compactados, para que possam entrar em
+copiar/mover/excluir/compactar em lote. Os botões livres estão reservados (Select para a busca, LB/RB para regiões e
+dois painéis), então o atalho de extrair é Norte → Sul: num compactado, Norte aparece como "Extrair…" e o menu abre
+com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a ação sempre detecta o formato pelo conteúdo.
 - Janela sem foco: roteamento suspenso; ao voltar, estados limpos e só novas transições contam.
 - Analógico: zona morta 0,25, ativação 0,55, liberação 0,40 (histerese), dominância 1,25 (diagonais ambíguas ignoradas).
 

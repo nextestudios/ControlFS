@@ -30,6 +30,8 @@ Toda ação essencial está nos menus (Start / Norte), então um controle só co
 
 ## Extraindo
 
+Num compactado o rodapé mostra **Sul Explorar** (abre somente leitura), **Oeste Marcar** e **Norte Extrair…**: Norte abre o menu de ações já em **Extrair para "nome"**, então Norte e depois Sul extraem.
+
 - **Extrair para "nome"**: cria uma pasta nova ao lado do arquivo (nunca reaproveita uma existente: "nome (2)").
 - **Extrair aqui**: na pasta do arquivo; conflitos de nome perguntam.
 - **Extrair para…**: escolha uma pasta dentro do app (dá para criar uma ali).
