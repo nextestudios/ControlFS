@@ -30,6 +30,12 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Épico do teclado virtual concluído (#89)
+
+- Layout no modelo estrutural do PS5 (#41), segurar para repetir (#42), cursor visível e início/fim (#43), seleção de
+  texto (#44) e sugestões locais (#45, PR #183). Layout conferido em 1920×1080 e 1280×800 (smoke 36349504542);
+  controle real, distância de TV e Narrador seguem como verificação manual em `docs/TESTING.md`.
+
 ## Redesign: modo Lista e painel de detalhes (0.7.0-alpha.1)
 
 - Fase C (PRs #164, #165): Lista com cabeçalho de colunas e ordenação, caixas de marcação, datas amigáveis e painel de
