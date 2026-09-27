@@ -391,6 +391,20 @@ internal static class ScreenRenderer
             CloseModals(app);
         }
 
+        // Edição leve de texto (#62): a visualização em modo de edição, com a linha em foco destacada.
+        if (Wanted("mt"))
+        {
+            await FocusAsync(app, stage, "relatório.txt");
+            app.Handle(InputAction.Confirm);
+            if (await WaitForAsync(() => app.TopModal is Application.State.TextPreviewModal { IsLoading: false }))
+            {
+                app.Handle(InputAction.OpenContextMenu);
+                if (await WaitForAsync(() => app.TopModal is Application.State.TextPreviewModal { Editor: not null }))
+                    await CaptureAsync(stage, target, dir, "mt-text-edit", window);
+            }
+            CloseModals(app);
+        }
+
         // Vídeo em tela cheia (#61, #170): AVI sem compressão gerado aqui; pausado e com um destino de busca em preparo.
         // Sem dispositivo de som no runner o Windows pode recusar: a captura mostra então a mensagem de erro sobre o vídeo.
         if (Wanted("mv"))

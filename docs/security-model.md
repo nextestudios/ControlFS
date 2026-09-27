@@ -112,6 +112,13 @@ não é confiável.
   (sem link/junção), com o mesmo nome do vídeo, na mesma pasta e com até 5 MB, lidas como fluxo local pelo próprio
   Windows. "Continuar de onde parou" guarda em `playback.json` só um resumo SHA-256 (caminho + tamanho + data) e os
   segundos, no máximo 500 entradas; arquivo ilegível recomeça vazio (`VideoPlayerJourneyTests`).
+- A edição leve de texto (#62) só abre arquivos que `TextEditDocument` (Core) consegue regravar byte a byte iguais
+  (mesma codificação, BOM e quebras; linhas não tocadas nunca mudam), até 1 MB e 10.000 linhas; binários e arquivos
+  somente leitura são recusados. Salvar exige confirmação; `AtomicFileWriter` grava num temporário `.controlfs-edit-*.part`
+  na mesma pasta (registrado no diário de temporários antes de existir, para limpeza após queda), com `WriteThrough` e
+  flush até o disco, e troca com `File.Replace` (atributos, datas e permissões do original preservados), deixando o
+  original em `nome.controlfs.bak`. Se o tamanho ou a data mudaram desde a abertura, salvar pede confirmação explícita.
+  Uma linha editada nunca ganha quebras (`TextEditDocumentTests`, `TextEditJourneyTests`).
 - Arquivos dentro de compactados não são visualizados.
 
 ## Atualizações automáticas

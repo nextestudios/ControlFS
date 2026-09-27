@@ -87,6 +87,13 @@ public sealed partial class AppController
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
+            case TextPreviewModal { Editor: { } editor }:
+                hints.Add(new(InputAction.Confirm, "Editar linha"));
+                hints.Add(new(InputAction.NavigateDown, "Linha"));
+                hints.Add(new(InputAction.OpenContextMenu, "Inserir/apagar"));
+                if (editor.IsModified) hints.Add(new(InputAction.OpenAppMenu, "Salvar"));
+                hints.Add(new(InputAction.Back, editor.IsModified ? "Sair (descartar?)" : "Sair da edição"));
+                return hints;
             case TextPreviewModal text:
                 if (text.Document is { Lines.Count: > 0 })
                 {
@@ -97,6 +104,7 @@ public sealed partial class AppController
                     hints.Add(new(InputAction.NextRegion, "Fim"));
                     hints.Add(new(InputAction.Confirm, text.Monospace ? "Fonte proporcional" : "Fonte fixa"));
                 }
+                if (CanOfferEdit(text)) hints.Add(new(InputAction.OpenContextMenu, "Editar"));
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
             case ImagePreviewModal preview:

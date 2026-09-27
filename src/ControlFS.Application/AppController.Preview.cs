@@ -196,6 +196,12 @@ public sealed partial class AppController
 
     private void HandleTextPreview(TextPreviewModal modal, InputAction action)
     {
+        if (modal.Editor is { } editor)
+        {
+            HandleTextEditing(modal, editor, action);
+            return;
+        }
+        if (modal.IsOpeningEditor) return;
         var page = Math.Max(1, modal.PageLines - 1); // uma linha de contexto entre as páginas
         switch (action)
         {
@@ -212,6 +218,7 @@ public sealed partial class AppController
             case InputAction.NavigateLeft: modal.ShiftColumns(-TextPreviewModal.ColumnStep); break;
             case InputAction.NavigateRight: modal.ShiftColumns(TextPreviewModal.ColumnStep); break;
             case InputAction.Confirm: modal.Monospace = !modal.Monospace; break;
+            case InputAction.OpenContextMenu: BeginTextEdit(modal); break;
         }
     }
 

@@ -80,7 +80,7 @@ public static class TextPreview
             $"Prévia parcial: mostrando as primeiras {document.Lines.Count:N0} linhas de um arquivo de {size}. Abra com o aplicativo padrão para ver tudo.");
     }
 
-    private static (Encoding? Encoding, string Name, int Preamble) Detect(ReadOnlySpan<byte> bytes)
+    internal static (Encoding? Encoding, string Name, int Preamble) Detect(ReadOnlySpan<byte> bytes)
     {
         if (bytes.StartsWith((ReadOnlySpan<byte>)[0xEF, 0xBB, 0xBF])) return (StrictUtf8, "UTF-8 com BOM", 3);
         if (bytes.StartsWith((ReadOnlySpan<byte>)[0xFF, 0xFE])) return (Encoding.Unicode, "UTF-16 LE", 2);
@@ -137,7 +137,7 @@ public static class TextPreview
     }
 
     /// <summary>Muitos caracteres de controle (fora tabulação, quebras de linha, form feed e ESC): não é texto.</summary>
-    private static bool LooksBinary(string text)
+    internal static bool LooksBinary(string text)
     {
         if (text.Length == 0) return false;
         var sample = text.AsSpan(0, Math.Min(text.Length, 64 * 1024));
@@ -161,7 +161,7 @@ public static class TextPreview
         }
     }
 
-    private static string ExpandTabs(string line)
+    public static string ExpandTabs(string line)
     {
         if (!line.Contains('\t', StringComparison.Ordinal)) return line;
         var sb = new StringBuilder(line.Length + 16);

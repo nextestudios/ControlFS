@@ -566,6 +566,17 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Legível e sem cortes em 1280×720/800 (portátil), 1080p e 4K; um menu (Norte) por cima não esconde o vídeo nem
       rouba o foco de um diálogo.
 
+## Edição de texto (#62) — não validado em hardware
+
+- [ ] Com o controle: num `.ini` do Bloco de Notas (UTF-8 com BOM, CRLF), Norte → Editando; Sul na linha abre o teclado
+      com o texto; Concluir troca a linha; Norte insere/apaga/desfaz; Start → Salvar. Abrir no Bloco de Notas: só a linha
+      mudou, acentos e quebras iguais; `config.ini.controlfs.bak` tem o original.
+- [ ] ANSI (Windows-1252) com acentos e um arquivo UTF-16: salvar mantém a codificação.
+- [ ] Voltar com alterações pergunta (foco em "Continuar editando"); Descartar não grava nada.
+- [ ] Editar no ControlFS, mudar o arquivo no Bloco de Notas e salvar no ControlFS: aparece "O arquivo mudou no disco".
+- [ ] Arquivo somente leitura, `.exe` pelo menu "Visualizar como texto" e um log de 5 MB: edição recusada com o motivo.
+- [ ] Faixa da linha em foco visível a ~3 m em 1080p/4K e em 1280×720.
+
 ## Visualização de texto (#58)
 
 - [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem
