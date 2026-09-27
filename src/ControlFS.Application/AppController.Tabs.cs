@@ -21,6 +21,7 @@ public sealed partial class AppController
         PhysicalLocation physical => FolderLabel(physical.FullPath),
         ArchiveLocation archive => Path.GetFileName(archive.ArchivePath),
         SearchLocation search => $"Busca: {search.Query}",
+        RecycleBinLocation => "Lixeira",
         _ => "Nova aba",
     };
 
