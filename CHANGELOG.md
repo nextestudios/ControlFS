@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.7.0-alpha.1]
 ### Melhorias
 - **Lista no novo visual (redesenho, fase C)**: a lista fica num cartão com cabeçalho de colunas (caixa de marcação · Nome · Tipo · Tamanho · Modificado em) e a seta da ordenação atual na coluna ordenada (↑ crescente, ↓ decrescente), a mesma do Menu → Ordenar por/Ordem; com mouse, clicar num título ordena por ele e clicar de novo inverte, e a caixa do cabeçalho marca todos ou limpa. Linhas altas para TV e controle, com a caixa de marcação (o foco nunca marca), ícone do Windows, nome, tipo, tamanho, data amigável ("Hoje, 14:32", "Ontem, 18:05", senão "25/09/2026, 20:11") e a seta nas pastas; a linha focada tem fundo azul, borda ciano e a seta em destaque. No início, as pastas do Windows aparecem como "Pasta do sistema" com o tamanho real (a mesma soma dos cartões da grade, com "Calculando…"). A densidade compacta continua, com linhas baixas nas mesmas colunas; sem espaço, a coluna de tipo sai primeiro.
 - **Painel de detalhes** à direita da lista, visível por padrão: ícone grande do Windows, nome, tipo e dados reais do item focado. Pasta: caminho, quantos itens e quanto espaço há dentro ("Calculando…" enquanto soma, em segundo plano e só da pasta focada); arquivo: caminho, tamanho e data; imagem: miniatura, formato e dimensões (mesmo decodificador e limites da visualização); compactado: formato pelo conteúdo e quantos arquivos há (ZIP e 7z, sem extrair); unidade: sistema de arquivos, capacidade, livre, usado e a barra de uso; dentro de um compactado e na Lixeira, o local no compactado ou o local original. Com itens marcados, o painel diz quantos e quanto somam. Em portáteis e janelas estreitas o painel sai para a lista não ficar espremida (os mesmos dados continuam em Ações → Propriedades).
@@ -11,6 +13,10 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ### Correções
 - Abrir outra pasta (ou um compactado) sem um item escolhido agora foca o primeiro item, em vez de manter a posição da lista anterior ou pular para um item com o mesmo nome. Voltar e subir continuam focando o item de onde se veio.
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
 
 ## [0.6.0-alpha.1]
 ### Melhorias

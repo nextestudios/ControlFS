@@ -13,7 +13,7 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.6.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.6.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.7.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.7.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
