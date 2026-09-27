@@ -3,12 +3,19 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.6.0-alpha.1]
 ### Melhorias
 - **Novo visual, primeira etapa do redesenho**: paleta azul-marinho com foco ciano (borda, fundo azul e um halo discreto, com transição curta) e rodapé maior, com as ações sempre na mesma ordem (Abrir · Voltar · Marcar · Ações · Menu · Buscar · Lista/Grade) e as cores das faces do Xbox nos glifos (A verde, B vermelho, X azul, Y amarelo). **R3** (apertar o analógico direito) alterna lista e grade, como Ctrl+G e Menu → Exibição; o rodapé mostra o destino: "Grade" na lista, "Lista" na grade.
 - **Barra superior e cabeçalho novos**: o logo com o nome aparece em todas as telas, com as abas ao lado (RB). Abaixo, uma barra única mostra o caminho real com um botão raiz ("Locais › Início" no início, "Meu computador › C:\ › …" nas pastas) e o acesso rápido: Favoritos, Arquivos recentes, as pastas do Windows, Meu computador e Lixeira, com os ícones do Windows. LB leva o foco à barra (numa pasta, na pasta de cima; no início, em Favoritos), esquerda/direita andam do caminho para os atalhos e Sul abre na mesma aba, com histórico.
 - **Início em grade com cartões**: "Pastas principais" com o ícone do Windows, o caminho real e quantos itens e quanto espaço há dentro (calculado em segundo plano, com "Calculando…", sem travar a tela e guardado por 10 minutos), e "Unidades e dispositivos" com barra de uso, "X livres de Y" e o sistema de arquivos. Favoritos ganham uma seção própria; Recentes e Lixeira ficam em "Outros locais". As colunas acompanham a largura (3 em 1080p, 2 no portátil, 1 em janela estreita) e o direcional passa de uma seção para a outra. Tamanhos agora sempre no formato brasileiro ("698,5 GB").
 - **Meu computador** virou uma tela própria: as unidades numa aba (cartões na grade, linhas na lista), com histórico; Propriedades de uma unidade mostram capacidade, livre, usado e sistema de arquivos. Antes, Meu computador voltava ao início.
 - **Grade em cartões** nas pastas, na busca, nos compactados e na Lixeira, no mesmo desenho do início: ícone grande, nome, tipo e tamanho, estados (marcado, recortado, com senha) ou a pasta do resultado da busca, e a seta nas pastas. As colunas acompanham a largura (3 em 1080p, 2 no portátil, 1 em janela estreita, 4 numa TV 4K).
+
+### Limitações conhecidas
+- Redesign em andamento: o modo **Lista** com painel de detalhes chega na próxima versão; nesta, a Lista mantém o visual anterior.
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
 
 ## [0.5.0-alpha.1]
 ### Novidades

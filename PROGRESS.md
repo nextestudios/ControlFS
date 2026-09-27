@@ -30,6 +30,15 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Redesign: nova interface e modo Grade (0.6.0-alpha.1)
+
+- Fase A (PRs #159, #160): matriz de regressão em `docs/ui-redesign.md`, paleta nova, cabeçalho com logo, barra superior
+  (caminho real + acesso rápido), rodapé com prompts coloridos, R3 alterna Grade/Lista.
+- Fase B (PRs #161, #162): Início em cartões (Pastas principais com contagem e tamanho reais calculados em segundo plano,
+  Unidades e dispositivos com barra de uso), Meu computador como tela própria, cartões em pastas, busca, compactados e Lixeira.
+- Evidência (CI Windows, 2026-09-27): testes unitários/jornadas e de integração Windows; capturas renderizadas em 720p,
+  1080p e 4K conferidas contra a referência. Próximo: fase C (Lista + painel de detalhes).
+
 ## Itens Should do roadmap (0.5.0-alpha.1)
 
 - Resolvidas: #20, #21, #22, #25, #26, #29, #40, #44, #47, #49, #50, #54, #55, #57, #58, #63, #64, #66, #68, #69, #80, #83,
