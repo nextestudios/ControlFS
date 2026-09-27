@@ -14,6 +14,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Favoritos**: fixe pastas pelo menu de ações (Norte → "Adicionar aos favoritos"). Elas aparecem primeiro na tela inicial e em "Ir para outro local" do seletor de pastas, podem ser reordenadas no início e ficam salvas nas preferências (inclusive no modo portátil). Uma favorita que sumiu aparece como indisponível e só sai da lista se você mandar. (#48)
 - **Tentar de novo só as falhas**: no resultado de uma cópia, movimentação, exclusão ou extração, refaz apenas os itens que falharam ou não foram processados; o que já deu certo nunca é refeito. Itens interrompidos por cancelamento agora aparecem como "não processados". (#19)
 - **Ícones nativos do Windows** na lista (início, pastas, seletor e compactados): tipos de arquivo, pastas, pastas especiais e unidades. Os ícones carregam em segundo plano, sem travar a rolagem, e acompanham a escala da tela; nenhum emoji na lista. (#24)
+- **Cursor visível** no teclado virtual (barra fixa na cor de destaque, posição lida pelo Narrador) e **LT/RT** (ou Home/End) para ir ao início ou ao fim do texto. (#43)
 
 ### Melhorias
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)

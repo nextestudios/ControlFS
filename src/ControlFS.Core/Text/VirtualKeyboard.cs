@@ -129,6 +129,8 @@ public sealed class VirtualKeyboard
             case InputAction.OpenContextMenu: ToggleShift(); return true;
             case InputAction.PreviousRegion: MoveCaret(-1); return true;
             case InputAction.NextRegion: MoveCaret(1); return true;
+            case InputAction.PageUp: MoveCaretToStart(); return true;
+            case InputAction.PageDown: MoveCaretToEnd(); return true;
             case InputAction.OpenAppMenu: Submit(); return true;
             case InputAction.Search: SetPage(Page == KeyboardPage.Letters ? KeyboardPage.Symbols : KeyboardPage.Letters); return true;
             default: return false;
@@ -225,6 +227,12 @@ public sealed class VirtualKeyboard
         if (delta > 0 && target < _length && char.IsLowSurrogate(_buffer[target])) target++;
         Caret = target;
     }
+
+    /// <summary>Leva o cursor ao início do texto. Não altera texto, página nem maiúsculas.</summary>
+    public void MoveCaretToStart() => Caret = 0;
+
+    /// <summary>Leva o cursor ao fim do texto. Não altera texto, página nem maiúsculas.</summary>
+    public void MoveCaretToEnd() => Caret = _length;
 
     public void Submit()
     {
