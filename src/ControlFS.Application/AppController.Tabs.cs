@@ -148,6 +148,7 @@ public sealed partial class AppController
         var items = new List<MenuItem>
         {
             new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
+            new("Duplicar aba", () => DuplicateTab(index), NewTabUnavailable, Detail: "Mesma pasta e histórico numa aba nova, sem as marcações.", Icon: ActionIcon.Copy),
             new("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
             new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable,
                 Detail: _closedTabs.Count > 0 ? $"\"{TabTitle(_closedTabs[^1].Tab)}\", com o histórico dela." : null, Icon: ActionIcon.Undo),
@@ -284,5 +285,44 @@ public sealed partial class AppController
         if (tab.Location is PhysicalLocation) Refresh(tab);
         Screen = tab.Location is null ? Screen.Home : Screen.Browser;
         StatusMessage = $"Aba \"{TabTitle(tab)}\" reaberta ({ActiveTab + 1} de {_tabs.Count}).";
+    }
+
+    // ---------- Duplicar aba (#53) ----------
+
+    /// <summary>
+    /// Abre, logo depois de <paramref name="index"/>, uma aba no mesmo local, com cópia do histórico (Voltar/Avançar
+    /// independentes) e o foco no mesmo item, mas sem as marcações. Resultados de busca não são copiados: a cópia abre
+    /// na pasta de onde a busca partiu.
+    /// </summary>
+    internal void DuplicateTab(int index)
+    {
+        if (NewTabUnavailable is { } reason)
+        {
+            StatusMessage = reason;
+            return;
+        }
+        if (index < 0 || index >= _tabs.Count) return;
+        var source = _tabs[index];
+        Location? target = source.Location is SearchLocation or RecycleBinLocation or null ? source.LastValidPhysical : source.Location;
+        if (target is null)
+        {
+            StatusMessage = "Esta aba ainda não tem uma pasta para duplicar.";
+            return;
+        }
+        var copy = new PaneState(PaneMode.Browse)
+        {
+            LastValidPhysical = source.LastValidPhysical,
+            Archive = source.Archive, // somente leitura: pode ser compartilhada
+            ArchivePassword = source.ArchivePassword,
+        };
+        foreach (var entry in source.Back.Reverse()) copy.Back.Push(entry);
+        foreach (var entry in source.Forward.Reverse()) copy.Forward.Push(entry);
+        copy.List.SetSort(source.List.Sort);
+        Browser.Region = PaneRegion.List;
+        _tabs.Insert(index + 1, copy);
+        ActiveTab = index + 1;
+        Screen = Screen.Browser;
+        Track(NavigateAsync(copy, target, pushHistory: false, focusId: target == source.Location ? source.List.FocusedId : null));
+        StatusMessage = $"Aba duplicada ({ActiveTab + 1} de {_tabs.Count}).";
     }
 }

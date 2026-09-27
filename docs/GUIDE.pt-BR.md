@@ -84,7 +84,7 @@ Cada aba guarda a própria pasta, histórico, itens marcados e foco. Com duas ou
 
 Com duas ou mais abas abertas, a próxima abertura do ControlFS traz as mesmas abas, na mesma ordem e na aba que estava ativa (compactados e buscas voltam na pasta de onde vieram). Se a pasta de uma aba sumiu ou a unidade está desconectada, a aba aparece como "(indisponível)" e mostra o início com um aviso; abrir outro local nela a reaproveita. Menu → Configurações → **Restaurar abas ao abrir** desliga (e apaga a lista guardada).
 
-Fechou uma aba sem querer? Menu → **Reabrir aba fechada** (ou Norte na faixa de abas) a traz de volta na mesma posição, com a pasta e o histórico dela; repita para reabrir as anteriores (até 10 por sessão).
+Fechou uma aba sem querer? Menu → **Reabrir aba fechada** (ou Norte na faixa de abas) a traz de volta na mesma posição, com a pasta e o histórico dela; repita para reabrir as anteriores (até 10 por sessão). **Duplicar aba** (no mesmo menu) abre ao lado uma cópia da aba: mesma pasta, mesmo item focado e o mesmo histórico, sem as marcações.
 
 ## A lista
 

@@ -227,4 +227,41 @@ public class TabsJourneyTests : IDisposable
         var menu = await d.WaitMenu();
         Assert.False(menu.Items.Single(i => i.Label == "Reabrir aba fechada").IsEnabled);
     });
+
+    [Fact]
+    public void A_duplicated_tab_copies_location_history_and_focus_but_not_the_marks() => UiContext.Run(async () =>
+    {
+        var music = _tmp.MakeDir("Músicas");
+        var rock = _tmp.MakeDir("Músicas", "Rock");
+        File.WriteAllText(Path.Join(rock, "a.mp3"), "a");
+        File.WriteAllText(Path.Join(rock, "b.mp3"), "b");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("Músicas");
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("Rock");
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("a.mp3");
+        d.Press(InputAction.ToggleSelection);
+        await d.FocusItem("b.mp3");
+
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Abas");
+        await d.ChooseMenu("Duplicar aba");
+        await d.Idle();
+        Assert.Equal((2, 1), (app.Tabs.Count, app.ActiveTab));
+        Assert.Equal(rock, ((PhysicalLocation)app.Browser.Location!).FullPath);
+        Assert.Equal("b.mp3", app.Browser.List.Focused?.Name);
+        Assert.Equal(0, app.Browser.List.SelectionCount);
+
+        // Histórico copiado mas independente: Voltar na cópia vai a Músicas; a aba original continua em Rock, marcada.
+        d.Press(InputAction.Back);
+        await d.Idle();
+        Assert.Equal(music, ((PhysicalLocation)app.Browser.Location!).FullPath);
+        Assert.Equal(rock, ((PhysicalLocation)app.Tabs[0].Location!).FullPath);
+        Assert.Equal(["a.mp3"], app.Tabs[0].List.SelectedEntries.Select(e => e.Name));
+        Assert.True(app.Tabs[0].CanGoBack);
+    });
 }
