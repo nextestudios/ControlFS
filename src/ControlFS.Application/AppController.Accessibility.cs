@@ -25,7 +25,10 @@ public sealed partial class AppController
                 var item = menu.Items[Math.Clamp(menu.FocusIndex, 0, menu.Items.Count - 1)];
                 var state = (item.IsDestructive ? ", ação perigosa" : string.Empty) + (item.IsEnabled ? string.Empty : ", indisponível" + (item.DisabledReason is { } why ? ": " + why : string.Empty));
                 var detail = item.Detail is { Length: > 0 } d ? ", " + d : string.Empty;
-                return new($"Menu {menu.Title}", $"{item.Label}{state}{detail}, {Position(menu.FocusIndex, menu.Items.Count)}");
+                // Grade: "ação rápida 2 de 8"; lista: a posição entre os itens da lista (os blocos contam à parte).
+                var spot = menu.IsQuick(menu.FocusIndex) ? "ação rápida " + Position(menu.FocusIndex, menu.QuickCount)
+                    : Position(menu.FocusIndex - menu.QuickCount, menu.Items.Count - menu.QuickCount);
+                return new($"Menu {menu.Title}", $"{item.Label}{state}{detail}, {spot}");
             case DialogModal dialog:
                 var body = string.Join(" ", dialog.Lines.Select(l => $"{l.Label}: {l.Value}.").Append(dialog.Message ?? string.Empty).Where(t => t.Length > 0));
                 var context = Sentence($"Diálogo {dialog.Title}", body);

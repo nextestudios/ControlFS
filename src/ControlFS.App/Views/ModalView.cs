@@ -118,7 +118,7 @@ public static partial class ModalView
         var screen = $"{Theme.Viewport.Width:0}x{Theme.Viewport.Height:0}|{Theme.Layout.Tier}|{Theme.SolidSurfaces}|{modal.Title}|{modal.Subtitle}|{modal.Icon}";
         return modal switch
         {
-            MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}")),
+            MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}|{i.Placement}|{i.TileLabel}")),
             DialogModal dialog => dialog.Progress is not null ? null : screen + "|d|" + dialog.Message + "|"
                 + string.Join("\u0001", dialog.Lines.Select(l => l.Label + "=" + l.Value)) + "|"
                 + string.Join("\u0001", dialog.Options.Select(o => $"{o.Label}|{o.Kind}|{o.IsChecked}|{o.Icon}|{o.IsDestructive}")),
@@ -132,20 +132,24 @@ public static partial class ModalView
 
     private static double PanelPadding => Theme.Space(28);
 
+    /// <summary>Menus (#193): painel mais justo que o dos diálogos, para caber em 1280×720 sem rolar.</summary>
+    private static double MenuPadding => Theme.Space(20);
+
     private static double PanelMargin => Theme.SpaceM;
 
     /// <summary>
     /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela) e, embaixo, o aviso do rodapé (se
     /// houver) e as legendas do controle em uso. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
     /// </summary>
-    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null)
+    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null, bool compact = false)
     {
-        var grid = new Grid { RowSpacing = Theme.SpaceM };
+        var padding = compact ? MenuPadding : PanelPadding;
+        var grid = new Grid { RowSpacing = compact ? Theme.Space(12) : Theme.SpaceM };
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         // Cabeçalho separado do corpo por um fio: o conteúdo que rola nunca encosta no título.
-        var top = new StackPanel { Spacing = Theme.SpaceM };
+        var top = new StackPanel { Spacing = compact ? Theme.Space(12) : Theme.SpaceM };
         top.Children.Add(header);
         top.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider });
         grid.Children.Add(top);
@@ -177,7 +181,7 @@ public static partial class ModalView
             BorderBrush = Theme.ModalEdge,
             BorderThickness = Theme.Hairline,
             CornerRadius = Theme.ModalRadius,
-            Padding = new Thickness(PanelPadding, PanelPadding - Theme.SpaceXs, PanelPadding, Theme.Space(20)),
+            Padding = compact ? new Thickness(padding, padding - Theme.SpaceXs, padding, Theme.Space(14)) : new Thickness(padding, padding - Theme.SpaceXs, padding, Theme.Space(20)),
             MaxWidth = Math.Min(Theme.Scaled(maxWidth), Theme.Viewport.Width - (2 * PanelMargin)),
             MaxHeight = Theme.Viewport.Height - (2 * PanelMargin),
             MinWidth = Math.Min(Theme.Scaled(minWidth), Theme.Viewport.Width - (2 * PanelMargin)),
@@ -190,34 +194,34 @@ public static partial class ModalView
     }
 
     /// <summary>Cabeçalho: ícone num selo com o tom do modal, título (id estável para o UIA) e a linha de contexto.</summary>
-    private static Grid Header(string title, ActionIcon icon, string? subtitle = null)
+    private static Grid Header(string title, ActionIcon icon, string? subtitle = null, bool compact = false)
     {
-        var grid = new Grid { ColumnSpacing = Theme.SpaceM };
+        var grid = new Grid { ColumnSpacing = compact ? Theme.Space(12) : Theme.SpaceM };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         if (icon != ActionIcon.None)
         {
             var tone = ToneBrush(icon);
-            var size = Theme.Scaled(46);
+            var size = Theme.Scaled(compact ? 38 : 46);
             grid.Children.Add(new Border
             {
                 Width = size,
                 Height = size,
-                CornerRadius = new CornerRadius(Theme.Scaled(13)),
+                CornerRadius = new CornerRadius(Theme.Scaled(compact ? 11 : 13)),
                 Background = new SolidColorBrush(WithAlpha(tone.Color, 0x2E)),
                 VerticalAlignment = VerticalAlignment.Top,
-                Child = Glyph(icon, Theme.Font(22), tone),
+                Child = Glyph(icon, Theme.Font(compact ? 19 : 22), tone),
             });
         }
         var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = Theme.Space(2) };
         var heading = new TextBlock
         {
             Text = title,
-            FontSize = Theme.FontTitle,
+            FontSize = compact ? Theme.Font(22) : Theme.FontTitle,
             FontWeight = FontWeights.SemiBold,
             Foreground = Theme.Text,
             TextWrapping = TextWrapping.Wrap,
-            MaxLines = 3,
+            MaxLines = compact ? 2 : 3,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         AutomationProperties.SetAutomationId(heading, TitleId);
@@ -230,7 +234,7 @@ public static partial class ModalView
         return grid;
     }
 
-    private static Grid Header(Modal modal) => Header(modal.Title, modal.Icon, modal.Subtitle);
+    private static Grid Header(Modal modal, bool compact = false) => Header(modal.Title, modal.Icon, modal.Subtitle, compact);
 
     /// <summary>Cor do selo do cabeçalho: erro vermelho, aviso âmbar, sucesso verde; o resto, o ciano do tema.</summary>
     private static SolidColorBrush ToneBrush(ActionIcon icon) => icon switch
@@ -332,24 +336,24 @@ public static partial class ModalView
     /// vermelho, se perigosa), texto escuro em negrito e um pouco maior — nunca depende só da cor. Perigosa: vermelha e
     /// com o símbolo de alerta no fim da linha. Indisponível: esmaecida; focada, diz o motivo.
     /// </summary>
-    private static Border Row(string label, string glyph, bool focused, bool enabled, bool destructive, Action onTap, string? secondary = null)
+    private static Border Row(string label, string glyph, bool focused, bool enabled, bool destructive, Action onTap, string? secondary = null, bool compact = false)
     {
         var fill = !focused ? Theme.Transparent : !enabled ? Theme.DisabledFill : destructive ? Theme.DangerFill : Theme.FocusFill;
         var ink = focused && enabled ? Theme.FocusText : !enabled ? Theme.TextDisabled : destructive ? Theme.Danger : Theme.Text;
         var iconInk = focused && enabled ? Theme.FocusText : !enabled ? Theme.TextDisabled : destructive ? Theme.Danger : Theme.Accent;
         if (focused && !enabled) ink = iconInk = Theme.TextMuted;
 
-        var grid = new Grid { ColumnSpacing = Theme.Space(14) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Theme.Scaled(28)) });
+        var grid = new Grid { ColumnSpacing = Theme.Space(compact ? 12 : 14) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Theme.Scaled(compact ? 24 : 28)) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        if (glyph.Length > 0) grid.Children.Add(Glyph(glyph, Theme.Font(20), iconInk));
+        if (glyph.Length > 0) grid.Children.Add(Glyph(glyph, Theme.Font(compact ? 18 : 20), iconInk));
 
         var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         var text = new TextBlock
         {
             Text = label,
-            FontSize = Theme.FontItem,
+            FontSize = compact ? Theme.FontBody : Theme.FontItem,
             FontWeight = focused ? FontWeights.SemiBold : FontWeights.Normal,
             Foreground = ink,
             TextWrapping = TextWrapping.Wrap,
@@ -380,9 +384,9 @@ public static partial class ModalView
             Child = grid,
             Background = fill,
             CornerRadius = Theme.RowRadius,
-            Padding = new Thickness(Theme.Space(14), Theme.Space(11), Theme.Space(14), Theme.Space(11)),
+            Padding = compact ? new Thickness(Theme.Space(12), Theme.Space(7), Theme.Space(12), Theme.Space(7)) : new Thickness(Theme.Space(14), Theme.Space(11), Theme.Space(14), Theme.Space(11)),
             Margin = new Thickness(0, 1, 0, 1),
-            MinHeight = Theme.Scaled(52),
+            MinHeight = Theme.Scaled(compact ? 42 : 52),
         };
         if (focused)
         {
@@ -398,8 +402,8 @@ public static partial class ModalView
     /// <summary>Título de um grupo de opções, com a linha que o separa do grupo anterior.</summary>
     private static StackPanel SectionHeading(string? title, bool first)
     {
-        var section = new StackPanel { Spacing = Theme.SpaceXs, Margin = new Thickness(Theme.Space(14), first ? 0 : Theme.SpaceS, 0, Theme.Space(2)) };
-        if (!first) section.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider, Margin = new Thickness(-Theme.Space(14), 0, 0, Theme.SpaceXs) });
+        var section = new StackPanel { Spacing = Theme.Space(2), Margin = new Thickness(Theme.Space(12), first ? 0 : Theme.Space(6), 0, Theme.Space(2)) };
+        if (!first) section.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider, Margin = new Thickness(-Theme.Space(12), 0, 0, Theme.Space(2)) });
         if (title is { Length: > 0 })
         {
             var heading = new TextBlock
@@ -416,15 +420,45 @@ public static partial class ModalView
         return section;
     }
 
+    /// <summary>
+    /// Menu (#193): grade de ações rápidas no topo (blocos com ícone e rótulo curto, 2D) e, abaixo, a lista compacta das
+    /// demais opções, em grupos. Sob a grade, uma linha diz o nome completo do bloco focado, o que ele faz ou por que está
+    /// indisponível. Mantido na tela: mudar o foco troca só o bloco/linha que perde e o que ganha o foco (e essa linha).
+    /// </summary>
     private static Border BuildMenu(AppController app, MenuModal menu, out Action update)
     {
         var stack = new StackPanel();
+        var quick = menu.QuickCount;
+        var tiles = new Grid { ColumnSpacing = Theme.SpaceS, RowSpacing = Theme.SpaceS };
+        TextBlock? caption = null;
+        if (quick > 0)
+        {
+            for (var c = 0; c < menu.QuickColumns; c++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (var r = 0; r < menu.QuickRows; r++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var i = 0; i < quick; i++) tiles.Children.Add(MenuTile(app, menu, i));
+            stack.Children.Add(tiles);
+            caption = new TextBlock
+            {
+                FontSize = Theme.FontCaption,
+                Foreground = Theme.TextMuted,
+                TextWrapping = TextWrapping.Wrap,
+                MaxLines = 2,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MinHeight = Math.Ceiling(Theme.FontCaption * 1.4),
+                Margin = new Thickness(Theme.Space(4), Theme.SpaceS, Theme.Space(4), 0),
+            };
+            AutomationProperties.SetAccessibilityView(caption, AccessibilityView.Raw); // o Narrador já ouve o anúncio do foco
+            stack.Children.Add(caption);
+        }
         var positions = new int[menu.Items.Count];
         string? section = null;
-        for (var i = 0; i < menu.Items.Count; i++)
+        for (var i = quick; i < menu.Items.Count; i++)
         {
             var item = menu.Items[i];
-            if (item.Section != section && (i > 0 || item.Section is not null)) stack.Children.Add(SectionHeading(item.Section, first: i == 0));
+            // Grupo novo: título e fio. Logo abaixo da grade sempre há o fio separando as duas partes; no topo de um menu
+            // sem grade, só o título (se houver).
+            var heading = i == quick ? quick > 0 || item.Section is not null : item.Section != section;
+            if (heading) stack.Children.Add(SectionHeading(item.Section, first: i == 0));
             section = item.Section;
             positions[i] = stack.Children.Count;
             stack.Children.Add(MenuRow(app, menu, i));
@@ -432,28 +466,104 @@ public static partial class ModalView
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
         Border? footer = null;
-        var card = Panel(app, Header(menu), stack, 600, minWidth: 460, footerSink: f => footer = f);
+        var width = quick > 0 ? 500 : 460;
+        var card = Panel(app, Header(menu, compact: true), stack, width, minWidth: Math.Min(width, 400), footerSink: f => footer = f, compact: true);
+        if (caption is not null) caption.Text = TileCaption(menu);
         var shown = menu.FocusIndex;
+        void Replace(int index)
+        {
+            if (index < 0 || index >= positions.Length) return;
+            if (menu.IsQuick(index)) tiles.Children[index] = MenuTile(app, menu, index);
+            else stack.Children[positions[index]] = MenuRow(app, menu, index);
+        }
         update = () =>
         {
             var now = menu.FocusIndex;
             if (now != shown)
             {
-                if (shown >= 0 && shown < positions.Length) stack.Children[positions[shown]] = MenuRow(app, menu, shown);
-                if (now >= 0 && now < positions.Length) stack.Children[positions[now]] = MenuRow(app, menu, now);
+                Replace(shown);
+                Replace(now);
                 shown = now;
+                if (caption is not null) caption.Text = TileCaption(menu);
             }
             if (footer is not null) footer.Child = Footer(app);
         };
         return card;
     }
 
+    /// <summary>Linha sob a grade: o nome completo do bloco focado e o que ele faz (ou o motivo de estar indisponível).</summary>
+    private static string TileCaption(MenuModal menu)
+    {
+        if (!menu.IsQuick(menu.FocusIndex)) return string.Empty;
+        var item = menu.Items[menu.FocusIndex];
+        var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
+        return item.Label + (about is { Length: > 0 } ? " · " + about : string.Empty);
+    }
+
+    /// <summary>
+    /// Bloco da grade: ícone grande e o rótulo curto visível embaixo (legível de longe; nada só em dica de mouse). Focado:
+    /// preenchido (ciano; vermelho se perigoso; cinza se indisponível), texto escuro em negrito e um pouco maior. Perigoso:
+    /// ícone e texto vermelhos. Indisponível: esmaecido.
+    /// </summary>
+    private static Border MenuTile(AppController app, MenuModal menu, int index)
+    {
+        var item = menu.Items[index];
+        var focused = index == menu.FocusIndex;
+        var enabled = item.IsEnabled;
+        var destructive = item.IsDestructive;
+        var fill = !focused ? Theme.ModalInset : !enabled ? Theme.DisabledFill : destructive ? Theme.DangerFill : Theme.FocusFill;
+        var ink = focused && enabled ? Theme.FocusText : !enabled ? (focused ? Theme.TextMuted : Theme.TextDisabled) : destructive ? Theme.Danger : Theme.Text;
+        var iconInk = focused && enabled ? Theme.FocusText : !enabled ? (focused ? Theme.TextMuted : Theme.TextDisabled) : destructive ? Theme.Danger : Theme.Accent;
+
+        var content = new StackPanel { Spacing = Theme.Space(6), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        content.Children.Add(Glyph(ActionIcons.Glyph(item.Icon), Theme.Font(24), iconInk));
+        var text = new TextBlock
+        {
+            Text = item.TileLabel,
+            FontSize = Theme.Font(16),
+            FontWeight = focused ? FontWeights.SemiBold : FontWeights.Normal,
+            Foreground = ink,
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            TextWrapping = TextWrapping.WrapWholeWords,
+            MaxLines = 2,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        if (focused)
+        {
+            AutomationProperties.SetAutomationId(text, FocusedOptionId);
+            AutomationProperties.SetName(text, item.Label);
+        }
+        content.Children.Add(text);
+
+        var tile = new Border
+        {
+            Child = content,
+            Background = fill,
+            CornerRadius = Theme.RowRadius,
+            Padding = new Thickness(Theme.Space(6), Theme.Space(10), Theme.Space(6), Theme.Space(8)),
+            MinHeight = Theme.Scaled(78),
+        };
+        Grid.SetRow(tile, index / menu.QuickColumns);
+        Grid.SetColumn(tile, index % menu.QuickColumns);
+        if (focused)
+        {
+            tile.RenderTransformOrigin = new Point(0.5, 0.5);
+            tile.RenderTransform = new ScaleTransform { ScaleX = 1.05, ScaleY = 1.05 };
+            KeepInView(tile);
+        }
+        AutomationProperties.SetName(tile, item.Label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty));
+        tile.Tapped += (_, _) => app.PointerChooseModalOption(index);
+        return tile;
+    }
+
+    /// <summary>Linha compacta da lista; a linha secundária (o que faz, ou por que está indisponível) só na focada.</summary>
     private static Border MenuRow(AppController app, MenuModal menu, int index)
     {
         var item = menu.Items[index];
         var focused = index == menu.FocusIndex;
-        var secondary = !item.IsEnabled && focused ? "Indisponível: " + item.DisabledReason : item.Detail;
-        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), secondary);
+        var secondary = !focused ? null : !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
+        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), secondary, compact: true);
     }
 
     // ---------- Diálogos ----------

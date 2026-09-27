@@ -40,7 +40,7 @@ public class BatchExtractionJourneyTests : IDisposable
         }
         d.Press(InputAction.OpenContextMenu);
         var menu = await d.WaitMenu();
-        Assert.StartsWith("Extrair cada um para a própria pasta (3)", menu.Items[0].Label, StringComparison.Ordinal); // notas.txt fica de fora
+        Assert.StartsWith("Extrair cada um para a própria pasta (3)", menu.Items[menu.FocusIndex].Label, StringComparison.Ordinal); // foco inicial; notas.txt fica de fora
         d.Press(InputAction.Confirm);
         d.ChooseOption(await d.WaitDialog("Extrair 3 compactados"), "Extrair");
 

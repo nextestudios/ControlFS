@@ -25,8 +25,8 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
 | R3 (pressionar analógico direito) | Lista ↔ grade (`ChangeView`) | Ctrl+G |
 
-"Confirmar com botão direito" (menu do app) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
-Guide/Home não é mapeado. L3 não é usado; R3 troca lista ↔ grade (também Ctrl+G e Menu → Exibição). Joysticks sem
+"Confirmar com botão direito" (Menu → Configurações) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
+Guide/Home não é mapeado. L3 não é usado; R3 troca lista ↔ grade (também Ctrl+G e Menu → Configurações → Exibição). Joysticks sem
 perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
 
 ## Regras implementadas e testadas (unitário)
@@ -157,6 +157,20 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
   físico nunca fica sem destino).
 - Após criar pasta: foco na pasta criada. Ao sair de um compactado ou subir de nível: foco no item de origem.
 - Diálogos destrutivos iniciam na opção segura; conflito inicia em "Pular (manter existente)".
+- Menus com ações rápidas (#193): uma grade de blocos no topo (`MenuItem.Placement = Quick`, decidido no
+  `AppController`; até 4 por linha, blocos perigosos no fim) e a lista das demais opções abaixo.
+  - Na grade: **Esquerda/Direita** andam entre os blocos da linha e **param nas pontas** (não fecham o menu nem
+    escolhem); **Baixo** desce uma linha e, da última, entra no primeiro item da lista (sem lista: volta à primeira
+    linha, mesma coluna); **Cima** sobe uma linha e, da primeira, dá a volta para o último item da lista (sem lista: vai
+    à última linha).
+  - Na lista: Cima/Baixo como sempre (dá a volta: do último item para o primeiro bloco); **Cima no primeiro item** sobe
+    para a última linha da grade, na coluna de onde o foco saiu. Direita escolhe e Esquerda fecha, como antes.
+  - LT/RT (PageUp/PageDown): primeiro bloco / último item. Confirmar escolhe; Voltar fecha; o rodapé não muda.
+  - Foco inicial: o primeiro item que o `AppController` passou (ou `FocusOn`), nunca um perigoso (`SafeInitialFocus`).
+  - Narrador: "rótulo completo, estado (ação perigosa / indisponível: motivo), ação rápida N de M"; na lista, a posição
+    conta só os itens da lista. Mouse/toque num bloco escolhe (mesmo caminho de `PointerChooseModalOption`).
+  - Configurações (Menu → Configurações…): opções `KeepOpen` aplicam o ajuste e o menu continua aberto com o texto novo
+    e o foco no mesmo ajuste; opções com tela própria fecham Configurações. Coberto por `ModalSystemJourneyTests`.
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas
   `Gamepad*` do WinUI são descartadas para evitar entrada dupla com o SDL.
 

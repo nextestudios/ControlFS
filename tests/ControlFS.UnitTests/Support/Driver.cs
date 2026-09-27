@@ -41,13 +41,42 @@ public sealed class Driver(AppController app)
         return (KeyboardModal)App.TopModal!;
     }
 
+    /// <summary>
+    /// Escolhe a opção que começa com <paramref name="labelStart"/> só com setas e Confirmar. Ajustes que moram em
+    /// Menu → Configurações (#193) são procurados lá quando o Menu não os tem; alternar um ajuste mantém Configurações
+    /// aberto, então o driver fecha (Voltar), como quem ajusta e volta à pasta.
+    /// </summary>
     public async Task ChooseMenu(string labelStart)
     {
         var menu = await WaitMenu();
-        var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(labelStart, StringComparison.Ordinal));
+        var index = IndexOf(menu, labelStart);
+        if (index < 0 && menu.Title == "Menu" && IndexOf(menu, "Configurações") is var settings and >= 0)
+        {
+            FocusMenu(menu, settings);
+            Press(InputAction.Confirm);
+            var inner = await WaitMenu();
+            await ChooseMenu(labelStart);
+            if (ReferenceEquals(App.TopModal, inner)) Press(InputAction.Back);
+            return;
+        }
         Assert.True(index >= 0, $"Item de menu \"{labelStart}\" ausente: {string.Join(" | ", menu.Items.Select(i => i.Label))}");
-        while (menu.FocusIndex != index) Press(InputAction.NavigateDown);
+        FocusMenu(menu, index);
         Press(InputAction.Confirm);
+    }
+
+    private static int IndexOf(MenuModal menu, string labelStart) => menu.Items.ToList().FindIndex(i => i.Label.StartsWith(labelStart, StringComparison.Ordinal));
+
+    /// <summary>Bloco da grade: do primeiro (PageUp), Baixo por linha e Direita por coluna. Item da lista: Baixo (dá a volta).</summary>
+    public void FocusMenu(MenuModal menu, int index)
+    {
+        if (menu.IsQuick(index))
+        {
+            Press(InputAction.PageUp);
+            for (var r = 0; r < index / menu.QuickColumns; r++) Press(InputAction.NavigateDown);
+            while (menu.FocusIndex != index) Press(InputAction.NavigateRight);
+            return;
+        }
+        while (menu.FocusIndex != index) Press(InputAction.NavigateDown);
     }
 
     public void ChooseOption(DialogModal dialog, string labelStart)

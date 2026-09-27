@@ -208,8 +208,11 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.ChangeView);
 
                 app.Handle(InputAction.OpenAppMenu);
-                for (var i = 0; i < 15; i++) app.Handle(InputAction.NavigateDown); // item bem abaixo da dobra
                 await CaptureAsync(stage, target, dir, "4-menu", window);
+                FocusMenuItem(app, "Configurações");
+                app.Handle(InputAction.Confirm);
+                FocusMenuItem(app, "Ordem");
+                await CaptureAsync(stage, target, dir, "4b-settings", window);
                 CloseModals(app);
 
                 app.Handle(InputAction.Search);
@@ -341,7 +344,22 @@ internal static class ScreenRenderer
     {
         if (app.TopModal is not Application.State.MenuModal menu) return;
         var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(prefix, StringComparison.Ordinal));
-        if (index < 0) return;
+        if (index >= 0) StepTo(app, menu, index);
+    }
+
+    /// <summary>
+    /// Só setas, como no controle: um bloco da grade de ações rápidas pelo topo (PageUp, Baixo por linha, Direita por
+    /// coluna); um item da lista descendo (a lista dá a volta e passa pela grade).
+    /// </summary>
+    private static void StepTo(AppController app, Application.State.MenuModal menu, int index)
+    {
+        if (menu.IsQuick(index))
+        {
+            app.Handle(InputAction.PageUp);
+            for (var r = 0; r < index / menu.QuickColumns; r++) app.Handle(InputAction.NavigateDown);
+            while (menu.FocusIndex != index) app.Handle(InputAction.NavigateRight);
+            return;
+        }
         while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
     }
 
@@ -407,12 +425,21 @@ internal static class ScreenRenderer
     {
         if (app.TopModal is not Application.State.MenuModal menu) return;
         var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(prefix, StringComparison.Ordinal));
+        if (index < 0 && menu.Title == "Menu" && menu.Items.ToList().FindIndex(i => i.Label.StartsWith("Configurações", StringComparison.Ordinal)) is var settings and >= 0)
+        {
+            // Ajustes moram em Menu → Configurações (#193); alternar um ajuste mantém o menu aberto, então ele é fechado.
+            StepTo(app, menu, settings);
+            app.Handle(InputAction.Confirm);
+            ChooseOpenMenu(app, prefix);
+            if (app.TopModal is Application.State.MenuModal { Title: "Configurações" }) app.Handle(InputAction.Back);
+            return;
+        }
         if (index < 0)
         {
             CloseModals(app);
             return;
         }
-        while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
+        StepTo(app, menu, index);
         app.Handle(InputAction.Confirm);
     }
 
