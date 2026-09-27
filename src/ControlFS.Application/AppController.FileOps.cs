@@ -93,6 +93,8 @@ public sealed partial class AppController
             return Merge(results, parts);
         });
         item.RetryAction = () => RetryFileOperation(summary, parts, retryOfFailed);
+        item.Source = summary.SourceFolder;
+        item.Destination = summary.Destination;
         _fileOperations[item.Id] = summary with { Sources = parts.SelectMany(p => p.Sources).ToList() };
         StatusMessage = $"{title}: iniciado. Você pode continuar navegando.";
         RaiseChanged();

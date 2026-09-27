@@ -463,7 +463,7 @@ public sealed partial class AppController
             new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também em Select/View)."),
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
                 Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores."),
-            new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 ? "Nenhuma operação nesta sessão." : null),
+            new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
                 Detail: "Troca comportamento e legendas de confirmar/voltar."),
@@ -483,45 +483,6 @@ public sealed partial class AppController
             new("Sair", ShowExitDialog),
         };
         PushModal(new MenuModal("Menu", items));
-    }
-
-    private void ShowOperations()
-    {
-        var items = Operations.Items.Reverse().Select(op => new MenuItem(
-            $"{op.Title} — {StateLabel(op.State)}",
-            () => ShowOperationDetails(op),
-            Detail: op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"} itens · {FormatBytes(p.BytesProcessed)}" : null)).ToList();
-        PushModal(new MenuModal("Operações", items));
-    }
-
-    private void ShowOperationDetails(Operations.OperationItem op)
-    {
-        var lines = new List<(string, string)> { ("Estado", StateLabel(op.State)) };
-        if (op.Progress is { } p)
-        {
-            lines.Add(("Itens", $"{p.ItemsProcessed} de {p.ItemsTotal?.ToString() ?? "?"}"));
-            lines.Add(("Dados", FormatBytes(p.BytesProcessed)));
-            if (p.CurrentItem is { } current) lines.Add(("Atual", current));
-        }
-        if (op.Result?.Message is { } message) lines.Add(("Resultado", message));
-        var dialog = new DialogModal(op.Title, lines);
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
-        dialog.Options.Add(close);
-        if (op.IsActive)
-            dialog.Options.Add(new DialogOption("Cancelar operação", DialogOptionKind.Danger, () =>
-            {
-                Operations.Cancel(op);
-                CloseModal(dialog);
-            }));
-        if (op.CanRetry)
-            dialog.Options.Add(new DialogOption("Tentar de novo", DialogOptionKind.Primary, () =>
-            {
-                CloseModal(dialog);
-                Operations.Retry(op);
-            }));
-        AddRetryFailedOption(dialog, op);
-        dialog.BackOption = close;
-        PushModal(dialog);
     }
 
     // ---------- Criar pasta ----------

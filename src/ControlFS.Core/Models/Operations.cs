@@ -8,6 +8,7 @@ public enum OperationKind
     Copy,
     Move,
     Delete,
+    Rename,
 }
 
 public enum OperationState

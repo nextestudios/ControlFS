@@ -38,8 +38,9 @@ public sealed partial class AppController
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
         IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null,
-        ITemporaryJournal? temporaries = null)
+        ITemporaryJournal? temporaries = null, IOperationHistoryStore? history = null)
     {
+        _historyStore = history;
         _profileStore = controllerProfiles;
         _temporaries = temporaries;
         Clock = () => _stopwatch.Elapsed;
@@ -92,6 +93,7 @@ public sealed partial class AppController
             StatusMessage = loaded.Notice;
         }
         LoadControllerProfiles();
+        LoadHistory();
         Places = BuildPlaces();
         PlacesFocus = 0;
         Screen = Screen.Home;
