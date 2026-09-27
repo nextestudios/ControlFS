@@ -127,6 +127,7 @@ jobs:
       - name: Restore (locked)
         run: dotnet restore ControlFS.slnx --locked-mode
 
+      # Suíte completa, incluindo [Trait("Category", "Slow")] que a CI dos pull requests pula.
       - name: Run tests
         run: dotnet test ControlFS.slnx -c Release --no-restore --nologo
 

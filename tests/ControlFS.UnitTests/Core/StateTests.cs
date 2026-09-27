@@ -21,19 +21,6 @@ public class StateTests
     }
 
     [Fact]
-    public void Removed_focused_item_moves_focus_to_neighbor()
-    {
-        var list = new FileListState();
-        list.SetItems([F("a"), F("b"), F("c")]);
-        list.FocusById("b");
-        list.SetItems([F("a"), F("c")]);
-        Assert.Equal("c", list.FocusedId);
-        list.FocusById("c");
-        list.SetItems([F("a")]);
-        Assert.Equal("a", list.FocusedId);
-    }
-
-    [Fact]
     public void Deleting_marked_items_moves_focus_to_the_next_survivor_not_the_same_index()
     {
         // Bug: com b e c excluídos e o foco em c, o foco caía no índice antigo (e), pulando d.

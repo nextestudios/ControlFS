@@ -10,6 +10,19 @@ on:
       release_tag:
         description: "Release tag to test (empty = build from this commit)"
         required: false
+      mode:
+        description: "full = packages, launches, UIA and screens; screens = only --render-screens (no installer, fast)"
+        type: choice
+        options: [full, screens]
+        default: full
+      screens:
+        description: "Captures to render: comma list of names/prefixes (e.g. m1,2d,glyphs) or all"
+        required: false
+        default: all
+      sizes:
+        description: "Targets to render: comma list (e.g. 1920x1080,1280x720) or all"
+        required: false
+        default: all
 
 permissions:
   contents: read
@@ -49,7 +62,7 @@ jobs:
             smoke-released-installed
 
   source:
-    name: Launch portable exe and installed app
+    name: ${{ inputs.mode == 'screens' && 'Render screens' || 'Launch portable exe and installed app' }}
     runs-on: windows-latest
     timeout-minutes: 40
     env:
@@ -64,13 +77,20 @@ jobs:
           cache: true
           cache-dependency-path: "**/packages.lock.json"
       - name: Install Inno Setup (if missing)
+        if: inputs.mode != 'screens'
         shell: pwsh
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
       - name: Build portable exe and installer
+        if: inputs.mode != 'screens'
         shell: pwsh
         run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version 0.0.0-smoke
+      # Modo screens: só a pasta do app (sem arquivo único nem instalador), o bastante para o --render-screens.
+      - name: Build the app folder (screens mode)
+        if: inputs.mode == 'screens'
+        run: dotnet publish src/ControlFS.App/ControlFS.App.csproj -c Release --self-contained true -p:Platform=x64 -p:PublishSingleFile=false -o artifacts/render-app --nologo
       - name: Launch portable exe
+        if: inputs.mode != 'screens'
         shell: pwsh
         run: |
           $dir = Join-Path $env:RUNNER_TEMP "portable"
@@ -78,13 +98,13 @@ jobs:
           Copy-Item dist\ControlFS-Portable-x64.exe $dir
           .\build\Test-Startup.ps1 -Exe (Join-Path $dir "ControlFS-Portable-x64.exe") -OutDir smoke-portable -Seconds 40
       - name: Install, launch and uninstall
-        if: always()
+        if: always() && inputs.mode != 'screens'
         shell: pwsh
         run: .\build\Test-Installed.ps1 -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-installed
       # UI Automation (#83): teclas na janela real e conferência pelo UIA do que o WinUI desenhou (foco, diálogos,
       # escopo do modal, teclado virtual). Windows PowerShell: UIAutomationClient vem do .NET Framework.
       - name: UI Automation (focus, dialogs, on-screen keyboard)
-        if: always()
+        if: always() && inputs.mode != 'screens'
         shell: powershell
         run: |
           $dir = Join-Path $env:RUNNER_TEMP "uia"
@@ -93,15 +113,27 @@ jobs:
           .\build\Test-UiAutomation.ps1 -Exe (Join-Path $dir "ControlFS-Portable-x64.exe") -OutDir smoke-uia
       # Layout responsivo (#36) e glifos (#33): a tela do runner é pequena, então o app simula cada resolução/escala e
       # salva PNGs das telas reais (--render-screens, só para desenvolvimento; ver docs/TESTING.md).
-      - name: Render screens at 720p/800p/1080p/4K and the glyph gallery
+      - name: Render screens (filtered by the screens/sizes inputs) and the glyph gallery
         if: always()
         shell: pwsh
+        env:
+          ONLY: ${{ inputs.screens }}
+          SIZES: ${{ inputs.sizes }}
         run: |
-          $dir = Join-Path $env:RUNNER_TEMP "render"
-          New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          Copy-Item dist\ControlFS-Portable-x64.exe $dir
+          if ("${{ inputs.mode }}" -eq "screens") {
+            $dir = Join-Path $PWD "artifacts\render-app"
+            $exe = Join-Path $dir "ControlFS.exe"
+          } else {
+            $dir = Join-Path $env:RUNNER_TEMP "render"
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+            Copy-Item dist\ControlFS-Portable-x64.exe $dir
+            $exe = Join-Path $dir "ControlFS-Portable-x64.exe"
+          }
           $out = Join-Path $PWD "smoke-screens"
-          $p = Start-Process -FilePath (Join-Path $dir "ControlFS-Portable-x64.exe") -WorkingDirectory $dir -ArgumentList "--render-screens", "`"$out`"" -PassThru
+          $renderArgs = @("--render-screens", "`"$out`"")
+          if ($env:ONLY -and $env:ONLY -ne "all") { $renderArgs += @("--only", ($env:ONLY -replace '[^0-9A-Za-z,x_-]', '')) }
+          if ($env:SIZES -and $env:SIZES -ne "all") { $renderArgs += @("--sizes", ($env:SIZES -replace '[^0-9A-Za-z,x_-]', '')) }
+          $p = Start-Process -FilePath $exe -WorkingDirectory $dir -ArgumentList $renderArgs -PassThru
           $null = $p.Handle
           if (-not $p.WaitForExit(600000)) { Stop-Process -Id $p.Id -Force; Write-Host "::error::--render-screens did not finish in 10 min"; exit 1 }
           if (Test-Path (Join-Path $out "report.txt")) { Get-Content (Join-Path $out "report.txt") }
@@ -113,7 +145,7 @@ jobs:
           name: smoke-screens
           path: smoke-screens
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && inputs.mode != 'screens'
         with:
           name: smoke-evidence
           path: |

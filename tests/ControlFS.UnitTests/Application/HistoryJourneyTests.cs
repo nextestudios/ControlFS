@@ -40,13 +40,20 @@ public class HistoryJourneyTests : IDisposable
         await d.ChooseMenu("Extrair para \"cofre\"");
         d.ChooseOption(await d.WaitDialog("Extrair"), "Extrair");
         var kb = await d.WaitKeyboard();
+        Assert.Equal(TextFieldKind.Password, kb.Keyboard.Kind);
         d.TypeOnKeyboard(kb, "errada");
+        Assert.Equal("••••••", kb.Keyboard.DisplayText);
         d.PressKey(kb, KeyKind.Done);
         var retry = await d.WaitKeyboard();
+        Assert.NotSame(kb, retry);
+        Assert.Equal("Senha incorreta. Tente novamente.", retry.Keyboard.ErrorMessage);
+        Assert.Equal(0, kb.Keyboard.Length); // senha anterior zerada
         d.TypeOnKeyboard(retry, "certa");
         d.PressKey(retry, KeyKind.Done);
         await d.WaitDialog("Extração concluída");
         await d.Idle();
+        Assert.Equal("conteúdo protegido\n", File.ReadAllText(_tmp.Sub("cofre", "segredo.txt")));
+        Assert.False(Directory.Exists(_tmp.Sub("cofre (2)")), "a tentativa com senha errada não deixou pasta para trás");
         var extracted = d.App.Operations.Items[^1].Result!.Count(ItemOutcome.Succeeded);
 
         var saved = File.ReadAllText(store.FilePath);

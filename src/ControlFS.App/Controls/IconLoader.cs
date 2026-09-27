@@ -35,6 +35,9 @@ public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoa
 
     public int SizePx { get; private set; } = (int)iconSize;
 
+    /// <summary>Ícones ainda a caminho, em todos os carregadores (as capturas de --render-screens esperam zerar).</summary>
+    public static int Loading { get; private set; }
+
     /// <summary>A escala mudou (outro monitor, outro DPI): os ícones em cache ficaram do tamanho errado.</summary>
     public event Action? Invalidated;
 
@@ -84,36 +87,44 @@ public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoa
 
     private async Task LoadAsync(Image image, UIElement fallback, IconRequest request, string key, CancellationToken cancellationToken)
     {
-        if (!_inflight.TryGetValue(key, out var flight))
-        {
-            var cts = new CancellationTokenSource();
-            flight = new Flight(provider.GetIconAsync(request, SizePx, cts.Token), cts);
-            _inflight[key] = flight;
-        }
-        flight.Waiters++;
-        IconImage? pixels;
+        Loading++;
         try
         {
-            pixels = await flight.Task.WaitAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            // Ninguém mais espera este ícone: o provedor pode pular o trabalho.
-            if (--flight.Waiters == 0 && _inflight.TryGetValue(key, out var current) && current == flight)
+            if (!_inflight.TryGetValue(key, out var flight))
             {
-                _inflight.Remove(key);
-                flight.Cancellation.Cancel();
+                var cts = new CancellationTokenSource();
+                flight = new Flight(provider.GetIconAsync(request, SizePx, cts.Token), cts);
+                _inflight[key] = flight;
             }
-            return;
+            flight.Waiters++;
+            IconImage? pixels;
+            try
+            {
+                pixels = await flight.Task.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ninguém mais espera este ícone: o provedor pode pular o trabalho.
+                if (--flight.Waiters == 0 && _inflight.TryGetValue(key, out var current) && current == flight)
+                {
+                    _inflight.Remove(key);
+                    flight.Cancellation.Cancel();
+                }
+                return;
+            }
+            flight.Waiters--;
+            if (_inflight.TryGetValue(key, out var same) && same == flight) _inflight.Remove(key);
+            if (!_cache.TryGet(key, out var source))
+            {
+                source = pixels is null ? null : ToBitmap(pixels);
+                if (key.EndsWith("@" + SizePx, StringComparison.Ordinal)) _cache.Set(key, source); // não guarda tamanho antigo
+            }
+            if (Equals(image.Tag, key)) Show(image, fallback, source, key);
         }
-        flight.Waiters--;
-        if (_inflight.TryGetValue(key, out var same) && same == flight) _inflight.Remove(key);
-        if (!_cache.TryGet(key, out var source))
+        finally
         {
-            source = pixels is null ? null : ToBitmap(pixels);
-            if (key.EndsWith("@" + SizePx, StringComparison.Ordinal)) _cache.Set(key, source); // não guarda tamanho antigo
+            Loading--;
         }
-        if (Equals(image.Tag, key)) Show(image, fallback, source, key);
     }
 
     private static void Show(Image image, UIElement fallback, ImageSource? source, string? key)
