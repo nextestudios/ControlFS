@@ -226,6 +226,19 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
 - [ ] Unidade (Meu computador em lista, início): sistema de arquivos, capacidade, livre, usado e barra de uso reais.
 - [ ] Narrador: o painel tem nome "Detalhes: …" com as linhas.
 
+## Painel de detalhes na grade (#177)
+
+Não validado em hardware (controle real, TV a ~3 m, DPI real).
+- [ ] 1920×1080 e 4K (100/200%): grade com o painel à direita, cartões inteiros (sem cortar nome, tipo ou seta) nas
+      colunas que sobram; capturas `1c-home-grid`, `3c-folder-grid` e `3d-folder-grid-details-toggled` conferem.
+- [ ] 1280×720/800: sem painel por padrão; Menu → Mostrar painel de detalhes abre o painel mais estreito e a grade fica
+      com uma coluna inteira (captura `3d` em 1280x720); Ocultar devolve as colunas.
+- [ ] Controle real: segurar o direcional pela grade com o painel à mostra não trava; só a pasta em que o foco parar é
+      somada; o foco nunca vai para o painel.
+- [ ] Mostrar/Ocultar no meio de uma pasta longa rolada: o mesmo cartão continua focado e à vista, com as marcas.
+- [ ] Marcar itens e subir para a barra superior (LB): o painel mostra "N itens marcados · Nenhum item em foco".
+- [ ] Fechar e abrir o app: lista e grade mantêm cada uma a sua escolha do painel.
+
 ## Grade (#29)
 
 - [ ] Menu → Exibição: grade (e Ctrl+G): o item focado continua o mesmo nas duas direções; fechar e abrir o app mantém.
@@ -233,7 +246,7 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
       descer para a última linha incompleta vai ao último item; gatilhos paginam; LB entra na barra de caminho.
 - [ ] Pasta com 10.000 arquivos em grade: rolagem sem travar enquanto os ícones grandes aparecem.
 - [ ] 1280×720, 1080p e 4K (100–300%), confortável e compacta: cartões (fase B2) sem cortes, foco inteiro (borda ciano,
-      halo, leve aumento) sem cobrir o vizinho, nome com reticências; colunas 3 (1080p), 2 (portátil), 1 (estreita),
+      halo, leve aumento) sem cobrir o vizinho, nome com reticências; colunas 3 (1080p; 2 com o painel de detalhes), 2 (portátil), 1 (estreita),
       4 (TV 4K); as capturas `3b-folder-grid-compact` e `3c-folder-grid` do `--render-screens` conferem.
 - [ ] Busca e Lixeira em grade: a terceira linha do cartão mostra "em <pasta>" quando não há estado.
 - [ ] Redimensionar a janela: o número de colunas acompanha e a navegação usa as colunas que aparecem.

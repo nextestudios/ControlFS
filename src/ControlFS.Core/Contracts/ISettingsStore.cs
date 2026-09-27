@@ -30,6 +30,15 @@ public sealed record AppSettings
 
     /// <summary>Lista ou grade, para todas as pastas (a densidade vale para as duas: grade compacta tem blocos menores).</summary>
     public ViewMode View { get; init; } = ViewMode.List;
+
+    /// <summary>
+    /// Painel de detalhes na lista e na grade, cada exibição com a sua escolha (Menu → Mostrar/Ocultar painel de
+    /// detalhes). Null = automático: à mostra onde cabe sem apertar o conteúdo, escondido em portáteis e janelas estreitas.
+    /// </summary>
+    public bool? ListDetails { get; init; }
+
+    /// <inheritdoc cref="ListDetails"/>
+    public bool? GridDetails { get; init; }
     public string? LastLocation { get; init; }
     public IReadOnlyList<string> Favorites { get; init; } = [];
 

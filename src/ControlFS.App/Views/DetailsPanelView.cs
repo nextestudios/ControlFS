@@ -119,7 +119,9 @@ internal sealed class DetailsPanelView
     /// <summary>Miniatura da imagem (quando pronta) ou o ícone grande do Windows com o símbolo de reserva.</summary>
     private Grid Hero(ItemDetails details, IReadOnlySet<string> specialFolders)
     {
-        var height = Theme.Scaled(200);
+        // Portáteis: ícone e área menores, para as linhas (caminho, tamanho, datas) aparecerem sem rolar.
+        var compact = Theme.Layout.Tier == Core.Layout.LayoutTier.Compact;
+        var height = Theme.Scaled(compact ? 120 : 200);
         var cell = new Grid { Height = height, HorizontalAlignment = HorizontalAlignment.Stretch };
         if (details.Thumbnail is { } thumbnail)
         {
@@ -141,12 +143,13 @@ internal sealed class DetailsPanelView
             cell.Children.Add(frame);
             return cell;
         }
-        var size = Theme.Scaled(IconSize);
+        var size = Theme.Scaled(compact ? 96 : IconSize);
         var entry = details.Entry;
         var fallback = new TextBlock
         {
             Text = entry.IsBlocked ? "" : entry.IsSteamGame ? "\uE7FC" : details.Kind switch
             {
+                DetailsKind.Selection => "\uE762",
                 DetailsKind.Drive => "",
                 DetailsKind.Place when entry.Id == RecycleBinLocation.PlaceId => "",
                 DetailsKind.Place => "",
@@ -157,7 +160,7 @@ internal sealed class DetailsPanelView
             },
             FontFamily = new FontFamily(IconFont),
             FontSize = Math.Round(size * 0.6),
-            Foreground = entry.IsBlocked ? Theme.Danger : details.Kind == DetailsKind.Place ? Theme.Accent : Theme.TextMuted,
+            Foreground = entry.IsBlocked ? Theme.Danger : details.Kind == DetailsKind.Selection ? Theme.Selected : details.Kind == DetailsKind.Place ? Theme.Accent : Theme.TextMuted,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -165,7 +168,7 @@ internal sealed class DetailsPanelView
         cell.Children.Add(fallback);
         cell.Children.Add(image);
         _iconImage = image;
-        _icons.Load(image, fallback, entry.Id == AppController.RecentPlaceId || details.Kind == DetailsKind.ArchiveEntry ? null : IconRequest.For(entry, specialFolders));
+        _icons.Load(image, fallback, entry.Id == AppController.RecentPlaceId || details.Kind is DetailsKind.ArchiveEntry or DetailsKind.Selection ? null : IconRequest.For(entry, specialFolders));
         return cell;
     }
 

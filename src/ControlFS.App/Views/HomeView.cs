@@ -62,8 +62,18 @@ internal sealed class HomeView
     /// <summary>Medidas da faixa de layout atual: refaz os cartões no próximo Render.</summary>
     public void ApplyLayout()
     {
-        _sections.Padding = new Thickness(PageGutter, Theme.Space(28), PageGutter, Theme.Space(32));
+        _sections.Padding = new Thickness(PageGutter, Theme.Space(28), _trailingGutter ?? PageGutter, Theme.Space(32));
         _shownPlaces = null;
+    }
+
+    private double? _trailingGutter;
+
+    /// <summary>Margem direita (null: a da página); com o painel de detalhes ao lado, só a distância até ele.</summary>
+    public void SetTrailingGutter(double? gutter)
+    {
+        if (_trailingGutter == gutter) return;
+        _trailingGutter = gutter;
+        ApplyLayout();
     }
 
     /// <summary>Margem lateral: os cartões ficam um pouco para dentro da barra superior, como na referência.</summary>

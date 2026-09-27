@@ -185,6 +185,13 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "3b-folder-grid-compact", window);
                 ChooseAppMenu(app, "Densidade");
                 await CaptureAsync(stage, target, dir, "3c-folder-grid", window);
+                // Painel de detalhes na grade (#177): 3c mostra o automático (ao lado onde cabe, fora nos portáteis); 3d,
+                // o contrário pelo menu (portátil: a grade perde colunas). Depois volta ao automático.
+                ChooseAppMenu(app, app.DetailsPanelVisible ? "Ocultar painel" : "Mostrar painel");
+                await SettleAsync(stage);
+                await app.WhenIdleAsync();
+                await CaptureAsync(stage, target, dir, "3d-folder-grid-details-toggled", window);
+                ChooseAppMenu(app, app.DetailsPanelVisible ? "Ocultar painel" : "Mostrar painel");
                 app.Handle(InputAction.NavigateUp);
                 app.Handle(InputAction.ChangeView);
 
