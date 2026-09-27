@@ -115,6 +115,7 @@ public sealed class MainWindow : Window
             new Preview.WicImageDecoder(), new WindowsRecycleBin())
         {
             PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
+            Terminal = new TerminalLauncher(),
             Git = new Infrastructure.Git.GitStatusReader(),
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),

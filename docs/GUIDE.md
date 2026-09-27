@@ -226,6 +226,10 @@ To eject it, go to **Meu computador** (This PC) or the home screen, North on the
 
 **Game shortcuts and shortcut icons.** Steam game shortcuts (`.url` files that open `steam://…`, like the ones Steam puts on the Desktop) show the game's title without `.url` (e.g. "Valheim"), the type **Jogo da Steam** and the icon the shortcut declares (the game's own `.ico` in the local Steam folder); if that icon is missing, ControlFS looks for the same file in the local Steam installation, and otherwise shows a game symbol. The details panel and Properties keep the real file name, what the shortcut opens (`steam://rungameid/…`) and its real type. **South** (or North → **Jogar…**) asks first, starting on **Cancel**, and then hands the shortcut file itself to Windows, which passes it to Steam; without Steam installed you get a readable error. Ordinary website shortcuts (`https://…`) stay regular `.url` files. Windows `.lnk` shortcuts show their own icon (the one they declare, or their target program's) instead of a blank document. Icons are only read from local paths on fixed drives: a shortcut that points its icon at a network share (`\\server\…`), a web address or a link is shown with the generic symbol and never touched.
 
+## Terminal
+
+North → **Abrir terminal aqui…** (open terminal here) opens **Windows Terminal** in the current folder, or **Windows PowerShell** if Windows Terminal isn't installed. It asks first, starting on **Cancelar**, because the terminal is a Windows program outside ControlFS: it doesn't work with the controller and needs a keyboard. **Abrir terminal e o teclado virtual do Windows** also opens Windows' on-screen keyboard (ControlFS' own keyboard only works inside ControlFS). Nothing runs by itself: the terminal just opens in the folder, waiting for you. The terminal is external on purpose; see `docs/decisions/0009`.
+
 ## Updates
 
 The **installed** version updates itself:
