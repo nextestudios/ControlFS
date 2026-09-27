@@ -99,6 +99,7 @@ On an archive the bottom bar shows **South Explore** (opens it read-only), **Wes
 - **Extract here**: into the archive's folder; name conflicts ask you.
 - **Extract to…**: pick a folder inside the app (you can create one there).
 - Inside an open archive, mark entries with West and use **Extract selection**.
+- **Several archives at once**: mark them with West and press North → **Extract each to its own folder (N)** (the first option, so North then South). Each one goes into a new folder named after it (contents never mix; repeated names get "(2)"), is queued as its own operation and, at the end, a summary shows each result. Marked items that aren't archives are left out; password-protected ones ask for the password in their turn.
 - **Test integrity** (North on an archive, or inside it): reads every entry and checks its CRC without writing anything, with progress and cancel in Menu → Operations. The result shows how many entries matched, which ones failed (by name) and how many have no checksum to compare (TAR, GZ, ZIP AES AE-2). It is not a virus scan.
 
 Before starting you see source, destination, entries and conflict policy. Conflicts start on **Skip (keep existing)**; **Replace** asks again. The archive is never deleted and nothing extracted is ever opened or run.

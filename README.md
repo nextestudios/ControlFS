@@ -55,7 +55,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Text preview** (logs, notes, configs, code): read-only, encoding detection, size and line limits, binary files refused
 - **Search by name** in the current folder, with or without subfolders: results stream in, can be cancelled, open in their folder; no indexing, links never followed
 - **Create folder** with Windows naming rules
-- **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; test integrity without extracting; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
+- **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; several archives at once, each into its own folder; test integrity without extracting; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
 - **Compress** to ZIP or TAR.GZ from marked items, name typed on the on-screen keyboard
 - **Open with Windows:** default program, "Open with…", "Show in File Explorer"; programs and scripts ask for confirmation
 - **Automatic, verified updates** (installed version): daily check, background download, "Install and restart" or install on quit; signed manifest + SHA-256; can be turned off ([how it works](docs/GUIDE.md#updates))

@@ -331,8 +331,15 @@ public sealed partial class AppController
         var marked = pane.List.SelectedEntries.Where(e => e.FullPath is not null).ToList();
         if (marked.Count > 0 && pane.Location is PhysicalLocation)
         {
+            // Compactados marcados: "extrair cada um" vem primeiro, então Norte e depois Sul extraem o lote (#69).
+            var markedArchives = MarkedArchives(marked);
             PushModal(new MenuModal($"{marked.Count} item(ns) marcado(s)",
             [
+                .. markedArchives.Count == 0 ? Array.Empty<MenuItem>() :
+                [
+                    new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
+                        Detail: markedArchives.Count < marked.Count ? "Itens que não são compactados ficam de fora." : null),
+                ],
                 new MenuItem($"Copiar {marked.Count} item(ns)", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
                 new MenuItem($"Recortar {marked.Count} item(ns)", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
                 new MenuItem($"Copiar {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
