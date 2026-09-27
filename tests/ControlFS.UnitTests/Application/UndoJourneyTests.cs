@@ -119,6 +119,7 @@ public class UndoJourneyTests : IDisposable
         Assert.False(File.Exists(_tmp.Sub("final.txt")));
         Assert.Equal("texto", File.ReadAllText(_tmp.Sub("rascunho.txt")));
 
+        await UiContext.WaitUntil(() => d.App.RedoTitle is not null, "refazer disponível"); // o arquivo volta antes de a operação terminar
         await ChooseAppMenu(d, "Refazer: ");
         await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("final.txt")), "renomeado de novo");
         await d.Idle();
@@ -223,6 +224,7 @@ public class UndoJourneyTests : IDisposable
         await d.Idle();
         Assert.Empty(bin.Items);
 
+        await UiContext.WaitUntil(() => d.App.RedoTitle is not null, "refazer disponível"); // o arquivo volta antes de a operação terminar
         await ChooseAppMenu(d, "Refazer: ");
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("a.txt")), "na Lixeira de novo");
         await d.Idle();
