@@ -476,6 +476,7 @@ public sealed partial class AppController
             new("Atualizar", () => Refresh(pane), inBrowser ? null : "Nada para atualizar na tela inicial."),
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
                 Detail: "Também pela barra de caminho (botão de ombro esquerdo)."),
+            new("Ir para caminho…", () => BeginGoToPath(pane), Detail: "Digite ou cole o caminho de uma pasta (ex.: D:\\Jogos)."),
             new($"Ordenar por: {SortLabel(sort.Field)}", () =>
             {
                 pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) });
@@ -563,6 +564,7 @@ public sealed partial class AppController
             new("Criar pasta aqui", () => BeginCreateFolder(Picker), here is null ? "Nenhuma pasta aberta." : null),
             new("Ir para pasta acima…", () => ShowPathMenu(Picker), BuildBreadcrumbs(Picker).Count > 1 ? null : "Não há pastas acima desta."),
             new("Ir para outro local", ShowPickerPlaces),
+            new("Ir para caminho…", () => BeginGoToPath(Picker)),
             new("Cancelar escolha", CancelPicker),
         };
         PushModal(new MenuModal(PickerTitle, items));

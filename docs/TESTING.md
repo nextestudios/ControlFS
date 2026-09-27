@@ -71,6 +71,13 @@ Ainda manual, num aparelho real:
 - [ ] Cinco abas com nomes longos em 1280×720: a faixa não empurra a lista para fora da tela; nomes cortados com "…".
 - [ ] Clique/toque numa aba troca para ela; o Narrador lê "Aba N de M: nome, ativa".
 
+## Ir para caminho (#54)
+
+- [ ] Com o controle: Menu → Ir para caminho…; digitar `C:\Windows` só com o teclado virtual (página de símbolos para `:`
+      e `\`) e Concluir abre a pasta.
+- [ ] Caminho inexistente mostra "Pasta não encontrada" no teclado, sem fechá-lo; corrigir e Concluir navega.
+- [ ] Teclado físico: colar com Ctrl+V um caminho copiado com "Copiar como caminho" do Explorador (com aspas) funciona.
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item

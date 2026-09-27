@@ -20,6 +20,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **ZIP64 validado**: compactados ZIP com entradas acima de 4 GB ou mais de 65.535 entradas extraem com tamanho e CRC conferidos; os limites de segurança continuam valendo. (#63)
 - **ZIP com criptografia AES (WinZip AE-1/AE-2, 128/192/256 bits) validado**: sem senha o app pede, com a senha certa o conteúdo sai idêntico e a senha errada agora é reconhecida como "Senha incorreta" (pede de novo) em vez de "senha ou dados corrompidos". (#64)
 - **Abas** no navegador: cada aba guarda a própria pasta, histórico, marcação e foco. RB leva à faixa de abas, LB/RB trocam de aba e Norte cria ou fecha; Norte numa pasta tem "Abrir em nova aba". Uma cópia ou movimentação atualiza todas as abas que mostram a origem ou o destino. (#50)
+- **Ir para caminho…** (Menu, e no seletor de pastas): o teclado virtual abre com a pasta atual selecionada; digite ou cole (Ctrl+V) um caminho, com ou sem aspas e com variáveis como `%USERPROFILE%`, e Concluir vai até lá. Caminho inexistente ou inválido mostra o erro sem fechar o teclado; o caminho de um arquivo abre a pasta dele com o foco no arquivo. (#54)
 
 ## [0.4.0-alpha.1]
 ### Novidades
