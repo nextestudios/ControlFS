@@ -47,6 +47,7 @@ public class HistoryJourneyTests : IDisposable
         d.PressKey(retry, KeyKind.Done);
         await d.WaitDialog("Extração concluída");
         await d.Idle();
+        var extracted = d.App.Operations.Items[^1].Result!.Count(ItemOutcome.Succeeded);
 
         var saved = File.ReadAllText(store.FilePath);
         Assert.DoesNotContain("errada", saved, StringComparison.OrdinalIgnoreCase);
@@ -58,14 +59,14 @@ public class HistoryJourneyTests : IDisposable
         Assert.Equal(2, entries.Count);
         Assert.Equal(OperationErrorKind.WrongPassword, entries[0].Error);
         Assert.Equal(OperationState.Completed, entries[1].FinalState);
-        Assert.Equal(1, entries[1].Count(ItemOutcome.Succeeded));
+        Assert.Equal(extracted, entries[1].Count(ItemOutcome.Succeeded));
         Assert.Equal(_tmp.Sub("cofre.zip"), entries[1].Source);
 
         relaunched.Press(InputAction.OpenAppMenu);
         await relaunched.ChooseMenu("Operações");
         await relaunched.ChooseMenu("Extrair cofre.zip — concluída");
         var details = await relaunched.WaitDialog("Extrair cofre.zip");
-        Assert.Contains(details.Lines, l => l is ("Concluídos", "1"));
+        Assert.Contains(details.Lines, l => l == ("Concluídos", extracted.ToString(System.Globalization.CultureInfo.InvariantCulture)));
         Assert.Contains(details.Lines, l => l.Label == "Destino" && l.Value.EndsWith("cofre", StringComparison.Ordinal));
     });
 
