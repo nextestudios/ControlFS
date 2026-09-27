@@ -68,6 +68,10 @@ internal static class ScreenRenderer
     private static bool Wanted(string capture) =>
         _only is null || _only.Any(p => capture.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Algum filtro cai dentro do grupo (ex.: <c>m1</c> pede o grupo <c>m</c> dos modais).</summary>
+    private static bool WantedGroup(string prefix) =>
+        _only is null || _only.Any(p => p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || prefix.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Pasta de saída se o app foi aberto com <c>--render-screens &lt;pasta&gt;</c>.</summary>
     public static string? OutputDirectory(string[] args)
     {
@@ -203,7 +207,7 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
                 app.Handle(InputAction.ChangeView);
 
-                if (target.Modals && Wanted("m")) await CaptureModalsAsync(app, window, stage, target, dir, modals);
+                if (target.Modals && WantedGroup("m")) await CaptureModalsAsync(app, window, stage, target, dir, modals);
             }
 
             if (Wanted("glyphs")) await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
