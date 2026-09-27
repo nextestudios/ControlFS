@@ -30,6 +30,12 @@ public sealed class PaneState(PaneMode mode)
     /// <summary>Segmento focado na barra de caminho (índice nos segmentos visíveis).</summary>
     public int BreadcrumbFocus { get; internal set; }
 
+    /// <summary>Última busca deste painel; os resultados aparecem quando <see cref="Location"/> é a <see cref="SearchLocation"/> dela.</summary>
+    public SearchState? Search { get; internal set; }
+
+    /// <summary>O painel mostra os resultados de uma busca (local virtual).</summary>
+    public SearchState? ActiveSearch => Location is SearchLocation location && Search is { } search && search.Location == location ? search : null;
+
     /// <summary>Senha do compactado aberto (cabeçalhos protegidos). Só na memória, só enquanto o compactado está aberto.</summary>
     internal string? ArchivePassword { get; set; }
 

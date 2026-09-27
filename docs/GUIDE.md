@@ -16,7 +16,7 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | LB / RB | Path bar (breadcrumbs) | Move cursor |
 | LT / RT | Page up / down | Cursor to start / end |
 | Start | App menu | Done |
-| Select | (search, not yet) | Symbols |
+| Select / View | Search | Symbols |
 
 **Back** closes the open menu first, then clears the selection, then goes back in history, then to the home screen. Leaving the app always asks for confirmation, starting on "Cancel".
 
@@ -48,6 +48,15 @@ The current path is shown as segments at the top. **LB** moves focus from the li
 The focused item has a highlight ring and shows its full name (up to three lines); other long names end in "…". Marked items get a stripe on the left, a checked box and "Marked"; cut items get scissors and "Cut" and are dimmed until pasted; password-protected archive entries show a lock. None of these rely on color alone.
 
 Menu → **List density** switches between **comfortable** (two lines per item, for the TV) and **compact** (one line with type, size and date columns). The choice is saved.
+
+## Search
+
+Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.
+
+- **Subfolders:** included by default. Change it in Menu → "Search in subfolders" (for the next search) or North → "Subfolders" on the results (searches again).
+- **East/B** while searching stops it and keeps the partial results; East/B again goes back to the folder.
+- **South/A** on a result opens its folder with the item focused; Back returns to the results.
+- Search never enters junctions, symbolic links or other reparse points (the link itself can show up as a result).
 
 ## Favorites
 

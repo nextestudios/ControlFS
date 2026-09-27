@@ -40,6 +40,25 @@ public sealed class FileListState
             ?? (_items.Count == 0 ? -1 : Math.Clamp(previousIndex, 0, _items.Count - 1));
     }
 
+    /// <summary>
+    /// Acrescenta itens que chegam aos poucos (busca em andamento) na ordem atual, sem reordenar a lista inteira. O foco
+    /// continua no mesmo item e a marcação é mantida; lista que estava vazia recebe o foco no primeiro item.
+    /// </summary>
+    public void AppendItems(IReadOnlyCollection<FileEntry> items)
+    {
+        if (items.Count == 0) return;
+        var focusedId = FocusedId;
+        var comparer = Sort.CreateComparer();
+        var incoming = items.OrderBy(i => i, comparer).ToList();
+        var merged = new List<FileEntry>(_items.Count + incoming.Count);
+        int a = 0, b = 0;
+        while (a < _items.Count && b < incoming.Count) merged.Add(comparer.Compare(_items[a], incoming[b]) <= 0 ? _items[a++] : incoming[b++]);
+        for (; a < _items.Count; a++) merged.Add(_items[a]);
+        for (; b < incoming.Count; b++) merged.Add(incoming[b]);
+        _items = merged;
+        FocusIndex = FindIndex(focusedId) ?? 0;
+    }
+
     private int? FindSurvivingNeighbor(List<FileEntry> previous, int previousIndex)
     {
         if (previousIndex < 0 || previousIndex >= previous.Count || _items.Count == 0) return null;

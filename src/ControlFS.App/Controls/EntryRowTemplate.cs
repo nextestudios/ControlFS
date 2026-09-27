@@ -93,7 +93,7 @@ public static class EntryRowTemplate
             var place = entry.Kind is EntryKind.Drive or EntryKind.KnownFolder;
             type.Text = entry.IsBlocked ? "Bloqueado: " + entry.BlockedReason
                 : place ? entry.Detail ?? TypeName(entry)
-                : string.Join(" · ", new[] { TypeName(entry) }.Concat(Flags(entry)));
+                : string.Join(" · ", (entry.FoundIn is { } folder ? new[] { "em " + folder, TypeName(entry) } : [TypeName(entry)]).Concat(Flags(entry)));
             type.Foreground = muted;
             // Unidades e pastas especiais não têm tamanho/data: o espaço livre ocupa as três colunas.
             Grid.SetColumnSpan(type, place || entry.IsBlocked ? 3 : 1);
@@ -168,6 +168,7 @@ public static class EntryRowTemplate
             yield return d;
             yield break;
         }
+        if (entry.FoundIn is { } folder) yield return "em " + folder;
         yield return TypeName(entry);
         if (entry.Size is long size && !entry.IsContainer) yield return Format(size);
         if (entry.Modified is { } m) yield return m.LocalDateTime.ToString("g");

@@ -22,7 +22,7 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | LB / RB | Barra de caminho ↔ lista (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
 | LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
-| Select | Busca (ainda não implementada; não aparece nas legendas) | Ctrl+F |
+| Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
 
 "Confirmar com botão direito" (menu do app) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
 Guide/Home não é mapeado. L3/R3 não são usados.
@@ -74,6 +74,8 @@ Guide/Home não é mapeado. L3/R3 não são usados.
 | Itens marcados | Abrir · Desmarcar/Marcar · Operações (N) · Menu · Cancelar seleção |
 | Carregando | Menu · Cancelar |
 | Item bloqueado | Motivo · Ações · Menu · Voltar |
+| Pasta do disco (além do acima) | Buscar (Select/View) |
+| Resultados da busca | Mostrar na pasta · Ações · Nova busca · Menu · Cancelar busca (buscando) / Voltar |
 | Teclado virtual | Selecionar (só com controle) · Apagar · Maiúsculas · Cursor · Símbolos · Concluir (Start/Options) · Cancelar |
 | Menu | Escolher (oculto em item indisponível: o motivo aparece no item) · Fechar |
 | Diálogo | nome da opção em foco · opção segura de Voltar |
@@ -89,7 +91,7 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 
 1. Fecha o modal do topo (em diálogos, executa a opção segura declarada).
 2. Limpa a seleção, se houver.
-3. Cancela um carregamento em andamento.
+3. Cancela um carregamento ou uma busca em andamento (a busca cancelada mantém os resultados parciais).
 4. Volta no histórico do painel (restaurando o foco no item de origem).
 5. Sem histórico: tela inicial. Na tela inicial: confirmação de saída com foco em "Cancelar".
 

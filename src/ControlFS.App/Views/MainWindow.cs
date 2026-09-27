@@ -199,7 +199,12 @@ public sealed class MainWindow : Window
                 _location.Text = pane.Location?.DisplayPath ?? "…";
                 break;
             default:
-                _badge.Text = pane.Location is ArchiveLocation ? "COMPACTADO · SOMENTE LEITURA" : "PASTA NO DISCO";
+                _badge.Text = pane.Location switch
+                {
+                    ArchiveLocation => "COMPACTADO · SOMENTE LEITURA",
+                    SearchLocation => "BUSCA",
+                    _ => "PASTA NO DISCO",
+                };
                 _location.Text = pane.Location?.DisplayPath ?? "…";
                 break;
         }
@@ -259,8 +264,14 @@ public sealed class MainWindow : Window
                 if (_list.ContainerFromIndex(focus) is ListViewItem current) EntryRowTemplate.SetFocused(current, true);
             }
         }
-        _empty.Text = pane.IsLoading && _app.Screen != Screen.Home ? "Carregando…" : items.Count == 0 ? "Pasta vazia" : string.Empty;
-        if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
+        var search = _app.Screen == Screen.Home ? null : pane.ActiveSearch;
+        _empty.Text = pane.IsLoading && _app.Screen != Screen.Home ? "Carregando…"
+            : items.Count > 0 ? string.Empty
+            : search is null ? "Pasta vazia"
+            : search.IsRunning ? "Buscando…" : "Nenhum resultado";
+        if (search is not null && _app.StatusMessage is null)
+            _status.Text = search.Summary; // parcial, concluída ou cancelada, e as pastas puladas
+        else if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
             _status.Text = $"{pane.InaccessibleCount} item(ns) sem permissão de leitura foram omitidos.";
         else
             _status.Text = _app.StatusMessage ?? string.Empty;
