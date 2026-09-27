@@ -154,6 +154,7 @@ public sealed partial class AppController
         }
         var archiveOnDisk = focused is { Kind: EntryKind.File, IsBlocked: false } && ArchiveFormats.HasExtractableExtension(focused.Name);
         if (focused is { IsBlocked: true }) hints.Add(new(InputAction.Confirm, "Motivo"));
+        else if (focused is { Kind: EntryKind.ArchiveDirectory }) hints.Add(new(InputAction.Confirm, "Explorar"));
         else if (focused is { IsContainer: true }) hints.Add(new(InputAction.Confirm, "Abrir"));
         else if (archiveOnDisk && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Explorar"));
         else if (focused is { Kind: EntryKind.File } && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Abrir"));
@@ -185,6 +186,7 @@ public sealed partial class AppController
     /// </summary>
     private static string ActionsLabel(PaneState pane, int selection, bool archiveOnDisk) => pane.Location switch
     {
+        ArchiveLocation when selection > 0 => $"Extrair seleção ({selection})",
         ArchiveLocation => "Extrair…",
         PhysicalLocation when selection > 0 => $"Operações ({selection})",
         _ when archiveOnDisk => "Extrair…",

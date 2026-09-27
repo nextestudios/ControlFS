@@ -97,6 +97,8 @@ Início → **Lixeira** lista o que foi excluído para a Lixeira do Windows, com
 
 Num compactado o rodapé mostra **Sul Explorar** (abre somente leitura), **Oeste Marcar** e **Norte Extrair…**: Norte abre o menu de ações já em **Extrair para "nome"**, então Norte e depois Sul extraem.
 
+Dentro de um compactado, o cabeçalho mostra formato, número de arquivos, tamanho descompactado e quantas entradas têm senha ou estão bloqueadas. Cada arquivo mostra o tamanho e quanto ocupa compactado (ex.: "compactado: 540 KB (45%)"); entradas com senha têm um cadeado e as bloqueadas dizem o motivo (Sul/A mostra o motivo inteiro). Sul/A explora pastas, Oeste marca para extrair e, com entradas marcadas, o rodapé mostra **Norte Extrair seleção (N)**: o menu abre já nessa opção, então Norte e depois Sul extraem só o que foi marcado.
+
 - **Extrair para "nome"**: cria uma pasta nova ao lado do arquivo (nunca reaproveita uma existente: "nome (2)").
 - **Extrair aqui**: na pasta do arquivo; conflitos de nome perguntam.
 - **Extrair para…**: escolha uma pasta dentro do app (dá para criar uma ali).

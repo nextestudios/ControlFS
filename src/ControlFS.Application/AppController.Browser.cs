@@ -456,12 +456,14 @@ public sealed partial class AppController
             new("Extrair tudo para…", () => PickDestinationThenExtract(path, folder, null, string.Empty)),
         };
         var noSelection = selected.Count == 0 ? "Marque entradas primeiro (botão de marcar)." : null;
+        var selectionIndex = items.Count;
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, selected, archive.InnerPath), noSelection));
         items.Add(new MenuItem($"Extrair seleção ({selected.Count}) para…", () => PickDestinationThenExtract(path, folder, selected, archive.InnerPath), noSelection));
         items.AddRange(SelectionItems(pane));
         items.Add(TestIntegrityItem(path));
         items.Add(new MenuItem("Informações do compactado", () => ShowArchiveInfo(pane)));
-        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items));
+        // Com entradas marcadas, o rodapé anuncia "Extrair seleção": o menu abre já nela (Norte e depois Sul extraem).
+        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items) { FocusIndex = selected.Count > 0 ? selectionIndex : 0 });
     }
 
     private void ShowAppMenu()
@@ -639,12 +641,13 @@ public sealed partial class AppController
         var lines = new List<(string, string)>
         {
             ("Arquivo", info.ArchivePath),
-            ("Formato", info.Format.ToString()),
+            ("Formato", ArchiveFormats.DisplayName(info.Format)),
             ("Entradas", info.Entries.Count.ToString()),
             ("Arquivos", tree.FileCount.ToString()),
             ("Tamanho descompactado", info.DeclaredTotalSize is long total ? FormatBytes(total) + " (declarado)" : "desconhecido"),
-            ("Senha", info.HasEncryptedEntries ? "há entradas protegidas" : "não"),
-            ("Bloqueadas", tree.BlockedCount.ToString()),
+            ("Senha", tree.EncryptedCount > 0 ? $"{tree.EncryptedCount} entrada(s) protegida(s)" : info.HasEncryptedEntries ? "há entradas protegidas" : "não"),
+            ("Bloqueadas (nome recusado)", tree.BlockedCount.ToString()),
+            ("Bloqueadas (links/especiais)", tree.LinkCount.ToString()),
             ("Verificação", info.Capabilities.CanVerifyIntegrity ? "CRC durante a extração" : "indisponível"),
         };
         foreach (var limitation in info.Limitations) lines.Add(("Limitação", limitation));

@@ -97,6 +97,8 @@ Home → **Recycle Bin** lists what was deleted to the Windows Recycle Bin, with
 
 On an archive the bottom bar shows **South Explore** (opens it read-only), **West Mark** and **North Extract…**: North opens the actions menu already on **Extract to "name"**, so North then South extracts.
 
+Inside an archive, the header shows the format, number of files, uncompressed size and how many entries are password-protected or blocked. Each file shows its size and how much it takes compressed (e.g. "compactado: 540 KB (45%)"); password-protected entries have a lock and blocked ones state the reason (South/A shows it in full). South/A explores folders, West marks for extraction and, with entries marked, the bottom bar shows **North Extract selection (N)**: the menu opens on that option, so North then South extracts only what you marked.
+
 - **Extract to "name"**: creates a new folder next to the archive (never reuses an existing one: "name (2)").
 - **Extract here**: into the archive's folder; name conflicts ask you.
 - **Extract to…**: pick a folder inside the app (you can create one there).
