@@ -515,6 +515,7 @@ public sealed partial class AppController
             new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null),
             new("Sair", ShowExitDialog),
         };
+        items.InsertRange(items.FindIndex(i => i.Label.StartsWith("Operações (", StringComparison.Ordinal)) + 1, UndoMenuItems());
         PushModal(new MenuModal("Menu", items));
     }
 

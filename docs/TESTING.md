@@ -316,6 +316,14 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
 - [ ] Pausar e depois Cancelar (sem continuar): o temporário some, os arquivos já concluídos ficam.
 - [ ] Extração e compactação não mostram "Pausar".
 
+## Desfazer e refazer (#22)
+
+- [ ] Mandar um arquivo para a Lixeira real do Windows e Menu → Desfazer: ele volta ao local original e sai da Lixeira
+      (conferir no Explorador). Refazer manda de novo.
+- [ ] Mover uma pasta grande para outra unidade e desfazer: volta inteira, com a origem igual à de antes.
+- [ ] Copiar para um pendrive e desfazer: a cópia vai para a Lixeira (ou é excluída, se o pendrive não tiver Lixeira) e o
+      original continua intacto.
+
 ## Limpeza após queda
 
 - [ ] Durante uma extração grande (e, em outra rodada, uma cópia grande), encerrar o ControlFS pelo Gerenciador de
