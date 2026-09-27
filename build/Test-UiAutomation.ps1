@@ -79,7 +79,11 @@ function Check([string]$description, [scriptblock]$condition) {
     }
 }
 
-Remove-Item (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data") -Recurse -Force -ErrorAction SilentlyContinue
+# Dados limpos e sem verificar atualizações: um aviso de nova versão abriria um modal antes dos testes.
+$data = Join-Path (Split-Path -Parent $Exe) "ControlFS_Data"
+Remove-Item $data -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $data | Out-Null
+[IO.File]::WriteAllText((Join-Path $data "settings.json"), '{ "AutoCheckUpdates": false }')
 $p = Start-Process -FilePath $Exe -WorkingDirectory (Split-Path -Parent $Exe) -PassThru
 $failed = $null
 try {
