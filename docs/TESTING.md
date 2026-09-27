@@ -523,3 +523,5 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 ## Destaque fantasma na lista (#182) — não validado em hardware
 - [ ] Com o ponteiro do mouse parado sobre a lista (e sobre a grade), mover o foco para cima/baixo com o controle, inclusive rolando: nenhuma linha além da focada fica destacada; itens marcados continuam com faixa/caixa marcada.
 - [ ] Clicar numa linha com o mouse continua abrindo/focando como antes.
+## Ícone transparente (#187) — não validado em hardware
+- [ ] Instalar a versão nova: barra de tarefas, barra de título, Alt+Tab, menu Iniciar e atalho da área de trabalho mostram a pasta neon sem quadrado preto, em tema claro e escuro, a 100% e 150–200% de escala. (Se aparecer o ícone antigo, limpar o cache de ícones do Windows ou reiniciar o Explorer.)
