@@ -5,6 +5,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 ## [Unreleased]
 ### Improvements
 - **New look, first step of the redesign**: a navy palette with a cyan focus (border, blue fill and a subtle glow, with a short transition) and a larger bottom bar with the actions always in the same order (Open · Back · Mark · Actions · Menu · Search · List/Grid) and the Xbox face colors in the glyphs (A green, B red, X blue, Y yellow). **R3** (pressing the right stick) switches between list and grid, like Ctrl+G and Menu → View; the bottom bar names the target: "Grade" (grid) in the list, "Lista" (list) in the grid.
+- **New header and top bar**: the logo with the name shows on every screen, with the tabs next to it (RB). Below, a single bar shows the real path with a root button ("Locais › Início" on the home screen, "Meu computador › C:\ › …" in folders) and quick access: Favorites, Recent files, the Windows folders, This PC and the Recycle Bin, with the Windows icons. LB moves focus to the bar (in a folder onto the folder above; on the home screen onto Favorites), Left/Right walk from the path to the shortcuts and South opens in the same tab, with history.
 
 ## [0.5.0-alpha.1]
 ### What's new

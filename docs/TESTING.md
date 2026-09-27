@@ -102,6 +102,23 @@ Ainda manual, num aparelho real:
 - [ ] Caminho longo (8+ níveis) em 1280×720: o meio vira `…`, nada sai da tela; Sul no `…` mostra as pastas escondidas.
 - [ ] Clique/toque num segmento navega até ele.
 
+## Barra superior e cabeçalho (redesenho, fase A2)
+
+Não validado em hardware.
+
+- [ ] Início, com controle: LB leva o foco a Favoritos; direita percorre Arquivos recentes, as pastas do Windows (com os
+      ícones do Windows, sem emoji), Meu computador e Lixeira; Sul em Downloads abre a pasta; Leste/baixo voltam à lista.
+- [ ] Numa pasta funda: a barra mostra "Meu computador › C:\ › … › pasta" (caminho real, meio recolhido); LB foca a pasta
+      de cima; direita no último segmento passa aos atalhos; Sul num atalho abre na mesma aba e Leste volta.
+- [ ] Favoritos e Arquivos recentes abrem uma lista; fechar a lista devolve o foco ao atalho. Sem favoritos, a lista
+      explica como adicionar.
+- [ ] 1280×720 e 1280×800: os atalhos que não cabem mostram só o ícone (o focado e o da pasta atual mostram o nome);
+      nada sai da tela; LB e RB aparecem na barra/ao lado das abas e não no rodapé.
+- [ ] O logo com o nome aparece em todas as telas; minimizar, maximizar, fechar, redimensionar, mover e F11 continuam
+      funcionando (barra de título do Windows).
+- [ ] Clique/toque num atalho ou num segmento faz o mesmo que focar e apertar Sul.
+- [ ] Narrador: "Acesso rápido. Downloads, 3 de 10" ao andar pelos atalhos; "Barra de caminho" nos segmentos.
+
 ## Abas (#50)
 
 - [ ] Com o controle: RB na lista mostra o anel de foco na aba ativa; LB/RB trocam de aba e a lista abaixo muda na hora;

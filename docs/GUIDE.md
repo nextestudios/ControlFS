@@ -13,7 +13,7 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | East | Back / close | Cancel without applying |
 | West | Mark item | Backspace |
 | North | Item actions | Shift |
-| LB / RB | Path bar (LB) / tabs (RB) | Move cursor |
+| LB / RB | Top bar: path and quick access (LB) / tabs (RB) | Move cursor |
 | LT / RT | Page up / down | Cursor to start / end |
 | Start | App menu | Done |
 | Select / View | Search | Symbols |
@@ -51,7 +51,9 @@ Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads.
 
 Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips an optional step. With no input for 20 seconds the wizard cancels itself. If the joystick already has a profile, saving asks before replacing it (starting on "Cancel"); cancelling at any point leaves the saved profile untouched. The profile applies again whenever that joystick is connected, including after restarting ControlFS. Menu → Controllers without a profile also exports a profile to a folder and imports one (`.json`, up to 64 KB, validated; anything unexpected is refused).
 
-## Path bar
+## Top bar: path and quick access
+
+The top bar is the same on every screen. On the left is the path: a root button (**Locais** on the home screen, the Recycle Bin and search results; **Meu computador**, "This PC", on folders and archives) followed by the real segments of where you are, for example `Meu computador › C:\ › Users › ana › Downloads`, or `Locais › Início` on the home screen. On the right is quick access: **Favoritos** (favorites), **Arquivos recentes** (recent), the Windows folders that exist on this PC (Downloads, Documents, Desktop, Pictures, Videos, Music), **Meu computador** and **Lixeira** (Recycle Bin), with the Windows icons. **LB** moves focus to the bar: in a folder onto the folder above, on the home screen onto Favoritos. **Left/Right** walk the whole bar (path, then quick access), **LT/RT** jump to the first/last item of the part you are in, **South** opens: a folder shortcut opens in the current tab (Back returns), Favoritos and Arquivos recentes open a list to choose from, Meu computador goes to the home screen on the first drive and the root button goes home. **Down**, **East**, **LB** or **RB** go back to the list. The shortcut matching the current folder is highlighted.
 
 The current path is shown as segments at the top. **LB** moves focus from the list to the path bar (on the folder above the current one); **Left/Right** pick a segment and **South** goes there, focusing the folder you came from. **RB**, **Down** or **East** go back to the list. Inside an archive, the archive file is its own segment after a `▸`, so the disk part and the inside of the archive are easy to tell apart. Long paths collapse the middle into `…`, which opens the hidden folders. Keyboard: Ctrl+← / Ctrl+→. The same list is in Menu → **Go to folder above…**.
 
@@ -59,7 +61,7 @@ To jump anywhere, use Menu → **Go to path…** (also in the folder picker's St
 
 ## Tabs
 
-The tab strip sits above the path. Each tab keeps its own folder, history, marked items and focus. **RB** moves focus from the list to the strip; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab) and **Close tab**. **South**, **Down** or **East** go back to the list. North on a folder also has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it.
+The tab strip sits in the header, next to the logo. Each tab keeps its own folder, history, marked items and focus. **RB** moves focus from the list to the strip; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab) and **Close tab**. **South**, **Down** or **East** go back to the list. North on a folder also has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it.
 
 ## The list
 

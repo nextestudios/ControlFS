@@ -18,7 +18,7 @@ public sealed partial class AppController
     /// </summary>
     private List<Hint> ScreenOrder(List<Hint> hints)
     {
-        if (Screen != Screen.Home && ActivePane.Region != PaneRegion.List) return hints; // barra de caminho e abas: a ordem é a da tarefa
+        if (FocusRegion != PaneRegion.List) return hints; // barra de caminho e abas: a ordem é a da tarefa
         return [.. hints.OrderBy(h => h.Action switch
         {
             InputAction.Confirm => 0,
@@ -118,6 +118,11 @@ public sealed partial class AppController
     private List<Hint> BuildScreenHints()
     {
         var hints = new List<Hint>();
+        if (Screen == Screen.Home && _homeRegion != PaneRegion.List)
+        {
+            AddTopBarHints(hints);
+            return hints;
+        }
         if (Screen == Screen.Home)
         {
             if (Places.Count > 0)
@@ -150,12 +155,9 @@ public sealed partial class AppController
             return hints;
         }
 
-        if (pane.Region == PaneRegion.Breadcrumbs && crumbs.Count > 0)
+        if (pane.Region is PaneRegion.Breadcrumbs or PaneRegion.QuickAccess && crumbs.Count > 0)
         {
-            var crumb = crumbs[Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1)];
-            hints.Add(new(InputAction.Confirm, crumb.Kind == BreadcrumbKind.Collapsed ? "Mostrar pastas" : crumb.IsCurrent ? "Voltar à lista" : "Ir para"));
-            hints.Add(new(InputAction.OpenContextMenu, "Caminho completo"));
-            hints.Add(new(InputAction.Back, "Voltar à lista"));
+            AddTopBarHints(hints);
             return hints;
         }
 

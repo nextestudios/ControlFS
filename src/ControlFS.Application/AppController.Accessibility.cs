@@ -45,6 +45,21 @@ public sealed partial class AppController
                 return new(other.Title, string.Empty);
         }
 
+        var quick = QuickAccess;
+        if (FocusRegion == PaneRegion.QuickAccess && quick.Count > 0)
+        {
+            var index = Math.Clamp(QuickAccessFocus, 0, quick.Count - 1);
+            var item = quick[index];
+            return new("Acesso rápido", $"{item.Label}{(IsQuickAccessActive(item) ? ", local atual" : string.Empty)}, {Position(index, quick.Count)}");
+        }
+        if (FocusRegion == PaneRegion.Breadcrumbs && Breadcrumbs is { Count: > 0 } trail)
+        {
+            var index = Math.Clamp(BreadcrumbFocus, 0, trail.Count - 1);
+            var crumb = trail[index];
+            var label = crumb.Kind == BreadcrumbKind.Collapsed ? $"{crumb.Hidden.Count} pastas recolhidas" : crumb.Label;
+            return new("Barra de caminho", $"{label}{(crumb.IsCurrent ? ", pasta atual" : string.Empty)}, {Position(index, trail.Count)}");
+        }
+
         if (Screen == Screen.Home)
         {
             if (Places.Count == 0) return new("Início", "nenhum local");
@@ -58,14 +73,6 @@ public sealed partial class AppController
         {
             var tabs = Tabs;
             return new("Abas", $"Aba {ActiveTab + 1} de {tabs.Count}: {TabTitle(Browser)}");
-        }
-        var crumbs = Breadcrumbs;
-        if (pane.Region == PaneRegion.Breadcrumbs && crumbs.Count > 0)
-        {
-            var index = Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1);
-            var crumb = crumbs[index];
-            var label = crumb.Kind == BreadcrumbKind.Collapsed ? $"{crumb.Hidden.Count} pastas recolhidas" : crumb.Label;
-            return new("Barra de caminho", $"{label}{(crumb.IsCurrent ? ", pasta atual" : string.Empty)}, {Position(index, crumbs.Count)}");
         }
 
         var where = (Screen == Screen.FolderPicker ? "Escolher pasta: " : string.Empty) + pane.Location switch

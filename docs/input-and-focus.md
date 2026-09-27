@@ -19,7 +19,7 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | East | Voltar / fechar | Esc, Backspace |
 | West | Marcar/desmarcar | Espaço |
 | North | Ações do item | F2, tecla Menu |
-| LB / RB | Barra de caminho ↔ lista (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
+| LB / RB | Barra superior (caminho + acesso rápido) / abas; nelas, voltar ao conteúdo (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
 | LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
 | Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
@@ -110,9 +110,22 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 
 ## Foco
 
-- Regiões do navegador (#30): lista e barra de caminho (`PaneState.Region`). LB entra na barra com foco na pasta acima;
-  esquerda/direita escolhem; Sul navega (com histórico) e foca o filho de onde viemos; RB/baixo/Leste voltam à lista;
-  Norte mostra o caminho completo em menu. Só um foco fica visível: na barra, o anel da lista some.
+- Regiões (#30, #50, redesenho): conteúdo, barra superior (caminho + acesso rápido) e abas (`AppController.FocusRegion`:
+  `PaneState.Region` no navegador, estado próprio no início). A barra superior é uma linha só:
+  `[LB] [Locais|Meu computador] › segmentos │ Favoritos · Arquivos recentes · pastas do Windows · Meu computador · Lixeira`.
+  - LB no conteúdo: no navegador, foco na pasta de cima (como antes); no início, no primeiro atalho.
+  - Esquerda/direita percorrem a linha toda: do último segmento a direita passa ao primeiro atalho e do primeiro atalho
+    a esquerda volta ao último segmento. LT/RT: primeiro/último item da parte atual (caminho ou atalhos).
+  - Sul: segmento navega (com histórico) e foca o filho de onde viemos; a raiz vai ao início ("Meu computador" foca a
+    primeira unidade; no seletor de pasta, abre os outros locais); atalho de pasta/Lixeira abre na aba atual com
+    histórico (no início, abre o navegador); Favoritos e Arquivos recentes abrem um menu, e fechar o menu devolve o foco
+    ao atalho.
+  - Norte num segmento: caminho completo em menu. Baixo, Leste, LB e RB voltam ao conteúdo; Start abre o menu.
+  - RB no conteúdo continua indo para a faixa de abas, que agora fica no cabeçalho ao lado do logo.
+  - Só um foco fica visível: na barra ou nas abas, o anel da lista some. Enquanto o foco está no conteúdo, os glifos
+    de LB (na barra) e RB (ao lado das abas) ficam no topo e saem do rodapé; as legendas continuam em
+    `AppController.Hints`.
+  - Coberto por `BreadcrumbJourneyTests`, `TabsJourneyTests` e `TopBarJourneyTests`.
 - Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização. Item focado removido (excluir,
   mover, mudança externa) → o **próximo item que sobreviveu** na ordem anterior; sem próximo, o anterior. Com itens na
   lista, o foco nunca fica vazio (`StateTests`).

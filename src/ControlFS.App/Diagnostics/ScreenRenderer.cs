@@ -99,6 +99,10 @@ internal static class ScreenRenderer
 
                 app.GoHome();
                 await CaptureAsync(stage, target, dir, "1-home", window);
+                app.Handle(InputAction.PreviousRegion); // LB: acesso rápido da barra superior
+                app.Handle(InputAction.NavigateRight);
+                await CaptureAsync(stage, target, dir, "1b-home-top-bar", window);
+                app.Handle(InputAction.Back);
 
                 app.OpenPhysical(sample);
                 await app.WhenIdleAsync();
@@ -108,6 +112,9 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.NavigateDown);
                 app.Handle(InputAction.NavigateDown); // foco no nome longo (mostra a quebra em até três linhas)
                 await CaptureAsync(stage, target, dir, "2-folder", window);
+                app.Handle(InputAction.PreviousRegion); // LB: pasta de cima na barra de caminho
+                await CaptureAsync(stage, target, dir, "2b-folder-path-bar", window);
+                app.Handle(InputAction.Back);
 
                 ChooseAppMenu(app, "Densidade");
                 await CaptureAsync(stage, target, dir, "3-folder-compact", window);

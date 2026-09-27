@@ -493,7 +493,7 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
             }),
-            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também em Select/View)."),
+            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G)."),
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
                 Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores."),
             new($"Operações ({Operations.ActiveCount} ativa(s))", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null),
