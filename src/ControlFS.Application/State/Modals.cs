@@ -85,3 +85,37 @@ public sealed class MappingWizardModal(Core.Contracts.InputDeviceInfo device, Co
     /// <summary>Outro controle não assume no meio do mapeamento.</summary>
     public override bool IsSensitive => true;
 }
+
+/// <summary>Um dispositivo na tela de teste: número estável na sessão e se ainda está conectado.</summary>
+public sealed record ControllerTestDevice(int Number, Core.Contracts.InputDeviceInfo Info, bool IsConnected, bool IsActive, string? Profile);
+
+/// <summary>
+/// Uma pressão registrada no teste: o controle físico (gamepad ou perfil) e/ou a entrada crua, e a ação semântica que
+/// produziu (null: nenhuma — joystick sem perfil, outro controle ativo ou botão sem função).
+/// </summary>
+public sealed record ControllerTestLine(int Device, PhysicalControl? Control, Core.Input.Mapping.RawInputEvent? Raw, InputAction? Action, Core.Input.ControllerFamily Family);
+
+/// <summary>
+/// Tela "Teste de controles" (#78): lista os controles conectados e mostra, ao vivo, cada botão/eixo e a ação que ele
+/// produziu. Não executa nada: no controle, segurar Confirmar copia o relatório e segurar Voltar sai; no teclado, Enter e Esc.
+/// </summary>
+public sealed class ControllerTestModal() : Modal("Teste de controles")
+{
+    public const int MaxLines = 300;
+
+    internal Dictionary<string, (int Number, Core.Contracts.InputDeviceInfo Info)> Seen { get; } = new(StringComparer.Ordinal);
+    internal Dictionary<(string Device, int Axis), int> AxisBuckets { get; } = [];
+    public List<ControllerTestLine> Lines { get; } = [];
+    public string? Notice { get; internal set; }
+
+    /// <summary>Pressão em curso vinda da camada de entrada (preenchida antes de o roteador emitir a ação).</summary>
+    internal PendingTestInput? Pending { get; set; }
+
+    /// <summary>Confirmar/Voltar mantidos: ao completar o tempo, copiam o relatório ou saem.</summary>
+    internal (string Device, PhysicalControl Control, InputAction Action, TimeSpan Since)? Hold { get; set; }
+}
+
+internal sealed record PendingTestInput(string DeviceKey, int Device, PhysicalControl Control, Core.Input.Mapping.RawInputEvent? Raw, Core.Input.ControllerFamily Family)
+{
+    public bool Handled { get; set; }
+}

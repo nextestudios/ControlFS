@@ -20,7 +20,7 @@ namespace ControlFS.App.Navigation;
 /// Joysticks sem perfil de gamepad: eventos crus vão ao assistente (AppController) ou, com perfil salvo, viram
 /// controles físicos pelo <see cref="ControllerProfileTranslator"/> e seguem o mesmo caminho dos gamepads.
 /// </summary>
-public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
+public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDiagnostics, IDisposable
 {
     private static readonly TimeSpan ActiveInterval = TimeSpan.FromMilliseconds(8);
     private static readonly TimeSpan BackgroundInterval = TimeSpan.FromMilliseconds(120);
@@ -52,6 +52,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
             foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device);
         };
         app.AttachRawControllers(this);
+        app.AttachControllerDiagnostics(this);
 
         BackendReady = _backend.Initialize(this, out var error);
         BackendError = error;
@@ -65,7 +66,8 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
     public InputRouter Router { get; }
     public bool BackendReady { get; }
     public string? BackendError { get; }
-    public string BackendDescription => _backend.BackendDescription;
+    public string BackendDescription => BackendReady ? _backend.BackendDescription : $"{_backend.BackendDescription}: {BackendError}";
+    public string? ActiveDeviceKey => Router.ActiveDeviceKey;
     public IReadOnlyCollection<InputDeviceInfo> Devices => _devices.Values;
     public IReadOnlyList<InputDeviceInfo> RawDevices => [.. _devices.Values.Where(d => !d.IsGamepad)];
     public InputDeviceInfo? ActiveDevice => Router.ActiveDeviceKey is { } key && _devices.TryGetValue(key, out var d) ? d : null;
@@ -93,12 +95,19 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
         Router.Tick(_clock.Elapsed);
     }
 
-    public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp)
+    public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp) => Route(deviceKey, control, pressed, null);
+
+    /// <summary><paramref name="raw"/>: a entrada crua que um perfil traduziu neste controle (só para a tela de teste).</summary>
+    private void Route(string deviceKey, PhysicalControl control, bool pressed, RawInputEvent? raw)
     {
+        _devices.TryGetValue(deviceKey, out var device);
         // Volta às legendas do controle quando ele é usado de novo depois do teclado (antes da ação, para o
         // Render dela já sair com os glifos certos).
-        if (pressed && Router.ActiveDeviceKey == deviceKey && _devices.TryGetValue(deviceKey, out var device)) _app.SetActiveController(device.Family);
+        if (pressed && Router.ActiveDeviceKey == deviceKey && device is not null) _app.SetActiveController(device.Family);
+        var testing = device is not null && _app.IsTestingControllers;
+        if (testing) _app.BeginTestInput(device!, control, pressed, raw); // a ação emitida abaixo fica associada a esta pressão
         Router.OnControl(deviceKey, control, pressed, _clock.Elapsed);
+        if (testing) _app.EndTestInput();
     }
 
     public void OnDeviceAdded(InputDeviceInfo device)
@@ -111,6 +120,13 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
     public void OnRawInput(string deviceKey, RawInputEvent input, TimeSpan timestamp)
     {
         if (Router.IsSuspended || !_devices.TryGetValue(deviceKey, out var device)) return;
+        if (_app.IsTestingControllers)
+        {
+            // Tela de teste: com perfil, a entrada crua segue traduzida (e aparece junto do controle); sem perfil, só é registrada.
+            if (_translators.TryGetValue(deviceKey, out var profiled)) profiled.Apply(input, (control, pressed) => Route(deviceKey, control, pressed, input));
+            else _app.RecordTestRaw(device, input);
+            return;
+        }
         if (_app.OnRawInput(device, input)) return; // assistente em andamento ou joystick ainda sem perfil
         if (_translators.TryGetValue(deviceKey, out var translator))
             translator.Apply(input, (control, pressed) => OnControl(deviceKey, control, pressed, timestamp));

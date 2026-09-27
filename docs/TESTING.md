@@ -89,10 +89,34 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Sem internet: o app abre normalmente e "Verificar agora" mostra erro claro.
 - [ ] Desinstalar pelo Windows: arquivos do app e cache de atualizações removidos; `settings.json` preservado.
 
+## Teste de controles (#78)
+
+Não precisa do SDK do .NET: use o instalador ou o portátil da release. Controles da matriz: Xbox Wireless/Series (USB e
+Bluetooth), DualShock 4, DualSense, Switch Pro, 8BitDo (em cada modo X/D/S que tiver) e um genérico USB.
+
+1. Abra o ControlFS e conecte **um** controle. Menu (Start ou F10) → **Teste de controles…**.
+2. Confira a linha do controle: nome, `SDL type`, `family` (Xbox, PlayStation, Nintendo ou Generic), `VID:PID`,
+   gamepad ou joystick cru, e `ACTIVE` depois de apertar um botão.
+3. Aperte, soltando entre um e outro: direcional ↑ ↓ ← →, analógico esquerdo ↑ ↓ ← →, Sul, Leste, Oeste, Norte, LB, RB,
+   LT, RT, Start e Select. Cada pressão aparece em destaque como `controle físico → ação`. Esperado (Confirmar com botão
+   inferior): direções → `Navigate…`, Sul → `Confirm`, Leste → `Back`, Oeste → `ToggleSelection`, Norte →
+   `OpenContextMenu`, LB/RB → `PreviousRegion`/`NextRegion`, LT/RT → `PageUp`/`PageDown`, Start → `OpenAppMenu`,
+   Select → `Search`. Confira também se o nome entre parênteses é o impresso no botão (ex.: `South (Botão cruz)` no DualSense).
+4. Segure **Confirmar 1 s** (ou Enter, ou toque em "Copiar relatório"): o aviso "Relatório copiado" aparece.
+5. Cole num comentário da issue [#78](https://github.com/nextestudios/ControlFS/issues/78) e escreva em cima o
+   transporte (USB, Bluetooth ou receptor), o modo do controle (8BitDo) e qualquer coisa estranha (botão que não
+   aparece, direção trocada, desconexão).
+6. Segure **Voltar 1 s** (ou Esc) para sair. Repita para cada controle e transporte.
+
+- [ ] Relatório colado não tem nome de usuário, caminho do dispositivo, GUID nem número de série.
+- [ ] Com dois controles conectados, apertar um botão no outro marca-o como `ACTIVE`; desconectar um deixa a linha como `disconnected`.
+- [ ] Joystick genérico sem perfil: as pressões aparecem como `botão N`/`direcional N ↑`/`eixo N ±` → `nenhuma ação`, e
+      sair com Esc funciona.
+
 ## Controles da matriz
 
 Xbox (USB/BT), DualShock 4, DualSense, Switch Pro, 8BitDo, um genérico. Para cada um: navegação, confirmar/voltar na
-posição certa, gatilhos (página), Start (menu), reconexão, família detectada no probe e legendas certas em "Legendas: automáticas".
+posição certa, gatilhos (página), Start (menu), reconexão, família detectada no teste de controles e legendas certas em "Legendas: automáticas".
 
 - [ ] Troca a quente: com um Xbox ativo, apertar um botão num DualSense passa o comando para ele e as legendas mudam
       sem reiniciar; voltar ao Xbox faz o mesmo.

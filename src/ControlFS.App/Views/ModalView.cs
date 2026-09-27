@@ -26,6 +26,7 @@ public static class ModalView
             KeyboardModal keyboard => BuildKeyboard(app, keyboard),
             AboutModal about => BuildAbout(about),
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
+            ControllerTestModal test => BuildControllerTest(app, test),
             _ => null,
         };
         if (panel is null) return null;
@@ -263,6 +264,52 @@ public static class ModalView
                 TextWrapping = TextWrapping.Wrap,
             });
         }
+        return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
+    }
+
+    /// <summary>Teste de controles: dispositivos, a última pressão em destaque e as anteriores (mais recente no topo).</summary>
+    private static Border BuildControllerTest(AppController app, ControllerTestModal modal)
+    {
+        var stack = new StackPanel { Spacing = Theme.SpaceS };
+        stack.Children.Add(Title(modal.Title));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Aperte cada botão, direcional, analógico e gatilho: cada pressão mostra o controle físico e a ação que ele produz no ControlFS. " +
+                "Nada é executado aqui. No controle, segure Confirmar 1 s para copiar o relatório e segure Voltar 1 s para sair; no teclado, Enter copia e Esc sai.",
+            FontSize = Theme.FontBody,
+            Foreground = Theme.TextMuted,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var devices = app.ControllerTestDevices(modal);
+        stack.Children.Add(new TextBlock { Text = $"Controles ({devices.Count})", FontSize = Theme.FontItem, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, Margin = new Thickness(0, Theme.SpaceS, 0, 0) });
+        if (devices.Count == 0)
+            stack.Children.Add(new TextBlock { Text = "Nenhum controle detectado. Conecte um controle (USB, Bluetooth ou receptor).", FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        foreach (var device in devices)
+        {
+            stack.Children.Add(new TextBlock
+            {
+                Text = $"{device.Number}. {AppController.DescribeDevice(device)}",
+                FontSize = Theme.FontCaption,
+                Foreground = device.IsActive ? Theme.Accent : device.IsConnected ? Theme.Text : Theme.TextDisabled,
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+
+        var last = modal.Lines.Count > 0 ? modal.Lines[^1] : null;
+        stack.Children.Add(new TextBlock
+        {
+            Text = last is null ? "Aperte um botão…" : $"#{last.Device} {AppController.DescribeInput(last, english: false)} → {last.Action?.ToString() ?? "nenhuma ação"}",
+            FontSize = Theme.FontTitle,
+            Foreground = Theme.Accent,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, Theme.SpaceS, 0, 0),
+        });
+        foreach (var line in modal.Lines.AsEnumerable().Reverse().Skip(1).Take(8))
+            stack.Children.Add(new TextBlock { Text = $"#{line.Device} {AppController.DescribeInput(line, english: false)} → {line.Action?.ToString() ?? "nenhuma ação"}", FontSize = Theme.FontCaption, Foreground = Theme.TextMuted });
+        if (modal.Notice is { } notice)
+            stack.Children.Add(new TextBlock { Text = notice, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap });
+        stack.Children.Add(Choice($"Copiar relatório ({modal.Lines.Count} pressões)", false, true, app.CopyControllerReport));
         return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
     }
 

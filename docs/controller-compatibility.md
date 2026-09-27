@@ -17,19 +17,31 @@
 `tools/ControlFS.InputProbe` no macOS arm64, sem controle conectado: SDL 3.5.0 inicializou, bombeou eventos e
 encerrou sem erros. Isso valida carregamento da biblioteca nativa e ciclo de vida, **não** hardware nem Windows.
 
-## Como testar (Windows)
+## Como testar (Windows, sem SDK)
 
-```powershell
-dotnet run --project tools/ControlFS.InputProbe -- 30
-# com convenção alternativa:
-dotnet run --project tools/ControlFS.InputProbe -- 30 --east-confirms
-```
+O próprio ControlFS tem a tela **Teste de controles** (Menu → Teste de controles…). Não precisa do SDK do .NET: basta o
+instalador ou o portátil da release. Passo a passo em `docs/TESTING.md` → "Teste de controles (#78)". Resumo:
+
+1. Abra o ControlFS, conecte **um controle por vez** (primeiro USB, depois Bluetooth/receptor) e abra Menu → Teste de controles….
+2. Confira a linha do controle: nome, tipo do SDL, família, VID:PID, gamepad ou joystick cru e se é o ativo.
+3. Aperte cada controle: direcional (4 direções), analógico esquerdo (4 direções), Sul, Leste, Oeste, Norte, LB, RB, LT,
+   RT, Start e Select. Cada pressão mostra o controle físico e a ação, por exemplo `South (Botão A) → Confirm`.
+4. Segure Confirmar 1 s (ou Enter) para **copiar o relatório** e cole num comentário da issue
+   [#78](https://github.com/nextestudios/ControlFS/issues/78), dizendo o transporte (USB/Bluetooth/receptor) e o modo do
+   controle (ex.: 8BitDo em X/D/S). Segure Voltar 1 s (ou Esc) para sair.
+
+O relatório leva versão do app, do Windows e do SDL, os campos de cada controle e as linhas "controle → ação". Não leva
+nome de usuário, caminhos do dispositivo, GUID nem número de série. Com o relatório, esta tabela é atualizada.
 
 ### Joystick sem perfil (assistente, #79)
 
-Com um joystick que o SDL não reconhece como gamepad (o probe mostra `gamepad=False`), registre: tipo de direcional
-(hat, eixos ou botões), se algum eixo repousa fora do centro (gatilho em -1, analógico com drift), se o assistente
-capturou cada passo, o resultado do teste antes de salvar e se o perfil voltou a valer ao reconectar e ao reabrir o app.
+Com um joystick que o SDL não reconhece como gamepad (a tela de teste mostra `raw joystick, no profile`), registre: tipo
+de direcional (hat, eixos ou botões — o teste mostra `botão 3`, `direcional 1 ↑`, `eixo 2 +`), se algum eixo repousa fora
+do centro (gatilho em -1, analógico com drift), se o assistente capturou cada passo, o resultado do teste antes de
+salvar e se o perfil voltou a valer ao reconectar e ao reabrir o app. Depois de salvo, a tela de teste mostra a entrada
+crua e o controle traduzido juntos (ex.: `botão 1 = South → Confirm`).
 
-Registre modelo, transporte, modo, firmware (se conhecido), versão do Windows e a saída do probe nesta tabela,
-incluindo a `família` detectada (Xbox, PlayStation, Nintendo ou Generic) — ela decide as legendas no modo automático.
+### Para desenvolvedores
+
+`tools/ControlFS.InputProbe` continua disponível (`dotnet run --project tools/ControlFS.InputProbe -- 30`, com
+`--east-confirms` para a convenção alternativa) para depurar o backend fora do app.
