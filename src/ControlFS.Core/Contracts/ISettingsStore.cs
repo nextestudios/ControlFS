@@ -31,6 +31,12 @@ public sealed record AppSettings
     /// <summary>Lista ou grade, para todas as pastas (a densidade vale para as duas: grade compacta tem blocos menores).</summary>
     public ViewMode View { get; init; } = ViewMode.List;
 
+    /// <summary>Tema (#37): automático segue o modo de apps do Windows; claro ou escuro fixos.</summary>
+    public Appearance.ThemeMode Theme { get; init; } = Appearance.ThemeMode.System;
+
+    /// <summary>Cor de destaque (#37): foco, cursor e símbolos em destaque. Só predefinições conferidas em contraste.</summary>
+    public Appearance.AccentColor Accent { get; init; } = Appearance.AccentColor.Cyan;
+
     /// <summary>
     /// Painel de detalhes na lista e na grade, cada exibição com a sua escolha (Menu → Mostrar/Ocultar painel de
     /// detalhes). Null = automático: à mostra onde cabe sem apertar o conteúdo, escondido em portáteis e janelas estreitas.

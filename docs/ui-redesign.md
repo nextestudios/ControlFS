@@ -66,6 +66,9 @@ hardware, visual or timing checks that CI can't prove.
 ## Design tokens (A1)
 
 `src/ControlFS.App/Resources/Theme.cs`. Sizes still scale with `LayoutProfile` (#36: compact / regular / large).
+Colors come from `ControlFS.Core.Appearance.ThemePalettes` (#37): the values below are the **dark** theme with the default
+**cyan** accent; the light theme and the other accents are in the same file, and `Theme.Apply` recolors the shared brushes
+live. Contrast targets for every theme × accent: `ThemeContrastTests`.
 
 | Token | Value | Use |
 |---|---|---|
@@ -129,6 +132,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Raw joystick wizard, profiles import/export, two-button long press | Menu → Configurações → Controles sem perfil… | — | `ControllerMappingWizardTests` (5), `ControllerMappingJourneyTests` (3), `ControllerProfileSerializerTests` (3); Manual "Joystick sem perfil (#79)" |
 | Family detection and label style (automatic/generic/Xbox/PS/Nintendo) | Menu → Configurações → Legendas | — | `ControllerFamilyTests` (3), `PromptJourneyTests` |
 | Gyro aiming on the on-screen keyboard (#77, experimental, off by default): pointer layer over key focus, no wrap, D-pad re-anchors, R3 recenters; sensor only enabled with the setting | Menu → Configurações → Mira por giroscópio no teclado | turn/tilt controller; R3 | `GyroPointerTests` (2), `GyroKeyboardJourneyTests`; Manual "Mira por giroscópio (#77)" |
+| Light/dark theme (automatic follows Windows live) and accent color presets, applied live and persisted; contrast checked for every combination | Menu → Configurações → Tema / Cor de destaque | — | `ThemeContrastTests`, `AppearanceJourneyTests`; Screens `7-light-*`, `7d`, `7e`; Manual "Tema claro e cor de destaque (#37)" |
 | Right-stick scrolling (#175): active surface only (list/grid rows, menus, text lines/columns, zoomed image, dialog/About body); deadzone + hysteresis, proportional rate, sustained acceleration, instant stop; R3 press and context change latch until center; never steals the active device | all lists and modals | tilt right stick | `AnalogScrollerTests` (3), `InputRouterTests::Right_stick_scroll_never_takes_over_…`, `RightStickScrollJourneyTests`; Manual "Rolagem com o analógico direito (#175)" |
 | Dynamic footer prompts, hot swap, keyboard keys when typing on a physical keyboard | footer | — | `PromptJourneyTests`, `HintJourneyTests` (4), `JourneyTests::Footer_hints_only_show_actions_that_work_in_context` |
 | Footer order (A1): Confirm, Back, Mark, Actions, Menu, Search, Lista/Grade, L1, R1 (screens only; modals keep theirs); L1/R1 glyphs at the ends of the top bar while the list has focus (#176) | footer, top bar | — | `PromptJourneyTests` |

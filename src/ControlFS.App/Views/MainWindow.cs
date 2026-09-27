@@ -4,6 +4,7 @@ using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Appearance;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Layout;
 using ControlFS.Core.Models;
@@ -165,7 +166,12 @@ public sealed class MainWindow : Window
         _uiSettings.AdvancedEffectsEnabledChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
         // Alto contraste: o evento próprio (AccessibilitySettings.HighContrastChanged) não existe em apps de desktop; a
         // troca de tema de contraste também muda as cores do sistema, e esse evento chega.
-        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
+        // Também é o aviso de que o modo de apps do Windows (claro/escuro) mudou: o tema automático acompanha (#37).
+        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() =>
+        {
+            UpdateVisualEffects();
+            ApplyTheme(_app.Settings);
+        });
 
         Activated += (_, e) =>
         {
@@ -189,6 +195,7 @@ public sealed class MainWindow : Window
         _input.StatusChanged += Render;
         _app.SettingsChanged += settings =>
         {
+            ApplyTheme(settings);
             if (settings.Density == _density && settings.View == _view) return;
             _density = settings.Density;
             _view = settings.View;
@@ -812,6 +819,33 @@ public sealed class MainWindow : Window
         Theme.SolidSurfaces = solid;
         Theme.ReduceMotion = reduceMotion;
         if (render) Render();
+    }
+
+    /// <summary>
+    /// Tema e destaque (#37): resolve o automático pelo modo de apps do Windows e troca as cores dos pincéis compartilhados
+    /// (tudo na tela muda na hora). Os controles do sistema (rolagem, barra de progresso) seguem pelo RequestedTheme; o que
+    /// usa cores derivadas (degradê do painel de detalhes, linhas criadas com medidas) é refeito pelo ApplyLayout.
+    /// </summary>
+    private void ApplyTheme(AppSettings settings)
+    {
+        var dark = ThemePalettes.IsDark(settings.Theme, SystemIsDark());
+        if (!Theme.Apply(ThemePalettes.Build(dark, settings.Accent))) return;
+        _root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
+        if (_root.XamlRoot is not null) ApplyLayout();
+    }
+
+    /// <summary>Modo de apps do Windows: escuro quando a cor de fundo do sistema é escura (sem resposta: escuro, o padrão do app).</summary>
+    private bool SystemIsDark()
+    {
+        try
+        {
+            var background = _uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background);
+            return background.R + background.G + background.B < 3 * 128;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return true;
+        }
     }
 
     /// <summary>Lê uma configuração do Windows; se o sistema não responder, usa a reserva (o painel continua legível).</summary>
