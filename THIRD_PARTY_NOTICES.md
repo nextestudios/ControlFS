@@ -1,7 +1,8 @@
 GAMEPAD EXPLORER — AVISOS DE TERCEIROS
 
-O código original deste projeto é licenciado sob MIT (arquivo LICENSE). Os componentes abaixo
-mantêm suas próprias licenças; incluí-los na distribuição NÃO os torna MIT.
+O código original deste projeto é licenciado sob a GNU Affero General Public License v3.0 only
+(AGPL-3.0-only, arquivo LICENSE; versões até 0.2.0-alpha.1 foram distribuídas sob MIT — ver docs/LICENSING.md).
+Os componentes abaixo mantêm suas próprias licenças; incluí-los na distribuição NÃO os torna AGPL.
 
 Componentes distribuídos com o aplicativo
 ------------------------------------------------------------------------------

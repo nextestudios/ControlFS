@@ -1,12 +1,12 @@
 # ControlFS
 
-A **file manager for Windows made for the controller**, with a **built-in extractor**: browse, organize and unzip files from the couch, on a TV-connected PC or a Windows handheld. Open source, local, no login, no telemetry.
+A **file manager for Windows made for the controller**, with a **built-in extractor**: browse, organize and unzip files from the couch, on a TV-connected PC or a Windows handheld. Open source (AGPL-3.0-only), local, no login, no telemetry.
 
 🇧🇷 [Leia em português](README.pt-BR.md)
 
 ![Windows](https://img.shields.io/badge/Windows-11%20x64-blue)
 ![Version](https://img.shields.io/github/v/release/nextestudios/ControlFS?include_prereleases&label=version&color=brightgreen)
-![License](https://img.shields.io/github/license/nextestudios/ControlFS)
+![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)
 ![CI](https://github.com/nextestudios/ControlFS/actions/workflows/ci.yml/badge.svg)
 
 > **Pre-alpha.** The first vertical journey works and is covered by automated tests on real files, but the app has **not been validated on real Windows hardware or with physical controllers yet**. See [PROGRESS.md](PROGRESS.md) (Portuguese).
@@ -62,4 +62,4 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Feedback:** [this form](https://github.com/nextestudios/ControlFS/issues/new?template=feedback.yml)
 - Changelog: [English](CHANGELOG.en-US.md) · [português](CHANGELOG.md)
 
-[MIT License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Code signing policy](docs/CODE_SIGNING.md) · [Security](SECURITY.md)
+[GNU Affero General Public License v3.0 only](LICENSE) ([licensing notes](docs/LICENSING.md)) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Code signing policy](docs/CODE_SIGNING.md) · [Security](SECURITY.md)

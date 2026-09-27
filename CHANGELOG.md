@@ -3,6 +3,9 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Licença
+- A licença do projeto mudou de MIT para GNU AGPL v3.0 only (`AGPL-3.0-only`). Versões até 0.2.0-alpha.1 continuam sob MIT; as seguintes são distribuídas sob AGPL-3.0-only. Detalhes em `docs/LICENSING.md`.
+
 
 ## [0.2.0-alpha.1]
 ### Novidades
