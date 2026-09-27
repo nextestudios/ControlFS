@@ -19,7 +19,8 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
             var label = drive.Label;
             var name = string.IsNullOrWhiteSpace(label) ? drive.Name : $"{label} ({drive.Name.TrimEnd('\\', '/')})";
             var detail = $"{DescribeType(drive.Type)} · {FormatSize(drive.Free)} livres de {FormatSize(drive.Total)}";
-            places.Add(new FileEntry("drive:" + drive.Name, name, EntryKind.Drive, FullPath: drive.Name, Detail: detail, Drive: KindOf(drive.Type)));
+            places.Add(new FileEntry("drive:" + drive.Name, name, EntryKind.Drive, FullPath: drive.Name, Detail: detail, Drive: KindOf(drive.Type),
+                Volume: new VolumeInfo(drive.Total, drive.Free, drive.Format)));
         }
         return places;
     }
@@ -179,25 +180,32 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
         }
     }
 
-    private static IEnumerable<(string Name, string Label, DriveType Type, long Free, long Total)> SafeDrives()
+    private static IEnumerable<(string Name, string Label, DriveType Type, long Free, long Total, string? Format)> SafeDrives()
     {
         if (!OperatingSystem.IsWindows())
         {
             // Fora do Windows (desenvolvimento), expõe apenas a raiz e a pasta pessoal.
-            yield return ("/", "Raiz", DriveType.Fixed, 0, 0);
+            yield return ("/", "Raiz", DriveType.Fixed, 0, 0, null);
             yield break;
         }
         foreach (var d in DriveInfo.GetDrives())
         {
-            (string, string, DriveType, long, long)? item = null;
+            (string, string, DriveType, long, long, string?)? item = null;
             try
             {
-                if (d.IsReady) item = (d.Name, d.VolumeLabel, d.DriveType, d.AvailableFreeSpace, d.TotalSize);
+                if (d.IsReady) item = (d.Name, d.VolumeLabel, d.DriveType, d.AvailableFreeSpace, d.TotalSize, SafeFormat(d));
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
             if (item is { } value) yield return value;
         }
+    }
+
+    /// <summary>Sistema de arquivos (NTFS, exFAT…); null quando o Windows não informa (algumas unidades de rede).</summary>
+    private static string? SafeFormat(DriveInfo drive)
+    {
+        try { return string.IsNullOrWhiteSpace(drive.DriveFormat) ? null : drive.DriveFormat; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
     }
 
     internal static DriveKind KindOf(DriveType type) => type switch
@@ -216,13 +224,16 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
         _ => "Local",
     };
 
+    private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+
+    /// <summary>Tamanho no formato da interface (pt-BR: "698,5 GB"), independente do idioma do Windows.</summary>
     internal static string FormatSize(long bytes) => bytes switch
     {
         <= 0 => "—",
-        >= 1L << 40 => $"{bytes / (double)(1L << 40):0.#} TB",
-        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.#} GB",
-        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.#} MB",
-        >= 1L << 10 => $"{bytes / 1024.0:0.#} KB",
+        >= 1L << 40 => string.Create(PtBr, $"{bytes / (double)(1L << 40):0.#} TB"),
+        >= 1L << 30 => string.Create(PtBr, $"{bytes / (double)(1L << 30):0.#} GB"),
+        >= 1L << 20 => string.Create(PtBr, $"{bytes / (double)(1L << 20):0.#} MB"),
+        >= 1L << 10 => string.Create(PtBr, $"{bytes / 1024.0:0.#} KB"),
         _ => $"{bytes} B",
     };
 

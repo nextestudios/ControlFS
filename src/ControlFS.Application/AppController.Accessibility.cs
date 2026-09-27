@@ -64,7 +64,10 @@ public sealed partial class AppController
         {
             if (Places.Count == 0) return new("Início", "nenhum local");
             var place = Places[Math.Clamp(PlacesFocus, 0, Places.Count - 1)];
-            var about = place.IsBlocked ? "bloqueado: " + place.BlockedReason : place.Detail ?? EntryText.TypeName(place);
+            var (primary, secondary) = DescribePlace(place);
+            var about = place.IsBlocked ? "bloqueado: " + place.BlockedReason
+                : IsGrid ? primary + (secondary is null ? string.Empty : ", " + secondary)
+                : place.Detail ?? EntryText.TypeName(place);
             return new("Início", $"{place.Name}, {about}, {Position(PlacesFocus, Places.Count)}");
         }
 
@@ -81,6 +84,7 @@ public sealed partial class AppController
             ArchiveLocation archive => "Compactado " + Path.GetFileName(archive.ArchivePath) + (archive.InnerPath.Length > 0 ? ", " + archive.InnerPath : string.Empty),
             SearchLocation => "Resultados da busca",
             RecycleBinLocation => "Lixeira",
+            ThisPcLocation => "Meu computador",
             PhysicalLocation physical => "Pasta " + physical.FullPath,
             { } location => location.DisplayPath,
         };

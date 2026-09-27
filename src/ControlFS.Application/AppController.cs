@@ -101,7 +101,7 @@ public sealed partial class AppController
         LoadControllerProfiles();
         LoadHistory();
         Places = BuildPlaces();
-        PlacesFocus = 0;
+        PlacesFocus = IsGrid && HomeSections is [{ Places: [var first, ..] }, ..] ? first : 0; // grade: o primeiro cartão na tela
         Screen = Screen.Home;
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
@@ -256,7 +256,8 @@ public sealed partial class AppController
             EnterHomeTopBar();
             return;
         }
-        if (IsGrid && GridNavigation.Move(PlacesFocus, Places.Count, GridColumns, GridRowsPerPage, action) is { } cell)
+        // Grade: seções (pastas em 3 colunas, unidades em 2…) com as colunas que a tela mostra.
+        if (IsGrid && SectionGridNavigation.Move(HomeSections, HomeColumns, PlacesFocus, action) is { } cell)
         {
             PlacesFocus = cell;
             return;
@@ -294,8 +295,11 @@ public sealed partial class AppController
         Browser.IsLoading = false;
         Browser.Region = PaneRegion.List;
         _homeRegion = PaneRegion.List;
+        // O foco volta ao mesmo local mesmo quando a lista muda (ex.: "Recentes" surge depois da primeira pasta visitada).
+        var focusedId = PlacesFocus >= 0 && PlacesFocus < Places.Count ? Places[PlacesFocus].Id : null;
         Places = BuildPlaces();
-        PlacesFocus = Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
+        var index = focusedId is null ? -1 : IndexOfPlace(focusedId);
+        PlacesFocus = index >= 0 ? index : Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
         Screen = Screen.Home;
         RaiseChanged(); // chamado também de fora de Handle (gerador de capturas, Meu computador)
     }
@@ -510,7 +514,11 @@ public sealed partial class AppController
 
     internal void Post(Action action) => _ui.Post(_ => { action(); RaiseChanged(); }, null);
 
-    internal void RaiseChanged() => Changed?.Invoke();
+    internal void RaiseChanged()
+    {
+        UpdateHomeStats();
+        Changed?.Invoke();
+    }
 
     /// <summary>Aviso não modal no rodapé (ex.: pasta de dados alternativa no modo portátil).</summary>
     public void ShowNotice(string message) => SetStatus(message);

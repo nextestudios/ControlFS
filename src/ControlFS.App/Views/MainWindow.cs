@@ -51,7 +51,9 @@ public sealed class MainWindow : Window
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
     private readonly IconLoader _navIcons;
+    private readonly IconLoader _cardIcons;
     private readonly TopBarView _topBar;
+    private readonly HomeView _home;
     private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
     private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -98,6 +100,13 @@ public sealed class MainWindow : Window
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
         _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize);
         _topBar = new TopBarView(_app, _navIcons);
+        _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
+        _home = new HomeView(_app, _cardIcons);
+        _cardIcons.Invalidated += () =>
+        {
+            _home.ApplyLayout(); // refaz os cartões com ícones no novo tamanho
+            Render();
+        };
         _icons.Invalidated += OnIconsInvalidated;
         _tileIcons.Invalidated += OnIconsInvalidated;
         _navIcons.Invalidated += () =>
@@ -205,6 +214,7 @@ public sealed class MainWindow : Window
         var content = new Grid();
         content.Children.Add(_list);
         content.Children.Add(_grid);
+        content.Children.Add(_home.Root);
         content.Children.Add(_empty);
         Grid.SetRow(content, 3);
         layout.Children.Add(content);
@@ -324,6 +334,36 @@ public sealed class MainWindow : Window
             _shownPlaces = _app.Places;
             _specialFolders = new HashSet<string>(_app.Places.Where(p => p.Kind == EntryKind.KnownFolder && p.FullPath is not null).Select(p => p.FullPath!), StringComparer.OrdinalIgnoreCase);
         }
+        if (ShowHomeCards(_app.Screen == Screen.Home && _view == ViewMode.Grid))
+            _home.Render();
+        else
+            RenderItems(pane);
+        RenderFooter();
+    }
+
+    /// <summary>
+    /// Início em grade: os cartões por seção substituem a grade virtualizada (poucos itens, tamanhos diferentes por
+    /// seção). Devolve se os cartões estão à mostra.
+    /// </summary>
+    private bool ShowHomeCards(bool show)
+    {
+        var visible = show ? Visibility.Visible : Visibility.Collapsed;
+        if (_home.Root.Visibility != visible)
+        {
+            _home.Root.Visibility = visible;
+            ActiveList.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            if (show)
+            {
+                ActiveList.ItemsSource = null;
+                _empty.Text = string.Empty;
+            }
+            _shownItems = null; // ao sair do início, a lista/grade é preenchida de novo
+        }
+        return show;
+    }
+
+    private void RenderItems(PaneState pane)
+    {
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
         if (_app.FocusRegion != PaneRegion.List) focus = -1; // um só foco visível: o da barra superior ou das abas
@@ -359,6 +399,12 @@ public sealed class MainWindow : Window
             : items.Count > 0 ? string.Empty
             : search is null ? "Pasta vazia"
             : search.IsRunning ? "Buscando…" : "Nenhum resultado";
+    }
+
+    private void RenderFooter()
+    {
+        var pane = _app.ActivePane;
+        var search = _app.Screen == Screen.Home ? null : pane.ActiveSearch;
         if (search is not null && _app.StatusMessage is null)
             _status.Text = search.Summary; // parcial, concluída ou cancelada, e as pastas puladas
         else if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
@@ -549,7 +595,7 @@ public sealed class MainWindow : Window
     internal string DescribeFit()
     {
         var viewport = Theme.Viewport;
-        var fit = $"cabeçalho {_header.ActualHeight:0} + barra {_topBar.Root.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
+        var fit = $"cabeçalho {_header.ActualHeight:0} + barra {_topBar.Root.ActualHeight:0}, {(_home.Root.Visibility == Visibility.Visible ? $"início em cartões ({string.Join(", ", _app.HomeSections.Select(s => $"{s.Title} {_app.HomeColumns(s.Kind)} col."))})" : _view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {(_home.Root.Visibility == Visibility.Visible ? _home.Root.ActualHeight : ActiveList.ActualHeight):0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
         if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
         {
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
@@ -570,6 +616,7 @@ public sealed class MainWindow : Window
         _tabs.Spacing = Theme.SpaceS;
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);
         _topBar.ApplyLayout();
+        _home.ApplyLayout();
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
         _list.Padding = _grid.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
@@ -585,6 +632,7 @@ public sealed class MainWindow : Window
         _icons.SetScale(iconScale);
         _tileIcons.SetScale(iconScale);
         _navIcons.SetScale(iconScale);
+        _cardIcons.SetScale(iconScale);
         UpdateGridMetrics();
         _shownItems = null; // recria as linhas com as novas medidas
         Render();

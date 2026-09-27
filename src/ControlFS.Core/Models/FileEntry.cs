@@ -20,10 +20,22 @@ public enum DriveKind
 }
 
 /// <summary>
+/// Espaço de uma unidade (só em <see cref="EntryKind.Drive"/>): capacidade e livre em bytes e o sistema de arquivos
+/// (NTFS, exFAT…) quando o Windows informa. Alimenta a barra de uso dos cartões de unidade.
+/// </summary>
+public sealed record VolumeInfo(long TotalBytes, long FreeBytes, string? FileSystem)
+{
+    public long UsedBytes => Math.Max(0, TotalBytes - FreeBytes);
+
+    /// <summary>Fração usada (0 a 1); 0 quando a capacidade é desconhecida.</summary>
+    public double UsedFraction => TotalBytes > 0 ? Math.Clamp(UsedBytes / (double)TotalBytes, 0, 1) : 0;
+}
+
+/// <summary>
 /// Item apresentado em uma lista. <see cref="Id"/> identifica o item de forma estável dentro
 /// da localização (usado para foco e seleção); <see cref="FullPath"/> só existe para itens físicos.
 /// <see cref="FoundIn"/> só existe em resultados de busca: a pasta onde o item está, a partir da pasta buscada.
-/// <see cref="Drive"/> só existe em unidades.
+/// <see cref="Drive"/> e <see cref="Volume"/> só existem em unidades.
 /// </summary>
 public sealed record FileEntry(
     string Id,
@@ -40,7 +52,8 @@ public sealed record FileEntry(
     string? Detail = null,
     string? BlockedReason = null,
     string? FoundIn = null,
-    DriveKind? Drive = null)
+    DriveKind? Drive = null,
+    VolumeInfo? Volume = null)
 {
     public bool IsBlocked => BlockedReason is not null;
 

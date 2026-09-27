@@ -103,6 +103,9 @@ public sealed partial class AppController
         Places = BuildPlaces();
         var index = focusedId is null ? -1 : IndexOfPlace(focusedId);
         PlacesFocus = index >= 0 ? index : Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
+        // Abas em Meu computador: a lista de unidades acompanha (o foco fica na mesma unidade, se ela continua lá).
+        foreach (var tab in _tabs)
+            if (tab.Location is ThisPcLocation && !tab.IsLoading) Refresh(tab);
         RaiseChanged();
     }
 

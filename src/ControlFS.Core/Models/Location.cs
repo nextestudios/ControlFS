@@ -50,3 +50,14 @@ public sealed record RecycleBinLocation : Location
 
     public override string DisplayPath => "Lixeira";
 }
+
+/// <summary>
+/// Meu computador: local virtual com as unidades prontas (cartões com a barra de uso na grade, linhas na lista). Abre
+/// numa aba do navegador, com histórico, como a Lixeira.
+/// </summary>
+public sealed record ThisPcLocation : Location
+{
+    public static ThisPcLocation Instance { get; } = new();
+
+    public override string DisplayPath => "Meu computador";
+}

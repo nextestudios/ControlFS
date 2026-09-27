@@ -19,13 +19,16 @@ public sealed partial class AppController
         yield return new FileEntry(RecycleBinLocation.PlaceId, "Lixeira", EntryKind.KnownFolder, Detail: "Itens excluídos: restaurar ou excluir de vez");
     }
 
-    private void OpenRecycleBin()
+    private void OpenRecycleBin() => OpenVirtual(RecycleBinLocation.Instance);
+
+    /// <summary>Abre um local virtual (Lixeira, Meu computador) no navegador a partir do início, sem histórico.</summary>
+    private void OpenVirtual(Location location)
     {
         Browser.Back.Clear();
         Browser.Forward.Clear();
         Browser.Location = null;
         Screen = Screen.Browser;
-        Track(NavigateAsync(Browser, RecycleBinLocation.Instance, pushHistory: false));
+        Track(NavigateAsync(Browser, location, pushHistory: false));
     }
 
     /// <summary>

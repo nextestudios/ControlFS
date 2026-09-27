@@ -104,6 +104,20 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "1b-home-top-bar", window);
                 app.Handle(InputAction.Back);
 
+                // Início em grade (fase B): cartões das pastas principais com contagem/tamanho reais e das unidades.
+                app.Handle(InputAction.ChangeView);
+                for (var i = 0; i < 10 && app.PlacesFocus != app.HomeSections[0].Places[0]; i++) app.Handle(InputAction.PageUp); // primeiro cartão
+                await app.WhenIdleAsync(); // contagens e tamanhos calculados
+                await CaptureAsync(stage, target, dir, "1c-home-grid", window);
+                app.Handle(InputAction.PageDown); // primeira unidade
+                await CaptureAsync(stage, target, dir, "1d-home-grid-drives", window);
+                ChooseQuickAccess(app, "Meu computador");
+                await app.WhenIdleAsync();
+                await CaptureAsync(stage, target, dir, "1e-this-pc-grid", window);
+                app.Handle(InputAction.ChangeView);
+                await CaptureAsync(stage, target, dir, "1f-this-pc-list", window);
+                app.GoHome();
+
                 app.OpenPhysical(sample);
                 await app.WhenIdleAsync();
                 app.Handle(InputAction.ToggleSelection);
@@ -169,6 +183,20 @@ internal static class ScreenRenderer
             return;
         }
         while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
+        app.Handle(InputAction.Confirm);
+    }
+
+    /// <summary>LB e direita até o atalho <paramref name="label"/> da barra superior, e Confirmar.</summary>
+    private static void ChooseQuickAccess(AppController app, string label)
+    {
+        app.Handle(InputAction.PreviousRegion);
+        var index = app.QuickAccess.ToList().FindIndex(q => q.Label == label);
+        if (index < 0 || app.FocusRegion != Application.State.PaneRegion.QuickAccess)
+        {
+            app.Handle(InputAction.Back);
+            return;
+        }
+        while (app.QuickAccessFocus < index) app.Handle(InputAction.NavigateRight);
         app.Handle(InputAction.Confirm);
     }
 

@@ -196,6 +196,9 @@ public sealed partial class AppController
                     tree = current;
                     entries = current.Children(archive.InnerPath);
                     break;
+                case ThisPcLocation when pane.Mode == PaneMode.Browse:
+                    entries = await Task.Run(ThisPcEntries, cts.Token); // unidades de rede podem demorar a responder
+                    break;
                 case RecycleBinLocation when _recycleBin is { } bin && pane.Mode == PaneMode.Browse:
                     entries = RecycledEntries(await Task.Run(() => bin.List(cts.Token), cts.Token));
                     break;
@@ -328,6 +331,11 @@ public sealed partial class AppController
             ShowRecycleBinMenu(pane);
             return;
         }
+        if (pane.Location is ThisPcLocation)
+        {
+            ShowDriveMenu(pane);
+            return;
+        }
         var marked = pane.List.SelectedEntries.Where(e => e.FullPath is not null).ToList();
         if (marked.Count > 0 && pane.Location is PhysicalLocation)
         {
@@ -379,6 +387,22 @@ public sealed partial class AppController
         items.AddRange(SelectionItems(pane));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
         PushModal(new MenuModal(entry?.Name ?? "Ações", items));
+    }
+
+    /// <summary>Meu computador: só o que vale para uma unidade (nada de marcar, colar ou criar pasta aqui).</summary>
+    private void ShowDriveMenu(PaneState pane)
+    {
+        var items = new List<MenuItem>();
+        if (pane.List.Focused is { FullPath: { } path } drive)
+        {
+            items.Add(new MenuItem("Abrir", () => OpenEntry(pane, drive)));
+            items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(path), external: true), ShellUnavailable));
+            items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(path), NewTabUnavailable));
+            items.Add(FavoriteToggleItem(path));
+            items.Add(new MenuItem("Propriedades", () => ShowProperties(drive)));
+        }
+        items.Add(new MenuItem("Atualizar", () => Refresh(pane)));
+        PushModal(new MenuModal(pane.List.Focused?.Name ?? "Meu computador", items));
     }
 
     /// <summary>
@@ -611,8 +635,15 @@ public sealed partial class AppController
         {
             ("Nome", entry.Name),
             ("Caminho", entry.FullPath ?? "—"),
-            ("Tipo", entry.IsContainer ? "Pasta" : entry.Extension.Length > 0 ? $"Arquivo {entry.Extension}" : "Arquivo"),
+            ("Tipo", entry.Kind == EntryKind.Drive ? EntryText.TypeName(entry) : entry.IsContainer ? "Pasta" : entry.Extension.Length > 0 ? $"Arquivo {entry.Extension}" : "Arquivo"),
         };
+        if (entry.Volume is { TotalBytes: > 0 } volume)
+        {
+            if (volume.FileSystem is { } fileSystem) lines.Add(("Sistema de arquivos", fileSystem));
+            lines.Add(("Capacidade", $"{EntryText.Size(volume.TotalBytes)} ({volume.TotalBytes:N0} bytes)"));
+            lines.Add(("Livre", EntryText.Size(volume.FreeBytes)));
+            lines.Add(("Usado", $"{EntryText.Size(volume.UsedBytes)} ({volume.UsedFraction:P0})"));
+        }
         if (entry.Size is long size) lines.Add(("Tamanho", $"{FormatBytes(size)} ({size:N0} bytes)"));
         if (entry.Modified is { } modified) lines.Add(("Modificado", modified.LocalDateTime.ToString("g")));
         var attributes = new List<string>();

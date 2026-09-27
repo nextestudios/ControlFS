@@ -56,8 +56,14 @@ public sealed class TestFileSystem(string root) : IFileSystemProvider
     /// <summary>Segura o cálculo de tamanho até ser cancelado: torna observável o cancelamento.</summary>
     public bool HoldMeasureUntilCancelled { get; set; }
 
+    private int _measureCalls;
+
+    /// <summary>Quantas somas de tamanho foram pedidas (o início não deve reler o disco a cada visita).</summary>
+    public int MeasureCalls => Volatile.Read(ref _measureCalls);
+
     public FolderSize MeasureFolder(string path, IProgress<FolderSize>? progress, CancellationToken cancellationToken)
     {
+        Interlocked.Increment(ref _measureCalls);
         if (HoldMeasureUntilCancelled)
         {
             progress?.Report(new FolderSize(1, 1, 0, [], 0));

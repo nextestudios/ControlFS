@@ -69,10 +69,17 @@ public class TopBarJourneyTests : IDisposable
         await d.Idle();
         Assert.Equal(sub, ((PhysicalLocation)app.Browser.Location!).FullPath);
 
-        // A raiz leva ao início com o foco de volta nos locais.
+        // A raiz "Meu computador" abre as unidades na mesma aba (fase B; antes levava ao início); a raiz "Locais" de lá
+        // leva ao início com o foco de volta nos locais.
         d.Press(InputAction.PreviousRegion);
         d.Press(InputAction.PageUp);
         Assert.Equal(BreadcrumbKind.Root, app.Breadcrumbs[app.BreadcrumbFocus].Kind);
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        Assert.IsType<ThisPcLocation>(app.Browser.Location);
+        Assert.Equal(["Locais", "Meu computador"], app.Breadcrumbs.Select(c => c.Label));
+        d.Press(InputAction.PreviousRegion);
+        d.Press(InputAction.PageUp);
         d.Press(InputAction.Confirm);
         Assert.Equal(Screen.Home, app.Screen);
         Assert.Equal(PaneRegion.List, app.FocusRegion);
