@@ -3,7 +3,7 @@ name: Smoke
 # Abre o app de verdade num Windows do GitHub e coleta evidências (processo, janela, eventos, print).
 # "released": testa exatamente o ZIP portátil publicado numa release. "source": publica a partir do commit.
 on:
-  # Gitflow: opens the real app only before something reaches main (release/* and hotfix/* pull requests).
+  # Opens the real app before anything reaches main (every pull request into main).
   workflow_dispatch:
     inputs:
       release_tag:
