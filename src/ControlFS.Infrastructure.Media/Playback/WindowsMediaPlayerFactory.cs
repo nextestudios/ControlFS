@@ -182,8 +182,13 @@ public sealed class WindowsMediaPlayerFactory : IMediaPlayerFactory
                 _item.TimedMetadataTracks.SetPresentationMode((uint)i, i == _subtitle ? TimedMetadataTrackPresentationMode.PlatformPresented : TimedMetadataTrackPresentationMode.Disabled);
         }
 
+        /// <summary>MF_E_NO_AUDIO_PLAYBACK_DEVICE: o Media Foundation recusa tocar sem nenhuma saída de áudio.</summary>
+        internal const int NoAudioDevice = unchecked((int)0xC00D36FA);
+
         private static string Describe(MediaPlayerError error, Exception? extended) => error switch
         {
+            _ when extended?.HResult == NoAudioDevice =>
+                "Nenhuma saída de áudio foi encontrada neste PC. Conecte fones ou alto-falantes (ou ative um dispositivo de som) e tente de novo.",
             MediaPlayerError.SourceNotSupported or MediaPlayerError.DecodingError =>
                 "Este formato ou codec não é suportado neste Windows (pode faltar uma extensão de mídia da Microsoft Store). Abra no aplicativo padrão, se tiver um.",
             _ => "Não foi possível reproduzir este arquivo" + (extended is null ? "." : $" ({extended.Message.Trim()})."),

@@ -533,6 +533,7 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Cima/Baixo mudam o volume em passos de 10%; Norte tira o som (o painel diz "Sem som"); Cima volta o som.
 - [ ] Leste/B fecha e o som para na hora; o foco fica no arquivo; o arquivo pode ser apagado logo depois.
 - [ ] Um OGG sem as Extensões de Mídia da Web mostra a mensagem de codec sem suporte; um `.exe` renomeado para `.mp3` é recusado.
+- [ ] Sem nenhum dispositivo de som (desativado no Painel de Som): aparece "Nenhuma saída de áudio foi encontrada neste PC…" (é o que o runner do CI mostra).
 - [ ] Legível a ~3 m em 1080p/4K e em 1280×720.
 
 ## Visualização de texto (#58)

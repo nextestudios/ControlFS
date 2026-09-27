@@ -34,7 +34,13 @@ public sealed class MediaPlayerIntegrationTests : IDisposable
             for (var i = 0; i < 100 && session.Status.State == MediaPlaybackState.Opening; i++)
                 await Task.Delay(100, TestContext.Current.CancellationToken);
             var status = session.Status;
-            if (status.State == MediaPlaybackState.Failed) Assert.Skip("Sem saída de áudio neste runner: " + status.Error);
+            // Runners do GitHub não têm dispositivo de som: o Media Foundation recusa (MF_E_NO_AUDIO_PLAYBACK_DEVICE) e a
+            // mensagem tem de dizer isso ao usuário; qualquer outra falha é um defeito.
+            if (status.State == MediaPlaybackState.Failed)
+            {
+                Assert.Contains("Nenhuma saída de áudio", status.Error, StringComparison.Ordinal);
+                Assert.Skip("Sem saída de áudio neste runner: " + status.Error);
+            }
             Assert.NotEqual(MediaPlaybackState.Opening, status.State);
             Assert.InRange(status.Duration.TotalSeconds, 1.9, 2.1);
             Assert.False(status.HasVideo);
