@@ -55,3 +55,11 @@ posição certa, gatilhos (página), Start (menu), reconexão, família detectad
       sem reiniciar; voltar ao Xbox faz o mesmo.
 - [ ] Segurar o direcional no controle ativo e apertar um botão no outro: o outro **não** assume até o primeiro ser solto.
 - [ ] Menu → Legendas fixada em "PlayStation" com um Xbox ativo: legendas continuam PlayStation.
+
+## Glifos dos botões
+
+- [ ] Com Legendas fixadas em cada estilo (genéricas, Xbox, PlayStation, Nintendo) e um controle ativo, o rodapé mostra
+      glifos desenhados (não texto): faces, ombros/gatilhos (LB/RB/LT/RT, L1/R1/L2/R2, L/R/ZL/ZR), Menu/Exibir,
+      Options/Create, +/−. Nintendo: A à direita e B embaixo.
+- [ ] Glifos nítidos e alinhados ao texto do rodapé em 1080p e 4K, com escala 100%, 150%, 200% e 300%.
+- [ ] Narrador lê o nome do botão (ex.: "Botão cruz", "Botão A", "Botão Menu").

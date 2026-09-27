@@ -45,4 +45,12 @@ xunit.v3 3.2.2 / xunit.runner.visualstudio 3.1.5 — Apache-2.0
 Microsoft.NET.Test.Sdk 18.10.1 — MIT
 Microsoft.Windows.SDK.BuildTools 10.0.28000.2705 — Microsoft Windows SDK License
 
+Glifos dos botões de controle
+------------------------------------------------------------------------------
+
+Os glifos das legendas (src/ControlFS.App/Resources/ControllerGlyphs.cs) são originais deste projeto: formas
+geométricas e letras desenhadas em código. Nenhuma imagem, fonte de ícones, logotipo ou conjunto de glifos de
+terceiros (Xbox, PlayStation, Nintendo ou outros) é incluído. Xbox, PlayStation e Nintendo são marcas de seus
+respectivos donos e aparecem aqui só para identificar compatibilidade.
+
 O Windows e seus serviços não fazem parte deste código aberto.

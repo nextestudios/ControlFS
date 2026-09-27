@@ -7,6 +7,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **New on-screen keyboard layout**: text field on top, four character rows, a function row (`⇧`, `ABC`, `@#:`, space, `⌫`) and a bottom row with the cursor, `…` (accents, language and clear) and a wide **Done**. (#41)
 - Button labels automatically follow the family of the controller in use (Xbox, PlayStation, Nintendo or generic), detected from the type SDL reports and the vendor. Pressing a button on another controller hands control to it and switches the labels without restarting. The menu still lets you pin a style. (#32)
 - **Retry** an operation that failed, finished with warnings or was cancelled: Menu → Operations → pick the operation → Retry. The original request is planned again from scratch. (#18)
+- Controller prompts use **original vector glyphs** (face buttons, bumpers, triggers, Menu/Options/+/−, D-pad and sticks) instead of plain letters, crisp at any scale. No third-party images or logos. (#33)
 
 ### Improvements
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)

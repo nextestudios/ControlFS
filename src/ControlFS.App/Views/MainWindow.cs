@@ -225,19 +225,19 @@ public sealed class MainWindow : Window
         var map = new ActionMap(_app.Settings.Convention);
         foreach (var hint in _app.Hints)
         {
-            var glyph = device is not null && map.ControlFor(hint.Action) is { } control
-                ? ButtonGlyphs.For(control, _app.PromptFamily)
-                : ButtonGlyphs.KeyboardFor(hint.Action);
             var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
-            chip.Children.Add(new Border
-            {
-                Background = Theme.SurfaceRaised,
-                BorderBrush = Theme.Border,
-                BorderThickness = Theme.Hairline,
-                CornerRadius = Theme.Radius,
-                Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2),
-                Child = new TextBlock { Text = glyph, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
-            });
+            if (device is not null && map.ControlFor(hint.Action) is { } control)
+                chip.Children.Add(ControllerGlyphs.Create(ControllerButtons.From(control), _app.PromptFamily, Theme.FontCaption * 1.6));
+            else
+                chip.Children.Add(new Border
+                {
+                    Background = Theme.SurfaceRaised,
+                    BorderBrush = Theme.Border,
+                    BorderThickness = Theme.Hairline,
+                    CornerRadius = Theme.Radius,
+                    Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2),
+                    Child = new TextBlock { Text = ButtonGlyphs.KeyboardFor(hint.Action), FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
+                });
             chip.Children.Add(new TextBlock { Text = hint.Label, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center });
             _hints.Children.Add(chip);
         }
