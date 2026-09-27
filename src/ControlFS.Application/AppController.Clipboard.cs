@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -44,7 +45,7 @@ public sealed partial class AppController
         if (existing.Count == 0)
         {
             Clipboard = null;
-            ShowMessage("Nada para colar", [], "Os itens copiados ou recortados não existem mais.");
+            ShowMessage("Nada para colar", [], "Os itens copiados ou recortados não existem mais.", icon: ActionIcon.Warning);
             return;
         }
         ConfirmTransfer(clip.Kind, existing, here.FullPath, clip.SourceFolder);

@@ -8,24 +8,41 @@ public abstract class Modal(string title)
 {
     public string Title { get; } = title;
 
+    /// <summary>Linha de contexto sob o título (ex.: tipo do item cujas ações o menu mostra). Opcional.</summary>
+    public string? Subtitle { get; internal set; }
+
+    /// <summary>Ícone do cabeçalho (o item, o tom de um aviso ou erro). <see cref="ActionIcon.None"/>: só o título.</summary>
+    public virtual ActionIcon Icon { get; internal set; }
+
     /// <summary>Confirmações sensíveis bloqueiam troca automática de dispositivo ativo.</summary>
     public virtual bool IsSensitive => false;
 }
 
-public sealed record MenuItem(string Label, Action? Execute, string? DisabledReason = null, string? Detail = null)
+/// <summary>
+/// Opção de menu. <paramref name="Icon"/> diz o que a ação faz (a tela desenha o símbolo ao lado do texto);
+/// <paramref name="Section"/> agrupa opções: quando muda de um item para o seguinte, a tela desenha um separador com o
+/// título do grupo (vazio: só a linha).
+/// </summary>
+public sealed record MenuItem(string Label, Action? Execute, string? DisabledReason = null, string? Detail = null,
+    ActionIcon Icon = ActionIcon.None, string? Section = null)
 {
     public bool IsEnabled => Execute is not null && DisabledReason is null;
+
+    /// <summary>Apaga arquivos ou listas: desenhado em vermelho com alerta e nunca é o foco inicial.</summary>
+    public bool IsDestructive => ActionIcons.IsDestructive(Icon);
 }
 
 public sealed class MenuModal(string title, IReadOnlyList<MenuItem> items) : Modal(title)
 {
     public IReadOnlyList<MenuItem> Items { get; } = items;
     public int FocusIndex { get; internal set; }
+    public override ActionIcon Icon { get; internal set; } = ActionIcon.Menu;
 }
 
 public sealed class KeyboardModal(VirtualKeyboard keyboard, Func<VirtualKeyboard, Task> onSubmit, Action? onCancel = null) : Modal(keyboard.Title)
 {
     public VirtualKeyboard Keyboard { get; } = keyboard;
+    public override ActionIcon Icon { get; internal set; } = keyboard.Kind == TextFieldKind.Password ? ActionIcon.Password : ActionIcon.Keyboard;
     internal Func<VirtualKeyboard, Task> OnSubmit { get; } = onSubmit;
     internal Action? OnCancel { get; } = onCancel;
     public bool IsBusy { get; internal set; }
@@ -39,12 +56,27 @@ public enum DialogOptionKind
     Toggle,
 }
 
-public sealed class DialogOption(string label, DialogOptionKind kind, Action execute)
+public sealed class DialogOption(string label, DialogOptionKind kind, Action execute, ActionIcon icon = ActionIcon.None)
 {
     public string Label { get; internal set; } = label;
     public DialogOptionKind Kind { get; } = kind;
     internal Action Execute { get; } = execute;
     public bool IsChecked { get; internal set; }
+
+    /// <summary>Opção perigosa (confirma algo que apaga, substitui ou executa): nunca é o foco inicial.</summary>
+    public bool IsDestructive => Kind == DialogOptionKind.Danger || ActionIcons.IsDestructive(Icon);
+
+    /// <summary>
+    /// Símbolo da opção: o escolhido por quem montou o diálogo ou, sem escolha, o do tipo (segura = fechar, principal =
+    /// aceitar, perigosa = alerta). Opções de alternar mostram a caixa de marcação na tela.
+    /// </summary>
+    public ActionIcon Icon { get; } = icon != ActionIcon.None ? icon : kind switch
+    {
+        DialogOptionKind.Safe => ActionIcon.Close,
+        DialogOptionKind.Danger => ActionIcon.Warning,
+        DialogOptionKind.Toggle => ActionIcon.Settings,
+        _ => ActionIcon.Accept,
+    };
 }
 
 /// <summary>
@@ -57,13 +89,27 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
     public List<DialogOption> Options { get; } = [];
     public int FocusIndex { get; internal set; }
     public string? Message { get; internal set; }
+
+    /// <summary>Andamento (0–1) de uma operação mostrada no diálogo; null: sem barra.</summary>
+    public double? Progress { get; internal set; }
     internal DialogOption? BackOption { get; set; }
     public override bool IsSensitive => sensitive;
+
+    private ActionIcon _icon;
+
+    /// <summary>Tom do diálogo: o escolhido por quem o montou ou, com uma opção perigosa, o alerta.</summary>
+    public override ActionIcon Icon
+    {
+        get => _icon != ActionIcon.None ? _icon : Options.Any(o => o.Kind == DialogOptionKind.Danger) ? ActionIcon.Warning : ActionIcon.None;
+        internal set => _icon = value;
+    }
 }
 
 /// <summary>Tela "Sobre": logo, versão, licença e origem do código. Fecha com Confirmar ou Voltar.</summary>
 public sealed class AboutModal(string version, IReadOnlyList<(string Label, string Value)> lines) : Modal("Sobre o ControlFS")
 {
+    public override ActionIcon Icon { get; internal set; } = ActionIcon.About;
+
     public string Version { get; } = version;
     public IReadOnlyList<(string Label, string Value)> Lines { get; } = lines;
 }
@@ -79,6 +125,7 @@ public sealed class MappingWizardModal(Core.Contracts.InputDeviceInfo device, Co
     public static IReadOnlyList<string> ReviewOptions { get; } = ["Salvar perfil", "Refazer um passo…", "Cancelar sem salvar"];
 
     public Core.Contracts.InputDeviceInfo Device { get; } = device;
+    public override ActionIcon Icon { get; internal set; } = ActionIcon.ControllerSetup;
     public Core.Input.Mapping.ControllerMappingWizard Wizard { get; } = wizard;
     public int ReviewFocus { get; internal set; }
 
@@ -103,6 +150,8 @@ public sealed record ControllerTestLine(int Device, PhysicalControl? Control, Co
 public sealed class ControllerTestModal() : Modal("Teste de controles")
 {
     public const int MaxLines = 300;
+
+    public override ActionIcon Icon { get; internal set; } = ActionIcon.ControllerTest;
 
     internal Dictionary<string, (int Number, Core.Contracts.InputDeviceInfo Info)> Seen { get; } = new(StringComparer.Ordinal);
     internal Dictionary<(string Device, int Axis), int> AxisBuckets { get; } = [];
@@ -132,6 +181,7 @@ public sealed class ImagePreviewModal : Modal
 
     internal ImagePreviewModal(PaneState pane, IReadOnlyList<Core.Models.FileEntry> images, int index) : base("Visualizar imagem")
     {
+        Icon = ActionIcon.Image;
         Pane = pane;
         Images = images;
         Index = index;
@@ -191,6 +241,7 @@ public sealed class TextPreviewModal : Modal
 
     internal TextPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Visualizar texto")
     {
+        Icon = ActionIcon.Text;
         Pane = pane;
         Entry = entry;
     }

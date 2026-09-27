@@ -36,6 +36,7 @@ public sealed class MainWindow : Window
     private readonly InputHost _input;
     private readonly GitHubReleaseUpdateService? _updates;
     private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
+    private readonly Windows.UI.ViewManagement.AccessibilitySettings _accessibility = new();
     private bool _layoutPinned;
     private readonly ShellIconProvider _iconProvider = new();
     private readonly DriveWatcher _drives = new();
@@ -152,6 +153,12 @@ public sealed class MainWindow : Window
         };
         // Tamanho do texto do Windows (Acessibilidade): o WinUI aumenta cada texto; o layout decide o que cabe.
         _uiSettings.TextScaleFactorChanged += (_, _) => DispatcherQueue.TryEnqueue(UpdateLayoutProfile);
+        // Transparência, alto contraste e animações do Windows: o painel dos modais fica sólido e sem transição.
+        UpdateVisualEffects(render: false);
+        _uiSettings.AdvancedEffectsEnabledChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
+        // Alto contraste: o evento próprio (AccessibilitySettings.HighContrastChanged) não existe em apps de desktop; a
+        // troca de tema de contraste também muda as cores do sistema, e esse evento chega.
+        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
 
         Activated += (_, e) =>
         {
@@ -568,25 +575,10 @@ public sealed class MainWindow : Window
         foreach (var prompt in _app.Prompts)
         {
             if (regionsShownAbove && prompt.Action is InputAction.PreviousRegion or InputAction.NextRegion) continue;
-            var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS + Theme.SpaceXs };
-            if (prompt is { Button: { } button, Family: { } family })
-                chip.Children.Add(ControllerGlyphs.Create(button, family, glyphHeight));
-            else
-                chip.Children.Add(new Border
-                {
-                    Background = Theme.SurfaceRaised,
-                    BorderBrush = Theme.Border,
-                    BorderThickness = Theme.Hairline,
-                    CornerRadius = Theme.Radius,
-                    MinHeight = glyphHeight * 0.8,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
-                    Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
-                });
-            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = FooterLabelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, prompt.AccessibilityText);
-            _hints.Children.Add(chip);
+            _hints.Children.Add(ModalView.PromptChip(prompt, glyphHeight, FooterLabelSize));
         }
+        // Com um modal aberto, as legendas ficam no próprio painel: as do rodapé somem sem mudar a altura dele.
+        _hints.Opacity = _app.TopModal is null ? 1 : 0;
 
         // Camada modal
         _overlay.Children.Clear();
@@ -725,6 +717,42 @@ public sealed class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Efeitos de transparência desligados ou alto contraste: painéis sólidos (e fundo mais escuro) nos modais; animações
+    /// do Windows desligadas: modais sem transição. Lido na abertura e a cada mudança nas Configurações.
+    /// </summary>
+    private void UpdateVisualEffects(bool render = true)
+    {
+        if (_layoutPinned) return; // capturas: o gerador escolhe
+        var solid = !Setting(() => _uiSettings.AdvancedEffectsEnabled, fallback: true) || Setting(() => _accessibility.HighContrast, fallback: false);
+        var reduceMotion = !Setting(() => _uiSettings.AnimationsEnabled, fallback: true);
+        if (solid == Theme.SolidSurfaces && reduceMotion == Theme.ReduceMotion) return;
+        Theme.SolidSurfaces = solid;
+        Theme.ReduceMotion = reduceMotion;
+        if (render) Render();
+    }
+
+    /// <summary>Lê uma configuração do Windows; se o sistema não responder, usa a reserva (o painel continua legível).</summary>
+    private static bool Setting(Func<bool> read, bool fallback)
+    {
+        try
+        {
+            return read();
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return fallback;
+        }
+    }
+
+    /// <summary>Gerador de capturas: força o painel sólido (transparência reduzida) para conferir a reserva.</summary>
+    internal void SimulateSolidSurfaces(bool solid)
+    {
+        Theme.SolidSurfaces = solid;
+        Theme.ReduceMotion = true;
+        Render();
+    }
+
     /// <summary>Gerador de capturas: fixa a faixa de layout de uma resolução/escala simulada.</summary>
     internal void PinLayout(LayoutProfile profile, Windows.Foundation.Size viewport, double simulatedTextScale)
     {
@@ -746,7 +774,7 @@ public sealed class MainWindow : Window
     {
         var viewport = Theme.Viewport;
         var fit = $"cabeçalho {_header.ActualHeight:0} + barra {_topBar.Root.ActualHeight:0}, {(_home.Root.Visibility == Visibility.Visible ? $"início em cartões ({string.Join(", ", _app.HomeSections.Select(s => $"{s.Title} {_app.HomeColumns(s.Kind)} col."))})" : _view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {(_home.Root.Visibility == Visibility.Visible ? _home.Root.ActualHeight : ActiveList.ActualHeight):0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
-        if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
+        if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel scrim && scrim.Children.OfType<FrameworkElement>().FirstOrDefault(c => Equals(c.Tag, ModalView.CardTag)) is { } card)
         {
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
             fit += $"; modal {card.ActualWidth:0}x{card.ActualHeight:0}" + (needed > viewport.Height + 0.5 ? " NÃO CABE" : " cabe");

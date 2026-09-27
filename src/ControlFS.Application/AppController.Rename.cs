@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -68,13 +69,13 @@ public sealed partial class AppController
         {
             Message = "O Windows usa a extensão para escolher o programa que abre o arquivo; ele pode deixar de abrir corretamente.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Alterar extensão", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             confirmed();
-        }));
+        }, icon: ActionIcon.Rename));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);

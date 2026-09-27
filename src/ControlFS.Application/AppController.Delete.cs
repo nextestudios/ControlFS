@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -30,18 +31,18 @@ public sealed partial class AppController
         {
             Message = "Dá para restaurar depois em Início → Lixeira.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Mover para a Lixeira", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             EnqueueFileOperation(new FileOperationPlan(FileOperationKind.Delete, sources, null, false, here.FullPath));
-        }));
+        }, icon: ActionIcon.RecycleBin));
         dialog.Options.Add(new DialogOption("Excluir permanentemente…", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             ConfirmPermanentDelete(sources, itemsText, here.FullPath, "Os itens não irão para a Lixeira e não há como desfazer.");
-        }));
+        }, icon: ActionIcon.DeleteForever));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -53,13 +54,13 @@ public sealed partial class AppController
         {
             Message = message,
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Excluir permanentemente", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             EnqueueFileOperation(new FileOperationPlan(FileOperationKind.Delete, sources, null, true, folder));
-        }));
+        }, icon: ActionIcon.DeleteForever));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);

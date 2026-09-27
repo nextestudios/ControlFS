@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -52,13 +53,13 @@ public sealed partial class AppController
             var restorable = targets.Where(t => !t.IsBlocked).ToList();
             var single = targets.Count == 1;
             items.Add(new MenuItem(single ? "Restaurar" : $"Restaurar {Plural.Of(restorable.Count, "item", "itens")}", () => Restore(pane, restorable),
-                restorable.Count == 0 ? targets[0].BlockedReason : null, single ? "Para " + OriginalPath(targets[0]) : "Cada item volta para a pasta de onde saiu."));
-            items.Add(new MenuItem(single ? "Excluir permanentemente…" : $"Excluir {Plural.Of(targets.Count, "item", "itens")} permanentemente…", () => ConfirmPurge(pane, targets)));
-            if (targets.Count == 1) items.Add(new MenuItem("Propriedades", () => ShowRecycledProperties(targets[0])));
+                restorable.Count == 0 ? targets[0].BlockedReason : null, single ? "Para " + OriginalPath(targets[0]) : "Cada item volta para a pasta de onde saiu.", Icon: ActionIcon.Restore));
+            items.Add(new MenuItem(single ? "Excluir permanentemente…" : $"Excluir {Plural.Of(targets.Count, "item", "itens")} permanentemente…", () => ConfirmPurge(pane, targets), Icon: ActionIcon.DeleteForever));
+            if (targets.Count == 1) items.Add(new MenuItem("Propriedades", () => ShowRecycledProperties(targets[0]), Icon: ActionIcon.Properties));
         }
         items.AddRange(SelectionItems(pane));
-        items.Add(new MenuItem("Atualizar", () => Refresh(pane)));
-        PushModal(new MenuModal(marked.Count > 0 ? $"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}" : targets.Count == 1 ? targets[0].Name : "Lixeira", items));
+        items.Add(new MenuItem("Atualizar", () => Refresh(pane), Icon: ActionIcon.Refresh));
+        PushModal(new MenuModal(marked.Count > 0 ? $"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}" : targets.Count == 1 ? targets[0].Name : "Lixeira", items) { Icon = ActionIcon.RecycleBin });
     }
 
     private static string OriginalPath(FileEntry entry) => Path.Join(entry.FoundIn, entry.Name);
@@ -74,7 +75,7 @@ public sealed partial class AppController
         if (entry.Size is long size) lines.Add(("Tamanho", $"{FormatBytes(size)} ({size:N0} bytes)"));
         if (entry.Modified is { } deleted) lines.Add(("Excluído em", deleted.LocalDateTime.ToString("g")));
         if (entry.BlockedReason is { } problem) lines.Add(("Aviso", problem));
-        ShowMessage("Propriedades", lines);
+        ShowMessage("Propriedades", lines, icon: ActionIcon.Properties);
     }
 
     private void Restore(PaneState pane, IReadOnlyList<FileEntry> entries)
@@ -92,7 +93,7 @@ public sealed partial class AppController
         {
             Message = "Os itens saem da Lixeira e não há como desfazer.",
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Excluir permanentemente", DialogOptionKind.Danger, () =>
         {
@@ -100,7 +101,7 @@ public sealed partial class AppController
             var ids = entries.Select(e => (e.Id, e.Name)).ToList();
             Track(RunOnBinAsync(pane, ids, id => _recycleBin!.DeletePermanently(id),
                 done => done == 1 ? "1 item excluído permanentemente." : $"{done} itens excluídos permanentemente.", "Alguns itens não foram excluídos"));
-        }));
+        }, icon: ActionIcon.DeleteForever));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -125,7 +126,7 @@ public sealed partial class AppController
         }
         pane.List.ClearSelection();
         if (pane.Location is RecycleBinLocation) await NavigateAsync(pane, RecycleBinLocation.Instance, pushHistory: false, pane.List.FocusedId);
-        if (failures.Count > 0) ShowMessage(failureTitle, failures, done > 0 ? summary(done) : null);
+        if (failures.Count > 0) ShowMessage(failureTitle, failures, done > 0 ? summary(done) : null, icon: ActionIcon.Error);
         else SetStatus(summary(done));
     }
 }

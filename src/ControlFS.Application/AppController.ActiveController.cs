@@ -1,5 +1,6 @@
 using System.Globalization;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Input;
 
@@ -28,7 +29,7 @@ public sealed partial class AppController
         var items = new List<MenuItem>
         {
             new("Automático" + (diagnostics.IsActiveDeviceLocked ? string.Empty : " (atual)"), () => SelectActiveController(null),
-                Detail: "Qualquer controle assume ao apertar um botão (exceto em confirmações sensíveis)."),
+                Detail: "Qualquer controle assume ao apertar um botão (exceto em confirmações sensíveis).", Icon: ActionIcon.Operations),
         };
         var focus = 0;
         foreach (var device in connected)
@@ -39,11 +40,11 @@ public sealed partial class AppController
             items.Add(new MenuItem(device.Name + (isActive ? (diagnostics.IsActiveDeviceLocked ? " (escolhido)" : " (em uso)") : string.Empty),
                 () => SelectActiveController(device),
                 canDrive ? null : "Joystick sem perfil: configure-o em Menu → Controles sem perfil primeiro.",
-                Detail: DescribeForMenu(device, connected, duplicates)));
+                Detail: DescribeForMenu(device, connected, duplicates), Icon: ActionIcon.Controller));
         }
         if (connected.Count == 0)
-            items.Add(new MenuItem("Nenhum controle conectado", null, "Conecte um controle; o teclado continua funcionando."));
-        PushModal(new MenuModal("Controle ativo", items) { FocusIndex = focus });
+            items.Add(new MenuItem("Nenhum controle conectado", null, "Conecte um controle; o teclado continua funcionando.", Icon: ActionIcon.Controller));
+        PushModal(new MenuModal("Controle ativo", items) { Icon = ActionIcon.Controller, FocusIndex = focus });
     }
 
     private void SelectActiveController(InputDeviceInfo? device)

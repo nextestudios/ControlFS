@@ -16,6 +16,7 @@ mouse-only or lose its test.** A later phase that moves a feature updates its "W
 | B2 | Grid tiles restyled as cards (icon · name · type/size · states or "em <pasta>" · chevron) in folders, search, archives and Recycle Bin; columns from the available width | done |
 | C1 | List mode: rows in a card with column header (mark box · Nome · Tipo · Tamanho · Modificado em), sort arrow, friendly dates, real sizes of main folders on Home, new-location focus rule, taller footer/top bar at 1080p+ | done |
 | C2 | Details panel on the right of the list (folder, file, image thumbnail, archive, drive, archive entries, Recycle Bin items, marked summary), async and only for the focused item while visible; collapses on handhelds/narrow windows | done |
+| M (#172) | One modal system for every menu, dialog, keyboard, picker menu, operation/result, About, controller screens and preview: dimmed page, frosted panel (solid fallback), header with icon/title/context, full-width option rows with icons, filled focus, section headings, prompts inside the panel | done |
 
 Legend for the matrix: **Where** is the place in the new shell (after the phase in brackets). **Test** names the automated
 test that protects the behavior (`File::Method`, unit tests under `tests/ControlFS.UnitTests`, Windows-only ones under
@@ -77,11 +78,32 @@ hardware, visual or timing checks that CI can't prove.
 | `Text` / `TextMuted` / `TextDisabled` | `#F5F8FC` / `#A4B4C8` / `#607286` | primary / secondary / muted text |
 | `FocusGlow` | `#11C7FF` at 33% | 2 px halo around the focus ring (`Theme.WithGlow`) |
 | `Selected` | `#F2C14E` | marked items (mark bar, check, "Marcado"): focus ≠ marking |
-| `Danger` | `#FF7A6E` | always with "⚠" text, never color alone |
+| `Danger` | `#FF7A6E` | always with a warning symbol ("⚠" text, or the warning icon in modals), never color alone |
 | `Radius` | 8 | cards, rows, chips |
 | `FocusRing` | 2 px (× space scale) | same thickness focused or not (no layout jump) |
 | `MotionFast` / `MotionFocus` / `MotionPanel` | 120 / 160 / 200 ms | only `BrushTransition` on focus fills for now |
 | Xbox faces | A `#2EB34A`, B `#E5393F`, X `#2C7FE8`, Y `#F4C42F` | glyph body; Xbox family only (other families keep their shapes) |
+
+### Modal tokens (#172)
+
+| Token | Value | Use |
+|---|---|---|
+| `ModalScrim` | `#02070C` at 71% (91% when solid) | page behind any modal |
+| `ModalPanel()` | acrylic, tint `#0C1B2A` at 82%, fallback `#0D1C2B` | panel material; solid brush when `Theme.SolidSurfaces` |
+| `ModalEdge` / `ModalDivider` / `ModalInset` | white at 22% / 14% / 10% | thin light edge, separators, info and field boxes |
+| `ModalRadius` / `RowRadius` | 22 / 12 (× layout scale) | panel / option rows, keys, info boxes |
+| `FocusFill` + `FocusText` | `#11C7FF` + `#03101A` (≈9:1) | focused option and key: filled, SemiBold, scaled 1.025 (keys 1.06) |
+| `DangerFill` | `#FF8A7F` | focused destructive option (dark text); unfocused: red text + trailing warning symbol |
+| `DisabledFill` | `#2A3E52` | focused unavailable option (muted text + "Indisponível: reason") |
+| `Success` / `Warning` / `Danger` | `#4CD98A` / `#F2C14E` / `#FF7A6E` | header badge tone (result, warning, error) |
+| `MotionModal` | 120 ms, opacity only | new modal only; off with Windows animations off; never delays input |
+
+Icons: `ActionIcon` (Core) is the only map from meaning to symbol (`ActionIcons.Glyph`, Segoe Fluent Icons / MDL2);
+`ActionIcons.IsDestructive` (Delete, DeleteForever, Erase) drives the red style and the "never initial focus" rule
+(`AppController.SafeInitialFocus`). `MenuItem.Icon`/`Section`, `DialogOption.Icon`, `Modal.Icon`/`Subtitle` are set by
+`AppController`; views never pick icons. `Theme.SolidSurfaces` comes from Windows transparency effects off or high
+contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContrast`); `Theme.ReduceMotion` from
+`UISettings.AnimationsEnabled`.
 
 ## Regression matrix
 
@@ -220,6 +242,7 @@ Every entry stays in the Menu (Start/F10); nothing moves out without a replaceme
 | Text preview (encodings, limits, binary refused) | modal | `TextPreviewJourneyTests`, `TextPreviewTests` (2); Manual "(#58)" |
 | On-screen keyboard: PT-BR/EN, shift/caps, numbers, symbols, accents, space, backspace (repeat), clear, caret, selection, OK/cancel, name/path/password fields, masking/reveal, controller navigation | modal; footer shows Selecionar/Apagar/…/Concluir/Cancelar | `VirtualKeyboardTests` (13), `HintJourneyTests::On_screen_keyboard_…`, UIA |
 | Dialogs name the focused choice; destructive dialogs start on the safe option | modal | `HintJourneyTests::Dialogs_and_menus_…`, UIA |
+| Modal system (#172): every menu option and dialog button has an icon; destructive ones flagged, red + warning symbol, never the initial focus; input never reaches the screen under a modal (buttons, list clicks, tabs); nested modals close one at a time and focus returns; prompts and status inside the panel; solid panel with transparency off/high contrast | every modal | `ModalSystemJourneyTests` (4), UIA; Screens `m1`–`m9`, `icons/action-icons`; Manual "Modais (#172)" |
 | Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
 | About (version, license, source) | Menu → Sobre | `AboutJourneyTests` |
 

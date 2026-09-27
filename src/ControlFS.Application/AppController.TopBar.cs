@@ -194,8 +194,8 @@ public sealed partial class AppController
                 else
                     PushModal(new MenuModal("Arquivos recentes",
                     [
-                        new MenuItem("Lembrar pastas e arquivos abertos", ToggleRememberRecents, Detail: "Só neste computador. Também em Menu → Recentes."),
-                    ]));
+                        new MenuItem("Lembrar pastas e arquivos abertos", ToggleRememberRecents, Detail: "Só neste computador. Também em Menu → Recentes.", Icon: ActionIcon.Recent),
+                    ]) { Icon = ActionIcon.Recent });
                 break;
             case QuickAccessKind.Folder when item.Path is { } path:
                 OpenFromTopBar(new PhysicalLocation(path));
@@ -225,10 +225,10 @@ public sealed partial class AppController
     private void ShowFavoritesMenu()
     {
         var items = Settings.Favorites.Select(path => new MenuItem(FavoriteName(path), () => OpenFromTopBar(new PhysicalLocation(path)),
-            SafeDirectoryExists(path) ? null : "A pasta não existe ou não está acessível agora.", path)).ToList();
+            SafeDirectoryExists(path) ? null : "A pasta não existe ou não está acessível agora.", path, Icon: ActionIcon.Folder)).ToList();
         if (items.Count == 0)
-            items.Add(new MenuItem("Nenhum favorito ainda", null, "Adicione uma pasta pelo botão de ações (Norte) → Adicionar aos favoritos."));
-        PushModal(new MenuModal("Favoritos", items));
+            items.Add(new MenuItem("Nenhum favorito ainda", null, "Adicione uma pasta pelo botão de ações (Norte) → Adicionar aos favoritos.", Icon: ActionIcon.Favorite));
+        PushModal(new MenuModal("Favoritos", items) { Icon = ActionIcon.Favorite });
     }
 
     /// <summary>Mouse/toque num atalho: mesmo efeito de focar e confirmar.</summary>

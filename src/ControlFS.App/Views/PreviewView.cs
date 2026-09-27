@@ -21,26 +21,36 @@ public static partial class ModalView
     /// <summary>O modal é refeito a cada quadro: o bitmap de cada imagem decodificada é criado uma vez só.</summary>
     private static readonly ConditionalWeakTable<PreviewImage, WriteableBitmap> Bitmaps = [];
 
-    private static Border BuildImagePreview(ImagePreviewModal modal)
+    /// <summary>
+    /// Área útil de uma visualização em tela cheia: a janela menos as margens, o cabeçalho e o rodapé do painel (medidos
+    /// antes, porque o texto precisa saber quantas linhas cabem e a imagem, o tamanho de ajuste).
+    /// </summary>
+    private static (double Width, double Height) PreviewBox(AppController app, FrameworkElement header, double reserved = 0)
+    {
+        var inner = Math.Max(200, Theme.Viewport.Width - (2 * PanelMargin) - (2 * PanelPadding) - 2);
+        header.Measure(new Size(inner, double.PositiveInfinity));
+        var footer = Footer(app);
+        footer.Measure(new Size(inner, double.PositiveInfinity));
+        var chrome = (2 * PanelMargin) + (PanelPadding - Theme.SpaceXs) + Theme.Space(20) + (3 * Theme.SpaceM) + Theme.Hairline.Top + 2;
+        var height = Theme.Viewport.Height - chrome - header.DesiredSize.Height - footer.DesiredSize.Height - reserved - Theme.SpaceXs;
+        return (inner, Math.Max(160, height));
+    }
+
+    private static Border BuildImagePreview(AppController app, ImagePreviewModal modal)
     {
         var entry = modal.Current;
-        var stack = new StackPanel { Spacing = Theme.SpaceXs };
-        stack.Children.Add(new TextBlock { Text = entry.Name, FontSize = Theme.FontItem, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis });
         var details = new List<string> { $"{modal.Index + 1} de {modal.Images.Count}" };
         if (modal.Info is { } info) details.Add($"{info.Width} × {info.Height} · {info.Format.ToString().ToUpperInvariant()}");
         if (modal.Image is not null) details.Add(string.Create(CultureInfo.CurrentCulture, $"zoom {modal.Zoom * 100:0}%"));
-        stack.Children.Add(new TextBlock { Text = string.Join(" · ", details), FontSize = Theme.FontCaption, Foreground = Theme.TextMuted });
-
-        var chrome = 2 * (Theme.SpaceM + Theme.SpaceL);
-        var boxWidth = Math.Max(200, Theme.Viewport.Width - chrome);
-        var boxHeight = Math.Max(160, Theme.Viewport.Height - chrome - Theme.Scaled(150)); // título, detalhes e rodapé
+        var header = Header(entry.Name, modal.Icon, string.Join(" · ", details));
+        var (boxWidth, boxHeight) = PreviewBox(app, header);
         var area = new Grid
         {
             Width = boxWidth,
             Height = boxHeight,
             Background = new SolidColorBrush(Microsoft.UI.Colors.Black),
             Clip = new RectangleGeometry { Rect = new Rect(0, 0, boxWidth, boxHeight) },
-            Margin = new Thickness(0, Theme.SpaceS, 0, 0),
+            CornerRadius = Theme.RowRadius,
         };
         if (modal.Image is { } image)
         {
@@ -93,8 +103,7 @@ public static partial class ModalView
             AutomationProperties.SetLiveSetting(text, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
             area.Children.Add(text);
         }
-        stack.Children.Add(area);
-        return Card(stack, Theme.Viewport.Width);
+        return Panel(app, header, area, 100_000, scroll: false, stretch: true);
     }
 
     /// <summary>Colunas desenhadas por linha: o resto da linha fica fora da tela (Esquerda/Direita deslocam).</summary>
@@ -104,38 +113,37 @@ public static partial class ModalView
 
     private static Border BuildTextPreview(AppController app, TextPreviewModal modal)
     {
-        var stack = new StackPanel { Spacing = Theme.SpaceXs };
-        stack.Children.Add(new TextBlock { Text = modal.Entry.Name, FontSize = Theme.FontItem, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis });
-
-        var chrome = 2 * (Theme.SpaceM + Theme.SpaceL);
-        var boxWidth = Math.Max(200, Theme.Viewport.Width - chrome);
-        var boxHeight = Math.Max(160, Theme.Viewport.Height - chrome - Theme.Scaled(190)); // título, detalhes, aviso e rodapé
+        var document = modal.Document;
+        string? Details(int pageLines) => document is null ? null
+            : string.Create(CultureInfo.CurrentCulture,
+                $"{document.EncodingName} · {document.Lines.Count:N0} linhas · mostrando {(document.Lines.Count == 0 ? 0 : modal.Top + 1):N0}–{Math.Min(document.Lines.Count, modal.Top + pageLines):N0}") +
+                (modal.Column > 0 ? string.Create(CultureInfo.CurrentCulture, $" · a partir da coluna {modal.Column + 1}") : string.Empty) +
+                (modal.Monospace ? " · fonte fixa" : " · fonte proporcional");
+        var body = new StackPanel { Spacing = Theme.SpaceS };
+        var reserved = 0.0;
+        if (document is not null && Core.Preview.TextPreview.TruncationNotice(document) is { } notice)
+        {
+            var truncated = new TextBlock { Text = "⚠ " + notice, FontSize = Theme.FontCaption, Foreground = Theme.Warning, TextWrapping = TextWrapping.Wrap };
+            truncated.Measure(new Size(Math.Max(200, Theme.Viewport.Width - (2 * PanelMargin) - (2 * PanelPadding)), double.PositiveInfinity));
+            reserved = truncated.DesiredSize.Height + Theme.SpaceS;
+            body.Children.Add(truncated);
+        }
+        // O cabeçalho tem sempre uma linha de contexto: mede com ela para saber quantas linhas de texto cabem.
+        var (boxWidth, boxHeight) = PreviewBox(app, Header(modal.Entry.Name, modal.Icon, "·"), reserved);
         var fontSize = Theme.FontBody;
         var lineHeight = Math.Ceiling(fontSize * 1.4);
         var pageLines = Math.Max(1, (int)((boxHeight - 2 * Theme.SpaceS) / lineHeight));
         app.ReportTextPreviewPage(pageLines);
-
-        var document = modal.Document;
-        if (document is not null)
-        {
-            var last = Math.Min(document.Lines.Count, modal.Top + pageLines);
-            var details = string.Create(CultureInfo.CurrentCulture,
-                $"{document.EncodingName} · {document.Lines.Count:N0} linhas · mostrando {(document.Lines.Count == 0 ? 0 : modal.Top + 1):N0}–{last:N0}") +
-                (modal.Column > 0 ? string.Create(CultureInfo.CurrentCulture, $" · a partir da coluna {modal.Column + 1}") : string.Empty) +
-                (modal.Monospace ? " · fonte fixa" : " · fonte proporcional");
-            stack.Children.Add(new TextBlock { Text = details, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
-            if (Core.Preview.TextPreview.TruncationNotice(document) is { } notice)
-                stack.Children.Add(new TextBlock { Text = "⚠ " + notice, FontSize = Theme.FontCaption, Foreground = Theme.Selected, TextWrapping = TextWrapping.Wrap });
-        }
+        var header = Header(modal.Entry.Name, modal.Icon, Details(pageLines) ?? (modal.IsLoading ? "Lendo arquivo…" : null));
 
         var area = new Grid
         {
             Width = boxWidth,
             Height = boxHeight,
-            Background = Theme.SurfaceRaised,
+            Background = Theme.ModalInset,
             Padding = new Thickness(Theme.SpaceM, Theme.SpaceS, Theme.SpaceM, Theme.SpaceS),
             Clip = new RectangleGeometry { Rect = new Rect(0, 0, boxWidth, boxHeight) },
-            Margin = new Thickness(0, Theme.SpaceS, 0, 0),
+            CornerRadius = Theme.RowRadius,
         };
         if (document is not null && document.Lines.Count > 0)
         {
@@ -186,7 +194,7 @@ public static partial class ModalView
             AutomationProperties.SetLiveSetting(text, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
             area.Children.Add(text);
         }
-        stack.Children.Add(area);
-        return Card(stack, Theme.Viewport.Width);
+        body.Children.Add(area);
+        return Panel(app, header, body, 100_000, scroll: false, stretch: true);
     }
 }

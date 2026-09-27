@@ -113,7 +113,7 @@ try {
     Send "{F10}"
     Check "F10 dentro da confirmação não abre o Menu por cima" { (Name-Of 'ControlFS.ModalTitle') -eq 'Sair do ControlFS?' -and (Name-Of 'ControlFS.FocusedOption') -eq 'Cancelar' }
     Send "{RIGHT}"
-    Check "→ move o foco para Sair (perigosa)" { (Name-Of 'ControlFS.FocusedOption') -eq '⚠ Sair' }
+    Check "→ move o foco para Sair (perigosa)" { (Name-Of 'ControlFS.FocusedOption') -eq 'Sair' -and (Name-Of 'ControlFS.ModalTitle') -eq 'Sair do ControlFS?' }
     Send "{LEFT}"
     Check "← volta para Cancelar" { (Name-Of 'ControlFS.FocusedOption') -eq 'Cancelar' }
     Send "{ESC}"

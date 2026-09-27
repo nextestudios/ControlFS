@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 
 namespace ControlFS.Application;
 
@@ -22,20 +23,20 @@ public sealed partial class AppController
             var index = items.Count;
             items.Add(new MenuItem(SearchFilter.TypeName(type) + (on ? " ✓" : string.Empty),
                 () => ApplySearchFilter(pane, search, filter with { Types = filter.Types ^ type }, index),
-                Detail: on ? "Filtrando por este tipo" : null));
+                Detail: on ? "Filtrando por este tipo" : null, Icon: ActionIcon.Filter, Section: "Tipo"));
         }
         var sizeIndex = items.Count;
         items.Add(new MenuItem($"Tamanho: {SearchFilter.SizeName(filter.Size)}",
-            () => ApplySearchFilter(pane, search, filter with { Size = Next(filter.Size) }, sizeIndex), Detail: "Sul troca a faixa."));
+            () => ApplySearchFilter(pane, search, filter with { Size = Next(filter.Size) }, sizeIndex), Detail: "Sul troca a faixa.", Icon: ActionIcon.Sort, Section: "Tamanho e data"));
         var dateIndex = items.Count;
         items.Add(new MenuItem($"Modificado: {SearchFilter.DateName(filter.Date)}",
-            () => ApplySearchFilter(pane, search, filter with { Date = Next(filter.Date) }, dateIndex), Detail: "Sul troca o período."));
+            () => ApplySearchFilter(pane, search, filter with { Date = Next(filter.Date) }, dateIndex), Detail: "Sul troca o período.", Icon: ActionIcon.Recent, Section: "Tamanho e data"));
         var clearIndex = items.Count;
         items.Add(new MenuItem("Limpar filtros", () => ApplySearchFilter(pane, search, SearchFilter.None, clearIndex),
-            filter.IsActive ? null : "Nenhum filtro ativo."));
-        items.Add(new MenuItem("Outras ações da busca…", () => ShowSearchMenu(pane, search), Detail: "Mostrar na pasta, nova busca, subpastas, propriedades."));
+            filter.IsActive ? null : "Nenhum filtro ativo.", Icon: ActionIcon.ClearFilter, Section: "Busca"));
+        items.Add(new MenuItem("Outras ações da busca…", () => ShowSearchMenu(pane, search), Detail: "Mostrar na pasta, nova busca, subpastas, propriedades.", Icon: ActionIcon.Search, Section: "Busca"));
         var visible = search.VisibleResults().Count();
-        PushModal(new MenuModal($"Filtros ({visible} de {search.ResultCount})", items) { FocusIndex = Math.Clamp(focus, 0, items.Count - 1) });
+        PushModal(new MenuModal($"Filtros ({visible} de {search.ResultCount})", items) { Icon = ActionIcon.Filter, FocusIndex = Math.Clamp(focus, 0, items.Count - 1) });
     }
 
     /// <summary>Guarda o filtro na sessão e refiltra os resultados guardados (a busca em andamento continua).</summary>

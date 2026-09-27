@@ -79,7 +79,8 @@ A faixa de layout sai do tamanho **efetivo** da janela (pixels ÷ escala do Wind
 "em texto" e pode deixar o layout compacto; o próprio WinUI aumenta cada texto.
 
 Evidência automática: o workflow **Smoke** (manual) roda `ControlFS-Portable-x64.exe --render-screens <pasta>`, que
-monta as telas reais (início, pasta, lista compacta, menu com foco abaixo da dobra, teclado virtual) em 1280×720,
+monta as telas reais (início, pasta, lista compacta, menu com foco abaixo da dobra, teclado virtual e, em 720p, 800p,
+1080p e 4K 100/200%, os modais da seção "Modais (#172)") em 1280×720,
 1280×800 (e com texto a 150%), 1920×1080 (100% e 150%) e 3840×2160 (100%, 200% e 300%), além da galeria de glifos
 (escuro/claro, 100/200/300%), e publica os PNGs no artefato `smoke-screens` com um `report.txt` das alturas medidas.
 A resolução é simulada (a tela do runner é pequena); o modo usa uma pasta temporária, não acessa a rede e fecha sozinho.
@@ -92,6 +93,35 @@ Ainda manual, num aparelho real:
 - [ ] Windows → Acessibilidade → Tamanho do texto em 150% e 200% com o app aberto: o layout se ajusta na hora, nada
       essencial fica cortado (menus rolam até o item focado).
 - [ ] Arrastar a janela entre um monitor 100% e outro 150%/200%: textos e ícones nítidos, sem reiniciar.
+
+## Modais (#172)
+
+Automático: `ModalSystemJourneyTests` (ícone em toda opção de menu e botão de diálogo, com símbolo; ações perigosas
+marcadas e nunca focadas ao abrir; entrada — botões, clique na lista, abas — nunca chega à tela atrás de um modal;
+modais aninhados fecham um por vez e o foco volta), UIA (Sair começa em Cancelar; F10 não abre outro modal por cima) e
+as capturas `m1-menu-actions`, `m1b-menu-destructive-focus`, `m2-confirm-delete`, `m2b-confirm-delete-solid`
+(transparência reduzida), `m3-extract-summary`, `m4-password`, `m5-result-error`, `m6-operations`,
+`m7-operation-details`, `m8-picker-menu`, `m9-about`, `4-menu` e `5-keyboard` em 1280×720, 1280×800, 1920×1080 e
+3840×2160 (100% e 200%), mais `icons/action-icons.png` (todos os ícones com o nome) no artefato `smoke-screens`.
+
+Não validado em hardware (controle real, TV a ~3 m, DPI real, Configurações do Windows reais):
+- [ ] TV 1080p e 4K a ~3 m: dá para dizer qual opção está focada sem depender da cor (preenchimento, negrito, tamanho);
+      os ícones são reconhecíveis e combinam com o texto; títulos de grupo legíveis.
+- [ ] Portátil 1280×800/720: menus longos (Menu, ações de arquivo) rolam até o item focado; o painel e as legendas do
+      rodapé do painel cabem sem cortar.
+- [ ] Xbox, PlayStation, Nintendo e genérico: as legendas do painel mostram o glifo certo e fazem a ação escrita
+      (Escolher, Fechar, a opção focada do diálogo, Concluir/Cancelar no teclado); troca a quente atualiza na hora.
+- [ ] Windows → Personalização → Cores → **Efeitos de transparência** desligados com um menu aberto: o painel fica
+      sólido na hora e o fundo mais escuro; ligar de novo volta ao fosco. Economia de energia/área de trabalho remota:
+      o acrílico cai para a cor sólida sozinho.
+- [ ] Windows → Acessibilidade → **Temas de contraste** ligado: painel sólido, texto e foco legíveis.
+- [ ] Windows → Acessibilidade → Efeitos visuais → **Efeitos de animação** desligados: modais aparecem sem transição;
+      ligados: só um esmaecer curto (≤ 120 ms), sem atrasar a entrada (apertar Sul logo ao abrir já escolhe).
+- [ ] Sombra do painel visível sobre a tela escurecida (ThemeShadow; o `--render-screens` não desenha sombras).
+- [ ] Confirmações perigosas (Sair, Excluir permanentemente, Executar, Substituir, Descartar) começam em Cancelar/opção
+      segura; a opção perigosa focada fica vermelha com texto escuro e o símbolo de alerta.
+- [ ] Mouse: clicar numa opção faz o mesmo que Sul; clicar fora do painel não aciona nada atrás dele.
+- [ ] Narrador: opções perigosas são lidas com "ação perigosa"; o título do modal é lido ao abrir.
 
 ## Barra de caminho (#30)
 

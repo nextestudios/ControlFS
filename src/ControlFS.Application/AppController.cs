@@ -308,9 +308,34 @@ public sealed partial class AppController
 
     internal void PushModal(Modal modal)
     {
+        SafeInitialFocus(modal);
         _modals.Add(modal);
         ModalContextChanged?.Invoke();
         RaiseChanged();
+    }
+
+    /// <summary>
+    /// Regra única do foco inicial (#172): um modal nunca abre com o foco numa ação que apaga dados. Menus pulam para a
+    /// primeira opção não destrutiva; diálogos, para a opção de Voltar (sempre segura) ou a primeira que não é perigosa.
+    /// </summary>
+    private static void SafeInitialFocus(Modal modal)
+    {
+        switch (modal)
+        {
+            case MenuModal menu when menu.Items.Count > 0:
+                menu.FocusIndex = Math.Clamp(menu.FocusIndex, 0, menu.Items.Count - 1);
+                if (!menu.Items[menu.FocusIndex].IsDestructive) return;
+                var safe = menu.Items.ToList().FindIndex(i => !i.IsDestructive);
+                if (safe >= 0) menu.FocusIndex = safe;
+                break;
+            case DialogModal dialog when dialog.Options.Count > 0:
+                dialog.FocusIndex = Math.Clamp(dialog.FocusIndex, 0, dialog.Options.Count - 1);
+                if (!dialog.Options[dialog.FocusIndex].IsDestructive) return;
+                var back = dialog.BackOption is { } option ? dialog.Options.IndexOf(option) : -1;
+                var fallback = back >= 0 ? back : dialog.Options.FindIndex(o => !o.IsDestructive);
+                if (fallback >= 0) dialog.FocusIndex = fallback;
+                break;
+        }
     }
 
     internal void CloseModal(Modal modal)
@@ -472,15 +497,23 @@ public sealed partial class AppController
         }
     }
 
-    internal DialogModal ShowMessage(string title, IReadOnlyList<(string, string)> lines, string? message = null)
+    internal DialogModal ShowMessage(string title, IReadOnlyList<(string, string)> lines, string? message = null, ActionIcon icon = ActionIcon.Info)
     {
-        var dialog = new DialogModal(title, lines) { Message = message };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var dialog = new DialogModal(title, lines) { Message = message, Icon = icon };
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(close);
         dialog.BackOption = close;
         PushModal(dialog);
         return dialog;
     }
+
+    /// <summary>Tom do resultado de uma operação: concluída, com avisos/cancelada ou com falha (nunca só pela cor).</summary>
+    internal static ActionIcon ResultIcon(OperationState state) => state switch
+    {
+        OperationState.Completed => ActionIcon.Success,
+        OperationState.Failed => ActionIcon.Error,
+        _ => ActionIcon.Warning,
+    };
 
     private void ShowExitDialog()
     {
@@ -488,14 +521,14 @@ public sealed partial class AppController
         var dialog = new DialogModal("Sair do ControlFS?", active > 0
             ? [("Operações em andamento", $"{active} — serão canceladas; arquivos concluídos permanecem.")]
             : [], sensitive: true);
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Sair", DialogOptionKind.Danger, () =>
         {
             CloseModal(dialog);
             foreach (var op in Operations.Items.Where(o => o.IsActive).ToList()) Operations.Cancel(op);
             RequestExit();
-        }));
+        }, icon: ActionIcon.Exit));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);

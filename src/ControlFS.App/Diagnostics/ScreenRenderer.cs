@@ -29,7 +29,7 @@ internal static class ScreenRenderer
 {
     public const string Switch = "--render-screens";
 
-    private sealed record Target(string Name, int Width, int Height, double Scale, double TextScale = 1)
+    private sealed record Target(string Name, int Width, int Height, double Scale, double TextScale = 1, bool Modals = false)
     {
         public double EffectiveWidth => Width / Scale;
         public double EffectiveHeight => Height / Scale;
@@ -38,13 +38,13 @@ internal static class ScreenRenderer
     /// <summary>Critério de aceite do #36 (720p, 800p, 1080p, 4K) e as escalas que o Windows costuma usar nelas.</summary>
     private static readonly Target[] Targets =
     [
-        new("1280x720", 1280, 720, 1),
-        new("1280x800", 1280, 800, 1),
+        new("1280x720", 1280, 720, 1, Modals: true),
+        new("1280x800", 1280, 800, 1, Modals: true),
         new("1280x800-text150", 1280, 800, 1, TextScale: 1.5),
-        new("1920x1080", 1920, 1080, 1),
+        new("1920x1080", 1920, 1080, 1, Modals: true),
         new("1920x1080-150", 1920, 1080, 1.5),
-        new("3840x2160", 3840, 2160, 1),
-        new("3840x2160-200", 3840, 2160, 2),
+        new("3840x2160", 3840, 2160, 1, Modals: true),
+        new("3840x2160-200", 3840, 2160, 2, Modals: true),
         new("3840x2160-300", 3840, 2160, 3),
     ];
 
@@ -65,6 +65,7 @@ internal static class ScreenRenderer
             Directory.CreateDirectory(outputDirectory);
             var sample = CreateSampleFolder(Path.Join(work, "files"));
             var shortcuts = CreateShortcutFolder(Path.Join(work, "files", "Área de trabalho"));
+            var modals = CreateModalFolder(Path.Join(work, "files", "Modais"));
             var window = new MainWindow(Path.Join(work, "data"));
             var loaded = new TaskCompletionSource();
             window.RootHost.Loaded += (_, _) => loaded.TrySetResult();
@@ -84,6 +85,7 @@ internal static class ScreenRenderer
 
             var app = window.Controller;
             app.SetActiveController(ControllerFamily.Xbox); // legendas com glifos, como com um controle em uso
+            window.SimulateSolidSurfaces(false); // painel fosco; a reserva sólida tem a própria captura
             foreach (var target in Targets)
             {
                 window.AppWindow.Resize(new SizeInt32(target.Width, target.Height)); // o Windows limita à tela; ajuda a virtualização
@@ -178,9 +180,12 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.ChangeView);
                 await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
                 app.Handle(InputAction.ChangeView);
+
+                if (target.Modals) await CaptureModalsAsync(app, window, stage, target, dir, modals);
             }
 
             await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
+            await RenderIconGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "icons"));
             await File.WriteAllTextAsync(Path.Join(outputDirectory, "report.txt"), Report.ToString());
             Environment.ExitCode = 0;
         }
@@ -196,6 +201,153 @@ internal static class ScreenRenderer
             try { Directory.Delete(work, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             Microsoft.UI.Xaml.Application.Current.Exit();
         }
+    }
+
+    /// <summary>
+    /// Modais (#172), só com ações semânticas: menu de ações (foco inicial e numa ação perigosa), confirmação de
+    /// exclusão (fosca e com a reserva sólida de transparência reduzida), resumo da extração, senha no teclado, resultado
+    /// com erro, Central de Operações e detalhes, menu do seletor de pasta e Sobre.
+    /// </summary>
+    private static async Task CaptureModalsAsync(AppController app, MainWindow window, FrameworkElement stage, Target target, string dir, string folder)
+    {
+        CloseModals(app);
+        app.OpenPhysical(folder);
+        await app.WhenIdleAsync();
+
+        await FocusAsync(app, stage, "relatório.txt");
+        app.Handle(InputAction.OpenContextMenu);
+        await app.WhenIdleAsync(); // o menu de arquivo detecta o formato antes de abrir
+        await CaptureAsync(stage, target, dir, "m1-menu-actions", window);
+        FocusMenuItem(app, "Excluir");
+        await CaptureAsync(stage, target, dir, "m1b-menu-destructive-focus", window);
+        app.Handle(InputAction.Confirm);
+        await CaptureAsync(stage, target, dir, "m2-confirm-delete", window);
+        window.SimulateSolidSurfaces(true);
+        await CaptureAsync(stage, target, dir, "m2b-confirm-delete-solid", window);
+        window.SimulateSolidSurfaces(false);
+        CloseModals(app);
+
+        // Compactado com senha: resumo da extração, teclado de senha e o resultado com a senha errada.
+        await FocusAsync(app, stage, "protegido.zip");
+        app.Handle(InputAction.OpenContextMenu);
+        await app.WhenIdleAsync(); // abre em "Extrair para \"protegido\""
+        app.Handle(InputAction.Confirm);
+        await CaptureAsync(stage, target, dir, "m3-extract-summary", window);
+        app.Handle(InputAction.Confirm); // Extrair
+        if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal))
+        {
+            var first = app.TopModal;
+            app.TypeText("senha errada");
+            await CaptureAsync(stage, target, dir, "m4-password", window);
+            app.Handle(InputAction.OpenAppMenu); // Concluir: senha errada reabre o teclado com o erro
+            if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal k && !ReferenceEquals(k, first) && !k.IsBusy))
+            {
+                await CaptureAsync(stage, target, dir, "m5-password-error", window);
+                app.TypeText("certa");
+                app.Handle(InputAction.OpenAppMenu);
+                if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
+                    await CaptureAsync(stage, target, dir, "m5b-result", window);
+            }
+        }
+        CloseModals(app);
+
+        // Erro: a pasta sumiu do disco depois de listada.
+        await app.WhenIdleAsync();
+        var gone = Path.Join(folder, "Pasta removida");
+        if (Directory.Exists(gone)) Directory.Delete(gone);
+        await FocusAsync(app, stage, "Pasta removida");
+        app.Handle(InputAction.Confirm);
+        if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
+            await CaptureAsync(stage, target, dir, "m5c-error", window);
+        CloseModals(app);
+        Directory.CreateDirectory(gone);
+        app.Handle(InputAction.OpenAppMenu);
+        FocusMenuItem(app, "Atualizar");
+        app.Handle(InputAction.Confirm);
+        await app.WhenIdleAsync();
+
+        ChooseAppMenu(app, "Operações");
+        await CaptureAsync(stage, target, dir, "m6-operations", window);
+        app.Handle(InputAction.Confirm);
+        await CaptureAsync(stage, target, dir, "m7-operation-details", window);
+        CloseModals(app);
+
+        // Seletor de pasta (Extrair para…): o menu do seletor e depois "Cancelar escolha".
+        await FocusAsync(app, stage, "protegido.zip");
+        app.Handle(InputAction.OpenContextMenu);
+        await app.WhenIdleAsync();
+        FocusMenuItem(app, "Extrair para…");
+        app.Handle(InputAction.Confirm);
+        await app.WhenIdleAsync();
+        app.Handle(InputAction.OpenAppMenu);
+        await CaptureAsync(stage, target, dir, "m8-picker-menu", window);
+        FocusMenuItem(app, "Cancelar escolha");
+        app.Handle(InputAction.Confirm);
+        CloseModals(app);
+
+        ChooseAppMenu(app, "Sobre");
+        await CaptureAsync(stage, target, dir, "m9-about", window);
+        CloseModals(app);
+        app.GoHome();
+    }
+
+    /// <summary>Move o foco do menu aberto até o item que começa com <paramref name="prefix"/> (só setas).</summary>
+    private static void FocusMenuItem(AppController app, string prefix)
+    {
+        if (app.TopModal is not Application.State.MenuModal menu) return;
+        var index = menu.Items.ToList().FindIndex(i => i.Label.StartsWith(prefix, StringComparison.Ordinal));
+        if (index < 0) return;
+        while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
+    }
+
+    private static async Task<bool> WaitForAsync(Func<bool> condition)
+    {
+        for (var i = 0; i < 150 && !condition(); i++) await Task.Delay(100);
+        return condition();
+    }
+
+    /// <summary>Pasta dos modais: um texto e um ZIP com senha (ZipCrypto, 389 bytes; o mesmo dos testes, senha "senha-certa").</summary>
+    private static string CreateModalFolder(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Join(folder, "relatório.txt"), "Relatório de exemplo.");
+        Directory.CreateDirectory(Path.Join(folder, "Pasta removida"));
+        File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
+        return folder;
+    }
+
+    private const string ProtectedZip =
+        "UEsDBAoACQAAALqIOl0bTTExIAAAABQAAAALAAAAc2VncmVkby50eHTxaJajxtfA2YEoujO4doqsCyhhAsJ0bWsM2cfhseKhz1BLBwgbTTExIAAAABQAAABQSwMECgAAAAAAuog6XQAAAAAAAAAAAAAAAAUAAABkb2NzL1BLAwQKAAkAAAC6iDpdEKquTBEAAAAFAAAADQAAAGRvY3Mvbm90YS50eHSx7BFtMkmzDm5HlScqgRPgVlBLBwgQqq5MEQAAAAUAAABQSwECHgMKAAkAAAC6iDpdG00xMSAAAAAUAAAACwAAAAAAAAABAAAApIEAAAAAc2VncmVkby50eHRQSwECHgMKAAAAAAC6iDpdAAAAAAAAAAAAAAAABQAAAAAAAAAAABAA7UFZAAAAZG9jcy9QSwECHgMKAAkAAAC6iDpdEKquTBEAAAAFAAAADQAAAAAAAAABAAAApIF8AAAAZG9jcy9ub3RhLnR4dFBLBQYAAAAAAwADAKcAAADIAAAAAAA=";
+
+    /// <summary>Galeria dos ícones das ações (#172): cada símbolo com o nome, para conferir a fonte de ícones do runner.</summary>
+    private static async Task RenderIconGalleryAsync(Grid stage, Grid layout, MainWindow window, string directory)
+    {
+        Directory.CreateDirectory(directory);
+        window.PinLayout(LayoutProfile.Default, new Windows.Foundation.Size(1920, 1080), 1);
+        var icons = Enum.GetValues<ActionIcon>().Where(i => i != ActionIcon.None).ToArray();
+        const int columns = 6;
+        var grid = new Grid { Background = Theme.Background, Padding = new Thickness(24), ColumnSpacing = 24, RowSpacing = 14 };
+        for (var c = 0; c < columns; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(280) });
+        for (var r = 0; r < (icons.Length + columns - 1) / columns; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var i = 0; i < icons.Length; i++)
+        {
+            var cell = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            cell.Children.Add(new TextBlock { Text = ActionIcons.Glyph(icons[i]), FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = 24, Foreground = Theme.Accent, Width = 32 });
+            cell.Children.Add(new TextBlock { Text = icons[i].ToString() + (ActionIcons.IsDestructive(icons[i]) ? " ⚠" : string.Empty), FontSize = 16, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
+            Add(grid, cell, i / columns, i % columns);
+        }
+        stage.Children.Clear();
+        stage.Children.Add(grid);
+        grid.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        var width = (int)Math.Ceiling(grid.DesiredSize.Width);
+        var height = (int)Math.Ceiling(grid.DesiredSize.Height);
+        stage.Width = width;
+        stage.Height = height;
+        await SettleAsync(stage);
+        await SaveAsync(stage, width, height, Path.Join(directory, "action-icons.png"));
+        Report.AppendLine($"action-icons: {icons.Length} ícones");
+        stage.Children.Clear();
+        stage.Children.Add(layout);
     }
 
     /// <summary>Abre o menu do app e escolhe o item que começa com <paramref name="prefix"/>, só com ações semânticas.</summary>

@@ -1,4 +1,5 @@
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
 
@@ -43,14 +44,15 @@ public sealed partial class AppController
         var dialog = new DialogModal($"Extrair {Plural.Of(archives.Count, "compactado", "compactados")}", lines)
         {
             Message = "Cada compactado entra na fila como uma operação própria. Os protegidos por senha pedem a senha na vez deles.",
+            Icon = ActionIcon.Extract,
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(new DialogOption("Extrair", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             pane.List.ClearSelection();
             Track(StartBatchExtractionAsync(new ExtractionBatch(archives, here.FullPath)));
-        }));
+        }, icon: ActionIcon.Extract));
         dialog.Options.Add(cancel);
         dialog.BackOption = cancel;
         PushModal(dialog);
@@ -105,15 +107,16 @@ public sealed partial class AppController
         var dialog = new DialogModal($"Extração de {Plural.Of(batch.Archives.Count, "compactado", "compactados")} " + (allOk ? "concluída" : "com problemas"), lines)
         {
             Message = "Detalhes de cada compactado (e tentar de novo) em Menu → Operações.",
+            Icon = allOk ? ActionIcon.Success : ActionIcon.Warning,
         };
-        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         if (Directory.Exists(batch.Destination))
             dialog.Options.Add(new DialogOption("Abrir pasta de destino", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 Screen = Screen.Browser;
                 Track(NavigateAsync(Browser, new PhysicalLocation(batch.Destination), pushHistory: Browser.Location is not null));
-            }));
+            }, icon: ActionIcon.OpenFolder));
         dialog.Options.Add(close);
         dialog.BackOption = close;
         PushModal(dialog);

@@ -118,9 +118,9 @@ public sealed partial class AppController
         var index = ActiveTab;
         PushModal(new MenuModal($"Aba {index + 1} de {_tabs.Count}",
         [
-            new MenuItem("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova."),
-            new MenuItem("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null),
-        ]));
+            new MenuItem("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova.", Icon: ActionIcon.NewTab),
+            new MenuItem("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
+        ]) { Icon = ActionIcon.NewTab });
     }
 
     /// <summary>Mouse/toque numa aba: ativa a aba e volta o foco para a lista.</summary>

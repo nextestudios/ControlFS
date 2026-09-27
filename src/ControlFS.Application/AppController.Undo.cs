@@ -1,5 +1,6 @@
 using ControlFS.Application.Operations;
 using ControlFS.Application.State;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Text;
@@ -92,8 +93,8 @@ public sealed partial class AppController
     {
         yield return new MenuItem(UndoTitle is { } undo ? $"Desfazer: {undo}" : "Desfazer", () => ConfirmUndo(_undo[^1]),
             _undo.Count == 0 ? "Nada para desfazer nesta sessão." : null,
-            Detail: "Renomear, mover, copiar e mandar para a Lixeira. Exclusão permanente e substituições não se desfazem.");
-        yield return new MenuItem(RedoTitle is { } redo ? $"Refazer: {redo}" : "Refazer", ConfirmRedo, _redo.Count == 0 ? "Nada para refazer." : null);
+            Detail: "Renomear, mover, copiar e mandar para a Lixeira. Exclusão permanente e substituições não se desfazem.", Icon: ActionIcon.Undo, Section: "Operações");
+        yield return new MenuItem(RedoTitle is { } redo ? $"Refazer: {redo}" : "Refazer", ConfirmRedo, _redo.Count == 0 ? "Nada para refazer." : null, Icon: ActionIcon.Redo, Section: "Operações");
     }
 
     private static string Describe(UndoRecord record)
@@ -118,14 +119,15 @@ public sealed partial class AppController
         var dialog = new DialogModal($"Desfazer \"{record.Title}\"?", [("O que acontece", Describe(record))], sensitive: true)
         {
             Message = "Antes de mudar qualquer coisa, o ControlFS confere se os itens continuam como a operação deixou; se não, nada é feito.",
+            Icon = ActionIcon.Undo,
         };
-        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
+        var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(cancel);
         dialog.Options.Add(new DialogOption("Desfazer", DialogOptionKind.Primary, () =>
         {
             CloseModal(dialog);
             StartUndo(record);
-        }));
+        }, icon: ActionIcon.Undo));
         dialog.BackOption = cancel;
         dialog.FocusIndex = 0;
         PushModal(dialog);
@@ -297,7 +299,7 @@ public sealed partial class AppController
             var done = result.Count(ItemOutcome.Succeeded);
             if (done > 0) lines.Insert(0, ("Desfeitos", done.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             ShowMessage(result.FinalState == OperationState.Failed ? "Não foi possível desfazer" : "Desfeito em parte", lines,
-                (result.Message ?? "Alguns itens não voltaram.") + " A operação saiu da lista de desfazer.");
+                (result.Message ?? "Alguns itens não voltaram.") + " A operação saiu da lista de desfazer.", icon: result.FinalState == OperationState.Failed ? ActionIcon.Error : ActionIcon.Warning);
         }
         RefreshAfterUndo(record);
     }
@@ -330,7 +332,7 @@ public sealed partial class AppController
         }
         catch (FileOperationException ex)
         {
-            ShowMessage("Não foi possível refazer", [("Item", Path.GetFileName(oldPath))], ex.Message);
+            ShowMessage("Não foi possível refazer", [("Item", Path.GetFileName(oldPath))], ex.Message, icon: ActionIcon.Error);
         }
     }
 }
