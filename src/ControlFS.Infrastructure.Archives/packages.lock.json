@@ -10,6 +10,12 @@
       },
       "controlfs.core": {
         "type": "Project"
+      },
+      "controlfs.infrastructure.windows": {
+        "type": "Project",
+        "dependencies": {
+          "ControlFS.Core": "[0.1.0, )"
+        }
       }
     }
   }

@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+    <!-- Pastas de destino presas por handle (PinnedDirectory), compartilhadas com as operações de arquivo. -->
+    <ProjectReference Include="..\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
     <PackageReference Include="SharpCompress" />
   </ItemGroup>
   <ItemGroup>

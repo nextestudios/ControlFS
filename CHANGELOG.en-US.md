@@ -16,6 +16,9 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Native Windows icons** in the list (home, folders, picker and archives): file types, folders, special folders and drives. Icons load in the background without stalling scrolling and follow the display scale; no emoji left in the list. (#24)
 - **Visible cursor** on the on-screen keyboard (a steady accent-colored bar whose position Narrator reads) and **LT/RT** (or Home/End) to jump to the start or end of the text. (#43)
 
+### Security
+- Extraction, copy and move destinations are checked **by handle** on Windows: destination folders stay pinned while each file is put in place, so another program can't swap them for a junction to write outside the destination. Remaining limits in `docs/security-model.md`. (#81)
+
 ### Improvements
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)
 - **Clearer list:** focused, marked and cut items each have their own shape (ring; stripe + checked box + "Marked"; scissors + "Cut"), readable without relying on color. Type, size and date always appear in the same order, and the focused item shows its full name. New **list density** in the menu (comfortable, or compact with columns), saved between sessions. (#28)

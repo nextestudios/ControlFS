@@ -152,6 +152,7 @@
         "type": "Project",
         "dependencies": {
           "ControlFS.Core": "[0.1.0, )",
+          "ControlFS.Infrastructure.Windows": "[0.1.0, )",
           "SharpCompress": "[1.0.0, )"
         }
       },
