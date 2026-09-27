@@ -68,6 +68,7 @@ public sealed class MainWindow : Window
     private bool _detailsFit = true;
     private EntryRowTemplate.ListColumns? _columns;
     private int _shownStatsVersion = -1;
+    private int _shownGitVersion = -1;
     private readonly GridView _grid = new();
     private readonly WrapPanel _hints = new();
     private readonly StackPanel _footer = new();
@@ -107,6 +108,7 @@ public sealed class MainWindow : Window
             new Preview.WicImageDecoder(), new WindowsRecycleBin())
         {
             PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
+            Git = new Infrastructure.Git.GitStatusReader(),
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
         };
@@ -334,7 +336,7 @@ public sealed class MainWindow : Window
 
     /// <summary>Contexto das linhas (tipo, soma das pastas do início, marcação, relógio), refeito a cada Render.</summary>
     private EntryRowTemplate.RowContext RowContext() => _rowContext ??= new EntryRowTemplate.RowContext(
-        _app.TypeNameOf, HomeFolderSize, _app.ListHeader.CanMark, DateTime.Now);
+        _app.TypeNameOf, HomeFolderSize, _app.ListHeader.CanMark, DateTime.Now, _app.GitState);
 
     /// <summary>Pastas principais no início: a mesma soma real dos cartões da grade ("Calculando…" enquanto roda).</summary>
     private string? HomeFolderSize(FileEntry entry) =>
@@ -363,10 +365,12 @@ public sealed class MainWindow : Window
     private void RefillRealized(IReadOnlyList<FileEntry> items, HashSet<string> selection)
     {
         _shownStatsVersion = _app.FolderStatsVersion;
+        _shownGitVersion = _app.GitStatusVersion;
         var context = RowContext();
+        var (view, icons) = _view == ViewMode.Grid ? ((ListViewBase)_grid, _tileIcons) : (_list, _icons);
         for (var i = 0; i < items.Count; i++)
-            if (_list.ContainerFromIndex(i) is SelectorItem container)
-                EntryRowTemplate.Fill(container, items[i], i == _shownFocus, selection.Contains(items[i].Id), _app.IsCut(items[i]), _icons, _specialFolders, context);
+            if (view.ContainerFromIndex(i) is SelectorItem container)
+                EntryRowTemplate.Fill(container, items[i], i == _shownFocus, selection.Contains(items[i].Id), _app.IsCut(items[i]), icons, _specialFolders, context);
     }
 
     private void OnIconsInvalidated()
@@ -425,6 +429,7 @@ public sealed class MainWindow : Window
         {
             Screen.FolderPicker => "ESCOLHER PASTA · " + _app.PickerTitle,
             Screen.Browser when pane.Location is ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
+            Screen.Browser when _app.GitSummary is { } git => git,
             _ => string.Empty,
         };
         _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -507,7 +512,7 @@ public sealed class MainWindow : Window
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
         if (focus >= items.Count) focus = -1;
         var sourceChanged = !ReferenceEquals(items, _shownItems);
-        if (sourceChanged) _shownStatsVersion = _app.FolderStatsVersion;
+        if (sourceChanged) (_shownStatsVersion, _shownGitVersion) = (_app.FolderStatsVersion, _app.GitStatusVersion);
         if (sourceChanged || !selection.SetEquals(_shownSelection) || !ReferenceEquals(_app.Clipboard, _shownClipboard))
         {
             _shownClipboard = _app.Clipboard;
@@ -520,6 +525,11 @@ public sealed class MainWindow : Window
             if (sourceChanged && focus >= 0) view.UpdateLayout();
             if (_view == ViewMode.Grid) UpdateGridMetrics(); // o painel da grade só existe depois do primeiro layout
             if (focus >= 0) view.ScrollIntoView(items[focus]);
+        }
+        else if (_app.GitStatusVersion != _shownGitVersion)
+        {
+            // Status do Git chegando depois da lista: só as linhas já criadas ganham a marca.
+            RefillRealized(items, selection);
         }
         else if (_app.FolderStatsVersion != _shownStatsVersion && _app.Screen == Screen.Home && _view == ViewMode.List)
         {

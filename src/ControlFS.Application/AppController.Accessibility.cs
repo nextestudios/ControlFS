@@ -108,6 +108,7 @@ public sealed partial class AppController
         if (entry.FoundIn is { } folder) parts.Add("em " + folder);
         if (ActivePane.List.IsSelected(entry)) parts.Add("marcado");
         if (IsCut(entry)) parts.Add("recortado");
+        if (GitState(entry) is { } git) parts.Add(git.ToLowerInvariant());
         if (entry.IsEncrypted) parts.Add("com senha");
         if (entry.IsHidden) parts.Add("oculto");
         return string.Join(", ", parts);

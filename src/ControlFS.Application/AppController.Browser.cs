@@ -220,6 +220,7 @@ public sealed partial class AppController
             pane.Location = target;
             pane.InaccessibleCount = inaccessible;
             pane.List.SetItems(entries, focusId, newLocation: newLocation);
+            RequestGitStatus(pane);
             if (target is PhysicalLocation p)
             {
                 pane.LastValidPhysical = p;
@@ -573,6 +574,9 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
             }, Icon: ActionIcon.Hidden, Section: view, KeepOpen: true),
+            new($"Status do Git: {(Settings.ShowGitStatus ? "mostrar" : "não mostrar")}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
+                Detail: "Em pastas de repositórios Git: o ramo no topo e \"Git: modificado/novo\" nos itens. Somente leitura; não precisa do Git instalado.",
+                Icon: ActionIcon.Info, Section: view, KeepOpen: true),
             new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true),
             new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,

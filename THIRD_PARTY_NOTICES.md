@@ -29,6 +29,17 @@ Microsoft Windows App SDK 2.5.1 — componentes WinUI, Foundation, InteractiveEx
   A seção "Distributable Code" permite redistribuir arquivos colocados junto ao aplicativo pelo pacote,
   inclusive em implantação self-contained. Contém avisos de terceiros próprios; ver o pacote.
 
+LibGit2Sharp 0.32.0 (status do Git somente leitura, #75)
+  Origem: https://github.com/libgit2/libgit2sharp
+  Licença: MIT — Copyright (c) LibGit2Sharp contributors
+
+libgit2 (git2-5853918.dll, do pacote LibGit2Sharp.NativeBinaries 2.0.324)
+  Origem: https://github.com/libgit2/libgit2
+  Licença: GNU GPL v2 com exceção de linking ("LINKING EXCEPTION"): permite distribuir a biblioteca compilada ligada a
+  outros programas sem que a GPL se aplique a eles; modificações da própria libgit2 seguem a GPL v2. Inclui código de
+  terceiros com licenças próprias (zlib, PCRE, http-parser, ntlmclient e outros), listadas em libgit2/libgit2.license.txt
+  no pacote. O ControlFS não modifica a libgit2.
+
 .NET Runtime 10 (quando publicado como self-contained)
   Origem: https://github.com/dotnet/runtime
   Licença: MIT — Copyright (c) .NET Foundation and Contributors

@@ -626,3 +626,8 @@ Automático: `DiskImageIntegrationTests` monta e desmonta uma ISO 9660 mínima g
 - [ ] VHDX sem administrador: a mensagem explica que precisa de administrador; como administrador, monta e abre.
 - [ ] ISO montada pelo Explorador ("Montar"): o ControlFS oferece "Desmontar imagem…" nela.
 - [ ] Com um arquivo da imagem aberto em outro programa, desmontar: a confirmação avisa; o resultado (desmonta ou erro explicado) é legível.
+
+## Status do Git (#75) — não validado em hardware
+- [ ] Repositório grande real (ex.: um clone do ControlFS): ligar em Configurações; a lista aparece na hora e as marcas chegam depois, sem travar a navegação.
+- [ ] Marcas "Git: …" legíveis na lista e na grade a 3 m e em 1280×720; o Narrador lê o estado do Git do item.
+- [ ] Pasta de repositório num pendrive exFAT ou criado por outro usuário: sem marcas e sem erro.

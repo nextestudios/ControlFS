@@ -33,6 +33,9 @@ public sealed class PaneState(PaneMode mode)
     /// <summary>Última busca deste painel; os resultados aparecem quando <see cref="Location"/> é a <see cref="SearchLocation"/> dela.</summary>
     public SearchState? Search { get; internal set; }
 
+    /// <summary>Status do Git da pasta mostrada (#75); null fora de repositórios, com o ajuste desligado ou ainda lendo.</summary>
+    public Core.Contracts.GitFolderStatus? Git { get; internal set; }
+
     /// <summary>O painel mostra os resultados de uma busca (local virtual).</summary>
     public SearchState? ActiveSearch => Location is SearchLocation location && Search is { } search && search.Location == location ? search : null;
 
