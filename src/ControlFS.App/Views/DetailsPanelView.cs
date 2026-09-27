@@ -61,7 +61,7 @@ internal sealed class DetailsPanelView
         _card.BorderBrush = Theme.Border;
         // Fundo do cartão com um leve azul no topo (a referência usa uma onda; aqui só um degradê discreto).
         var gradient = new LinearGradientBrush { StartPoint = new Windows.Foundation.Point(0.5, 0), EndPoint = new Windows.Foundation.Point(0.5, 0.55) };
-        gradient.GradientStops.Add(new GradientStop { Color = Microsoft.UI.ColorHelper.FromArgb(255, 0x0E, 0x2A, 0x45), Offset = 0 });
+        gradient.GradientStops.Add(new GradientStop { Color = Theme.DetailsGlowColor, Offset = 0 });
         gradient.GradientStops.Add(new GradientStop { Color = Theme.SurfaceRaised.Color, Offset = 1 });
         _card.Background = gradient;
         _stack.Padding = new Thickness(Theme.Space(32), Theme.Space(32), Theme.Space(28), Theme.Space(28));

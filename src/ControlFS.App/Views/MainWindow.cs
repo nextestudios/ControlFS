@@ -4,6 +4,7 @@ using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Appearance;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Layout;
 using ControlFS.Core.Models;
@@ -50,6 +51,8 @@ public sealed class MainWindow : Window
     private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
+    /// <summary>Placa atrás do logo: transparente no tema escuro; escura no claro (o nome no logo é claro, #37).</summary>
+    private readonly Border _logoPlate = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Background = Theme.LogoPlate };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
     private readonly IconLoader _navIcons;
     private readonly IconLoader _cardIcons;
@@ -165,7 +168,12 @@ public sealed class MainWindow : Window
         _uiSettings.AdvancedEffectsEnabledChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
         // Alto contraste: o evento próprio (AccessibilitySettings.HighContrastChanged) não existe em apps de desktop; a
         // troca de tema de contraste também muda as cores do sistema, e esse evento chega.
-        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() => UpdateVisualEffects());
+        // Também é o aviso de que o modo de apps do Windows (claro/escuro) mudou: o tema automático acompanha (#37).
+        _uiSettings.ColorValuesChanged += (_, _) => DispatcherQueue.TryEnqueue(() =>
+        {
+            UpdateVisualEffects();
+            ApplyTheme(_app.Settings);
+        });
 
         Activated += (_, e) =>
         {
@@ -189,6 +197,7 @@ public sealed class MainWindow : Window
         _input.StatusChanged += Render;
         _app.SettingsChanged += settings =>
         {
+            ApplyTheme(settings);
             if (settings.Density == _density && settings.View == _view) return;
             _density = settings.Density;
             _view = settings.View;
@@ -220,7 +229,8 @@ public sealed class MainWindow : Window
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _logo.Source = Branding.Logo;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
-        header.Children.Add(_logo);
+        _logoPlate.Child = _logo;
+        header.Children.Add(_logoPlate);
         _tabs.Children.Add(_tabStrip);
         Grid.SetColumn(_tabs, 1);
         header.Children.Add(_tabs);
@@ -433,7 +443,7 @@ public sealed class MainWindow : Window
             _ => string.Empty,
         };
         _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        _logo.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
+        _logoPlate.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
         _topBar.Render();
         RenderTabs(_app.Screen == Screen.Browser && _app.Tabs.Count > 1, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
         var device = _input.ActiveDevice;
@@ -814,6 +824,33 @@ public sealed class MainWindow : Window
         if (render) Render();
     }
 
+    /// <summary>
+    /// Tema e destaque (#37): resolve o automático pelo modo de apps do Windows e troca as cores dos pincéis compartilhados
+    /// (tudo na tela muda na hora). Os controles do sistema (rolagem, barra de progresso) seguem pelo RequestedTheme; o que
+    /// usa cores derivadas (degradê do painel de detalhes, linhas criadas com medidas) é refeito pelo ApplyLayout.
+    /// </summary>
+    private void ApplyTheme(AppSettings settings)
+    {
+        var dark = ThemePalettes.IsDark(settings.Theme, SystemIsDark());
+        if (!Theme.Apply(ThemePalettes.Build(dark, settings.Accent))) return;
+        _root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
+        if (_root.XamlRoot is not null) ApplyLayout();
+    }
+
+    /// <summary>Modo de apps do Windows: escuro quando a cor de fundo do sistema é escura (sem resposta: escuro, o padrão do app).</summary>
+    private bool SystemIsDark()
+    {
+        try
+        {
+            var background = _uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background);
+            return background.R + background.G + background.B < 3 * 128;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return true;
+        }
+    }
+
     /// <summary>Lê uma configuração do Windows; se o sistema não responder, usa a reserva (o painel continua legível).</summary>
     private static bool Setting(Func<bool> read, bool fallback)
     {
@@ -872,6 +909,8 @@ public sealed class MainWindow : Window
         _header.ColumnSpacing = Theme.SpaceXl;
         _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
         _logo.Height = Theme.Layout.LogoHeight;
+        _logoPlate.CornerRadius = new CornerRadius(Theme.Scaled(12));
+        _logoPlate.Padding = Theme.IsDark ? new Thickness(0) : new Thickness(Theme.SpaceS, Theme.SpaceXs, Theme.SpaceM, Theme.SpaceXs);
         _tabStrip.Spacing = Theme.SpaceXs;
         _tabs.Spacing = Theme.SpaceS;
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);

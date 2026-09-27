@@ -73,6 +73,8 @@ public enum ActionIcon
     Density,
     DetailsPane,
     Subfolders,
+    Theme,
+    Accent,
 
     // Operações, histórico e desfazer
     Operations,
@@ -186,6 +188,8 @@ public static class ActionIcons
         ActionIcon.Hidden => "\uE890",
         ActionIcon.View => "\uECA5",
         ActionIcon.Density => "\uE8FD",
+        ActionIcon.Theme => "\uE793", // Brightness (claro/escuro)
+        ActionIcon.Accent => "\uE790", // Color
         ActionIcon.DetailsPane => "\uE90D",
         ActionIcon.Subfolders => "\uE8B7",
         ActionIcon.Operations => "\uE895",

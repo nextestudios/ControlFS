@@ -1,6 +1,7 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using ControlFS.Core.Appearance;
 using ControlFS.Core.Layout;
 using Windows.Foundation;
 using Windows.UI;
@@ -8,41 +9,96 @@ using Windows.UI;
 namespace ControlFS.App.Resources;
 
 /// <summary>
-/// Tokens visuais do redesenho (docs/ui-redesign.md): escuro azul-marinho, destaque ciano. Perigo nunca é indicado só por
-/// cor: textos levam "⚠" (nos modais, o símbolo de alerta). Tema claro e cor de destaque configurável: pendentes (#37).
+/// Tokens visuais do redesenho (docs/ui-redesign.md). Tema escuro (azul-marinho) ou claro e cor de destaque configurável
+/// (#37): os pincéis abaixo são compartilhados por todas as telas e <see cref="Apply"/> só troca a cor deles, então a troca
+/// vale na hora, sem reconstruir nada. Perigo nunca é indicado só por cor: textos levam "⚠" (nos modais, o símbolo de
+/// alerta). Contrastes conferidos em <see cref="ThemeContrast"/> (testes).
 /// </summary>
 public static class Theme
 {
-    public static readonly Color BackgroundColor = ColorHelper.FromArgb(255, 0x06, 0x10, 0x1A);
-    public static readonly SolidColorBrush Background = new(BackgroundColor);
+    /// <summary>Paleta em uso (tema resolvido + destaque). Declarada primeiro: os pincéis abaixo nascem dela.</summary>
+    public static ThemePalette Palette { get; private set; } = ThemePalettes.Build(dark: true, AccentColor.Cyan);
+
+    /// <summary>Muda a cada troca de paleta (modais mantidos na tela entram nesta chave para serem refeitos).</summary>
+    public static int Revision { get; private set; }
+
+    public static bool IsDark => Palette.IsDark;
+
+    public static Color BackgroundColor => ToColor(Palette.Background);
+    public static readonly SolidColorBrush Background = new(ToColor(Palette.Background));
 
     /// <summary>Faixas de cabeçalho, barra superior e rodapé.</summary>
-    public static readonly SolidColorBrush Surface = new(ColorHelper.FromArgb(255, 0x0A, 0x16, 0x23));
+    public static readonly SolidColorBrush Surface = new(ToColor(Palette.Surface));
 
     /// <summary>Cartões, menus, diálogos e teclas.</summary>
-    public static readonly SolidColorBrush SurfaceRaised = new(ColorHelper.FromArgb(255, 0x0F, 0x1D, 0x2A));
-    public static readonly SolidColorBrush Border = new(ColorHelper.FromArgb(255, 0x17, 0x36, 0x4D));
-    public static readonly SolidColorBrush Text = new(ColorHelper.FromArgb(255, 0xF5, 0xF8, 0xFC));
+    public static readonly SolidColorBrush SurfaceRaised = new(ToColor(Palette.SurfaceRaised));
+    public static readonly SolidColorBrush Border = new(ToColor(Palette.Border));
+    public static readonly SolidColorBrush Text = new(ToColor(Palette.Text));
 
     /// <summary>Texto secundário (detalhes, legendas).</summary>
-    public static readonly SolidColorBrush TextMuted = new(ColorHelper.FromArgb(255, 0xA4, 0xB4, 0xC8));
-    public static readonly SolidColorBrush TextDisabled = new(ColorHelper.FromArgb(255, 0x60, 0x72, 0x86));
+    public static readonly SolidColorBrush TextMuted = new(ToColor(Palette.TextMuted));
+    public static readonly SolidColorBrush TextDisabled = new(ToColor(Palette.TextDisabled));
 
-    /// <summary>Cor do foco (borda do anel, cursor, símbolos em destaque).</summary>
-    public static readonly SolidColorBrush Accent = new(ColorHelper.FromArgb(255, 0x11, 0xC7, 0xFF));
+    /// <summary>Cor do foco (borda do anel, cursor, símbolos em destaque): a cor de destaque escolhida.</summary>
+    public static readonly SolidColorBrush Accent = new(ToColor(Palette.Accent));
 
     /// <summary>Azul principal (barras de uso, local ativo).</summary>
-    public static readonly SolidColorBrush Primary = new(ColorHelper.FromArgb(255, 0x07, 0x9C, 0xFF));
+    public static readonly SolidColorBrush Primary = new(ToColor(Palette.Primary));
 
-    /// <summary>Fundo do item focado (cartão focado).</summary>
-    public static readonly SolidColorBrush AccentSoft = new(ColorHelper.FromArgb(255, 0x12, 0x3B, 0x5A));
+    /// <summary>Fundo do item focado (cartão focado): o destaque misturado ao fundo.</summary>
+    public static readonly SolidColorBrush AccentSoft = new(ToColor(Palette.AccentSoft));
 
     /// <summary>Halo discreto em volta do anel de foco.</summary>
-    public static readonly SolidColorBrush FocusGlow = new(ColorHelper.FromArgb(0x55, 0x11, 0xC7, 0xFF));
-    public static readonly SolidColorBrush Selected = new(ColorHelper.FromArgb(255, 0xF2, 0xC1, 0x4E));
-    public static readonly SolidColorBrush Danger = new(ColorHelper.FromArgb(255, 0xFF, 0x7A, 0x6E));
-    public static readonly SolidColorBrush Scrim = new(ColorHelper.FromArgb(200, 0x02, 0x07, 0x0C));
+    public static readonly SolidColorBrush FocusGlow = new(ToColor(Palette.FocusGlow));
+    public static readonly SolidColorBrush Selected = new(ToColor(Palette.Selected));
+    public static readonly SolidColorBrush Danger = new(ToColor(Palette.Danger));
+    public static readonly SolidColorBrush Scrim = new(ToColor(Palette.Scrim));
     public static readonly SolidColorBrush Transparent = new(Colors.Transparent);
+
+    /// <summary>Placa atrás do logo (o nome no logo é claro): transparente no escuro, azul-marinho no claro.</summary>
+    public static readonly SolidColorBrush LogoPlate = new(ToColor(Palette.LogoPlate));
+
+    /// <summary>Brilho no alto do painel de detalhes (degradê).</summary>
+    public static Color DetailsGlowColor => ToColor(Palette.DetailsGlow);
+
+    public static Color ToColor(uint argb) => ColorHelper.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
+
+    /// <summary>
+    /// Troca tema e destaque ao vivo: atualiza a cor de cada pincel compartilhado (tudo o que já está na tela muda junto).
+    /// Devolve false se nada mudou. Deve rodar na thread de UI; quem chama refaz o que usa cores derivadas (degradês, tons).
+    /// </summary>
+    public static bool Apply(ThemePalette palette)
+    {
+        if (palette == Palette) return false;
+        Palette = palette;
+        Revision++;
+        void Set(SolidColorBrush brush, uint argb) => brush.Color = ToColor(argb);
+        Set(Background, palette.Background);
+        Set(Surface, palette.Surface);
+        Set(SurfaceRaised, palette.SurfaceRaised);
+        Set(Border, palette.Border);
+        Set(Text, palette.Text);
+        Set(TextMuted, palette.TextMuted);
+        Set(TextDisabled, palette.TextDisabled);
+        Set(Accent, palette.Accent);
+        Set(Primary, palette.Primary);
+        Set(AccentSoft, palette.AccentSoft);
+        Set(FocusGlow, palette.FocusGlow);
+        Set(Selected, palette.Selected);
+        Set(Danger, palette.Danger);
+        Set(Scrim, palette.Scrim);
+        Set(ModalScrimGlass, palette.ModalScrimGlass);
+        Set(ModalScrimSolid, palette.ModalScrimSolid);
+        Set(ModalEdge, palette.ModalEdge);
+        Set(ModalDivider, palette.ModalDivider);
+        Set(ModalInset, palette.ModalInset);
+        Set(FocusText, palette.FocusText);
+        Set(DangerFill, palette.DangerFill);
+        Set(DisabledFill, palette.DisabledFill);
+        Set(Success, palette.Success);
+        Set(LogoPlate, palette.LogoPlate);
+        return true;
+    }
 
     /// <summary>Durações das animações curtas (foco, troca de exibição, painéis). Nada passa de 200 ms.</summary>
     public static readonly TimeSpan MotionFast = TimeSpan.FromMilliseconds(120);
@@ -175,14 +231,14 @@ public static class Theme
     /// <summary>Animações do Windows desligadas (Acessibilidade → Efeitos visuais): modais aparecem sem transição.</summary>
     public static bool ReduceMotion { get; set; }
 
-    /// <summary>Cor do vidro dos modais (azul-marinho do tema) e a versão sólida usada sem transparência.</summary>
-    public static readonly Color ModalTintColor = ColorHelper.FromArgb(255, 0x0C, 0x1B, 0x2A);
-    public static readonly Color ModalSolidColor = ColorHelper.FromArgb(255, 0x0D, 0x1C, 0x2B);
+    /// <summary>Cor do vidro dos modais (a do tema) e a versão sólida usada sem transparência.</summary>
+    public static Color ModalTintColor => ToColor(Palette.ModalTint);
+    public static Color ModalSolidColor => ToColor(Palette.ModalSolid);
 
     /// <summary>Página por trás de um modal: escurecida (mais ainda sem transparência, para o painel se destacar).</summary>
     public static Brush ModalScrim => SolidSurfaces ? ModalScrimSolid : ModalScrimGlass;
-    private static readonly SolidColorBrush ModalScrimGlass = new(ColorHelper.FromArgb(0xB4, 0x02, 0x07, 0x0C));
-    private static readonly SolidColorBrush ModalScrimSolid = new(ColorHelper.FromArgb(0xE6, 0x02, 0x07, 0x0C));
+    private static readonly SolidColorBrush ModalScrimGlass = new(ToColor(Palette.ModalScrimGlass));
+    private static readonly SolidColorBrush ModalScrimSolid = new(ToColor(Palette.ModalScrimSolid));
 
     /// <summary>
     /// Material do painel: acrílico do WinUI (desfoca o que está atrás, dentro da janela) com tinta escura e opaca o
@@ -194,23 +250,24 @@ public static class Theme
         : new AcrylicBrush { TintColor = ModalTintColor, TintOpacity = 0.82, TintLuminosityOpacity = 0.9, FallbackColor = ModalSolidColor };
 
     /// <summary>Borda clara e fina do painel (o "fio de luz" que separa o vidro do fundo escurecido).</summary>
-    public static readonly SolidColorBrush ModalEdge = new(ColorHelper.FromArgb(0x38, 0xFF, 0xFF, 0xFF));
+    public static readonly SolidColorBrush ModalEdge = new(ToColor(Palette.ModalEdge));
 
     /// <summary>Linhas divisórias e o fundo discreto das informações dentro do painel.</summary>
-    public static readonly SolidColorBrush ModalDivider = new(ColorHelper.FromArgb(0x24, 0xFF, 0xFF, 0xFF));
-    public static readonly SolidColorBrush ModalInset = new(ColorHelper.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
+    public static readonly SolidColorBrush ModalDivider = new(ToColor(Palette.ModalDivider));
+    public static readonly SolidColorBrush ModalInset = new(ToColor(Palette.ModalInset));
 
     /// <summary>
-    /// Opção focada: preenchimento ciano com texto escuro (contraste ~9:1), negrito e um pouco maior. Perigosa focada:
-    /// vermelho com texto escuro. Indisponível focada: cinza-azulado com o motivo por extenso.
+    /// Opção focada: preenchida com o destaque, negrito e um pouco maior; o texto por cima é escuro no tema escuro e
+    /// branco no claro (contraste ≥ 4,5:1 em todas as cores de destaque). Perigosa focada: vermelho. Indisponível focada:
+    /// cinza-azulado com o motivo por extenso.
     /// </summary>
     public static readonly SolidColorBrush FocusFill = Accent;
-    public static readonly SolidColorBrush FocusText = new(ColorHelper.FromArgb(255, 0x03, 0x10, 0x1A));
-    public static readonly SolidColorBrush DangerFill = new(ColorHelper.FromArgb(255, 0xFF, 0x8A, 0x7F));
-    public static readonly SolidColorBrush DisabledFill = new(ColorHelper.FromArgb(255, 0x2A, 0x3E, 0x52));
+    public static readonly SolidColorBrush FocusText = new(ToColor(Palette.FocusText));
+    public static readonly SolidColorBrush DangerFill = new(ToColor(Palette.DangerFill));
+    public static readonly SolidColorBrush DisabledFill = new(ToColor(Palette.DisabledFill));
 
     /// <summary>Tons do cabeçalho: sucesso (verde), aviso (âmbar), erro (vermelho) e informação (ciano).</summary>
-    public static readonly SolidColorBrush Success = new(ColorHelper.FromArgb(255, 0x4C, 0xD9, 0x8A));
+    public static readonly SolidColorBrush Success = new(ToColor(Palette.Success));
     public static readonly SolidColorBrush Warning = Selected;
 
     /// <summary>Aumento da opção focada (discreto, como nos menus de TV; não muda o layout).</summary>

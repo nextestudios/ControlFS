@@ -5,6 +5,7 @@ using ControlFS.App.Resources;
 using ControlFS.App.Views;
 using ControlFS.Application;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Appearance;
 using ControlFS.Core.Input;
 using ControlFS.Core.Layout;
 using Microsoft.UI;
@@ -110,6 +111,7 @@ internal static class ScreenRenderer
             var app = window.Controller;
             app.SetActiveController(ControllerFamily.Xbox); // legendas com glifos, como com um controle em uso
             window.SimulateSolidSurfaces(false); // painel fosco; a reserva sólida tem a própria captura
+            SetTheme(app, ThemeMode.Dark, AccentColor.Cyan); // as referências são do tema escuro; o claro tem capturas próprias (7*)
             var targets = Targets.Where(t => _sizes is null || _sizes.Contains(t.Name, StringComparer.OrdinalIgnoreCase)).ToArray();
             if (targets.Length == 0 && _sizes is not null) throw new ArgumentException("--sizes: nenhum alvo conhecido (" + string.Join(", ", Targets.Select(t => t.Name)) + ")");
             foreach (var target in targets)
@@ -228,6 +230,30 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.ChangeView);
                 await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
                 app.Handle(InputAction.ChangeView);
+
+                // Tema claro e cor de destaque (#37): pasta, menu e teclado no claro; pasta com outro destaque; volta ao escuro.
+                if (WantedGroup("7"))
+                {
+                    SetTheme(app, ThemeMode.Light, AccentColor.Cyan);
+                    app.OpenPhysical(sample);
+                    await app.WhenIdleAsync();
+                    app.Handle(InputAction.ToggleSelection);
+                    app.Handle(InputAction.NavigateDown);
+                    await CaptureAsync(stage, target, dir, "7-light-folder", window);
+                    app.Handle(InputAction.OpenAppMenu);
+                    await CaptureAsync(stage, target, dir, "7b-light-menu", window);
+                    CloseModals(app);
+                    app.Handle(InputAction.Search);
+                    app.TypeText("relatório");
+                    await CaptureAsync(stage, target, dir, "7c-light-keyboard", window);
+                    CloseModals(app);
+                    SetTheme(app, ThemeMode.Light, AccentColor.Magenta);
+                    await CaptureAsync(stage, target, dir, "7d-light-accent-magenta", window);
+                    SetTheme(app, ThemeMode.Dark, AccentColor.Amber);
+                    await CaptureAsync(stage, target, dir, "7e-dark-accent-amber", window);
+                    SetTheme(app, ThemeMode.Dark, AccentColor.Cyan);
+                    app.Handle(InputAction.ToggleSelection);
+                }
 
                 if (target.Modals && WantedGroup("m")) await CaptureModalsAsync(app, window, stage, target, dir, modals);
             }
@@ -499,6 +525,13 @@ internal static class ScreenRenderer
     }
 
     /// <summary>Abre o menu do app e escolhe o item que começa com <paramref name="prefix"/>, só com ações semânticas.</summary>
+    /// <summary>Tema e destaque pelos próprios itens de Configurações (cada escolha avança uma opção).</summary>
+    private static void SetTheme(AppController app, ThemeMode theme, AccentColor accent)
+    {
+        for (var i = 0; i < 4 && app.Settings.Theme != theme; i++) ChooseAppMenu(app, "Tema");
+        for (var i = 0; i < 8 && app.Settings.Accent != accent; i++) ChooseAppMenu(app, "Cor de destaque");
+    }
+
     private static void ChooseAppMenu(AppController app, string prefix)
     {
         app.Handle(InputAction.OpenAppMenu);

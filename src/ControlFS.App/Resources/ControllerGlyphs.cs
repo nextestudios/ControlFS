@@ -11,12 +11,15 @@ using Windows.Foundation;
 
 namespace ControlFS.App.Resources;
 
-/// <summary>Cores de um glifo: corpo do botão e símbolo por cima. Escuro para o tema atual; claro para fundos claros.</summary>
+/// <summary>
+/// Cores de um glifo: corpo do botão e símbolo por cima. <see cref="Dark"/> segue o tema em uso (texto do tema com o fundo
+/// por cima: claro no escuro e escuro no claro); <see cref="Light"/> é fixo, para a galeria de glifos sobre fundo claro.
+/// </summary>
 public sealed record GlyphPalette(Brush Body, Brush Symbol)
 {
     public static GlyphPalette Dark { get; } = new(Theme.Text, Theme.Background);
 
-    public static GlyphPalette Light { get; } = new(new SolidColorBrush(Theme.BackgroundColor), new SolidColorBrush(Colors.White));
+    public static GlyphPalette Light { get; } = new(new SolidColorBrush(Theme.ToColor(0xFF06101A)), new SolidColorBrush(Colors.White));
 }
 
 /// <summary>

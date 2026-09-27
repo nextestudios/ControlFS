@@ -44,6 +44,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** e **pastas/arquivos recentes** no Início, **barra de caminho navegável** e **abas**
 - **Legendas do controle** de acordo com o que está na sua mão (Xbox, PlayStation, Nintendo, genérico), glifos vetoriais originais, rodapé por contexto e **assistente de mapeamento** para joysticks sem perfil
 - **Layout responsivo** para portáteis 720p/800p, desktop e TVs 1080p/4K
+- **Tema escuro ou claro** (segue o Windows por padrão) e **cores de destaque** à escolha, todas com contraste conferido
 - **Tentar de novo** uma operação que falhou ou só os itens que falharam; restos de operações interrompidas são limpos na próxima abertura
 - **Ícones nativos do Windows** para arquivos, pastas, pastas especiais e unidades, carregados em segundo plano e no tamanho da escala da tela
 - **Exibição em lista ou grade** (Menu → Configurações → Exibição, R3 ou Ctrl+G), com navegação 2D pelo controle entre os blocos
@@ -66,7 +67,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: tema claro, dois painéis, pré-visualização de PDF, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: dois painéis, pré-visualização de PDF, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Política de assinatura de código (Code signing policy)
 

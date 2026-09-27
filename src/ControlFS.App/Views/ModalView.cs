@@ -131,7 +131,7 @@ public static partial class ModalView
     /// </summary>
     private static string? RetainKey(Modal modal)
     {
-        var screen = $"{Theme.Viewport.Width:0}x{Theme.Viewport.Height:0}|{Theme.Layout.Tier}|{Theme.SolidSurfaces}|{modal.Title}|{modal.Subtitle}|{modal.Icon}";
+        var screen = $"{Theme.Viewport.Width:0}x{Theme.Viewport.Height:0}|{Theme.Layout.Tier}|{Theme.SolidSurfaces}|{Theme.Revision}|{modal.Title}|{modal.Subtitle}|{modal.Icon}";
         return modal switch
         {
             MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}|{i.Placement}|{i.TileLabel}")),

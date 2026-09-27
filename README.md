@@ -44,6 +44,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - Real folders and drives, history, sorting, hidden items, marking (select all / clear), properties, **favorite folders** and **recent folders/files** on Home, a **navigable path bar** and **tabs**
 - **Controller prompts** that match the pad in your hands (Xbox, PlayStation, Nintendo, generic), original vector glyphs, a context-sensitive action bar, and a **mapping wizard** for joysticks without a profile
 - **Responsive layout** for 720p/800p handhelds, desktops and 1080p/4K TVs
+- **Dark or light theme** (follows Windows by default) and a choice of **accent colors**, all contrast-checked
 - **Retry** a failed operation or only its failed items; leftovers of interrupted operations are cleaned up on the next launch
 - **Native Windows icons** for files, folders, special folders and drives, loaded in the background and sized for the screen's scale
 - **List or grid view** (Menu → Configurações → View, R3 or Ctrl+G), with 2D controller navigation between tiles
@@ -66,7 +67,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: light theme, two panes, PDF preview, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: two panes, PDF preview, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## Code signing policy
 

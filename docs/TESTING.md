@@ -631,3 +631,10 @@ Automático: `DiskImageIntegrationTests` monta e desmonta uma ISO 9660 mínima g
 - [ ] Repositório grande real (ex.: um clone do ControlFS): ligar em Configurações; a lista aparece na hora e as marcas chegam depois, sem travar a navegação.
 - [ ] Marcas "Git: …" legíveis na lista e na grade a 3 m e em 1280×720; o Narrador lê o estado do Git do item.
 - [ ] Pasta de repositório num pendrive exFAT ou criado por outro usuário: sem marcas e sem erro.
+
+## Tema claro e cor de destaque (#37) — não validado em hardware
+Automático: `ThemeContrastTests` (contraste de todo tema × destaque), `AppearanceJourneyTests`; capturas `7-light-folder`, `7b-light-menu`, `7c-light-keyboard`, `7d-light-accent-magenta`, `7e-dark-accent-amber`.
+- [ ] Windows no modo claro com Tema: automático → o app abre claro; trocar o modo de apps do Windows com o app aberto muda o tema na hora (sem reiniciar).
+- [ ] TV a ~3 m e portátil: no tema claro, o item focado (anel + fundo) e a opção focada preenchida são fáceis de achar com cada cor de destaque; marcados (âmbar escuro) continuam distintos do foco com o destaque âmbar.
+- [ ] Menus, diálogos, teclado virtual, painel de detalhes, visualizações e a barra de rolagem do sistema seguem o tema; nada fica com fundo escuro "esquecido" no claro.
+- [ ] Transparência desligada / alto contraste com o tema claro: painel sólido legível.
