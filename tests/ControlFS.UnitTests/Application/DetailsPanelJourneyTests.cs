@@ -69,7 +69,8 @@ public class DetailsPanelJourneyTests : IDisposable
         Assert.Equal("Calculando…", Value(calculating, DetailsIcon.Items));
 
         // Mudar o foco cancela a soma do item anterior (nada fica guardado como pronto).
-        await d.FocusItem("A-vazia");
+        d.Press(InputAction.NavigateUp); // "A-vazia" (sem esperar a soma presa)
+        Assert.Equal("A-vazia", app.Browser.List.Focused!.Name);
         await d.Idle();
         Assert.Equal(FolderStatsState.Calculating, app.FolderStatsFor(_tmp.Sub("Jogos")).State);
 
