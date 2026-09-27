@@ -300,7 +300,7 @@ internal sealed class HomeView
         var recent = place.Id == AppController.RecentPlaceId;
         var fallback = new TextBlock
         {
-            Text = place.IsBlocked ? "" : recent ? "" : place.Kind == EntryKind.Drive ? "" : place.Id == RecycleBinLocation.PlaceId ? "" : "",
+            Text = place.IsBlocked ? "" : recent ? "" : place.Kind == EntryKind.Drive ? EntryRowTemplate.DriveGlyph(place.Drive) : place.Id == RecycleBinLocation.PlaceId ? "" : "",
             FontFamily = new FontFamily(IconFont),
             FontSize = Math.Round(size * 0.62),
             Foreground = place.IsBlocked ? Theme.Danger : recent ? Theme.Accent : Theme.TextMuted,

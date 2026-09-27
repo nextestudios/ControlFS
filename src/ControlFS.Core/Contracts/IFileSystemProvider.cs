@@ -36,6 +36,12 @@ public interface IFileSystemProvider
 
     bool DirectoryExists(string path);
 
+    /// <summary>
+    /// O caminho está na rede (UNC ou unidade mapeada). Nesses locais o app não confere existência na thread de UI: um
+    /// servidor desligado pode levar dezenas de segundos para responder.
+    /// </summary>
+    bool IsNetworkPath(string path) => Policies.NetworkPathPolicy.NormalizeShare(path) is not null;
+
     /// <summary>Cria uma pasta nova. Nunca reutiliza nem sobrescreve uma existente.</summary>
     /// <exception cref="FileOperationException">Com <see cref="OperationErrorKind"/> específico.</exception>
     FileEntry CreateDirectory(string parentPath, string name);

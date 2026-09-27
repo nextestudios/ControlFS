@@ -316,6 +316,21 @@ e um .lnk); `ShortcutIconIntegrationTests` extrai ícones reais de .ico/.dll e d
 - [ ] Leitor de cartão vazio → inserir cartão: a unidade aparece. Leitor óptico com disco: ícone óptico e "Óptica".
 - [ ] Unidade de rede mapeada (`net use Z: \\servidor\pasta`): aparece com ícone de rede; desconectar o servidor não
       trava o início.
+
+## Locais de rede (#27) — não validado em rede real
+
+- [ ] NAS com unidade mapeada (Z:): aparece no início (Unidades e dispositivos) e em Meu computador com o símbolo de rede,
+      o nome do compartilhamento ("filmes (Z:)") e "Rede · \\nas\filmes"; Sul abre e navega como qualquer pasta.
+- [ ] Desligar o NAS (ou tirar o cabo) e abrir o ControlFS: o início aparece na hora, sem travar e sem erro; a unidade
+      continua listada. Abri-la mostra "Carregando" e, depois do tempo do Windows, "Não foi possível abrir a pasta";
+      Voltar cancela a espera na hora.
+- [ ] Mapeamento persistente com o NAS desligado na inicialização do Windows (X vermelho no Explorador): aparece como
+      "Rede · desconectada · \\nas\filmes"; com o NAS ligado de novo, abrir reconecta.
+- [ ] Explorador → Este Computador → "Adicionar um local de rede" para `\\nas\fotos`: o local aparece com o nome dado no
+      assistente; locais FTP/web do mesmo assistente não aparecem.
+- [ ] Favorito numa pasta do NAS desligado: o início não trava (o favorito aparece como disponível; abrir mostra o erro).
+- [ ] Credenciais: o ControlFS nunca pede nem guarda senha de rede; um compartilhamento que exige login é aberto primeiro
+      pelo Explorador (o Windows guarda a credencial) e então navega no ControlFS.
 - [ ] Narrador lê o nome e o tipo da unidade (ex.: "PENDRIVE (E:), unidade removível (USB)").
 - [ ] Seletor de pasta → "Ir para outro local": cada unidade mostra tipo, espaço livre e total.
 

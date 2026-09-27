@@ -352,7 +352,7 @@ public static class EntryRowTemplate
     }
 
     /// <summary>Símbolo por tipo de unidade (o pendrive nunca se parece com o disco do sistema, mesmo antes do ícone do Shell).</summary>
-    private static string DriveGlyph(DriveKind? kind) => kind switch
+    internal static string DriveGlyph(DriveKind? kind) => kind switch
     {
         DriveKind.Removable => Glyphs.Usb,
         DriveKind.Optical => Glyphs.Optical,

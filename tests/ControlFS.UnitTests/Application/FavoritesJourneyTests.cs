@@ -105,4 +105,19 @@ public class FavoritesJourneyTests : IDisposable
         Assert.Empty(store.Load().Settings.Favorites);
         Assert.Equal(["Pasta de teste"], app.Places.Select(p => p.Name));
     });
+
+    [Fact]
+    public void A_favorite_on_a_network_share_is_never_checked_on_the_ui_thread() => UiContext.Run(async () =>
+    {
+        // Servidor que nunca responde (.invalid não resolve): conferir a pasta na thread de UI travaria o início (#27).
+        const string share = @"\\controlfs-offline.invalid\filmes";
+        var store = new JsonSettingsStore(_data.Path);
+        store.Save(new AppSettings { RememberRecents = false, Favorites = [share] });
+
+        var d = Boot(store);
+        await d.Idle();
+
+        var favorite = Assert.Single(d.App.Places, p => p.FullPath == share);
+        Assert.False(favorite.IsBlocked); // dado como disponível sem contatar o servidor; abrir é que diz se ele está lá
+    });
 }
