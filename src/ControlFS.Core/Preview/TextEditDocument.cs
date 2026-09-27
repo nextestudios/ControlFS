@@ -22,6 +22,11 @@ public sealed class TextEditDocument
     /// <summary>Caracteres máximos de uma linha editada pelo teclado virtual.</summary>
     public const int MaxLineLength = 4096;
 
+    /// <summary>Caracteres que não aparecem em texto editável: controles C0 (fora \t \n \r \f), DEL, C1 e U+FFFD.</summary>
+    private static readonly System.Buffers.SearchValues<char> NotEditable = System.Buffers.SearchValues.Create(
+        string.Concat(Enumerable.Range(0, 0x20).Where(c => c is not ('\t' or '\n' or '\r' or '\f')).Select(c => (char)c))
+        + string.Concat(Enumerable.Range(0x7F, 0x21).Select(c => (char)c)) + "\uFFFD");
+
     private readonly Encoding _encoding;
     private readonly byte[] _preamble;
 
@@ -67,7 +72,10 @@ public sealed class TextEditDocument
         if (encoding is UnicodeEncoding && body.Length % 2 != 0)
             throw new PreviewException("O arquivo termina no meio de um caractere UTF-16: não dá para regravá-lo igual. Use o aplicativo padrão.");
         var text = encoding.GetString(body);
-        if (TextPreview.LooksBinary(text)) throw new PreviewException("Este arquivo parece binário: só arquivos de texto podem ser editados.");
+        // Mais rígido que a prévia: um executável (MZ) ou qualquer caractere de controle além de tabulação, quebras e form
+        // feed (inclusive C1 e o de substituição) recusa a edição. Arquivos pequenos binários podem parecer UTF-16 sem BOM.
+        if (bytes.StartsWith("MZ"u8) || TextPreview.LooksBinary(text) || text.AsSpan().ContainsAny(NotEditable))
+            throw new PreviewException("Este arquivo parece binário: só arquivos de texto podem ser editados.");
 
         var lines = Split(text);
         if (lines.Count > MaxLines)
