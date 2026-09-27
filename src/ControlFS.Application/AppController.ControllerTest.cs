@@ -40,7 +40,7 @@ public sealed partial class AppController
         var keys = connected.Select(d => d.SessionKey).ToHashSet(StringComparer.Ordinal);
         return [.. modal.Seen.Values.OrderBy(s => s.Number).Select(s => new ControllerTestDevice(
             s.Number, s.Info, keys.Contains(s.Info.SessionKey), string.Equals(_diagnostics?.ActiveDeviceKey, s.Info.SessionKey, StringComparison.Ordinal),
-            s.Info.IsGamepad ? null : ProfileFor(s.Info)?.Name))];
+            s.Info.IsGamepad ? null : ProfileFor(s.Info)?.Name, ControllerDuplicates.SourceOf(s.Info, connected)))];
     }
 
     private static int Number(ControllerTestModal modal, InputDeviceInfo device)
@@ -176,7 +176,13 @@ public sealed partial class AppController
         var kind = info.IsGamepad ? "gamepad" : d.Profile is { } profile ? $"raw joystick, profile \"{profile}\"" : "raw joystick, no profile";
         return string.Create(CultureInfo.InvariantCulture,
             $"{info.Name} | SDL type: {(info.IsGamepad ? info.TypeName : "-")} | family: {info.Family} | VID:PID {info.VendorId:X4}:{info.ProductId:X4} | {kind}")
-            + (info.IsVirtual ? " | virtual" : string.Empty)
+            + (d.Source switch
+            {
+                VirtualSource.None => string.Empty,
+                VirtualSource.SteamInput => " | virtual (Steam Input)",
+                VirtualSource.LikelyEmulatedXbox360 => " | likely virtual (DS4Windows/ViGEm)",
+                _ => " | virtual",
+            })
             + (d.IsActive ? " | ACTIVE" : string.Empty)
             + (d.IsConnected ? string.Empty : " | disconnected");
     }

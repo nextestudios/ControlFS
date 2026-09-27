@@ -6,6 +6,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 ### Novidades
 - **Seleção de texto** no teclado virtual: **Selecionar tudo** na página `…` (ou Ctrl+A), trecho selecionado destacado e sublinhado, digitar substitui, `⌫` apaga e `◀ ▶` desfazem a seleção. Renomear já abre com o nome sem a extensão selecionado (`example-file.zip` → digitar `novo` → `novo.zip`). (#44)
 - **Tipos de unidade**: disco local, pendrive/USB, leitor óptico e unidade de rede têm símbolo e texto próprios no início e no seletor de pasta (com rótulo, letra e espaço livre/total), e o Narrador lê o tipo. Conectar ou remover um pendrive com o app aberto atualiza a lista sem reiniciar, mantendo o foco no mesmo local. (#25)
+- **Controle ativo**: Menu → Controle ativo lista os controles conectados (nome, família, tipo, VID:PID, físico ou virtual) e Sul/A no escolhido faz só ele comandar o ControlFS até você voltar ao automático. Quando o Steam Input ou o DS4Windows expõem o controle físico e uma cópia virtual ao mesmo tempo, o rodapé avisa da duplicata (cada botão poderia agir duas vezes) e o menu mostra qual parece a cópia. O teste de controles também marca os dispositivos virtuais. (#80)
 
 ## [0.4.0-alpha.1]
 ### Novidades

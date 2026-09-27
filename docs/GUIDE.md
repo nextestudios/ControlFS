@@ -32,6 +32,12 @@ Every essential action is reachable through menus (Start / North). On a joystick
 
 Menu → **Teste de controles…** (controller test) lists the connected controllers (name, type, family, VID:PID, gamepad or joystick without a profile, and which one is active) and shows, for every button you press, the physical control and the action it performs in ControlFS. Nothing runs on this screen: hold Confirm for 1 s to copy a report (no personal data) and hold Back for 1 s to leave; on the keyboard, Enter and Esc.
 
+### Active controller
+
+By default, any controller takes over when you press a button on it (except inside sensitive confirmations). Menu → **Controle ativo…** (active controller) lists the connected controllers with their family, type, VID:PID and whether they look physical or virtual; press South/A on one and only that controller drives ControlFS until you pick **Automático** again or it disconnects. The keyboard always works.
+
+Remappers such as Steam Input and DS4Windows expose the physical controller *and* a virtual copy (e.g. "Steam Virtual Gamepad" or an emulated Xbox 360 controller), so each button could arrive twice. ControlFS warns in the bottom bar when it sees this and marks the likely copy in the menu: choose one of them there.
+
 ### Joysticks without a profile
 
 Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads. ControlFS detects them but they can't move around until you map them:

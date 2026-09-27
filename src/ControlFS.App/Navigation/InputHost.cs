@@ -74,11 +74,19 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     public string? BackendError { get; }
     public string BackendDescription => BackendReady ? _backend.BackendDescription : $"{_backend.BackendDescription}: {BackendError}";
     public string? ActiveDeviceKey => Router.ActiveDeviceKey;
+    public bool IsActiveDeviceLocked => Router.IsActiveDeviceLocked;
     public IReadOnlyCollection<InputDeviceInfo> Devices => _devices.Values;
     public IReadOnlyList<InputDeviceInfo> RawDevices => [.. _devices.Values.Where(d => !d.IsGamepad)];
     public InputDeviceInfo? ActiveDevice => Router.ActiveDeviceKey is { } key && _devices.TryGetValue(key, out var d) ? d : null;
 
     public event Action? StatusChanged;
+
+    public void SelectActiveDevice(string? deviceKey)
+    {
+        if (deviceKey is not null && !_devices.ContainsKey(deviceKey)) return; // desconectou enquanto o menu estava aberto
+        Router.SelectActiveDevice(deviceKey);
+        StatusChanged?.Invoke();
+    }
 
     public void OnWindowActivated(bool active)
     {
@@ -125,6 +133,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     {
         _devices[device.SessionKey] = device;
         if (!device.IsGamepad) ApplyProfile(device);
+        _app.OnControllersChanged();
         StatusChanged?.Invoke();
     }
 
@@ -179,6 +188,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _longPress.Remove(deviceKey);
         _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
+        _app.OnControllersChanged();
         StatusChanged?.Invoke();
     }
 
