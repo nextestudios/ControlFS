@@ -322,7 +322,8 @@ public sealed partial class AppController
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
-        PushModal(new MenuModal(entry.Name, items));
+        // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>".
+        PushModal(new MenuModal(entry.Name, items) { FocusIndex = ArchiveFormats.CanExtract(format) ? 1 : 0 });
     }
 
     private void ShowArchiveMenu(PaneState pane, ArchiveLocation archive)

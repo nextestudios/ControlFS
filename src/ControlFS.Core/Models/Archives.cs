@@ -30,6 +30,18 @@ public static class ArchiveFormats
         _ => "desconhecido",
     };
 
+    /// <summary>
+    /// Indício rápido (só pelo nome) de um compactado que o extrator abre. Serve para legendas; a ação real sempre
+    /// detecta o formato pelo conteúdo.
+    /// </summary>
+    public static bool HasExtractableExtension(string name)
+    {
+        foreach (var ext in new[] { ".zip", ".7z", ".rar", ".tar", ".gz", ".tgz" })
+            if (name.Length > ext.Length && name.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
+
     /// <summary>Nome sem as extensões de compactado: "fotos.tar.gz" → "fotos", "dados.tgz" → "dados".</summary>
     public static string StemOf(string path)
     {

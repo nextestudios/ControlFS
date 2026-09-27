@@ -9,6 +9,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Retry** an operation that failed, finished with warnings or was cancelled: Menu → Operations → pick the operation → Retry. The original request is planned again from scratch. (#18)
 - Controller prompts use **original vector glyphs** (face buttons, bumpers, triggers, Menu/Options/+/−, D-pad and sticks) instead of plain letters, crisp at any scale. No third-party images or logos. (#33)
 - The bottom bar shows the **buttons of the controller in use** (e.g. `A Open` on Xbox, `✕ Open` on PlayStation) and updates instantly when you switch controllers or the confirm/back convention; with the keyboard it shows keys. Narrator reads the button and the action. (#34)
+- **Context-sensitive** bottom bar: on an archive it shows Explore, Mark and Extract… (North opens the menu already on "Extract to"), with marked items Operations (N) and Cancel selection, on the on-screen keyboard Select/Delete/Done/Cancel and, in dialogs, the name of the focused option. Actions that don't work right now are hidden. (#35)
 
 ### Improvements
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)

@@ -30,6 +30,8 @@ Every essential action is reachable through menus (Start / North), so a pad with
 
 ## Extracting
 
+On an archive the bottom bar shows **South Explore** (opens it read-only), **West Mark** and **North Extract…**: North opens the actions menu already on **Extract to "name"**, so North then South extracts.
+
 - **Extract to "name"**: creates a new folder next to the archive (never reuses an existing one: "name (2)").
 - **Extract here**: into the archive's folder; name conflicts ask you.
 - **Extract to…**: pick a folder inside the app (you can create one there).
