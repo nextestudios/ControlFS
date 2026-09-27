@@ -92,6 +92,7 @@ public static partial class ModalView
             ControllerTestModal test => BuildControllerTest(app, test),
             ImagePreviewModal preview => BuildImagePreview(app, preview),
             PdfPreviewModal pdf => BuildPdfPreview(app, pdf),
+            AudioPreviewModal audio => BuildAudioPreview(app, audio),
             TextPreviewModal text => BuildTextPreview(app, text),
             _ => null,
         };

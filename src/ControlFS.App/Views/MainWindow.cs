@@ -107,6 +107,7 @@ public sealed class MainWindow : Window
             new Preview.WicImageDecoder(), new WindowsRecycleBin())
         {
             PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
+            MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
         };
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);

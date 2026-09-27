@@ -526,6 +526,15 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
       "O conteúdo não é um PDF válido.".
 - [ ] Com o PDF aberto na visualização, dá para renomear/apagar o arquivo no Explorador (o ControlFS não o trava).
 
+## Áudio (#60) — não validado em hardware
+
+- [ ] Sul num MP3 e num FLAC reais: toca em até 1 s, o painel mostra "▶ Tocando", o tempo anda a cada segundo e a barra acompanha.
+- [ ] Sul pausa/continua; Esquerda/Direita ±10 s e LB/RB ±1 min sem passar do início/fim; no fim, Sul recomeça.
+- [ ] Cima/Baixo mudam o volume em passos de 10%; Norte tira o som (o painel diz "Sem som"); Cima volta o som.
+- [ ] Leste/B fecha e o som para na hora; o foco fica no arquivo; o arquivo pode ser apagado logo depois.
+- [ ] Um OGG sem as Extensões de Mídia da Web mostra a mensagem de codec sem suporte; um `.exe` renomeado para `.mp3` é recusado.
+- [ ] Legível a ~3 m em 1080p/4K e em 1280×720.
+
 ## Visualização de texto (#58)
 
 - [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem

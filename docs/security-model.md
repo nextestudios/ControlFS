@@ -101,6 +101,12 @@ não é confiável.
   travar o renderizador vira erro na tela (`PdfPreviewJourneyTests`, `PdfRendererIntegrationTests`). A senha de um PDF
   protegido é digitada no campo mascarado, sem sugestões, usada só para abrir e nunca guardada. O arquivo fica aberto
   compartilhado (leitura, escrita, exclusão) enquanto a visualização durar e é fechado ao sair.
+- A reprodução de áudio (#60) usa o `MediaPlayer` do Windows (Media Foundation) só com os codecs instalados. O arquivo é
+  entregue como fluxo local (`MediaSource.CreateFromStream`), nunca como URL: nada vai para a rede e o reprodutor não
+  resolve caminhos por conta própria. Antes, `MediaPreviewPolicy` (Core) recusa arquivos vazios e executáveis
+  disfarçados (cabeçalho `MZ`), fora da thread de UI. A decodificação acontece nas threads do próprio Media Foundation;
+  a aplicação só lê um retrato do estado a cada quadro. Os controles de mídia do sistema ficam desligados, fechar para o
+  som e libera o arquivo na hora (`AudioPreviewJourneyTests`, `MediaPlayerIntegrationTests`).
 - Arquivos dentro de compactados não são visualizados.
 
 ## Atualizações automáticas

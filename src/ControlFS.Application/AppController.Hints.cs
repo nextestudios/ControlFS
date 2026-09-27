@@ -1,5 +1,6 @@
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
+using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 
 namespace ControlFS.Application;
@@ -125,6 +126,24 @@ public sealed partial class AppController
                 if (pdf.Document is not null && pdf.PageIndex < pdf.PageCount - 1) hints.Add(new(InputAction.NextRegion, "Próxima página"));
                 if (pdf.ZoomIndex > 0) hints.Add(new(InputAction.PageUp, "Menos zoom"));
                 if (pdf.Page is not null && pdf.ZoomIndex < ZoomablePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
+                hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
+            case AudioPreviewModal audio:
+                if (audio.Session is not null && audio.DisplayError is null)
+                {
+                    var state = audio.Status.State;
+                    hints.Add(new(InputAction.Confirm, state is MediaPlaybackState.Playing or MediaPlaybackState.Buffering ? "Pausar"
+                        : state == MediaPlaybackState.Ended ? "Tocar de novo" : "Tocar"));
+                    if (audio.Status.CanSeek)
+                    {
+                        hints.Add(new(InputAction.NavigateLeft, "−10 s"));
+                        hints.Add(new(InputAction.NavigateRight, "+10 s"));
+                        hints.Add(new(InputAction.PreviousRegion, "−1 min"));
+                        hints.Add(new(InputAction.NextRegion, "+1 min"));
+                    }
+                    hints.Add(new(InputAction.NavigateUp, "Volume"));
+                    hints.Add(new(InputAction.OpenContextMenu, audio.Status.IsMuted ? "Com som" : "Sem som"));
+                }
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
             case DialogModal dialog:
