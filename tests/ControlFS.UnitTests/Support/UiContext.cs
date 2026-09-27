@@ -10,7 +10,16 @@ public sealed class UiContext : SynchronizationContext
 {
     private readonly BlockingCollection<(SendOrPostCallback Callback, object? State)> _queue = [];
 
-    public override void Post(SendOrPostCallback d, object? state) => _queue.Add((d, state));
+    /// <summary>
+    /// Continuações que chegam depois do fim do teste (ex.: progresso de uma operação em segundo plano) são ignoradas:
+    /// a "UI" já não existe, como ao fechar a janela do app.
+    /// </summary>
+    public override void Post(SendOrPostCallback d, object? state)
+    {
+        if (_queue.IsAddingCompleted) return;
+        try { _queue.Add((d, state)); }
+        catch (InvalidOperationException) { /* fila fechada entre a checagem e o Add */ }
+    }
 
     public override void Send(SendOrPostCallback d, object? state) => throw new NotSupportedException();
 
