@@ -28,7 +28,7 @@ internal sealed class ListHeaderView
     private readonly AppController _app;
     private readonly Border _root = new();
     private readonly Grid _grid = new();
-    private readonly Dictionary<SortField, (TextBlock Label, TextBlock Arrow)> _titles = [];
+    private readonly Dictionary<SortField, (TextBlock Label, TextBlock Arrow, StackPanel Cell)> _titles = [];
     private TextBlock? _check;
     private string _shownKey = string.Empty;
 
@@ -48,14 +48,13 @@ internal sealed class ListHeaderView
             _shownKey = columns.Key + listPadding;
             Build(columns, listPadding);
         }
-        foreach (var (field, (label, arrow)) in _titles)
+        foreach (var (field, (label, arrow, cell)) in _titles)
         {
             var sorted = header.Sort is { } sort && sort.Field == field;
             arrow.Text = sorted ? (header.Sort!.Descending ? ArrowDown : ArrowUp) : string.Empty;
             label.Foreground = arrow.Foreground = sorted ? Theme.Text : Theme.TextMuted;
             label.FontWeight = sorted ? FontWeights.SemiBold : FontWeights.Normal;
-            var parent = (FrameworkElement)label.Parent;
-            AutomationProperties.SetName(parent, sorted
+            AutomationProperties.SetName(cell, sorted
                 ? $"{label.Text}, ordenado em ordem {(header.Sort!.Descending ? "decrescente" : "crescente")}"
                 : header.Sort is null ? label.Text : $"Ordenar por {label.Text.ToLowerInvariant()}");
         }
@@ -128,6 +127,6 @@ internal sealed class ListHeaderView
         cell.Tapped += (_, _) => _app.PointerSortBy(field);
         Grid.SetColumn(cell, column);
         _grid.Children.Add(cell);
-        _titles[field] = (label, arrow);
+        _titles[field] = (label, arrow, cell);
     }
 }
