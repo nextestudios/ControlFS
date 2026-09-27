@@ -55,7 +55,7 @@ public class BatchRenameJourneyTests : IDisposable
         Assert.Equal([("a.jpg", "Foto 001.jpg"), ("b.png", "Foto 002.png"), ("c.jpg", "Foto 003.jpg")], preview);
 
         d.Press(InputAction.OpenAppMenu); // Start aplica de qualquer opção em foco
-        await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("Foto 003.jpg")), "lote renomeado");
+        await UiContext.WaitUntil(() => d.App.UndoTitle is not null, "lote renomeado e registrado no Desfazer");
         await d.Idle();
         Assert.Equal(["Foto 001.jpg", "Foto 002.png", "Foto 003.jpg"], Directory.GetFiles(_tmp.Path).Select(Path.GetFileName).Order(StringComparer.Ordinal));
         Assert.Equal("a", File.ReadAllText(_tmp.Sub("Foto 001.jpg")));
@@ -63,7 +63,7 @@ public class BatchRenameJourneyTests : IDisposable
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Desfazer: ");
         d.ChooseOption(await d.WaitDialog("Desfazer \""), "Desfazer");
-        await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("c.jpg")), "nomes de volta");
+        await UiContext.WaitUntil(() => d.App.RedoTitle is not null, "nomes de volta");
         await d.Idle();
         Assert.Equal(["a.jpg", "b.png", "c.jpg"], Directory.GetFiles(_tmp.Path).Select(Path.GetFileName).Order(StringComparer.Ordinal));
     });
