@@ -30,6 +30,15 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Controle, teclado, navegação e segurança (0.4.0-alpha.1)
+
+- Issues *Must* do roadmap (MoSCoW) resolvidas: #18, #19, #23, #24, #28, #30, #31, #32, #33, #34, #35, #36, #41, #42, #43,
+  #46, #48, #79, #81, #82 (PRs #107–#129). #78 (matriz de controles físicos) segue aberta: depende de hardware real, com a
+  tela "Teste de controles" (#127) pronta para isso.
+- Evidência (CI Windows, 2026-09-27): testes unitários/jornadas e de integração Windows (incluindo corrida de junction
+  durante extração/cópia/movimentação e busca sem seguir junction); capturas renderizadas em 1280×720, 1280×800,
+  1920×1080 e 3840×2160 e galeria de glifos conferidas no workflow Smoke.
+
 ## Operações de arquivo (0.3.0-alpha.1)
 
 - Todas as issues críticas do roadmap resolvidas: motor de operações #10, copiar #13, mover #14, conflitos #17 (PR #101),

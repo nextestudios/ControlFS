@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.4.0-alpha.1]
 ### Novidades
 - **Novo layout do teclado virtual**: campo em cima, quatro linhas de caracteres, linha de funções (`⇧`, `ABC`, `@#:`, espaço, `⌫`) e linha inferior com cursor, `…` (acentos, idioma e limpar) e **Concluir** largo. (#41)
 - As legendas dos botões seguem automaticamente a família do controle em uso (Xbox, PlayStation, Nintendo ou genérico), detectada pelo tipo informado pelo SDL e pelo fabricante. Apertar um botão em outro controle passa o comando para ele e troca as legendas sem reiniciar. O menu ainda permite fixar um estilo. (#32)
@@ -30,6 +32,9 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Layout responsivo** para portáteis (1280×720/800), desktop e TVs 1080p/4K: a faixa de layout segue a resolução efetiva, o DPI e o tamanho do texto do Windows. Em telas pequenas o espaçamento fica enxuto, as legendas do rodapé quebram linha em vez de sumir e menus e diálogos nunca passam da altura da tela (o item focado sempre aparece); numa TV 4K a 100% texto, ícones e foco crescem para ler a ~3 m. (#36)
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)
 - **Lista mais clara:** focado, marcado e recortado têm formas próprias (anel; faixa + caixa marcada + "Marcado"; tesoura + "Recortado"), legíveis sem depender de cor. Tipo, tamanho e data aparecem sempre na mesma ordem, e o item focado mostra o nome inteiro. Nova **densidade da lista** no menu (confortável ou compacta com colunas), salva entre sessões. (#28)
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos: rode Menu → Teste de controles… e envie o relatório na issue #78.
 
 ## [0.3.0-alpha.1]
 ### Novidades

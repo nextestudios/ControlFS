@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.4.0-alpha.1]
 ### What's new
 - **New on-screen keyboard layout**: text field on top, four character rows, a function row (`⇧`, `ABC`, `@#:`, space, `⌫`) and a bottom row with the cursor, `…` (accents, language and clear) and a wide **Done**. (#41)
 - Button labels automatically follow the family of the controller in use (Xbox, PlayStation, Nintendo or generic), detected from the type SDL reports and the vendor. Pressing a button on another controller hands control to it and switches the labels without restarting. The menu still lets you pin a style. (#32)
@@ -30,6 +32,9 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Responsive layout** for handhelds (1280×720/800), desktops and 1080p/4K TVs: the layout tier follows the effective resolution, DPI and Windows text size. On small screens spacing tightens, bottom-bar prompts wrap instead of disappearing, and menus and dialogs never grow taller than the screen (the focused item always stays visible); on a 4K TV at 100% text, icons and focus grow to stay readable at ~3 m. (#36)
 - **Clearer focus that always lands somewhere valid:** the list uses the same highlight ring as menus and dialogs; after deleting or moving items focus goes to the next remaining item (or the previous one); opening a folder scrolls the focused item into view right away; and the physical keyboard keeps working right after a menu or dialog closes. (#31)
 - **Clearer list:** focused, marked and cut items each have their own shape (ring; stripe + checked box + "Marked"; scissors + "Cut"), readable without relying on color. Type, size and date always appear in the same order, and the focused item shows its full name. New **list density** in the menu (comfortable, or compact with columns), saved between sessions. (#28)
+
+### Known limitations
+- Not yet validated with physical controllers: run Menu → Teste de controles… and post the report on issue #78.
 
 ## [0.3.0-alpha.1]
 ### What's new

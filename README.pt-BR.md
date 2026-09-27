@@ -13,7 +13,7 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.3.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.3.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.4.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.4.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
@@ -41,10 +41,13 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Recursos
 
-- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação, propriedades
+- Pastas e unidades reais, histórico, ordenação, itens ocultos, marcação (marcar todos / limpar), propriedades, **pastas favoritas** no Início e **barra de caminho navegável**
+- **Legendas do controle** de acordo com o que está na sua mão (Xbox, PlayStation, Nintendo, genérico), glifos vetoriais originais, rodapé por contexto e **assistente de mapeamento** para joysticks sem perfil
+- **Layout responsivo** para portáteis 720p/800p, desktop e TVs 1080p/4K
+- **Tentar de novo** uma operação que falhou ou só os itens que falharam; restos de operações interrompidas são limpos na próxima abertura
 - **Ícones nativos do Windows** para arquivos, pastas, pastas especiais e unidades, carregados em segundo plano e no tamanho da escala da tela
 - **Operações de arquivo:** renomear, copiar, recortar, colar, mover e excluir para a Lixeira, com conflitos (pular / manter ambos / substituir / mesclar pastas) e resultado por item
-- **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor, senha mascarada) usável só com direções + confirmar + voltar
+- **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor visível, segurar para repetir, senha mascarada) usável só com direções + confirmar + voltar
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos
 - **Criar pasta** com as regras de nomes do Windows
 - **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
@@ -57,7 +60,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** validação com controles reais (#78) e depois os itens *Should*: pastas recentes, abas, histórico e desfazer, grade, pré-visualização, ZIP64/AES ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, volumes divididos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Mais
 
