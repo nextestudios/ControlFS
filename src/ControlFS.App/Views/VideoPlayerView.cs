@@ -155,7 +155,7 @@ public sealed class VideoPlayerView
         };
         _times.FontSize = Theme.FontItem;
         _times.Text = status.Duration > TimeSpan.Zero
-            ? $"{MediaPreviewPolicy.FormatTime(status.Position)} / {MediaPreviewPolicy.FormatTime(status.Duration)}   (−{MediaPreviewPolicy.FormatTime(status.Duration - status.Position)})"
+            ? $"{MediaPreviewPolicy.FormatTime(status.Position)} / {MediaPreviewPolicy.FormatTime(status.Duration)}   (−{MediaPreviewPolicy.FormatTime(TimeSpan.FromSeconds(Math.Ceiling((status.Duration - status.Position).TotalSeconds)))})"
             : MediaPreviewPolicy.FormatTime(status.Position);
         _volume.FontSize = Theme.FontBody;
         _volume.Text = status.IsMuted ? "Sem som" : string.Create(CultureInfo.CurrentCulture, $"Volume {status.Volume * 100:0}%");
