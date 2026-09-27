@@ -184,9 +184,11 @@ public sealed partial class AppController
         SetExtractionRetryFailed(item, plan, result);
         if (plan.Batch is { Reported: false } batch) RecordBatchResult(batch, plan.ArchivePath, result);
         else ShowExtractionResult(item, plan, result);
-        if (Browser.Location is PhysicalLocation here && result.Destination is { } dest &&
-            (string.Equals(Path.GetDirectoryName(dest), here.FullPath, StringComparison.OrdinalIgnoreCase) || string.Equals(dest, here.FullPath, StringComparison.OrdinalIgnoreCase)))
-            Refresh(Browser);
+        // Todo painel que mostra o destino (ou a pasta dele) é atualizado: com dois painéis, o outro também (#56).
+        if (result.Destination is { } dest)
+            foreach (var pane in BrowsePanes.Where(p => p.Location is PhysicalLocation here &&
+                (string.Equals(Path.GetDirectoryName(dest), here.FullPath, StringComparison.OrdinalIgnoreCase) || string.Equals(dest, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())
+                Refresh(pane);
     }
 
     /// <summary>

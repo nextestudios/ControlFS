@@ -83,7 +83,9 @@ public sealed partial class AppController
             return new("Abas", $"Aba {ActiveTab + 1} de {tabs.Count}: {TabTitle(Browser)}");
         }
 
-        var where = (Screen == Screen.FolderPicker ? "Escolher pasta: " : string.Empty) + pane.Location switch
+        // Dois painéis: o contexto diz qual está ativo (trocar de painel com a mesma pasta nos dois também é anunciado).
+        var side = Screen != Screen.FolderPicker && DualPaneActive ? PaneName(pane) + ", " : string.Empty;
+        var where = side + (Screen == Screen.FolderPicker ? "Escolher pasta: " : string.Empty) + pane.Location switch
         {
             null => "Carregando",
             ArchiveLocation archive => "Compactado " + Path.GetFileName(archive.ArchivePath) + (archive.InnerPath.Length > 0 ? ", " + archive.InnerPath : string.Empty),

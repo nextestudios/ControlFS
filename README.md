@@ -41,7 +41,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Features
 
-- Real folders and drives, history, sorting, hidden items, marking (select all / clear), properties, **favorite folders** and **recent folders/files** on Home, a **navigable path bar** and **tabs**
+- Real folders and drives, history, sorting, hidden items, marking (select all / clear), properties, **favorite folders** and **recent folders/files** on Home, a **navigable path bar**, **tabs** (restored on launch) and **two panes** side by side (L3 switches; copy/move/extract to the other pane)
 - **Controller prompts** that match the pad in your hands (Xbox, PlayStation, Nintendo, generic), original vector glyphs, a context-sensitive action bar, and a **mapping wizard** for joysticks without a profile
 - **Responsive layout** for 720p/800p handhelds, desktops and 1080p/4K TVs
 - **Dark or light theme** (follows Windows by default) and a choice of **accent colors**, all contrast-checked

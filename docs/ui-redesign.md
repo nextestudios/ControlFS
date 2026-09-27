@@ -62,6 +62,7 @@ hardware, visual or timing checks that CI can't prove.
 | Start / F10 | app menu | app menu | app menu | app menu |
 | Select / Ctrl+F | — | search (disk folders) | — | — |
 | R3 / Ctrl+G | Lista ↔ Grade | Lista ↔ Grade | — | — |
+| L3 / Tab | other pane (two panes, #56) | other pane (two panes, #56) | — | — |
 
 ## Design tokens (A1)
 
@@ -202,6 +203,8 @@ by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTes
 | Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
 | Git status (#75): Configurações → Status do Git (off by default); badge line "GIT · ramo …", row state "Git: modificado/novo…", read after the list | `GitStatusJourneyTests` |
 | Open terminal here (#76): Y Ações → "Esta pasta" → Abrir terminal aqui…; notice starts on Cancelar; optional Windows on-screen keyboard | `TerminalJourneyTests` (2) |
+| Two panes (#56): left = active tab, right = own `PaneState`; active pane outlined in cyan with "ATIVO" title, the other dimmed with its path; L3/Tab or click switches without touching marks; tabs stay on the left; single pane on handhelds/narrow windows (setting kept); details panel hidden | Menu → "Dois painéis"; L3/Tab | `DualPaneJourneyTests` (2); Screens `2h-dual-pane`, `2i-dual-pane-right`; Manual "Dois painéis (#56)" |
+| Copiar/Mover para o outro painel (quick tiles), Extrair para o outro painel (archives), with source/destination summary; unavailable with a reason when both panes show the same folder (#56) | Y Ações (two panes) | `DualPaneJourneyTests` |
 | Tab strip: Nova aba, Duplicar aba, Fechar aba, Reabrir aba fechada, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
 | Mount/unmount disk images (#73, #74): Y Ações on .iso/.img/.vhd/.vhdx → Montar imagem (opens the new drive); Y on a mounted drive (This PC, Home) → Desmontar imagem… (confirmation starts on Cancelar) | `DiskImageJourneyTests`, `DiskImageIntegrationTests` |
 | Path bar: full path menu | North on a segment | `BreadcrumbJourneyTests` |

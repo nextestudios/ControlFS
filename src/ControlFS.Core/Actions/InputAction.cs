@@ -20,6 +20,12 @@ public enum InputAction
     ChangeView,
 
     /// <summary>
+    /// Com os dois painéis (#56), passa o foco para o outro painel (L3, Tab). Nunca muda marcações nem inicia operações;
+    /// com um painel só, não faz nada.
+    /// </summary>
+    SwitchPane,
+
+    /// <summary>
     /// Rolagem contínua do analógico direito (#175): um passo por ação, na taxa que a inclinação pede. Não vem de botão
     /// nem repete pelo roteador; rola só a superfície ativa (lista, visualização, modal) e nunca abre, volta ou confirma.
     /// </summary>

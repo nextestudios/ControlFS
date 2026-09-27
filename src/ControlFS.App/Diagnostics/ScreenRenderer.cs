@@ -190,6 +190,19 @@ internal static class ScreenRenderer
                 ChooseOpenMenu(app, "Fechar aba");
                 await app.WhenIdleAsync();
 
+                // Dois painéis (#56): o direito abre na mesma pasta; L3 ativa o direito, que entra numa subpasta.
+                ChooseAppMenu(app, "Dois painéis");
+                await app.WhenIdleAsync();
+                await CaptureAsync(stage, target, dir, "2h-dual-pane", window);
+                app.Handle(InputAction.SwitchPane);
+                await FocusAsync(app, stage, "Fotos da viagem");
+                app.Handle(InputAction.Confirm);
+                await app.WhenIdleAsync();
+                await CaptureAsync(stage, target, dir, "2i-dual-pane-right", window);
+                app.Handle(InputAction.SwitchPane);
+                ChooseAppMenu(app, "Dois painéis");
+                await app.WhenIdleAsync();
+
                 ChooseAppMenu(app, "Densidade");
                 await CaptureAsync(stage, target, dir, "3-folder-compact", window);
 

@@ -67,6 +67,11 @@ public sealed class MainWindow : Window
     private readonly ListHeaderView _listHeader;
     private readonly IconLoader _detailIcons;
     private readonly DetailsPanelView _details;
+    private readonly PaneView _paneView;
+    private readonly TextBlock _paneCaption = new() { FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1, Visibility = Visibility.Collapsed };
+    private readonly Grid _content = new();
+    private bool _dualShown;
+    private int _dualMainColumn;
     private bool _detailsShown;
     private bool _detailsFit = true;
     private EntryRowTemplate.ListColumns? _columns;
@@ -132,6 +137,7 @@ public sealed class MainWindow : Window
         _listHeader = new ListHeaderView(_app);
         _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
         _details = new DetailsPanelView(_detailIcons);
+        _paneView = new PaneView(_app, _icons);
         _detailIcons.Invalidated += () =>
         {
             _details.ApplyLayout(); // refaz o ícone grande no novo tamanho
@@ -262,10 +268,13 @@ public sealed class MainWindow : Window
         _grid.SizeChanged += (_, _) => UpdateGridMetrics();
         // Lista: cartão com o cabeçalho das colunas em cima das linhas; aparece e some junto com a lista.
         var listBody = new Grid();
+        listBody.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // título do painel (só com dois painéis)
         listBody.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         listBody.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        listBody.Children.Add(_paneCaption);
+        Grid.SetRow(_listHeader.Root, 1);
         listBody.Children.Add(_listHeader.Root);
-        Grid.SetRow(_list, 1);
+        Grid.SetRow(_list, 2);
         listBody.Children.Add(_list);
         _listCard.Child = listBody;
         _list.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => _listCard.Visibility = _list.Visibility);
@@ -274,13 +283,14 @@ public sealed class MainWindow : Window
             if (e.NewSize.Width != e.PreviousSize.Width && UpdateListColumns(force: false)) Render();
         };
         // Painel de detalhes à direita da lista (fase C); grade e início em cartões ocupam as duas colunas.
-        var content = new Grid();
+        var content = _content;
         content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         content.Children.Add(_listCard);
         Grid.SetColumn(_details.Root, 1);
         _details.Root.Visibility = Visibility.Collapsed;
         content.Children.Add(_details.Root);
+        content.Children.Add(_paneView.Root); // dois painéis (#56): o painel sem foco, na outra coluna
         Grid.SetColumnSpan(_grid, 2);
         Grid.SetColumnSpan(_home.Root, 2);
         content.Children.Add(_grid);
@@ -396,6 +406,7 @@ public sealed class MainWindow : Window
     private void OnIconsInvalidated()
     {
         _shownItems = null; // força recriar as linhas com ícones no novo tamanho
+        _paneView.Invalidate();
         Render();
     }
 
@@ -480,7 +491,8 @@ public sealed class MainWindow : Window
             _shownPlaces = _app.Places;
             _specialFolders = new HashSet<string>(_app.Places.Where(p => p.Kind == EntryKind.KnownFolder && p.FullPath is not null).Select(p => p.FullPath!), StringComparer.OrdinalIgnoreCase);
         }
-        var thisPcCards = _app.Screen == Screen.Browser && _view == ViewMode.Grid && pane is { Location: ThisPcLocation, IsLoading: false } && pane.List.Items.Count > 0;
+        var dual = _app.DualPaneActive && _app.Screen == Screen.Browser;
+        var thisPcCards = !dual && _app.Screen == Screen.Browser && _view == ViewMode.Grid && pane is { Location: ThisPcLocation, IsLoading: false } && pane.List.Items.Count > 0;
         if (ShowHomeCards(_app.Screen == Screen.Home && _view == ViewMode.Grid, thisPcCards))
         {
             if (thisPcCards) _home.RenderThisPc(pane);
@@ -488,6 +500,7 @@ public sealed class MainWindow : Window
         }
         else
             RenderItems(pane);
+        RenderDualPane(dual);
         RenderDetails();
         RenderFooter();
     }
@@ -585,7 +598,7 @@ public sealed class MainWindow : Window
     {
         var content = _home.Root.Visibility == Visibility.Visible || ActiveList.Visibility == Visibility.Visible;
         var (width, fits) = DetailsLayout();
-        var show = content && (_app.DetailsPanelPreference ?? fits);
+        var show = content && !_dualShown && (_app.DetailsPanelPreference ?? fits);
         if (show != _detailsShown || fits != _detailsFit)
         {
             if (show != _detailsShown)
@@ -644,7 +657,7 @@ public sealed class MainWindow : Window
     private void ApplyDetailsSpace()
     {
         _listCard.Margin = ListCardMargin;
-        var span = _detailsShown ? 1 : 2;
+        var span = _detailsShown || _dualShown ? 1 : 2;
         Grid.SetColumnSpan(_grid, span);
         Grid.SetColumnSpan(_home.Root, span);
         var padding = _grid.Padding;
@@ -653,7 +666,43 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>Margens do cartão da lista (à direita, o espaço até o painel quando ele aparece).</summary>
-    private Thickness ListCardMargin => new(Theme.SpaceL, Theme.Space(20), _detailsShown ? DetailsGap : Theme.SpaceL, Theme.Space(24));
+    private Thickness ListCardMargin => _dualShown ? DualMargin(_dualMainColumn) : new(Theme.SpaceL, Theme.Space(20), _detailsShown ? DetailsGap : Theme.SpaceL, Theme.Space(24));
+
+    /// <summary>Dois painéis: margem externa igual à da lista e meia distância entre os painéis.</summary>
+    private static Thickness DualMargin(int column) => column == 0
+        ? new(Theme.SpaceL, Theme.Space(20), Theme.SpaceS, Theme.Space(24))
+        : new(Theme.SpaceS, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
+
+    /// <summary>
+    /// Dois painéis (#56): o painel ativo usa a lista/grade principal na coluna dele (esquerda ou direita, sempre a mesma
+    /// para cada painel), contornado em ciano e com o título "ativo"; o outro aparece esmaecido na outra coluna. O painel
+    /// de detalhes sai (não cabe). No início, em portáteis ou com um painel, tudo volta ao layout de sempre.
+    /// </summary>
+    private void RenderDualPane(bool dual)
+    {
+        var column = _app.SecondPaneFocused ? 1 : 0;
+        if (dual != _dualShown || (dual && column != _dualMainColumn))
+        {
+            _dualShown = dual;
+            _dualMainColumn = column;
+            _content.ColumnDefinitions[1].Width = dual ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+            var main = dual ? column : 0;
+            Grid.SetColumn(_listCard, main);
+            Grid.SetColumn(_grid, main);
+            Grid.SetColumn(_empty, main);
+            Grid.SetColumn(_paneView.Root, 1 - main);
+            _paneView.Root.Margin = DualMargin(1 - main);
+            _listCard.BorderBrush = Theme.Accent;
+            _listCard.BorderThickness = dual ? Theme.FocusRing : new Thickness(0);
+            _paneCaption.Visibility = dual ? Visibility.Visible : Visibility.Collapsed;
+            if (dual) _paneView.Show();
+            else _paneView.Hide();
+            ApplyDetailsSpace();
+        }
+        if (!dual || _app.OtherPane is not { } other) return;
+        _paneCaption.Text = $"{_app.PaneName(_app.Browser).ToUpperInvariant()} · ATIVO";
+        _paneView.Render(other, _list.ItemTemplate, RowContext, _specialFolders);
+    }
 
     private void RenderFooter()
     {
@@ -937,6 +986,13 @@ public sealed class MainWindow : Window
         _listCard.Margin = ListCardMargin;
         _details.Root.Margin = new Thickness(0, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
         _details.ApplyLayout();
+        _paneView.ApplyLayout();
+        _paneCaption.FontSize = Theme.FontCaption;
+        _paneCaption.Foreground = Theme.Accent;
+        _paneCaption.Margin = new Thickness(Theme.Space(18), Theme.Space(4), Theme.Space(18), Theme.Space(6));
+        // Dois painéis só onde cabem com o nome legível: portáteis e janelas estreitas ficam com um (a escolha continua salva).
+        var dualFits = Theme.Layout.Tier != Core.Layout.LayoutTier.Compact && Theme.Viewport.Width >= 1200;
+        DispatcherQueue.TryEnqueue(() => _app.SetDualPaneFits(dualFits));
         _listCard.Padding = new Thickness(0, Theme.Space(6), 0, Theme.Space(10));
         _list.Padding = new Thickness(Theme.Space(10), Theme.Space(6), Theme.Space(10), 0);
         // Grade: cartões alinhados com os do início (margem lateral igual, meia distância entre cartões de cada lado).
