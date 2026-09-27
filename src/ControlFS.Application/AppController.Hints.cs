@@ -85,6 +85,17 @@ public sealed partial class AppController
             return hints;
         }
 
+        if (pane.ActiveSearch is { } search)
+        {
+            // Resultados de busca: abrir leva à pasta do item; Voltar primeiro cancela a busca em andamento.
+            if (pane.List.Focused is not null) hints.Add(new(InputAction.Confirm, "Mostrar na pasta"));
+            hints.Add(new(InputAction.OpenContextMenu, "Ações"));
+            hints.Add(new(InputAction.Search, "Nova busca"));
+            hints.Add(new(InputAction.OpenAppMenu, "Menu"));
+            hints.Add(new(InputAction.Back, search.IsRunning ? "Cancelar busca" : "Voltar"));
+            return hints;
+        }
+
         var focused = pane.List.Focused;
         var selection = pane.List.SelectionCount;
         var archiveOnDisk = focused is { Kind: EntryKind.File, IsBlocked: false } && ArchiveFormats.HasExtractableExtension(focused.Name);
@@ -104,6 +115,7 @@ public sealed partial class AppController
         if (focused is not null && !focused.IsBlocked && focused.Kind is not (EntryKind.Drive or EntryKind.KnownFolder))
             hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
+        if (pane.Location is PhysicalLocation) hints.Add(new(InputAction.Search, "Buscar"));
         hints.Add(new(InputAction.OpenAppMenu, "Menu"));
         hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
         return hints;

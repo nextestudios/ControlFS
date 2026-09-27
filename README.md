@@ -45,6 +45,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Native Windows icons** for files, folders, special folders and drives, loaded in the background and sized for the screen's scale
 - **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, cursor, masked passwords) usable with only directions + confirm + back
+- **Search by name** in the current folder, with or without subfolders: results stream in, can be cancelled, open in their folder; no indexing, links never followed
 - **Create folder** with Windows naming rules
 - **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
 - **Compress** to ZIP or TAR.GZ from marked items, name typed on the on-screen keyboard

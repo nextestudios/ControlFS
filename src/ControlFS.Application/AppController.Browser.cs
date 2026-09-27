@@ -29,7 +29,7 @@ public sealed partial class AppController
                 break;
             case InputAction.Back: Back(pane); break;
             case InputAction.ToggleSelection:
-                if (pane.Mode == PaneMode.Browse && !pane.IsLoading)
+                if (pane.Mode == PaneMode.Browse && !pane.IsLoading && pane.Location is not SearchLocation)
                 {
                     if (list.Focused is { IsBlocked: true } blocked) StatusMessage = blocked.BlockedReason;
                     else list.ToggleFocusedSelection();
@@ -37,7 +37,11 @@ public sealed partial class AppController
                 break;
             case InputAction.OpenContextMenu:
                 if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
+                else if (pane.ActiveSearch is { } search) ShowSearchMenu(pane, search);
                 else ShowItemMenu(pane);
+                break;
+            case InputAction.Search:
+                BeginSearch(pane);
                 break;
             case InputAction.OpenAppMenu:
                 if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
@@ -59,6 +63,11 @@ public sealed partial class AppController
     private void OpenEntry(PaneState pane, FileEntry entry)
     {
         if (pane.IsLoading) return;
+        if (pane.Location is SearchLocation)
+        {
+            RevealResult(pane, entry);
+            return;
+        }
         if (entry.IsBlocked)
         {
             ShowMessage("Entrada bloqueada", [("Nome", entry.Name), ("Motivo", entry.BlockedReason!)]);
@@ -151,6 +160,10 @@ public sealed partial class AppController
                     tree = current;
                     entries = current.Children(archive.InnerPath);
                     break;
+                case SearchLocation search when pane.Search is { } state && state.Location == search:
+                    // Voltar de um resultado aberto: os resultados guardados reaparecem (a busca não roda de novo).
+                    entries = [.. state.Results];
+                    break;
                 default:
                     return;
             }
@@ -196,7 +209,8 @@ public sealed partial class AppController
 
     internal void Refresh(PaneState pane, string? focusId = null)
     {
-        if (pane.Location is { } location)
+        if (pane.Location is SearchLocation search) StartSearch(pane, search);
+        else if (pane.Location is { } location)
             Track(NavigateAsync(pane, location, pushHistory: false, focusId ?? pane.List.FocusedId));
     }
 
@@ -211,6 +225,11 @@ public sealed partial class AppController
             pane.List.ClearSelection();
             return;
         }
+        if (pane.ActiveSearch is { IsRunning: true } running)
+        {
+            CancelSearch(running);
+            return;
+        }
         if (pane.IsLoading)
         {
             pane.LoadCts?.Cancel();
@@ -223,7 +242,8 @@ public sealed partial class AppController
         {
             var (location, focusId) = pane.Back.Pop();
             if (pane.Location is { } current) pane.Forward.Push((current, pane.List.FocusedId));
-            if (location is ArchiveLocation && pane.Archive is null)
+            // Compactado já fechado ou busca substituída por outra: não há o que restaurar, segue voltando.
+            if ((location is ArchiveLocation && pane.Archive is null) || (location is SearchLocation old && pane.Search?.Location != old))
             {
                 Back(pane);
                 return;
@@ -376,6 +396,8 @@ public sealed partial class AppController
                 pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) });
             }, inBrowser ? null : "Abra uma pasta primeiro."),
             new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }), inBrowser ? null : "Abra uma pasta primeiro."),
+            new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
+                Detail: "Vale para a próxima busca (Select/View)."),
             new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });

@@ -46,21 +46,10 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
                     FileAttributes attrs;
                     try { attrs = info.Attributes; }
                     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { inaccessible++; continue; }
-                    var hidden = (attrs & FileAttributes.Hidden) != 0 || (!OperatingSystem.IsWindows() && info.Name.StartsWith('.'));
+                    var hidden = IsHidden(info, attrs);
                     var system = (attrs & FileAttributes.System) != 0;
                     if (!includeHidden && (hidden || system)) continue;
-                    var isDir = (attrs & FileAttributes.Directory) != 0;
-                    entries.Add(new FileEntry(
-                        Id: info.Name,
-                        Name: info.Name,
-                        Kind: isDir ? EntryKind.Directory : EntryKind.File,
-                        Size: isDir ? null : SafeLength(info as FileInfo),
-                        Modified: SafeTime(info),
-                        FullPath: info.FullName,
-                        IsHidden: hidden,
-                        IsSystem: system,
-                        IsReadOnly: (attrs & FileAttributes.ReadOnly) != 0,
-                        IsReparsePoint: (attrs & FileAttributes.ReparsePoint) != 0));
+                    entries.Add(ToEntry(info, attrs, info.Name, hidden, system));
                 }
             }
             catch (UnauthorizedAccessException ex)
@@ -73,6 +62,89 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
             }
             return new DirectoryListing(dir.FullName, entries, inaccessible);
         }, cancellationToken);
+
+    public IEnumerable<SearchResult> Search(SearchRequest request, CancellationToken cancellationToken)
+    {
+        // Uma pasta por vez, em largura (resultados mais rasos primeiro). Sem RecurseSubdirectories: a descida é
+        // decidida aqui, para nunca atravessar junções, links simbólicos ou outros pontos de nova análise.
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = false,
+            RecurseSubdirectories = false,
+            AttributesToSkip = 0,
+            ReturnSpecialDirectories = false,
+        };
+        var root = Path.GetFullPath(request.RootPath);
+        var rootName = Path.GetFileName(Path.TrimEndingDirectorySeparator(root)) is { Length: > 0 } name ? name : root;
+        var pending = new Queue<string>();
+        pending.Enqueue(root);
+        while (pending.Count > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var folder = pending.Dequeue();
+            var relative = Path.GetRelativePath(root, folder);
+            var foundIn = relative == "." ? rootName : Path.Join(rootName, relative);
+            IEnumerator<FileSystemInfo>? items = null;
+            try { items = new DirectoryInfo(folder).EnumerateFileSystemInfos("*", options).GetEnumerator(); }
+            catch (Exception ex) when (IsUnreadable(ex)) { }
+            if (items is null)
+            {
+                yield return SearchResult.Skipped(folder);
+                continue;
+            }
+            var unreadable = false;
+            using (items)
+            {
+                while (true)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    FileSystemInfo info;
+                    FileAttributes attrs;
+                    try
+                    {
+                        if (!items.MoveNext()) break;
+                        info = items.Current;
+                        attrs = info.Attributes;
+                    }
+                    catch (Exception ex) when (IsUnreadable(ex))
+                    {
+                        unreadable = true;
+                        break;
+                    }
+                    var hidden = IsHidden(info, attrs);
+                    var system = (attrs & FileAttributes.System) != 0;
+                    if (!request.IncludeHidden && (hidden || system)) continue;
+                    var isDir = (attrs & FileAttributes.Directory) != 0;
+                    var isLink = (attrs & FileAttributes.ReparsePoint) != 0;
+                    if (SearchQuery.Matches(info.Name, request.Query))
+                        yield return SearchResult.Found(ToEntry(info, attrs, info.FullName, hidden, system) with { FoundIn = foundIn });
+                    if (isDir && !isLink && request.IncludeSubfolders) pending.Enqueue(info.FullName);
+                }
+            }
+            if (unreadable) yield return SearchResult.Skipped(folder);
+        }
+    }
+
+    private static bool IsUnreadable(Exception ex) => ex is UnauthorizedAccessException or IOException;
+
+    private static bool IsHidden(FileSystemInfo info, FileAttributes attrs) =>
+        (attrs & FileAttributes.Hidden) != 0 || (!OperatingSystem.IsWindows() && info.Name.StartsWith('.'));
+
+    private static FileEntry ToEntry(FileSystemInfo info, FileAttributes attrs, string id, bool hidden, bool system)
+    {
+        var isDir = (attrs & FileAttributes.Directory) != 0;
+        return new FileEntry(
+            Id: id,
+            Name: info.Name,
+            Kind: isDir ? EntryKind.Directory : EntryKind.File,
+            Size: isDir ? null : SafeLength(info as FileInfo),
+            Modified: SafeTime(info),
+            FullPath: info.FullName,
+            IsHidden: hidden,
+            IsSystem: system,
+            IsReadOnly: (attrs & FileAttributes.ReadOnly) != 0,
+            IsReparsePoint: (attrs & FileAttributes.ReparsePoint) != 0);
+    }
 
     public string? GetParent(string path)
     {

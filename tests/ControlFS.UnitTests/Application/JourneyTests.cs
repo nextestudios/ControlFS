@@ -335,7 +335,7 @@ public class JourneyTests : IDisposable
         d.Press(InputAction.Confirm);
         await d.Idle();
         Assert.Contains(d.App.Hints, h => h.Action == InputAction.ToggleSelection);
-        Assert.DoesNotContain(d.App.Hints, h => h.Action == InputAction.Search); // busca ainda não implementada
+        Assert.Contains(d.App.Hints, h => h is { Action: InputAction.Search, Label: "Buscar" });
         d.Press(InputAction.ToggleSelection);
         Assert.Contains(d.App.Hints, h => h is { Action: InputAction.Back, Label: "Cancelar seleção" });
     });

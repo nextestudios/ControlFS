@@ -61,6 +61,16 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
       com outra escala troca os ícones para o novo tamanho.
 - [ ] Anel de foco e marcação continuam legíveis sobre os ícones.
 
+## Busca (#46)
+
+- [ ] Select/View numa pasta abre o teclado; Concluir inicia a busca e os primeiros resultados aparecem antes de ela terminar.
+- [ ] Árvore com ~50.000 arquivos (ex.: `C:\Windows\WinSxS` ou uma pasta gerada), termo que casa com muitos itens: a lista e o
+      rodapé continuam respondendo ao direcional e ao analógico durante a busca; Leste/B cancela na hora e mantém o parcial.
+- [ ] `C:\` com subpastas: pastas sem permissão aparecem no rodapé ("pastas … puladas") e em Norte → Pastas puladas.
+- [ ] Sul/A num resultado abre a pasta dele com o foco no item; Voltar volta aos resultados com o foco no mesmo item.
+- [ ] Menu → "Busca em subpastas: não incluir": a busca seguinte só lê a pasta atual.
+- [ ] OneDrive com arquivos sob demanda: pastas marcadas como ponto de nova análise não são percorridas (limitação conhecida; anotar o que aparece).
+
 ## Formatos, compactar e abrir com o Windows
 
 - [ ] Abrir e extrair um RAR e um 7z reais baixados da internet (conferir a marca de origem nos extraídos).

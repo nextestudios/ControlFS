@@ -13,6 +13,7 @@ public enum EntryKind
 /// <summary>
 /// Item apresentado em uma lista. <see cref="Id"/> identifica o item de forma estável dentro
 /// da localização (usado para foco e seleção); <see cref="FullPath"/> só existe para itens físicos.
+/// <see cref="FoundIn"/> só existe em resultados de busca: a pasta onde o item está, a partir da pasta buscada.
 /// </summary>
 public sealed record FileEntry(
     string Id,
@@ -27,7 +28,8 @@ public sealed record FileEntry(
     bool IsReparsePoint = false,
     bool IsEncrypted = false,
     string? Detail = null,
-    string? BlockedReason = null)
+    string? BlockedReason = null,
+    string? FoundIn = null)
 {
     public bool IsBlocked => BlockedReason is not null;
 

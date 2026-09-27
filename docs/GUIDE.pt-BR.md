@@ -16,7 +16,7 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | LB / RB | Barra de caminho | Mover cursor |
 | LT / RT | Página anterior / próxima | Cursor no início / fim |
 | Start | Menu do app | Concluir |
-| Select | (busca, ainda não) | Símbolos |
+| Select / View | Buscar | Símbolos |
 
 **Voltar** fecha primeiro o menu aberto, depois limpa a seleção, depois volta no histórico e por fim vai à tela inicial. Sair do app sempre pede confirmação, começando em "Cancelar".
 
@@ -48,6 +48,15 @@ O caminho atual aparece em segmentos no topo. **LB** leva o foco da lista para a
 O item focado tem um anel de destaque e mostra o nome inteiro (até três linhas); os outros nomes longos terminam em "…". Itens marcados ganham uma faixa à esquerda, uma caixa marcada e "Marcado"; recortados ganham uma tesoura e "Recortado" e ficam esmaecidos até serem colados; entradas de compactados com senha mostram um cadeado. Nada disso depende só de cor.
 
 Menu → **Densidade da lista** alterna entre **confortável** (duas linhas por item, para a TV) e **compacta** (uma linha com colunas de tipo, tamanho e data). A escolha fica salva.
+
+## Busca
+
+Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.
+
+- **Subpastas:** incluídas por padrão. Troque em Menu → "Busca em subpastas" (vale para a próxima busca) ou em Norte → "Subpastas" nos resultados (busca de novo).
+- **Leste/B** durante a busca para a busca e mantém os resultados parciais; Leste/B de novo volta para a pasta.
+- **Sul/A** num resultado abre a pasta dele com o foco no item; Voltar retorna aos resultados.
+- A busca nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode aparecer como resultado).
 
 ## Favoritos
 

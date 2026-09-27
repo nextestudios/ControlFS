@@ -22,6 +22,34 @@ public sealed class TestFileSystem(string root) : IFileSystemProvider
         return await _real.ListAsync(path, includeHidden, cancellationToken);
     }
 
+    /// <summary>Pausa a busca depois de N resultados até <see cref="ResumeSearch"/>: torna observáveis o estado parcial e o cancelamento.</summary>
+    public int? PauseSearchAfter { get; set; }
+
+    /// <summary>A enumeração da busca terminou (concluída ou interrompida) e liberou a pasta.</summary>
+    public bool SearchEnded { get; private set; }
+
+    private readonly ManualResetEventSlim _resume = new(false);
+
+    public void ResumeSearch() => _resume.Set();
+
+    public IEnumerable<SearchResult> Search(SearchRequest request, CancellationToken cancellationToken)
+    {
+        SearchEnded = false;
+        var found = 0;
+        try
+        {
+            foreach (var result in _real.Search(request, cancellationToken))
+            {
+                yield return result;
+                if (result.Match is not null && ++found == PauseSearchAfter) _resume.Wait(cancellationToken);
+            }
+        }
+        finally
+        {
+            SearchEnded = true;
+        }
+    }
+
     public string? GetParent(string path) => _real.GetParent(path);
 
     public bool DirectoryExists(string path) => _real.DirectoryExists(path);
