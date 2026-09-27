@@ -187,4 +187,44 @@ public class TabsJourneyTests : IDisposable
         Assert.Single(d.App.Tabs);
         Assert.Equal(Screen.Home, d.App.Screen);
     });
+
+    [Fact]
+    public void A_closed_tab_reopens_at_its_place_with_its_location_and_history() => UiContext.Run(async () =>
+    {
+        var music = _tmp.MakeDir("Músicas");
+        var rock = _tmp.MakeDir("Músicas", "Rock");
+        File.WriteAllText(Path.Join(rock, "a.mp3"), "a");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("Músicas");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Abrir em nova aba");
+        await d.FocusItem("Rock");
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.ToggleSelection);
+
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Abas");
+        await d.ChooseMenu("Fechar aba");
+        Assert.Single(app.Tabs);
+
+        // Menu → Reabrir aba fechada: volta na posição 2, ativa, em Rock, e Voltar ainda leva a Músicas.
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Reabrir aba fechada");
+        await d.Idle();
+        Assert.Equal((2, 1), (app.Tabs.Count, app.ActiveTab));
+        Assert.Equal(rock, ((PhysicalLocation)app.Browser.Location!).FullPath);
+        Assert.Equal(0, app.Browser.List.SelectionCount);
+        d.Press(InputAction.Back);
+        await d.Idle();
+        Assert.Equal(music, ((PhysicalLocation)app.Browser.Location!).FullPath);
+
+        // A pilha esvaziou: a opção fica indisponível e diz o motivo.
+        d.Press(InputAction.OpenAppMenu);
+        var menu = await d.WaitMenu();
+        Assert.False(menu.Items.Single(i => i.Label == "Reabrir aba fechada").IsEnabled);
+    });
 }
