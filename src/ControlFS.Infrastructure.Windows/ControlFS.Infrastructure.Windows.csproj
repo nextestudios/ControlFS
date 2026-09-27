@@ -9,6 +9,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks> <!-- exigido pelo gerador de LibraryImport -->
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="ControlFS.WindowsIntegrationTests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
   </ItemGroup>
 </Project>

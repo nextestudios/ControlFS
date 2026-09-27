@@ -80,7 +80,7 @@ Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no 
 - **Leste/B** durante a busca para a busca e mantém os resultados parciais; Leste/B de novo volta para a pasta.
 - **Sul/A** num resultado abre a pasta dele com o foco no item; Voltar retorna aos resultados.
 - **Filtros:** Norte nos resultados abre os filtros. **Sul** liga/desliga um tipo (Pastas, Imagens, Vídeos, Músicas e áudio, Documentos, Compactados, Executáveis; vários tipos se somam) ou avança as faixas de **Tamanho** e **Modificado**; o menu fica aberto para escolher vários. A lista muda na hora, sem buscar de novo, o rodapé mostra "N de M resultados (filtros: …)" e os filtros continuam valendo nas próximas buscas da sessão até **Limpar filtros**.
-- A busca nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode aparecer como resultado).
+- A busca nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode aparecer como resultado). Pastas do OneDrive com arquivos sob demanda são pesquisadas como pastas comuns: só os nomes são lidos, então nada é baixado (o OneDrive pode buscar a lista de uma pasta que nunca foi aberta).
 
 ## Pastas e arquivos recentes
 

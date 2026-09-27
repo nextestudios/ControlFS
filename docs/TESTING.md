@@ -128,6 +128,14 @@ Ainda manual, num aparelho real:
       pelo Narrador) sem fechar o menu; a lista atrás muda na hora.
 - [ ] Com uma busca grande ainda em andamento, ligar um filtro não reinicia a busca; os novos resultados já chegam filtrados.
 
+## OneDrive sob demanda (#126)
+
+- [ ] Com "Arquivos sob demanda" ligado e uma pasta do OneDrive só na nuvem (ícone de nuvem no Explorador), buscar um
+      nome que existe numa subpasta dela: o resultado aparece.
+- [ ] Depois da busca, os arquivos continuam "somente online" no Explorador (nada foi baixado); o mesmo vale para
+      Propriedades → Calcular tamanho na pasta do OneDrive.
+- [ ] Uma junção criada dentro do OneDrive (`mklink /J`) continua sem ser percorrida.
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item

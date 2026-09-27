@@ -52,6 +52,21 @@ public sealed class SearchIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task Reparse_tag_is_read_from_metadata_and_a_junction_is_never_classified_as_a_cloud_folder()
+    {
+        var target = Directory.CreateDirectory(Path.Join(_root, "target")).FullName;
+        var link = Path.Join(_root, "junction");
+        var mklink = Process.Start(new ProcessStartInfo("cmd.exe") { ArgumentList = { "/c", "mklink", "/J", link, target }, UseShellExecute = false, CreateNoWindow = true })!;
+        await mklink.WaitForExitAsync();
+        Assert.Equal(0, mklink.ExitCode);
+
+        Assert.Equal(ControlFS.Core.Policies.ReparseTags.MountPoint, TreeWalker.ReparseTagOf(link));
+        Assert.Null(TreeWalker.ReparseTagOf(target)); // pasta comum: sem marca
+        Assert.False(TreeWalker.Descends(link, File.GetAttributes(link)));
+        Assert.True(TreeWalker.Descends(target, File.GetAttributes(target)));
+    }
+
+    [Fact]
     public void Folder_without_permission_is_reported_not_silently_skipped()
     {
         var tree = Directory.CreateDirectory(Path.Join(_root, "tree")).FullName;
