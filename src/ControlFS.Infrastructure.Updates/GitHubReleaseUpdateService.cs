@@ -15,6 +15,9 @@ public sealed class GitHubReleaseUpdateService : IUpdateService, IDisposable
 {
     public const string InstalledMarkerName = "ControlFS.installed";
     private const int MaxReleaseListBytes = 4 * 1024 * 1024;
+
+    /// <summary>Releases conferidas no máximo por verificação quando a mais nova foi assinada por uma chave desconhecida.</summary>
+    private const int MaxSignatureFallbacks = 3;
     private readonly UpdateTrust _trust;
     private readonly RestrictedHttp _http;
     private readonly string _downloadDirectory;
@@ -71,14 +74,22 @@ public sealed class GitHubReleaseUpdateService : IUpdateService, IDisposable
             }
             if (candidates.Count == 0) return new UpdateCheckResult(UpdateCheckOutcome.UpToDate);
 
-            var best = candidates.MaxBy(c => c.Version)!;
-            var manifestBytes = await _http.GetBytesAsync(best.Manifest, "application/octet-stream", ManifestVerifier.MaxManifestBytes, cancellationToken).ConfigureAwait(false);
-            var signatureBytes = await _http.GetBytesAsync(best.Signature, "application/octet-stream", 1024, cancellationToken).ConfigureAwait(false);
-            var verified = ManifestVerifier.Verify(manifestBytes, signatureBytes, _trust);
-            if (verified.Version != best.Version) throw new UpdateException("O manifesto assinado não corresponde à versão da release.");
-            if (verified.Version <= CurrentVersion) throw new UpdateException("Versão anterior ou igual recusada.");
-            _installerUrls[verified.Version.ToString()] = best.Installer;
-            return new UpdateCheckResult(UpdateCheckOutcome.UpdateAvailable, verified);
+            // A mais nova primeiro. Se nenhuma chave desta cópia confere a assinatura dela (a chave foi trocada depois
+            // desta versão, #86), tenta as anteriores ainda mais novas que a atual: a release de transição, assinada com
+            // a chave antiga e que já confia na nova, é o degrau. Só a falta de chave conhecida pula; qualquer outro
+            // problema (manifesto adulterado, versão trocada) recusa a verificação inteira.
+            foreach (var candidate in candidates.OrderByDescending(c => c.Version).Take(MaxSignatureFallbacks))
+            {
+                var manifestBytes = await _http.GetBytesAsync(candidate.Manifest, "application/octet-stream", ManifestVerifier.MaxManifestBytes, cancellationToken).ConfigureAwait(false);
+                var signatureBytes = await _http.GetBytesAsync(candidate.Signature, "application/octet-stream", ManifestVerifier.MaxSignatureBytes, cancellationToken).ConfigureAwait(false);
+                if (!ManifestVerifier.IsSignedByTrustedKey(manifestBytes, signatureBytes, _trust)) continue;
+                var verified = ManifestVerifier.Verify(manifestBytes, signatureBytes, _trust);
+                if (verified.Version != candidate.Version) throw new UpdateException("O manifesto assinado não corresponde à versão da release.");
+                if (verified.Version <= CurrentVersion) throw new UpdateException("Versão anterior ou igual recusada.");
+                _installerUrls[verified.Version.ToString()] = candidate.Installer;
+                return new UpdateCheckResult(UpdateCheckOutcome.UpdateAvailable, verified);
+            }
+            throw new UpdateException("Assinatura do manifesto inválida: a atualização foi recusada.");
         }
         catch (OperationCanceledException)
         {

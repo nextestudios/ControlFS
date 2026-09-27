@@ -98,10 +98,10 @@ não é confiável.
 ## Atualizações automáticas
 
 Manifesto de release assinado (ECDSA P-256/SHA-256) com chave que existe só no secret `UPDATE_SIGNING_KEY` do GitHub;
-chave pública embutida no app (`UpdateTrust`). O app exige assinatura válida, produto/repositório corretos, versão do
+chaves públicas embutidas no app (`UpdateTrust`; vale qualquer uma do conjunto, para rotação e chave reserva — `decisions/0006`). O app exige assinatura válida, produto/repositório corretos, versão do
 manifesto = versão da tag e > versão atual (sem downgrade/replay), HTTPS para hosts fixos com redirecionamentos
 conferidos, tamanho e SHA-256 exatos, e reconfere o arquivo aberto sem escrita de terceiros antes de executar.
-Testes: `UpdateServiceTests` (adulteração, outra chave, replay, sem assinatura, host fora da lista, hash errado,
+Testes: `UpdateServiceTests` (adulteração, outra chave, qualquer chave do conjunto, degrau depois da rotação, replay, sem assinatura, host fora da lista, hash errado,
 download maior que o declarado, offline) e `UpdateFlowTests`. Riscos e limites: `decisions/0005`.
 
 ## Relato de vulnerabilidades

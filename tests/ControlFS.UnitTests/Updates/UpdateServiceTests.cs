@@ -143,13 +143,59 @@ public class UpdateServiceTests : IDisposable
     }
 
     [Fact]
-    public void Official_public_key_is_a_valid_p256_key()
+    public void Official_keys_are_distinct_p256_keys_and_still_include_the_one_every_installed_copy_trusts()
     {
-        using var key = ECDsa.Create();
-        key.ImportFromPem(UpdateTrust.Official.PublicKeyPem);
-        Assert.Equal(256, key.KeySize);
-        Assert.Equal("8b841b19810a1a7e0fe417a34ce8fb1281125f52413576e5b4f4deba7c64f3e8",
-            Convert.ToHexStringLower(SHA256.HashData(key.ExportSubjectPublicKeyInfo())));
+        var fingerprints = UpdateTrust.Official.PublicKeysPem.Select(pem =>
+        {
+            using var key = ECDsa.Create();
+            key.ImportFromPem(pem);
+            Assert.Equal("1.2.840.10045.3.1.7", key.ExportParameters(false).Curve.Oid.Value); // P-256
+            return UpdateTrust.Fingerprint(pem);
+        }).ToList();
+        Assert.InRange(fingerprints.Count, 1, UpdateTrust.MaxTrustedKeys);
+        Assert.Equal(fingerprints.Count, fingerprints.Distinct().Count());
+        // Remover esta chave antes de uma rotação completa (docs/decisions/0006) quebra a atualização de quem a usa.
+        Assert.Contains("8b841b19810a1a7e0fe417a34ce8fb1281125f52413576e5b4f4deba7c64f3e8", fingerprints);
+    }
+
+    [Fact]
+    public void Manifest_signed_by_either_trusted_key_is_accepted_and_any_other_key_is_refused()
+    {
+        using var current = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var next = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var stranger = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var p384 = ECDsa.Create(ECCurve.NamedCurves.nistP384);
+        var trust = UpdateTrust.Official with { PublicKeysPem = [current.ExportSubjectPublicKeyInfoPem(), next.ExportSubjectPublicKeyInfoPem()] };
+        var manifest = System.Text.Encoding.UTF8.GetBytes(
+            $$$"""{"schema":1,"product":"ControlFS","repository":"{{{FakeReleaseServer.Repo}}}","version":"0.9.0","installer":{"name":"{{{UpdateTrust.InstallerAssetName}}}","size":10,"sha256":"{{{new string('a', 64)}}}"}}""");
+        byte[] Sign(ECDsa key) => System.Text.Encoding.ASCII.GetBytes(Convert.ToBase64String(key.SignData(manifest, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation)));
+
+        Assert.Equal("0.9.0", ManifestVerifier.Verify(manifest, Sign(current), trust).Version.ToString());
+        Assert.Equal("0.9.0", ManifestVerifier.Verify(manifest, Sign(next), trust).Version.ToString());
+        Assert.Throws<UpdateException>(() => ManifestVerifier.Verify(manifest, Sign(stranger), trust));
+        // Uma chave fora da curva P-256 na lista nunca confere nada, nem a própria assinatura.
+        var withP384 = trust with { PublicKeysPem = [p384.ExportSubjectPublicKeyInfoPem()] };
+        Assert.Throws<UpdateException>(() => ManifestVerifier.Verify(manifest, Sign(p384), withP384));
+        Assert.Throws<UpdateException>(() => ManifestVerifier.Verify(manifest, Sign(current), trust with { PublicKeysPem = [] }));
+    }
+
+    [Fact]
+    public async Task After_a_key_rotation_an_old_copy_takes_the_newest_release_it_can_verify_and_never_an_older_one()
+    {
+        using var rotated = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        _server.Publish("0.2.0", FakeReleaseServer.Installer("transicao")); // assinada com a chave antiga, já confia na nova
+        _server.Publish("0.3.0", FakeReleaseServer.Installer("nova"), signWith: rotated);
+        using var service = Service(current: "0.1.0");
+
+        var check = await service.CheckAsync(includePrereleases: false, CancellationToken.None);
+
+        Assert.Equal(UpdateCheckOutcome.UpdateAvailable, check.Outcome);
+        Assert.Equal("0.2.0", check.Manifest!.Version.ToString());
+        var ready = await service.DownloadAsync(check.Manifest, null, CancellationToken.None);
+        Assert.Equal(FakeReleaseServer.Installer("transicao"), File.ReadAllBytes(ready.InstallerPath));
+
+        using var upToDate = Service(current: "0.2.0"); // sem a chave nova e sem degrau mais novo que ela: recusa, nunca volta atrás
+        Assert.Equal(UpdateCheckOutcome.Failed, (await upToDate.CheckAsync(false, CancellationToken.None)).Outcome);
     }
 
     private sealed class ThrowingHandler : HttpMessageHandler

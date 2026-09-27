@@ -16,7 +16,7 @@ public sealed class FakeReleaseServer : HttpMessageHandler
     public FakeReleaseServer()
     {
         Key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        Trust = UpdateTrust.Official with { PublicKeyPem = Key.ExportSubjectPublicKeyInfoPem() };
+        Trust = UpdateTrust.Official with { PublicKeysPem = [Key.ExportSubjectPublicKeyInfoPem()] };
         Route($"https://api.github.com/repos/{Repo}/releases?per_page=20", () => Json(JsonSerializer.Serialize(_releases)));
     }
 

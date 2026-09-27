@@ -59,5 +59,5 @@ CI runs only at the Gitflow integration points: pull requests (build + tests), t
 - **Docs come in pairs:** `README.md` / `README.pt-BR.md`, `docs/GUIDE.md` / `docs/GUIDE.pt-BR.md`.
 - **Commits and PR titles:** Conventional Commits in English (`fix: …`, `feat: …`, `docs: …`), one topic per PR.
 - Never commit secrets, tokens, certificates, personal paths or user data. The update signing key exists only in the
-  `UPDATE_SIGNING_KEY` Actions secret; the public key is in `src/ControlFS.Infrastructure.Updates/UpdateTrust.cs`.
-  Changing it breaks automatic updates for every installed copy (see `docs/decisions/0005`).
+  `UPDATE_SIGNING_KEY` Actions secret; the trusted public keys are in `src/ControlFS.Infrastructure.Updates/UpdateTrust.cs`.
+  Removing or replacing a key outside the rotation procedure in `docs/decisions/0006` breaks automatic updates for installed copies.
