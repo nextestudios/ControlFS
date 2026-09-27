@@ -23,6 +23,18 @@ public sealed class OperationItem
 
     public bool IsActive => !OperationStateMachine.IsTerminal(State);
 
+    /// <summary>Quando saiu da fila e começou (null: cancelada antes de iniciar).</summary>
+    public DateTimeOffset? StartedAt { get; internal set; }
+
+    /// <summary>Origem para o histórico (pasta de origem ou compactado). Definido por quem enfileirou.</summary>
+    public string? Source { get; internal set; }
+
+    /// <summary>Destino para o histórico. Definido por quem enfileirou; o resultado pode trazer o destino real.</summary>
+    public string? Destination { get; internal set; }
+
+    /// <summary>Entrada do histórico gravada ao concluir.</summary>
+    public string? HistoryEntryId { get; internal set; }
+
     /// <summary>
     /// Refaz o pedido original (o motor planeja de novo; nada do estado anterior é presumido). Definido por quem enfileirou.
     /// </summary>
@@ -134,6 +146,7 @@ public sealed class OperationQueue
         {
             while (_items.FirstOrDefault(i => i.State == OperationState.Queued) is { } next)
             {
+                next.StartedAt = DateTimeOffset.Now;
                 next.TryTransition(OperationState.Planning);
                 next.TryTransition(OperationState.Running);
                 Changed?.Invoke();

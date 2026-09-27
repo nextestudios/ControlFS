@@ -106,6 +106,8 @@ Menu → **Operações** lista cada cópia, movimentação, exclusão, extraçã
 
 Quando só alguns itens falharam ou não foram processados (por exemplo, depois de cancelar ou com um arquivo em uso), o diálogo de resultado e os detalhes da operação também oferecem **Tentar de novo só as falhas (N)**: só esses itens rodam de novo, cada um para a pasta aonde deveria chegar; o que já deu certo nunca é copiado, movido ou extraído outra vez, e o novo resultado lista apenas os itens refeitos. Entradas bloqueadas por segurança nunca são refeitas.
 
+**Histórico:** operações concluídas (e renomeações) ficam em `history.json` na pasta de dados (`%LOCALAPPDATA%\ControlFS`, ou `ControlFS_Data` no modo portátil), então Menu → Operações lista também as operações de aberturas anteriores, das mais recentes para as mais antigas, com data, origem, destino e contagem de desfechos por item. Ficam as 200 operações mais recentes e até 100 itens de cada (problemas primeiro). Ele registra o que aconteceu, nunca conteúdo de arquivos nem senhas de compactados, e por si só não significa que a operação pode ser desfeita. **Limpar histórico…** no fim da lista apaga o registro (nenhum arquivo é alterado).
+
 Se o ControlFS for fechado no meio de uma operação (travamento, falta de energia), a próxima abertura remove os temporários ocultos que ele tinha criado (`.controlfs-staging-*`, `.controlfs-copy-*.part`) e avisa no rodapé. Só é removido o que o ControlFS registrou antes de criar; nada é apagado só por causa do nome.
 
 ## Abrindo arquivos com o Windows

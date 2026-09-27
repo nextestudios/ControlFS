@@ -132,6 +132,8 @@ public sealed partial class AppController
         });
         // A senha nunca é guardada: tentar de novo pergunta outra vez, se for preciso.
         item.RetryAction = () => Track(StartExtractionAsync(plan));
+        item.Source = plan.ArchivePath;
+        item.Destination = plan.Destination;
         _extractions[item.Id] = plan;
         StatusMessage = "Extração iniciada. Você pode continuar navegando.";
         RaiseChanged();
@@ -139,6 +141,7 @@ public sealed partial class AppController
 
     private void OnOperationCompleted(OperationItem item)
     {
+        RecordHistory(item);
         if (item.Result is { } fileResult && _fileOperations.Remove(item.Id, out var fileOp))
         {
             OnFileOperationCompleted(item, fileOp, fileResult);

@@ -111,6 +111,8 @@ public sealed partial class AppController
             return await _archives.CompressAsync(request, progress, ct);
         });
         item.RetryAction = () => EnqueueCompression(plan, UniqueNames.Next(fileName, n => File.Exists(Path.Join(plan.Folder, n)) || Directory.Exists(Path.Join(plan.Folder, n))));
+        item.Source = plan.Folder;
+        item.Destination = request.DestinationPath;
         _compressions[item.Id] = plan;
         StatusMessage = "Compactação iniciada. Você pode continuar navegando.";
         RaiseChanged();

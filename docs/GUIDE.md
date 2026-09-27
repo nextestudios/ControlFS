@@ -106,6 +106,8 @@ Menu → **Operations** lists every copy, move, delete, extraction and compressi
 
 When only some items failed or were not processed (for example after a cancel or a locked file), the result dialog and the operation's details also offer **Retry failed items (N)**: only those items run again, each into the folder it was meant to reach; what already succeeded is never copied, moved or extracted again, and the new result lists only the retried items. Entries blocked for security are never retried.
 
+**History:** finished operations (and renames) are kept in `history.json` in the data folder (`%LOCALAPPDATA%\ControlFS`, or `ControlFS_Data` in portable mode), so Menu → Operations also lists operations from earlier launches, newest first, with date, source, destination and per-item outcome counts. It keeps the 200 most recent operations and up to 100 items each (problems first). It records what happened, never file contents or archive passwords, and by itself doesn't mean an operation can be undone. **Clear history…** at the end of the list erases the record (no file is touched).
+
 If ControlFS is closed in the middle of an operation (crash, power loss), the next launch removes the hidden temporaries it had created (`.controlfs-staging-*`, `.controlfs-copy-*.part`) and says so in the bottom bar. Only items ControlFS registered before creating them are removed; nothing is deleted just because of its name.
 
 ## Opening files with Windows
