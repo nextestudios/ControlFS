@@ -69,21 +69,7 @@ jobs:
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
       - name: Build portable exe and installer
         shell: pwsh
-        run: |
-          # TEMPORARY (#84 validation, reverted before merge): self-signed code signing cert trusted on the runner.
-          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=ControlFS Test Signing" -CertStoreLocation Cert:\CurrentUser\My
-          $pw = ConvertTo-SecureString "test-only" -AsPlainText -Force
-          $pfx = Join-Path $env:RUNNER_TEMP "t.pfx"
-          Export-PfxCertificate -Cert $cert -FilePath $pfx -Password $pw | Out-Null
-          $cer = Join-Path $env:RUNNER_TEMP "t.cer"
-          Export-Certificate -Cert $cert -FilePath $cer | Out-Null
-          Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
-          Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedPublisher | Out-Null
-          $env:SIGNING_PFX_BASE64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($pfx))
-          $env:SIGNING_PFX_PASSWORD = "test-only"
-          .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version 0.0.0-smoke -Sign
-          . .\build\CodeSigning.ps1
-          Assert-Authenticode @("dist\ControlFS-Setup-x64.exe", "dist\ControlFS-Portable-x64.exe", "artifacts\publish-x64-app\ControlFS.exe")
+        run: .\build\Publish-ControlFS.ps1 -Runtime x64 -Target All -Version 0.0.0-smoke
       - name: Launch portable exe
         shell: pwsh
         run: |
