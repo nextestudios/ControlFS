@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.5.0-alpha.1]
 ### Novidades
 - **Narrador**: o foco lógico agora é anunciado ao andar com o controle ou o teclado — contexto ao entrar (início, pasta, menu, diálogo, teclado virtual, barra de caminho, abas) e depois só o item, com tipo, tamanho, posição e estados por extenso (marcado, recortado, bloqueado, com senha, indisponível com o motivo). Avisos do rodapé são uma região viva lida sem mover o foco. (#40)
 - **Lixeira** no início: lista os itens excluídos com a pasta de origem e a data da exclusão; Sul/A num item oferece **Restaurar** (volta à pasta original, sem nunca sobrescrever) e **Excluir permanentemente**, que sempre pergunta antes com o foco em Cancelar. Marcar vários funciona. Um local original inválido registrado na Lixeira é recusado. (#26)
@@ -29,6 +31,10 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Abas** no navegador: cada aba guarda a própria pasta, histórico, marcação e foco. RB leva à faixa de abas, LB/RB trocam de aba e Norte cria ou fecha; Norte numa pasta tem "Abrir em nova aba". Uma cópia ou movimentação atualiza todas as abas que mostram a origem ou o destino. (#50)
 - **Ir para caminho…** (Menu, e no seletor de pastas): o teclado virtual abre com a pasta atual selecionada; digite ou cole (Ctrl+V) um caminho, com ou sem aspas e com variáveis como `%USERPROFILE%`, e Concluir vai até lá. Caminho inexistente ou inválido mostra o erro sem fechar o teclado; o caminho de um arquivo abre a pasta dele com o foco no arquivo. (#54)
 - **Navegador de compactados mais informativo**: o cabeçalho mostra formato, arquivos, tamanho descompactado e quantas entradas têm senha ou estão bloqueadas; cada arquivo mostra quanto ocupa compactado (%); pastas mostram **Explorar** e, com entradas marcadas, Norte vira **Extrair seleção (N)** e o menu já abre nessa opção. (#68)
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84): o Windows SmartScreen pode avisar na primeira execução.
 
 ## [0.4.0-alpha.1]
 ### Novidades

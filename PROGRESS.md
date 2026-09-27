@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Itens Should do roadmap (0.5.0-alpha.1)
+
+- Resolvidas: #20, #21, #22, #25, #26, #29, #40, #44, #47, #49, #50, #54, #55, #57, #58, #63, #64, #66, #68, #69, #80, #83,
+  #85, #126 (PRs #131–#155). #84 (assinatura de código) tem o workflow pronto e espera o certificado do mantenedor.
+- Evidência (CI Windows, 2026-09-27): 367 testes unitários/jornadas e 28 de integração Windows (Lixeira real, ZIP64 acima
+  de 4 GiB, junctions no tamanho de pasta), 16 verificações de UI Automation no Smoke; pacotes ~26% menores.
+
 ## Controle, teclado, navegação e segurança (0.4.0-alpha.1)
 
 - Issues *Must* do roadmap (MoSCoW) resolvidas: #18, #19, #23, #24, #28, #30, #31, #32, #33, #34, #35, #36, #41, #42, #43,
