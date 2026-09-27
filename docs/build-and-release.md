@@ -45,6 +45,12 @@ artifacts\ControlFS-win-x64\ControlFS.exe
   `build/Test-Installed.ps1`: processo vivo, janela, eventos do Windows, logs e print). O workflow `smoke.yml` faz o
   mesmo em PRs, na `main` e sob demanda para uma release já publicada. Inclui também e `release-manifest.json` + `.sig` assinados com o secret `UPDATE_SIGNING_KEY`
   (`build/New-ReleaseManifest.ps1` confere a assinatura com a chave pública do app antes de publicar).
+- Velocidade: CI e smoke usam cache de pacotes NuGet (chave nos lock files) e não rodam em mudanças só de documentação
+  (`**/*.md`, `docs/**`). A release não usa cache (pacotes sempre baixados na hora). O teste dos arquivos já
+  publicados (`smoke.yml` com `release_tag`) roda em versões estáveis ou sob demanda — a release já abre o app antes
+  de publicar.
+- Desenvolvimento: `dotnet build ControlFS.slnx` local serve só como checagem rápida de compilação; testes, abertura do
+  app, pacotes e releases valem apenas quando executados na CI.
 - `codeql.yml` (C# e workflows) e `dependabot.yml` (NuGet e Actions, mensal, agrupado).
 
 Para publicar: adicione a seção da versão nos dois changelogs, faça merge na `main` e crie a tag (somente mantenedores).
