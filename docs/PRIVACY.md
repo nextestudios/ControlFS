@@ -10,6 +10,8 @@ the user or the person installing or operating it.
   once a day, and downloads it only from the project's GitHub releases. The request carries only a `ControlFS/<version>`
   User-Agent; GitHub sees the IP address like for any web request ([GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)).
   Turn it off in Menu → Atualizações → "Verificar automaticamente"; a manual "Verificar agora" still works on request.
+- **Network locations:** ControlFS lists the mapped drives and network locations Windows already knows (read locally) and
+  only contacts a server when you open that place. It has no network stack of its own and never stores network credentials.
 - **Opening files with Windows** ("Abrir com…", default programs, File Explorer) hands the file to programs the user
   chooses; what they do is governed by their own policies.
 
@@ -23,5 +25,7 @@ especificamente pelo usuário ou por quem o instala ou opera.
 - **Verificação de atualizações (opcional):** o app pergunta aos servidores do GitHub (API e downloads das releases) se há versão nova,
   no máximo uma vez por dia, e só baixa das releases do projeto no GitHub. O pedido leva apenas o User-Agent
   `ControlFS/<versão>`; o GitHub vê o endereço IP como em qualquer acesso à web. Desligue em Menu → Atualizações → "Verificar automaticamente"; "Verificar agora" continua funcionando quando pedido.
+- **Locais de rede:** o ControlFS lista as unidades mapeadas e os locais de rede que o Windows já conhece (lidos
+  localmente) e só contata um servidor quando você abre aquele local. Não tem pilha de rede própria nem guarda credenciais de rede.
 - **Abrir arquivos com o Windows** ("Abrir com…", programa padrão, Explorador de Arquivos) entrega o arquivo a programas
   escolhidos pelo usuário, que seguem as próprias políticas.

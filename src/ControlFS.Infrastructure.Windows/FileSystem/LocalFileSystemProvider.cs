@@ -6,23 +6,61 @@ using ControlFS.Infrastructure.Windows.Shell;
 namespace ControlFS.Infrastructure.Windows.FileSystem;
 
 /// <summary>Sistema de arquivos local, operando sobre arquivos reais dentro das permissões do usuário.</summary>
-public sealed class LocalFileSystemProvider : IFileSystemProvider
+/// <param name="networkShortcutsFolder">Pasta "Locais de rede" (padrão: a do usuário); testes usam uma pasta temporária.</param>
+public sealed class LocalFileSystemProvider(string? networkShortcutsFolder = null) : IFileSystemProvider
 {
+    /// <summary>Tempo máximo para ler os atalhos de "Locais de rede" (arquivos locais; normalmente milissegundos).</summary>
+    private static readonly TimeSpan ShortcutReadTimeout = TimeSpan.FromSeconds(2);
+
     public IReadOnlyList<FileEntry> GetPlaces()
     {
         var places = new List<FileEntry>();
         foreach (var (name, path) in KnownFolders.GetAll())
             places.Add(new FileEntry("place:" + path, name, EntryKind.KnownFolder, FullPath: path, Detail: path, Modified: Directory.Exists(path) ? SafeTime(new DirectoryInfo(path)) : null));
 
-        foreach (var drive in SafeDrives())
+        var networkRoots = new List<string>();
+        var localLetters = new HashSet<char>();
+        foreach (var drive in SafeDrives(networkRoots))
         {
+            localLetters.Add(char.ToUpperInvariant(drive.Name[0]));
             var label = drive.Label;
             var name = string.IsNullOrWhiteSpace(label) ? drive.Name : $"{label} ({drive.Name.TrimEnd('\\', '/')})";
             var detail = $"{DescribeType(drive.Type)} · {FormatSize(drive.Free)} livres de {FormatSize(drive.Total)}";
             places.Add(new FileEntry("drive:" + drive.Name, name, EntryKind.Drive, FullPath: drive.Name, Detail: detail, Drive: KindOf(drive.Type),
                 Volume: new VolumeInfo(drive.Total, drive.Free, drive.Format)));
         }
+        places.AddRange(NetworkPlaces(networkRoots, localLetters));
         return places;
+    }
+
+    /// <summary>
+    /// Unidades de rede mapeadas (conectadas ou não) e atalhos de "Locais de rede" (#27), com o símbolo de rede. Sem
+    /// espaço livre nem rótulo do volume: pedir isso contata o servidor, e um servidor desligado travaria o início.
+    /// Uma unidade desconectada aparece como tal e abri-la deixa o Windows tentar reconectar, fora da thread de UI.
+    /// </summary>
+    private IEnumerable<FileEntry> NetworkPlaces(List<string> networkRoots, HashSet<char> localLetters)
+    {
+        if (!OperatingSystem.IsWindows()) yield break;
+        foreach (var mapped in NetworkLocations.MappedDrives(networkRoots))
+        {
+            if (localLetters.Contains(mapped.Root[0])) continue; // conexão lembrada numa letra hoje usada por outra unidade
+            var letter = mapped.Root.TrimEnd('\\');
+            var name = mapped.Share is { } share ? $"{NetworkPathPolicy.ShareName(share)} ({letter})" : $"Unidade de rede ({letter})";
+            var detail = (mapped.Connected ? "Rede" : "Rede · desconectada") + (mapped.Share is { } remote ? " · " + remote : string.Empty);
+            yield return new FileEntry("drive:" + mapped.Root, name, EntryKind.Drive, FullPath: mapped.Root, Detail: detail, Drive: DriveKind.Network);
+        }
+        foreach (var shortcut in NetworkLocations.Shortcuts(networkShortcutsFolder ?? NetworkLocations.DefaultShortcutsFolder(), ShortcutReadTimeout))
+            yield return new FileEntry("net:" + shortcut.Share, shortcut.Name, EntryKind.Drive, FullPath: shortcut.Share,
+                Detail: "Local de rede · " + shortcut.Share, Drive: DriveKind.Network);
+    }
+
+    /// <summary>UNC ou letra de unidade de rede (GetDriveType: resposta local, sem contatar o servidor).</summary>
+    public bool IsNetworkPath(string path)
+    {
+        if (NetworkPathPolicy.NormalizeShare(path) is not null) return true;
+        if (!OperatingSystem.IsWindows() || path.Length < 2 || path[1] != ':' || !char.IsAsciiLetter(path[0])) return false;
+        try { return new DriveInfo(path[..1]).DriveType == DriveType.Network; }
+        catch (ArgumentException) { return false; }
     }
 
     public Task<DirectoryListing> ListAsync(string path, bool includeHidden, CancellationToken cancellationToken) =>
@@ -269,7 +307,8 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
         }
     }
 
-    private static IEnumerable<(string Name, string Label, DriveType Type, long Free, long Total, string? Format)> SafeDrives()
+    /// <summary>Unidades locais prontas. Unidades de rede não são tocadas (IsReady contataria o servidor): vão para <paramref name="networkRoots"/>.</summary>
+    private static IEnumerable<(string Name, string Label, DriveType Type, long Free, long Total, string? Format)> SafeDrives(List<string> networkRoots)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -282,7 +321,8 @@ public sealed class LocalFileSystemProvider : IFileSystemProvider
             (string, string, DriveType, long, long, string?)? item = null;
             try
             {
-                if (d.IsReady) item = (d.Name, d.VolumeLabel, d.DriveType, d.AvailableFreeSpace, d.TotalSize, SafeFormat(d));
+                if (d.DriveType == DriveType.Network) networkRoots.Add(d.Name);
+                else if (d.IsReady) item = (d.Name, d.VolumeLabel, d.DriveType, d.AvailableFreeSpace, d.TotalSize, SafeFormat(d));
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }

@@ -45,9 +45,13 @@ public sealed partial class AppController
         return entries;
     }
 
-    private bool SafeDirectoryExists(string path)
+    /// <param name="waitForNetwork">
+    /// Falso (padrão, thread de UI): um local de rede é dado como disponível sem conferir, porque um servidor desligado
+    /// pode levar dezenas de segundos para responder (#27); abri-lo diz se ele está lá. Verdadeiro só fora da thread de UI.
+    /// </param>
+    private bool SafeDirectoryExists(string path, bool waitForNetwork = false)
     {
-        try { return _fs.DirectoryExists(path); }
+        try { return !waitForNetwork && _fs.IsNetworkPath(path) || _fs.DirectoryExists(path); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { return false; }
     }
 

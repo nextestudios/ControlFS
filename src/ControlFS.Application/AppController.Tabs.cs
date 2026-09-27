@@ -202,7 +202,7 @@ public sealed partial class AppController
     {
         var generation = tab.Generation;
         bool exists;
-        try { exists = await Task.Run(() => SafeDirectoryExists(folder)); }
+        try { exists = await Task.Run(() => SafeDirectoryExists(folder, waitForNetwork: true)); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { exists = false; }
         if (generation != tab.Generation || !_tabs.Contains(tab)) return; // fechada ou já levada a outra pasta
         if (exists)
