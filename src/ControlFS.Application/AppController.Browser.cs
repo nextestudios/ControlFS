@@ -338,6 +338,8 @@ public sealed partial class AppController
         if (entry is { IsContainer: true }) items.Add(new MenuItem("Abrir", () => OpenEntry(pane, entry)));
         if (entry is { IsContainer: true, FullPath: { } folderPath })
             items.Add(new MenuItem("Abrir no Explorador de Arquivos", () => RunShell(s => s.Open(folderPath), external: true), ShellUnavailable));
+        if (entry is { IsContainer: true, FullPath: { } tabPath } && pane.Mode == PaneMode.Browse)
+            items.Add(new MenuItem("Abrir em nova aba", () => OpenInNewTab(tabPath), NewTabUnavailable));
         if (entry is { Kind: EntryKind.Directory, FullPath: not null } && pane.Location is PhysicalLocation)
         {
             items.Add(new MenuItem("Renomear…", () => BeginRename(pane, entry), FileOpsUnavailable));

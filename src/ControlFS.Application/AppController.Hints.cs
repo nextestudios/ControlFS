@@ -81,6 +81,15 @@ public sealed partial class AppController
         }
 
         var crumbs = Breadcrumbs;
+        if (pane.Region == PaneRegion.Tabs)
+        {
+            hints.Add(new(InputAction.PreviousRegion, "Aba anterior"));
+            hints.Add(new(InputAction.NextRegion, "Próxima aba"));
+            hints.Add(new(InputAction.OpenContextMenu, "Nova/fechar aba"));
+            hints.Add(new(InputAction.Back, "Voltar à lista"));
+            return hints;
+        }
+
         if (pane.Region == PaneRegion.Breadcrumbs && crumbs.Count > 0)
         {
             var crumb = crumbs[Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1)];
@@ -96,6 +105,7 @@ public sealed partial class AppController
             if (pane.List.Focused is not null) hints.Add(new(InputAction.Confirm, "Mostrar na pasta"));
             hints.Add(new(InputAction.OpenContextMenu, "Ações"));
             hints.Add(new(InputAction.Search, "Nova busca"));
+            hints.Add(new(InputAction.NextRegion, TabsHint));
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             hints.Add(new(InputAction.Back, search.IsRunning ? "Cancelar busca" : "Voltar"));
             return hints;
@@ -117,6 +127,7 @@ public sealed partial class AppController
             hints.Add(new(InputAction.Back, pane.CanGoBack ? "Voltar" : "Cancelar"));
             return hints;
         }
+        hints.Add(new(InputAction.NextRegion, TabsHint));
         if (focused is not null && !focused.IsBlocked && focused.Kind is not (EntryKind.Drive or EntryKind.KnownFolder))
             hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
@@ -125,6 +136,8 @@ public sealed partial class AppController
         hints.Add(new(InputAction.Back, selection > 0 ? "Cancelar seleção" : "Voltar"));
         return hints;
     }
+
+    private string TabsHint => _tabs.Count > 1 ? $"Abas ({ActiveTab + 1}/{_tabs.Count})" : "Abas";
 
     /// <summary>
     /// O botão de ações diz o que abre: extração dentro de um compactado ou num compactado focado (o menu abre em

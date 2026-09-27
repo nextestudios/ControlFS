@@ -224,11 +224,10 @@ public sealed partial class AppController
         // Operações totalmente bem-sucedidas não interrompem com diálogo: um aviso no rodapé basta.
         if (result.FinalState == OperationState.Completed && plan.Kind == FileOperationKind.Delete) StatusMessage = title;
         else PushModal(dialog);
-        if (Browser.Location is PhysicalLocation here)
-        {
-            var affected = new[] { plan.Destination, plan.SourceFolder }.Where(p => p is not null);
-            if (affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))) Refresh(Browser);
-        }
+        // Todas as abas que mostram a origem ou o destino são atualizadas, não só a ativa.
+        var affected = new[] { plan.Destination, plan.SourceFolder }.Where(p => p is not null).ToList();
+        foreach (var tab in _tabs.Where(t => t.Location is PhysicalLocation here && affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())
+            Refresh(tab);
     }
 
     /// <summary>Gancho para estados que dependem do fim de uma operação (ex.: área de transferência).</summary>

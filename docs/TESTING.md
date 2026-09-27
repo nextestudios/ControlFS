@@ -64,6 +64,13 @@ Ainda manual, num aparelho real:
 - [ ] Caminho longo (8+ níveis) em 1280×720: o meio vira `…`, nada sai da tela; Sul no `…` mostra as pastas escondidas.
 - [ ] Clique/toque num segmento navega até ele.
 
+## Abas (#50)
+
+- [ ] Com o controle: RB na lista mostra o anel de foco na aba ativa; LB/RB trocam de aba e a lista abaixo muda na hora;
+      baixo ou Leste voltam para a lista. O rodapé mostra "Aba anterior / Próxima aba / Nova/fechar aba".
+- [ ] Cinco abas com nomes longos em 1280×720: a faixa não empurra a lista para fora da tela; nomes cortados com "…".
+- [ ] Clique/toque numa aba troca para ela; o Narrador lê "Aba N de M: nome, ativa".
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item

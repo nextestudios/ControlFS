@@ -45,6 +45,7 @@ public sealed class MainWindow : Window
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0) };
+    private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, 0, 0, Theme.SpaceXs) };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 4) };
     private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
@@ -162,6 +163,7 @@ public sealed class MainWindow : Window
         _logo.Source = Branding.Logo;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
         titleStack.Children.Add(_logo);
+        titleStack.Children.Add(_tabStrip);
         titleStack.Children.Add(_badge);
         titleStack.Children.Add(_location);
         titleStack.Children.Add(_crumbs);
@@ -292,6 +294,7 @@ public sealed class MainWindow : Window
         var crumbs = _app.Breadcrumbs;
         _location.Visibility = _app.Screen == Screen.Home || crumbs.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
         RenderBreadcrumbs(crumbs, pane.Region == PaneRegion.Breadcrumbs && _app.Screen != Screen.Home ? pane.BreadcrumbFocus : -1);
+        RenderTabs(_app.Screen == Screen.Browser, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
         var device = _input.ActiveDevice;
         _device.Text = !_input.BackendReady
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"
@@ -318,7 +321,7 @@ public sealed class MainWindow : Window
         }
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
-        if (_app.Screen != Screen.Home && pane.Region == PaneRegion.Breadcrumbs) focus = -1; // um só foco visível: o da barra de caminho
+        if (_app.Screen != Screen.Home && pane.Region != PaneRegion.List) focus = -1; // um só foco visível: o da barra de caminho ou das abas
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
         if (focus >= items.Count) focus = -1;
         var sourceChanged = !ReferenceEquals(items, _shownItems);
@@ -453,6 +456,43 @@ public sealed class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Faixa de abas do navegador: a ativa em destaque; com o foco na faixa (RB), a ativa recebe o anel de foco e LB/RB
+    /// trocam de aba. Só aparece no navegador.
+    /// </summary>
+    private void RenderTabs(bool visible, bool focused)
+    {
+        _tabStrip.Children.Clear();
+        _tabStrip.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible) return;
+        var tabs = _app.Tabs;
+        for (var i = 0; i < tabs.Count; i++)
+        {
+            var active = i == _app.ActiveTab;
+            var title = AppController.TabTitle(tabs[i]);
+            var chip = new Border
+            {
+                Child = new TextBlock
+                {
+                    Text = title,
+                    FontSize = Theme.FontCaption,
+                    FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal,
+                    Foreground = active ? Theme.Text : Theme.TextMuted,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxWidth = Theme.Scaled(200),
+                },
+                CornerRadius = Theme.Radius,
+                Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
+            };
+            Theme.ApplyFocus(chip, focused && active);
+            if (active && !focused) chip.Background = Theme.SurfaceRaised; // ativa sem foco: destaque discreto
+            var index = i;
+            chip.Tapped += (_, _) => _app.PointerActivateTab(index);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, $"Aba {i + 1} de {tabs.Count}: {title}" + (active ? ", ativa" : string.Empty));
+            _tabStrip.Children.Add(chip);
+        }
+    }
+
     /// <summary>Texto simples para a área de transferência do Windows (relatório do teste de controles).</summary>
     private static bool CopyToClipboard(string text)
     {
@@ -533,6 +573,8 @@ public sealed class MainWindow : Window
         _logo.Margin = new Thickness(0, 0, 0, Theme.SpaceXs);
         _location.FontSize = Theme.FontTitle;
         _crumbs.Spacing = Theme.SpaceXs;
+        _tabStrip.Spacing = Theme.SpaceXs;
+        _tabStrip.Margin = new Thickness(-Theme.SpaceS, 0, 0, Theme.SpaceXs);
         _crumbs.Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0);
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;

@@ -32,6 +32,7 @@ public sealed partial class AppController
     private readonly SynchronizationContext _ui;
     private readonly List<Modal> _modals = [];
     private readonly List<Task> _pending = [];
+    private readonly List<PaneState> _tabs = [new(PaneMode.Browse)];
     private Action<string>? _pickerCallback;
     private Action? _pickerCancel;
 
@@ -57,7 +58,8 @@ public sealed partial class AppController
     public Screen Screen { get; private set; } = Screen.Home;
     public IReadOnlyList<FileEntry> Places { get; private set; } = [];
     public int PlacesFocus { get; private set; }
-    public PaneState Browser { get; } = new(PaneMode.Browse);
+    /// <summary>Aba ativa do navegador (cada aba é um <see cref="PaneState"/> independente).</summary>
+    public PaneState Browser => _tabs[ActiveTab];
     public PaneState Picker { get; } = new(PaneMode.PickFolder);
     public string PickerTitle { get; private set; } = string.Empty;
     public IReadOnlyList<Modal> Modals => _modals;
