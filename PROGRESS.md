@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Backlog concluído (0.9.0-alpha.1)
+
+- Todas as issues Could/Won't do roadmap entregues (#27, #37, #51–#53, #56, #59–#62, #65, #67, #70–#77, #86, #170, #171,
+  #175), além de menus compactos com grade de ações e tela Configurações (#193), modais sem "fantasma" (#191), fluidez
+  por quadro (#192), ícone transparente (#187) e destaque fantasma na lista (#182). Épicos #88, #90–#93 fechados.
+- Restam só #78 (controles físicos) e #84 (certificado), que dependem do mantenedor.
+
 ## Modais, atalhos, barra superior e abas (0.8.0-alpha.1)
 
 - Atalhos de jogos da Steam e ícones de `.lnk` (#168, PR #169), modais unificados com ícones e foco preenchido (#172,

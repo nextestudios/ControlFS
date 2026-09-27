@@ -13,7 +13,7 @@ Um **gerenciador de arquivos para Windows feito para o controle**, com **extrato
 
 ## Download
 
-Baixe a **[0.8.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.8.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.9.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.9.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
@@ -67,7 +67,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: dois painéis, pré-visualização de PDF, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** validação com controles reais (#78) e assinatura de código (#84) antes da 1.0 ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Política de assinatura de código (Code signing policy)
 
