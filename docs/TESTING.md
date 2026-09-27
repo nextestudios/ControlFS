@@ -525,3 +525,7 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Clicar numa linha com o mouse continua abrindo/focando como antes.
 ## Ícone transparente (#187) — não validado em hardware
 - [ ] Instalar a versão nova: barra de tarefas, barra de título, Alt+Tab, menu Iniciar e atalho da área de trabalho mostram a pasta neon sem quadrado preto, em tema claro e escuro, a 100% e 150–200% de escala. (Se aparecer o ícone antigo, limpar o cache de ícones do Windows ou reiniciar o Explorer.)
+
+## Fluidez dos modais — não validado em hardware
+- [ ] Com controle real, segurar baixo num menu longo (Menu, Ações): o foco anda sem piscar, sem "fantasma" na opção anterior e sem a rolagem pular para o topo.
+- [ ] No teclado virtual, andar rápido pelas teclas e digitar: sem piscar; a faixa de sugestões e o campo atualizam sem mexer nas teclas.

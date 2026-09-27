@@ -43,14 +43,36 @@ public static partial class ModalView
     /// <summary>O último modal desenhado: só um modal novo ganha a transição de entrada (o modal é refeito a cada quadro).</summary>
     private static WeakReference<Modal>? _shown;
 
+    /// <summary>Modal montado e mantido na tela; mudanças só de foco (e de texto no teclado) são aplicadas nele.</summary>
+    private sealed record Retained(Modal Modal, string Key, UIElement Scrim, Action Update);
+
+    private static Retained? _retained;
+
+    /// <summary>
+    /// Devolve a camada do modal do topo. Menus, diálogos e o teclado virtual são montados uma vez e, enquanto a estrutura
+    /// (opções, textos, página, tamanho da tela…) não muda, só as linhas/teclas que ganham ou perdem o foco são trocadas
+    /// no lugar: sem recriar o painel fosco, a sombra e a rolagem a cada movimento, que davam o efeito de "fantasma"
+    /// (a rolagem nova nascia no topo e só depois voltava à opção focada). Os demais modais são refeitos como antes.
+    /// </summary>
     public static UIElement? Build(AppController app)
     {
-        if (app.TopModal is not { } modal) return null;
+        if (app.TopModal is not { } modal)
+        {
+            _retained = null;
+            return null;
+        }
+        var key = RetainKey(modal);
+        if (key is not null && _retained is { } kept && ReferenceEquals(kept.Modal, modal) && kept.Key == key)
+        {
+            kept.Update();
+            return kept.Scrim;
+        }
+        Action? update = null;
         var card = modal switch
         {
-            MenuModal menu => BuildMenu(app, menu),
-            DialogModal dialog => BuildDialog(app, dialog),
-            KeyboardModal keyboard => BuildKeyboard(app, keyboard),
+            MenuModal menu => BuildMenu(app, menu, out update),
+            DialogModal dialog => BuildDialog(app, dialog, out update),
+            KeyboardModal keyboard => BuildKeyboard(app, keyboard, out update),
             AboutModal about => BuildAbout(app, about),
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             ControllerTestModal test => BuildControllerTest(app, test),
@@ -83,7 +105,27 @@ public static partial class ModalView
             card.OpacityTransition = new ScalarTransition { Duration = Theme.MotionModal };
             card.Loaded += (_, _) => card.Opacity = 1;
         }
+        _retained = key is not null && update is not null ? new Retained(modal, key, scrim, update) : null;
         return scrim;
+    }
+
+    /// <summary>
+    /// Tudo o que muda a estrutura de um modal mantido (fora o foco). Null: o modal é refeito a cada quadro. O tamanho da
+    /// tela, a faixa de layout e a superfície sólida entram na chave para um redimensionamento refazer o painel.
+    /// </summary>
+    private static string? RetainKey(Modal modal)
+    {
+        var screen = $"{Theme.Viewport.Width:0}x{Theme.Viewport.Height:0}|{Theme.Layout.Tier}|{Theme.SolidSurfaces}|{modal.Title}|{modal.Subtitle}|{modal.Icon}";
+        return modal switch
+        {
+            MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}")),
+            DialogModal dialog => dialog.Progress is not null ? null : screen + "|d|" + dialog.Message + "|"
+                + string.Join("\u0001", dialog.Lines.Select(l => l.Label + "=" + l.Value)) + "|"
+                + string.Join("\u0001", dialog.Options.Select(o => $"{o.Label}|{o.Kind}|{o.IsChecked}|{o.Icon}|{o.IsDestructive}")),
+            KeyboardModal keyboard => screen + $"|k|{keyboard.Keyboard.Page}|{keyboard.Keyboard.Language}|{keyboard.Keyboard.Shift}|{keyboard.Keyboard.IsRevealed}|{keyboard.IsBusy}|"
+                + string.Join(",", keyboard.Keyboard.Rows.Select(r => r.Count)),
+            _ => null,
+        };
     }
 
     // ---------- Painel ----------
@@ -96,7 +138,7 @@ public static partial class ModalView
     /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela) e, embaixo, o aviso do rodapé (se
     /// houver) e as legendas do controle em uso. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
     /// </summary>
-    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0)
+    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null)
     {
         var grid = new Grid { RowSpacing = Theme.SpaceM };
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -124,7 +166,8 @@ public static partial class ModalView
         Grid.SetRow((FrameworkElement)content, 1);
         grid.Children.Add(content);
 
-        var footer = Footer(app);
+        var footer = new Border { Child = Footer(app) };
+        footerSink?.Invoke(footer);
         Grid.SetRow(footer, 2);
         grid.Children.Add(footer);
 
@@ -373,23 +416,44 @@ public static partial class ModalView
         return section;
     }
 
-    private static Border BuildMenu(AppController app, MenuModal menu)
+    private static Border BuildMenu(AppController app, MenuModal menu, out Action update)
     {
         var stack = new StackPanel();
+        var positions = new int[menu.Items.Count];
         string? section = null;
         for (var i = 0; i < menu.Items.Count; i++)
         {
             var item = menu.Items[i];
             if (item.Section != section && (i > 0 || item.Section is not null)) stack.Children.Add(SectionHeading(item.Section, first: i == 0));
             section = item.Section;
-            var index = i;
-            var focused = i == menu.FocusIndex;
-            var secondary = !item.IsEnabled && focused ? "Indisponível: " + item.DisabledReason : item.Detail;
-            stack.Children.Add(Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), secondary));
+            positions[i] = stack.Children.Count;
+            stack.Children.Add(MenuRow(app, menu, i));
         }
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
-        return Panel(app, Header(menu), stack, 600, minWidth: 460);
+        Border? footer = null;
+        var card = Panel(app, Header(menu), stack, 600, minWidth: 460, footerSink: f => footer = f);
+        var shown = menu.FocusIndex;
+        update = () =>
+        {
+            var now = menu.FocusIndex;
+            if (now != shown)
+            {
+                if (shown >= 0 && shown < positions.Length) stack.Children[positions[shown]] = MenuRow(app, menu, shown);
+                if (now >= 0 && now < positions.Length) stack.Children[positions[now]] = MenuRow(app, menu, now);
+                shown = now;
+            }
+            if (footer is not null) footer.Child = Footer(app);
+        };
+        return card;
+    }
+
+    private static Border MenuRow(AppController app, MenuModal menu, int index)
+    {
+        var item = menu.Items[index];
+        var focused = index == menu.FocusIndex;
+        var secondary = !item.IsEnabled && focused ? "Indisponível: " + item.DisabledReason : item.Detail;
+        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), secondary);
     }
 
     // ---------- Diálogos ----------
@@ -447,7 +511,7 @@ public static partial class ModalView
 
     private static string CheckGlyph(bool on) => char.ConvertFromUtf32(on ? 0xE73A : 0xE739);
 
-    private static Border BuildDialog(AppController app, DialogModal dialog)
+    private static Border BuildDialog(AppController app, DialogModal dialog, out Action update)
     {
         var stack = new StackPanel { Spacing = Theme.Space(12) };
         if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody));
@@ -455,15 +519,30 @@ public static partial class ModalView
         if (dialog.Message is { } message)
             stack.Children.Add(new TextBlock { Text = message, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         var options = new StackPanel { Margin = new Thickness(0, Theme.SpaceXs, 0, 0) };
-        for (var i = 0; i < dialog.Options.Count; i++)
-        {
-            var option = dialog.Options[i];
-            var index = i;
-            var glyph = option.Kind == DialogOptionKind.Toggle ? CheckGlyph(option.IsChecked) : ActionIcons.Glyph(option.Icon);
-            options.Children.Add(Row(option.Label, glyph, i == dialog.FocusIndex, true, option.IsDestructive, () => app.PointerChooseModalOption(index)));
-        }
+        for (var i = 0; i < dialog.Options.Count; i++) options.Children.Add(DialogRow(app, dialog, i));
         if (dialog.Options.Count > 0) stack.Children.Add(options);
-        return Panel(app, Header(dialog), stack, 720);
+        Border? footer = null;
+        var card = Panel(app, Header(dialog), stack, 720, footerSink: f => footer = f);
+        var shown = dialog.FocusIndex;
+        update = () =>
+        {
+            var now = dialog.FocusIndex;
+            if (now != shown)
+            {
+                if (shown >= 0 && shown < options.Children.Count) options.Children[shown] = DialogRow(app, dialog, shown);
+                if (now >= 0 && now < options.Children.Count) options.Children[now] = DialogRow(app, dialog, now);
+                shown = now;
+            }
+            if (footer is not null) footer.Child = Footer(app);
+        };
+        return card;
+    }
+
+    private static Border DialogRow(AppController app, DialogModal dialog, int index)
+    {
+        var option = dialog.Options[index];
+        var glyph = option.Kind == DialogOptionKind.Toggle ? CheckGlyph(option.IsChecked) : ActionIcons.Glyph(option.Icon);
+        return Row(option.Label, glyph, index == dialog.FocusIndex, true, option.IsDestructive, () => app.PointerChooseModalOption(index));
     }
 
     private static Border BuildAbout(AppController app, AboutModal about)
@@ -530,11 +609,64 @@ public static partial class ModalView
         return text;
     }
 
-    private static Border BuildKeyboard(AppController app, KeyboardModal modal)
+    private static Border BuildKeyboard(AppController app, KeyboardModal modal, out Action update)
     {
         var kb = modal.Keyboard;
         var stack = new StackPanel { Spacing = Theme.SpaceS };
+        var top = new StackPanel { Spacing = Theme.SpaceS };
+        FillKeyboardTop(app, modal, top);
+        stack.Children.Add(top);
 
+        var gap = Theme.Scaled(6);
+        var grid = new Grid { ColumnSpacing = gap, RowSpacing = gap, Margin = new Thickness(0, Theme.SpaceS, 0, 0) };
+        for (var c = 0; c < VirtualKeyboardLayouts.Columns; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var positions = new int[kb.Rows.Count][];
+        var columns = new int[kb.Rows.Count][];
+        for (var r = 0; r < kb.Rows.Count; r++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(Theme.Layout.KeyHeight) });
+            positions[r] = new int[kb.Rows[r].Count];
+            columns[r] = new int[kb.Rows[r].Count];
+            var column = 0;
+            for (var k = 0; k < kb.Rows[r].Count; k++)
+            {
+                positions[r][k] = grid.Children.Count;
+                columns[r][k] = column;
+                grid.Children.Add(KeyCell(app, kb, r, k, column));
+                column += kb.Rows[r][k].Span;
+            }
+        }
+        stack.Children.Add(grid);
+        Border? footer = null;
+        var card = Panel(app, Header(modal), stack, 960, footerSink: f => footer = f);
+
+        var shown = (kb.Row, kb.Column, kb.SuggestionIndex);
+        update = () =>
+        {
+            top.Children.Clear();
+            FillKeyboardTop(app, modal, top);
+            var now = (kb.Row, kb.Column, kb.SuggestionIndex);
+            if (now != shown)
+            {
+                Refresh(shown.Row, shown.Column);
+                Refresh(now.Row, now.Column);
+                shown = now;
+            }
+            if (footer is not null) footer.Child = Footer(app);
+        };
+        return card;
+
+        void Refresh(int r, int k)
+        {
+            if (r < 0 || r >= positions.Length || k < 0 || k >= positions[r].Length) return;
+            grid.Children[positions[r][k]] = KeyCell(app, kb, r, k, columns[r][k]);
+        }
+    }
+
+    /// <summary>Campo de texto, estado, erro e faixa de sugestões: refeitos no lugar a cada quadro (o texto muda ao digitar).</summary>
+    private static void FillKeyboardTop(AppController app, KeyboardModal modal, StackPanel stack)
+    {
+        var kb = modal.Keyboard;
         var display = kb.DisplayText;
         var caret = Math.Min(kb.Caret, display.Length);
         var fieldText = CaretText(display, caret, kb.SelectionStart, kb.SelectionLength);
@@ -608,59 +740,51 @@ public static partial class ModalView
                 VerticalScrollMode = ScrollMode.Disabled,
             });
         }
-        var grid = new Grid { ColumnSpacing = gap, RowSpacing = gap, Margin = new Thickness(0, Theme.SpaceS, 0, 0) };
-        for (var c = 0; c < VirtualKeyboardLayouts.Columns; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        for (var r = 0; r < kb.Rows.Count; r++)
+    }
+
+    /// <summary>Uma tecla na grade (posição e largura já aplicadas).</summary>
+    private static Border KeyCell(AppController app, VirtualKeyboard kb, int r, int k, int column)
+    {
+        var key = kb.Rows[r][k];
+        var focused = kb.SuggestionIndex is null && r == kb.Row && k == kb.Column;
+        var enabled = kb.IsKeyEnabled(key);
+        var row = r;
+        var keyIndex = k;
+        var isDone = key.Kind == KeyKind.Done;
+        var isCurrentPage = VirtualKeyboardLayouts.PageOf(key) == kb.Page;
+        var isActiveShift = key.Kind == KeyKind.Shift && kb.Shift != ShiftState.Off;
+        var label = key.Kind == KeyKind.Shift && kb.Shift == ShiftState.Locked ? "⇪" : kb.DisplayLabel(key);
+        // Tecla focada: preenchida (como a opção focada dos menus), em negrito e um pouco maior.
+        var cell = new Border
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(Theme.Layout.KeyHeight) });
-            var column = 0;
-            for (var k = 0; k < kb.Rows[r].Count; k++)
+            Background = focused ? (enabled ? Theme.FocusFill : Theme.DisabledFill) : key.IsFunction ? Theme.ModalInset : Theme.ModalDivider,
+            BorderBrush = focused ? Theme.Text : isDone ? Theme.Accent : Theme.Transparent,
+            BorderThickness = Theme.Hairline,
+            CornerRadius = new CornerRadius(Theme.Scaled(10)),
+            Child = new TextBlock
             {
-                var key = kb.Rows[r][k];
-                var focused = kb.SuggestionIndex is null && r == kb.Row && k == kb.Column;
-                var enabled = kb.IsKeyEnabled(key);
-                var row = r;
-                var keyIndex = k;
-                var isDone = key.Kind == KeyKind.Done;
-                var isCurrentPage = VirtualKeyboardLayouts.PageOf(key) == kb.Page;
-                var isActiveShift = key.Kind == KeyKind.Shift && kb.Shift != ShiftState.Off;
-                var label = key.Kind == KeyKind.Shift && kb.Shift == ShiftState.Locked ? "⇪" : kb.DisplayLabel(key);
-                // Tecla focada: preenchida (como a opção focada dos menus), em negrito e um pouco maior.
-                var cell = new Border
-                {
-                    Background = focused ? (enabled ? Theme.FocusFill : Theme.DisabledFill) : key.IsFunction ? Theme.ModalInset : Theme.ModalDivider,
-                    BorderBrush = focused ? Theme.Text : isDone ? Theme.Accent : Theme.Transparent,
-                    BorderThickness = Theme.Hairline,
-                    CornerRadius = new CornerRadius(Theme.Scaled(10)),
-                    Child = new TextBlock
-                    {
-                        Text = label,
-                        FontSize = key.IsFunction && label.Length > 3 ? Theme.FontBody : Theme.FontItem,
-                        FontWeight = focused || isDone || isCurrentPage || isActiveShift ? FontWeights.SemiBold : FontWeights.Normal,
-                        Foreground = focused ? (enabled ? Theme.FocusText : Theme.TextMuted) : !enabled ? Theme.TextDisabled : isCurrentPage || isActiveShift || isDone ? Theme.Accent : Theme.Text,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    },
-                };
-                if (focused)
-                {
-                    cell.RenderTransformOrigin = new Point(0.5, 0.5);
-                    cell.RenderTransform = new ScaleTransform { ScaleX = 1.06, ScaleY = 1.06 };
-                    Canvas.SetZIndex(cell, 1);
-                    KeepInView(cell);
-                    AutomationProperties.SetAutomationId(cell.Child, FocusedKeyId);
-                }
-                AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
-                cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
-                Grid.SetRow(cell, r);
-                Grid.SetColumn(cell, column);
-                Grid.SetColumnSpan(cell, key.Span);
-                grid.Children.Add(cell);
-                column += key.Span;
-            }
+                Text = label,
+                FontSize = key.IsFunction && label.Length > 3 ? Theme.FontBody : Theme.FontItem,
+                FontWeight = focused || isDone || isCurrentPage || isActiveShift ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = focused ? (enabled ? Theme.FocusText : Theme.TextMuted) : !enabled ? Theme.TextDisabled : isCurrentPage || isActiveShift || isDone ? Theme.Accent : Theme.Text,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+        if (focused)
+        {
+            cell.RenderTransformOrigin = new Point(0.5, 0.5);
+            cell.RenderTransform = new ScaleTransform { ScaleX = 1.06, ScaleY = 1.06 };
+            Canvas.SetZIndex(cell, 1);
+            KeepInView(cell);
+            AutomationProperties.SetAutomationId(cell.Child, FocusedKeyId);
         }
-        stack.Children.Add(grid);
-        return Panel(app, Header(modal), stack, 960);
+        AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
+        cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
+        Grid.SetRow(cell, r);
+        Grid.SetColumn(cell, column);
+        Grid.SetColumnSpan(cell, key.Span);
+        return cell;
     }
 
     // ---------- Controles: assistente e teste ----------
