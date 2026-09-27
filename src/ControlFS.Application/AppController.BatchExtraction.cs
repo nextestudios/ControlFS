@@ -22,10 +22,14 @@ public sealed partial class AppController
         public bool Reported { get; set; }
     }
 
-    /// <summary>Caminhos dos itens marcados que parecem compactados (pela extensão; o formato real é detectado ao iniciar).</summary>
+    /// <summary>
+    /// Caminhos dos itens marcados que parecem compactados (pela extensão; o formato real é detectado ao iniciar).
+    /// Volumes de um mesmo compactado dividido contam uma vez só (qualquer volume abre o conjunto).
+    /// </summary>
     private static List<string> MarkedArchives(IEnumerable<FileEntry> marked) =>
         marked.Where(e => e.Kind == EntryKind.File && e.FullPath is not null && ArchiveFormats.HasExtractableExtension(e.Name))
             .Select(e => e.FullPath!)
+            .DistinctBy(path => ArchiveFormats.VolumeSetKey(path) ?? path, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
     internal void BeginBatchExtraction(PaneState pane, IReadOnlyList<string> archives)

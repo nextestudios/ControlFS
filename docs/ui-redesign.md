@@ -256,6 +256,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Containment, traversal, links/junctions, collisions, limits, staging, CRC, MOTW, long paths | `SafeExtractorTests`, `ArchivePathPolicyTests`, `WindowsNameRulesTests` (3), `JunctionRaceTests` (3), `WindowsBehaviorTests` (6), `Zip64Tests` (3), `LinkDetectionTests`, `ReparseTagsTests` |
 | Integrity test (no writes, cancel) | `ArchiveTestTests` (3), `JourneyTests::Test_integrity_…` |
 | Batch extract | `BatchExtractionJourneyTests` |
+| Split archives (.7z.001, .zip.001, .partN.rar, .rar + .r00, .z01 + .zip): open/extract from any volume, missing volumes named and nothing extracted, one set counts once in a batch (#65) | `VolumeTests` (3), `BatchExtractionJourneyTests::Marked_volumes_of_one_split_archive_are_extracted_once` |
 | Never auto-execute | `ShellAndCompressJourneyTests::Executables_require_explicit_confirmation_starting_on_cancel` |
 
 ### Previews, keyboard, dialogs

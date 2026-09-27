@@ -10,6 +10,13 @@ internal static class MarkOfTheWeb
     private const string StreamSuffix = ":Zone.Identifier";
     private const int MaxZoneLength = 4096;
 
+    /// <summary>Marca do compactado; num dividido, a do primeiro volume que tiver uma (qualquer parte baixada marca o todo).</summary>
+    public static string? ReadForArchive(string archivePath)
+    {
+        var parts = Inspection.VolumeSet.Find(archivePath)?.Parts ?? [];
+        return Read(archivePath) ?? parts.Select(Read).FirstOrDefault(z => z is not null);
+    }
+
     public static string? Read(string archivePath)
     {
         if (!OperatingSystem.IsWindows()) return null;

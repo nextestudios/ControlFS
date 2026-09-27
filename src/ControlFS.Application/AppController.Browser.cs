@@ -353,7 +353,7 @@ public sealed partial class AppController
                 .. markedArchives.Count == 0 ? Array.Empty<MenuItem>() :
                 [
                     new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
-                        Detail: markedArchives.Count < marked.Count ? "Itens que não são compactados ficam de fora." : null, Icon: ActionIcon.Extract),
+                        Detail: marked.Any(e => e.Kind != EntryKind.File || !ArchiveFormats.HasExtractableExtension(e.Name)) ? "Itens que não são compactados ficam de fora." : null, Icon: ActionIcon.Extract),
                 ],
                 new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Placement: MenuPlacement.Quick, ShortLabel: "Recortar"),
                 copy,
