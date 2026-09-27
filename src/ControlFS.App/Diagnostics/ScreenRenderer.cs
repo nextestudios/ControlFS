@@ -350,6 +350,20 @@ internal static class ScreenRenderer
             }
             CloseModals(app);
         }
+
+        // Áudio de verdade no MediaPlayer do Windows (#60): pausado para a captura não depender do tempo.
+        if (Wanted("ma"))
+        {
+            await FocusAsync(app, stage, "tom.wav");
+            app.Handle(InputAction.Confirm);
+            if (await WaitForAsync(() => app.TopModal is Application.State.AudioPreviewModal a && a.Status.State != Core.Contracts.MediaPlaybackState.Opening))
+            {
+                if (app.TopModal is Application.State.AudioPreviewModal { Status.State: Core.Contracts.MediaPlaybackState.Playing }) app.Handle(InputAction.Confirm);
+                app.Handle(InputAction.NavigateRight);
+                await CaptureAsync(stage, target, dir, "ma-audio-preview", window);
+            }
+            CloseModals(app);
+        }
         app.GoHome();
     }
 
@@ -391,7 +405,32 @@ internal static class ScreenRenderer
         Directory.CreateDirectory(Path.Join(folder, "Pasta removida"));
         File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
         File.WriteAllBytes(Path.Join(folder, "manual.pdf"), SamplePdf());
+        File.WriteAllBytes(Path.Join(folder, "tom.wav"), SampleWav(seconds: 30));
         return folder;
+    }
+
+    /// <summary>WAV PCM 16 bits mono 8 kHz, silêncio (a captura não toca som no runner).</summary>
+    private static byte[] SampleWav(int seconds)
+    {
+        const int rate = 8000;
+        var bytes = rate * seconds * 2;
+        using var memory = new MemoryStream();
+        using var writer = new BinaryWriter(memory);
+        writer.Write("RIFF"u8);
+        writer.Write(36 + bytes);
+        writer.Write("WAVEfmt "u8);
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write((short)1);
+        writer.Write(rate);
+        writer.Write(rate * 2);
+        writer.Write((short)2);
+        writer.Write((short)16);
+        writer.Write("data"u8);
+        writer.Write(bytes);
+        writer.Write(new byte[bytes]);
+        writer.Flush();
+        return memory.ToArray();
     }
 
     /// <summary>PDF de duas páginas A4 com texto (Helvetica, fonte padrão de todo leitor) e um retângulo colorido.</summary>

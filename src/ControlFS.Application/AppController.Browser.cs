@@ -130,6 +130,7 @@ public sealed partial class AppController
         if (ArchiveFormats.CanExtract(format)) await OpenArchiveAsync(pane, path);
         else if (IsPreviewableImage(entry) && _imageDecoder is not null) OpenImagePreview(pane, entry);
         else if (IsPdf(entry) && PdfRenderer is not null) OpenPdfPreview(pane, entry);
+        else if (IsPlayableAudio(entry) && MediaPlayer is not null) OpenAudioPreview(pane, entry);
         else if (OpensAsText(entry)) OpenTextPreview(pane, entry);
         else OpenExternally(entry, path);
     }
@@ -454,6 +455,7 @@ public sealed partial class AppController
             items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable, Icon: ActionIcon.Image, Section: "Abrir"));
+        else if (IsPlayableAudio(entry)) items.Add(new MenuItem("Ouvir aqui", () => OpenAudioPreview(pane, entry), MediaUnavailable, Detail: "Com os codecs do Windows; nada é executado.", Icon: ActionIcon.Audio, Section: "Abrir"));
         else if (IsPdf(entry)) items.Add(new MenuItem("Visualizar PDF", () => OpenPdfPreview(pane, entry), PdfPreviewUnavailable, Detail: "Só as páginas; links e anexos nunca abrem.", Icon: ActionIcon.Pdf, Section: "Abrir"));
         else if (!ArchiveFormats.CanExtract(format))
             items.Add(new MenuItem("Visualizar como texto", () => OpenTextPreview(pane, entry), Detail: "Somente leitura; nada é executado.", Icon: ActionIcon.Text, Section: "Abrir"));
@@ -662,6 +664,7 @@ public sealed partial class AppController
         _ when ArchiveFormats.CanExtract(format) => ActionIcon.Archive,
         _ when IsPreviewableImage(entry) => ActionIcon.Image,
         _ when IsPdf(entry) => ActionIcon.Pdf,
+        _ when IsPlayableAudio(entry) => ActionIcon.Audio,
         _ => ActionIcon.File,
     };
 

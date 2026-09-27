@@ -5,6 +5,7 @@ using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Preview;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -141,6 +142,59 @@ public static partial class ModalView
         else
             area.Children.Add(PreviewMessage(modal.PageCount > 0 ? "Desenhando a página…" : "Abrindo PDF…", error: false));
         return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
+    }
+
+    /// <summary>Barra de progresso da reprodução: trilho escuro, parte tocada no ciano do tema.</summary>
+    private static Grid ProgressTrack(double fraction, double height)
+    {
+        var track = new Grid { Height = height, CornerRadius = new CornerRadius(height / 2), Background = Theme.SurfaceRaised };
+        track.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Clamp(fraction, 0, 1), GridUnitType.Star) });
+        track.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1 - Math.Clamp(fraction, 0, 1), GridUnitType.Star) });
+        track.Children.Add(new Border { Background = Theme.Accent, CornerRadius = new CornerRadius(height / 2) });
+        AutomationProperties.SetAccessibilityView(track, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        return track;
+    }
+
+    private static string StateLabel(MediaStatus status) => status.State switch
+    {
+        MediaPlaybackState.Opening => "Abrindo…",
+        MediaPlaybackState.Buffering => "Carregando…",
+        MediaPlaybackState.Playing => "▶ Tocando",
+        MediaPlaybackState.Paused => "⏸ Pausado",
+        MediaPlaybackState.Ended => "Fim",
+        _ => string.Empty,
+    };
+
+    private static string VolumeLabel(MediaStatus status) =>
+        status.IsMuted ? "Sem som" : string.Create(CultureInfo.CurrentCulture, $"Volume {status.Volume * 100:0}%");
+
+    /// <summary>Áudio (#60): estado, tempo decorrido/total, barra de progresso e volume, legíveis de longe.</summary>
+    private static Border BuildAudioPreview(AppController app, AudioPreviewModal modal)
+    {
+        var status = modal.Status;
+        var header = Header(modal.Entry.Name, modal.Icon, "Áudio · " + modal.Entry.Extension.TrimStart('.').ToUpperInvariant());
+        var body = new StackPanel { Spacing = Theme.SpaceM, Padding = new Thickness(0, Theme.SpaceS, 0, Theme.SpaceS) };
+        if (modal.DisplayError is { } error)
+        {
+            body.Children.Add(PreviewMessage(error, error: true));
+            return Panel(app, header, body, 900);
+        }
+        var state = new TextBlock { Text = StateLabel(status), FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text };
+        AutomationProperties.SetLiveSetting(state, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
+        body.Children.Add(state);
+        var fraction = status.Duration > TimeSpan.Zero ? status.Position / status.Duration : 0;
+        body.Children.Add(ProgressTrack(fraction, Theme.Scaled(10)));
+        var times = new Grid();
+        times.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        times.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var elapsed = MediaPreviewPolicy.FormatTime(status.Position) + (status.Duration > TimeSpan.Zero ? " / " + MediaPreviewPolicy.FormatTime(status.Duration) : string.Empty);
+        times.Children.Add(new TextBlock { Text = elapsed, FontSize = Theme.FontBody, Foreground = Theme.Text });
+        var volume = new TextBlock { Text = VolumeLabel(status), FontSize = Theme.FontBody, Foreground = status.IsMuted ? Theme.Warning : Theme.TextMuted };
+        Grid.SetColumn(volume, 1);
+        times.Children.Add(volume);
+        AutomationProperties.SetName(times, $"{StateLabel(status)}, {elapsed}, {VolumeLabel(status)}");
+        body.Children.Add(times);
+        return Panel(app, header, body, 900, minWidth: 640);
     }
 
     /// <summary>Colunas desenhadas por linha: o resto da linha fica fora da tela (Esquerda/Direita deslocam).</summary>

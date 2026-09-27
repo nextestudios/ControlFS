@@ -128,6 +128,7 @@ public sealed partial class AppController
     /// <summary>Chamado pelo laço de entrada: recolhe as legendas da imagem/PDF depois de um tempo sem entrada.</summary>
     private void TickPreviews()
     {
+        TickMedia();
         if (TopModal is ZoomablePreviewModal { HintsFaded: false } preview && Clock() - preview.LastInput >= PreviewHintsFadeAfter)
         {
             preview.HintsFaded = true;

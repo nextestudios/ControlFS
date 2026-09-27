@@ -374,6 +374,7 @@ public sealed partial class AppController
             case ControllerTestModal test: HandleControllerTest(test, action); break;
             case ImagePreviewModal preview: HandleImagePreview(preview, action); break;
             case PdfPreviewModal pdf: HandlePdfPreview(pdf, action); break;
+            case AudioPreviewModal audio: HandleAudioPreview(audio, action); break;
             case TextPreviewModal text: HandleTextPreview(text, action); break;
         }
     }

@@ -370,6 +370,38 @@ public sealed class PdfPreviewModal : ZoomablePreviewModal
 }
 
 /// <summary>
+/// Base da reprodução interna (#60, #61): a aplicação lê o retrato do reprodutor a cada quadro (<see cref="Status"/>) e
+/// só redesenha quando algo visível mudou. Fechar para o som e libera o arquivo.
+/// </summary>
+public abstract class MediaPreviewModal : Modal
+{
+    private protected MediaPreviewModal(string title, PaneState pane, Core.Models.FileEntry entry) : base(title)
+    {
+        Pane = pane;
+        Entry = entry;
+    }
+
+    internal PaneState Pane { get; }
+    public Core.Models.FileEntry Entry { get; }
+    internal Core.Contracts.IMediaSession? Session { get; set; }
+
+    public Core.Contracts.MediaStatus Status { get; internal set; } = new(Core.Contracts.MediaPlaybackState.Opening, TimeSpan.Zero, TimeSpan.Zero, 1, false);
+
+    /// <summary>Recusa antes do reprodutor (executável disfarçado, arquivo ilegível).</summary>
+    public string? Error { get; internal set; }
+
+    public string? DisplayError => Error ?? (Status.State == Core.Contracts.MediaPlaybackState.Failed ? Status.Error ?? "Não foi possível reproduzir este arquivo." : null);
+
+    internal bool IsClosed { get; set; }
+}
+
+/// <summary>Música ou som (#60): tocar/pausar, avançar/voltar, volume e sem som, sem sair do ControlFS.</summary>
+public sealed class AudioPreviewModal : MediaPreviewModal
+{
+    internal AudioPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Ouvir áudio", pane, entry) => Icon = ActionIcon.Audio;
+}
+
+/// <summary>
 /// Visualização de texto (#58), somente leitura. O documento já vem limitado em bytes e linhas; a tela desenha só as linhas
 /// visíveis a partir de <see cref="Top"/> e <see cref="Column"/>.
 /// </summary>
