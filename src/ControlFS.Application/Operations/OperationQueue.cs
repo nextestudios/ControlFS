@@ -23,6 +23,14 @@ public sealed class OperationItem
 
     public bool IsActive => !OperationStateMachine.IsTerminal(State);
 
+    /// <summary>
+    /// Refaz o pedido original (o motor planeja de novo; nada do estado anterior é presumido). Definido por quem enfileirou.
+    /// </summary>
+    internal Action? RetryAction { get; set; }
+
+    /// <summary>Tentar de novo só vale para operações encerradas que não terminaram limpas.</summary>
+    public bool CanRetry => RetryAction is not null && State is OperationState.Failed or OperationState.CompletedWithWarnings or OperationState.Cancelled;
+
     internal bool TryTransition(OperationState to)
     {
         if (!OperationStateMachine.CanTransition(State, to)) return false;
@@ -79,6 +87,14 @@ public sealed class OperationQueue
         if (!item.TryTransition(OperationState.CancelRequested)) return false;
         item.Cts.Cancel();
         Changed?.Invoke();
+        return true;
+    }
+
+    /// <summary>Refaz o pedido original como uma nova operação na fila. A operação antiga permanece no histórico.</summary>
+    public bool Retry(OperationItem item)
+    {
+        if (!item.CanRetry) return false;
+        item.RetryAction!();
         return true;
     }
 

@@ -6,6 +6,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 ### Novidades
 - **Novo layout do teclado virtual**: campo em cima, quatro linhas de caracteres, linha de funções (`⇧`, `ABC`, `@#:`, espaço, `⌫`) e linha inferior com cursor, `…` (acentos, idioma e limpar) e **Concluir** largo. (#41)
 - As legendas dos botões seguem automaticamente a família do controle em uso (Xbox, PlayStation, Nintendo ou genérico), detectada pelo tipo informado pelo SDL e pelo fabricante. Apertar um botão em outro controle passa o comando para ele e troca as legendas sem reiniciar. O menu ainda permite fixar um estilo. (#32)
+- **Tentar de novo** uma operação que falhou, terminou com avisos ou foi cancelada: Menu → Operações → escolha a operação → Tentar de novo. O pedido original é planejado outra vez do zero. (#18)
 
 ## [0.3.0-alpha.1]
 ### Novidades
