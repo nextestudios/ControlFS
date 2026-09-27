@@ -28,6 +28,10 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 
+## Favoritos
+
+Aperte **Norte** numa pasta (ou em qualquer lugar dentro dela, para "esta pasta") e escolha **Adicionar aos favoritos**. Os favoritos aparecem primeiro na tela inicial e no seletor de pastas (Start → "Ir para outro local"), a um botão de distância ao copiar, mover ou extrair. Na tela inicial, Norte num favorito oferece **Mover favorito para cima/baixo** e **Remover dos favoritos**. Um favorito cuja pasta sumiu (por exemplo, pendrive desconectado) aparece como indisponível e continua na lista até você removê-lo.
+
 ## Extraindo
 
 Num compactado o rodapé mostra **Sul Explorar** (abre somente leitura), **Oeste Marcar** e **Norte Extrair…**: Norte abre o menu de ações já em **Extrair para "nome"**, então Norte e depois Sul extraem.

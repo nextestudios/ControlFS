@@ -28,6 +28,10 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 Every essential action is reachable through menus (Start / North), so a pad with only a D-pad and two buttons still works.
 
+## Favorites
+
+Press **North** on a folder (or anywhere inside one, for "this folder") and choose **Add to favorites**. Favorites come first on the home screen and in the folder picker (Start → "Go to another place"), so they are one press away when copying, moving or extracting. On the home screen, North on a favorite offers **Move favorite up/down** and **Remove from favorites**. A favorite whose folder is missing (for example, an unplugged drive) is shown as unavailable and kept until you remove it.
+
 ## Extracting
 
 On an archive the bottom bar shows **South Explore** (opens it read-only), **West Mark** and **North Extract…**: North opens the actions menu already on **Extract to "name"**, so North then South extracts.

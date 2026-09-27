@@ -288,6 +288,8 @@ public sealed partial class AppController
             items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
             items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable));
         }
+        if (entry is { IsContainer: true, FullPath: { } favoritePath }) items.Add(FavoriteToggleItem(favoritePath));
+        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco."));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
@@ -319,6 +321,7 @@ public sealed partial class AppController
         items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable));
         items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
         items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable));
+        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta"));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
@@ -474,8 +477,9 @@ public sealed partial class AppController
 
     private void ShowPickerPlaces()
     {
-        var items = _fs.GetPlaces().Where(p => p.FullPath is not null)
-            .Select(p => new MenuItem(p.Name, () => Track(NavigateAsync(Picker, new PhysicalLocation(p.FullPath!), pushHistory: true)), Detail: p.Detail))
+        var items = BuildPlaces().Where(p => p.FullPath is not null)
+            .Select(p => new MenuItem(p.Name, () => Track(NavigateAsync(Picker, new PhysicalLocation(p.FullPath!), pushHistory: true)),
+                p.IsBlocked ? "Favorito indisponível: a pasta não existe ou não está acessível." : null, p.IsBlocked ? p.FullPath : p.Detail))
             .ToList();
         PushModal(new MenuModal("Locais", items));
     }

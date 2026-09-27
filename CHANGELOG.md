@@ -11,6 +11,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - O rodapé mostra os **botões do controle em uso** (ex.: `A Abrir` no Xbox, `✕ Abrir` no PlayStation) e troca na hora ao mudar de controle ou de convenção confirmar/voltar; ao usar o teclado, mostra as teclas. O Narrador lê o botão e a ação. (#34)
 - Rodapé **por contexto**: num compactado mostra Explorar, Marcar e Extrair… (Norte abre o menu já em "Extrair para"), com itens marcados mostra Operações (N) e Cancelar seleção, no teclado virtual Selecionar/Apagar/Concluir/Cancelar e, nos diálogos, o nome da opção em foco. Ações que não funcionam no momento não aparecem. (#35)
 - **Segurar para repetir** no teclado virtual: manter Oeste (apagar), LB/RB (cursor) ou Sul sobre `⌫ ◀ ▶` repete com aceleração; Concluir nunca repete. (#42)
+- **Favoritos**: fixe pastas pelo menu de ações (Norte → "Adicionar aos favoritos"). Elas aparecem primeiro na tela inicial e em "Ir para outro local" do seletor de pastas, podem ser reordenadas no início e ficam salvas nas preferências (inclusive no modo portátil). Uma favorita que sumiu aparece como indisponível e só sai da lista se você mandar. (#48)
 
 ### Melhorias
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)

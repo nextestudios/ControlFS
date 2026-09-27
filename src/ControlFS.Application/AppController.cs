@@ -84,7 +84,7 @@ public sealed partial class AppController
             Settings = loaded.Settings;
             StatusMessage = loaded.Notice;
         }
-        Places = _fs.GetPlaces();
+        Places = BuildPlaces();
         PlacesFocus = 0;
         Screen = Screen.Home;
         SettingsChanged?.Invoke(Settings);
@@ -185,9 +185,9 @@ public sealed partial class AppController
             case InputAction.PageDown: PlacesFocus = Math.Min(Places.Count - 1, PlacesFocus + PageSize); break;
             case InputAction.Confirm:
             case InputAction.NavigateRight:
-                if (PlacesFocus >= 0 && PlacesFocus < Places.Count && Places[PlacesFocus].FullPath is { } path)
-                    OpenPhysical(path);
+                if (PlacesFocus >= 0 && PlacesFocus < Places.Count) OpenPlace(Places[PlacesFocus]);
                 break;
+            case InputAction.OpenContextMenu: ShowHomeMenu(); break;
             case InputAction.Back: ShowExitDialog(); break;
             case InputAction.OpenAppMenu: ShowAppMenu(); break;
         }
@@ -207,7 +207,7 @@ public sealed partial class AppController
         Browser.LoadCts?.Cancel();
         Browser.Generation++;
         Browser.IsLoading = false;
-        Places = _fs.GetPlaces();
+        Places = BuildPlaces();
         PlacesFocus = Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
         Screen = Screen.Home;
     }
