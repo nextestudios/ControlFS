@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.8.0-alpha.1]
 ### Improvements
 - **Tabs on the triggers** (#185): Menu → **Nova aba** (new tab) and, with two or more tabs, **L2/R2 (LT/RT)** switch to the previous/next tab while browsing; each tab comes back with its folder, history, marks and focus. With a single tab the triggers keep paging; L1/R1 stay on the top bar. The footer shows "Aba anterior"/"Próxima aba" with the triggers of the controller in use.
 - **On-screen keyboard suggestions** (#45): in names, searches and paths, a strip above the keys suggests names you typed before, names in the current folder and, for paths, favorites and recent folders (case and accent insensitive). Up from the first row focuses the strip, South uses it. All local; never in passwords. Menu → Sugestões do teclado turns them off and erases the history.
@@ -15,6 +17,10 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ### Security
 - Shortcut icons are only read from local paths on fixed drives with no links along the path: network paths (`\\server\…`), web addresses, device prefixes and relative paths are refused before any access (so merely showing a folder can't leak Windows credentials to a server). `.url` contents are read with a 64 KB cap and never executed.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
 
 ## [0.7.0-alpha.1]
 ### Improvements

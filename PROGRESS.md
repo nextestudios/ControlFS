@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Modais, atalhos, barra superior e abas (0.8.0-alpha.1)
+
+- Atalhos de jogos da Steam e ícones de `.lnk` (#168, PR #169), modais unificados com ícones e foco preenchido (#172,
+  PR #173), barra superior com L1/R1 sem o chip redundante (#176, PR #180), painel de detalhes na grade (#177, PR #181),
+  glifo Create/Share do PlayStation (#178, PR #179), sugestões no teclado (#45, PR #183) e abas por L2/R2 (#185, PR #186).
+- Ciclo mais rápido (PR #174): smoke só de capturas, testes pesados só na release.
+
 ## Épico do teclado virtual concluído (#89)
 
 - Layout no modelo estrutural do PS5 (#41), segurar para repetir (#42), cursor visível e início/fim (#43), seleção de
