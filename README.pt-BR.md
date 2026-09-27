@@ -49,6 +49,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Exibição em lista ou grade** (Menu → Exibição ou Ctrl+G), com navegação 2D pelo controle entre os blocos
 - **Tipos de unidade** à primeira vista (local, USB, óptica, rede), atualizados ao conectar ou remover um pendrive
 - **Operações de arquivo:** renomear, copiar, recortar, colar, mover e excluir para a Lixeira, com conflitos (pular / manter ambos / substituir / mesclar pastas) e resultado por item
+- **Lixeira** na tela inicial: restaure itens para a pasta original ou exclua de vez (sempre com confirmação)
 - **Teclado virtual** próprio (português/inglês, acentos, símbolos, cursor visível, segurar para repetir, senha mascarada) usável só com direções + confirmar + voltar
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima no controle; limites de tamanho e resolução conferidos antes de decodificar
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos

@@ -96,6 +96,11 @@ public sealed partial class AppController
             RevealResult(pane, entry);
             return;
         }
+        if (pane.Location is RecycleBinLocation)
+        {
+            ShowRecycleBinMenu(pane);
+            return;
+        }
         if (entry.IsBlocked)
         {
             ShowMessage("Entrada bloqueada", [("Nome", entry.Name), ("Motivo", entry.BlockedReason!)]);
@@ -189,6 +194,9 @@ public sealed partial class AppController
                 case ArchiveLocation archive when pane.Archive is { } current && current.Info.ArchivePath == archive.ArchivePath && current.DirectoryExists(archive.InnerPath):
                     tree = current;
                     entries = current.Children(archive.InnerPath);
+                    break;
+                case RecycleBinLocation when _recycleBin is { } bin && pane.Mode == PaneMode.Browse:
+                    entries = RecycledEntries(await Task.Run(() => bin.List(cts.Token), cts.Token));
                     break;
                 case SearchLocation search when pane.Search is { } state && state.Location == search:
                     // Voltar de um resultado aberto: os resultados guardados reaparecem (a busca não roda de novo).
@@ -312,6 +320,11 @@ public sealed partial class AppController
         if (pane.Location is ArchiveLocation archive)
         {
             ShowArchiveMenu(pane, archive);
+            return;
+        }
+        if (pane.Location is RecycleBinLocation)
+        {
+            ShowRecycleBinMenu(pane);
             return;
         }
         var marked = pane.List.SelectedEntries.Where(e => e.FullPath is not null).ToList();

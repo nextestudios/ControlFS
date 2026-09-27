@@ -49,6 +49,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **List or grid view** (Menu → View or Ctrl+G), with 2D controller navigation between tiles
 - **Drive types** at a glance (local, USB, optical, network), refreshed when a USB stick is plugged in or removed
 - **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
+- **Recycle Bin** on the home screen: restore items to their original folder or delete them permanently (always confirmed)
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, visible caret, hold-to-repeat, masked passwords) usable with only directions + confirm + back
 - **Image preview** (JPG, PNG, GIF, BMP, WebP) with zoom, pan and next/previous on the controller; size and resolution limits checked before decoding
 - **Search by name** in the current folder, with or without subfolders: results stream in, can be cancelled, open in their folder; no indexing, links never followed

@@ -4,6 +4,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 ### Novidades
+- **Lixeira** no início: lista os itens excluídos com a pasta de origem e a data da exclusão; Sul/A num item oferece **Restaurar** (volta à pasta original, sem nunca sobrescrever) e **Excluir permanentemente**, que sempre pergunta antes com o foco em Cancelar. Marcar vários funciona. Um local original inválido registrado na Lixeira é recusado. (#26)
 - **Downloads menores**: o portátil caiu de 97 MB para 72 MB e o instalador de 65 MB para 48 MB, sem os componentes de IA/ML do Windows App SDK que o app não usa. (#85)
 - **Exibição em grade**: Menu → Exibição (ou Ctrl+G) alterna lista e grade de ícones grandes nas pastas e no início. Na grade o direcional anda em 2D, sem pular itens e passando de linha nas pontas; os gatilhos paginam. A densidade vale para a grade (blocos menores na compacta), a escolha fica salva e trocar de exibição mantém o item focado. (#29)
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP): Sul abre a imagem dentro do app; Esquerda/Direita ou LB/RB passam pelas imagens da pasta, RT/LT dão zoom, o direcional move a imagem ampliada e Leste/B fecha. A decodificação é em segundo plano e reduzida a 4096 px; formato conferido pelo conteúdo e limites de 100 MB e 80 megapixels antes de decodificar. Nada é executado; imagens dentro de compactados não são visualizadas. (#57)

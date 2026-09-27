@@ -87,6 +87,10 @@ Aperte **Norte** numa pasta (ou em qualquer lugar dentro dela, para "esta pasta"
 
 A tela inicial mostra as unidades com o tipo (local, USB, óptica, rede), o rótulo, a letra e o espaço livre. Conectar ou remover um pendrive atualiza a lista em um ou dois segundos, sem reiniciar; um favorito nesse pendrive volta a ficar disponível.
 
+## Lixeira
+
+Início → **Lixeira** lista o que foi excluído para a Lixeira do Windows, com a pasta de origem e a data da exclusão (a data mostrada em cada item é a da exclusão). **Sul/A** ou **Norte** num item oferece **Restaurar** (volta para a pasta de onde saiu, recriada se preciso; se já houver algo com o mesmo nome lá, nada é sobrescrito) e **Excluir permanentemente…**, que sempre pergunta antes com o foco em **Cancelar**. Marque vários itens com **Oeste/X** para restaurar ou excluir juntos. Um item cujo local original registrado é inválido só pode ser excluído de vez.
+
 ## Extraindo
 
 Num compactado o rodapé mostra **Sul Explorar** (abre somente leitura), **Oeste Marcar** e **Norte Extrair…**: Norte abre o menu de ações já em **Extrair para "nome"**, então Norte e depois Sul extraem.

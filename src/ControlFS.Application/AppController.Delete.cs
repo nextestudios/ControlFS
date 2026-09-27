@@ -27,7 +27,7 @@ public sealed partial class AppController
         }
         var dialog = new DialogModal($"Mover {sources.Count} item(ns) para a Lixeira?", [("Itens", itemsText), ("Pasta", here.FullPath)], sensitive: true)
         {
-            Message = "Dá para restaurar depois pela Lixeira do Windows.",
+            Message = "Dá para restaurar depois em Início → Lixeira.",
         };
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog));
         dialog.Options.Add(cancel);

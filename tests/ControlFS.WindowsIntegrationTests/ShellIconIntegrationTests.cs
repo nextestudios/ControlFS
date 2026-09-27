@@ -26,7 +26,7 @@ public sealed class ShellIconIntegrationTests : IDisposable
     [Theory]
     [InlineData(32)]
     [InlineData(64)]
-    public async Task Text_files_folders_and_drives_get_a_visible_icon_of_the_requested_scale(int size)
+    public async Task Text_files_folders_drives_and_the_recycle_bin_get_a_visible_icon_of_the_requested_scale(int size)
     {
         var file = Path.Join(_root, "nota.txt");
         File.WriteAllText(file, "x");
@@ -36,6 +36,7 @@ public sealed class ShellIconIntegrationTests : IDisposable
             IconRequest.For(new FileEntry("nota.txt", "nota.txt", EntryKind.File, FullPath: file))!,
             IconRequest.For(new FileEntry("pasta", "pasta", EntryKind.Directory, FullPath: _root))!,
             IconRequest.For(new FileEntry("drive:" + drive, drive, EntryKind.Drive, FullPath: drive))!,
+            IconRequest.For(new FileEntry(RecycleBinLocation.PlaceId, "Lixeira", EntryKind.KnownFolder))!, // pasta virtual, pelo PIDL
         };
         foreach (var request in requests)
         {

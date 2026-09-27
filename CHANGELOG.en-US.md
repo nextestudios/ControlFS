@@ -4,6 +4,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 ### What's new
+- **Recycle Bin** on the home screen: lists deleted items with their original folder and deletion date; South/A on an item offers **Restore** (back to the original folder, never overwriting) and **Delete permanently**, which always asks first with the focus on Cancel. Marking several works. An invalid original location recorded in the bin is refused. (#26)
 - **Smaller downloads**: the portable exe went from 97 MB to 72 MB and the installer from 65 MB to 48 MB by dropping the Windows App SDK AI/ML components the app doesn't use. (#85)
 - **Grid view**: Menu → View (or Ctrl+G) switches between the list and a grid of large icons in folders and on the home screen. In the grid the D-pad moves in 2D, never skipping items and wrapping to the next row at the ends; the triggers page. Density applies to the grid (smaller tiles when compact), the choice is saved and switching views keeps the focused item. (#29)
 - **Image preview** (JPG, PNG, GIF, BMP, WebP): South opens the image inside the app; Left/Right or LB/RB step through the folder's images, RT/LT zoom, the D-pad pans while zoomed and East/B closes. Decoding runs in the background and is reduced to 4096 px; the format is checked from the content and 100 MB / 80 megapixel limits apply before decoding. Nothing is executed; images inside archives aren't previewed. (#57)

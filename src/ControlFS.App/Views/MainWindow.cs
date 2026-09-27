@@ -87,7 +87,7 @@ public sealed class MainWindow : Window
         var temporaries = new TemporaryJournal(Path.Join(data, "operations"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(temporaries), settingsStore, _updates, new WindowsShellService(),
             new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries, new JsonOperationHistoryStore(data),
-            new Preview.WicImageDecoder());
+            new Preview.WicImageDecoder(), new WindowsRecycleBin());
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
@@ -285,6 +285,7 @@ public sealed class MainWindow : Window
                 {
                     ArchiveLocation => "COMPACTADO · SOMENTE LEITURA",
                     SearchLocation => "BUSCA",
+                    RecycleBinLocation => "LIXEIRA DO WINDOWS",
                     _ => "PASTA NO DISCO",
                 };
                 _location.Text = pane.Location?.DisplayPath ?? "…";

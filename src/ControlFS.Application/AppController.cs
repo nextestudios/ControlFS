@@ -39,10 +39,11 @@ public sealed partial class AppController
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
         IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null,
-        ITemporaryJournal? temporaries = null, IOperationHistoryStore? history = null, IImageDecoder? imageDecoder = null)
+        ITemporaryJournal? temporaries = null, IOperationHistoryStore? history = null, IImageDecoder? imageDecoder = null, IRecycleBin? recycleBin = null)
     {
         _historyStore = history;
         _imageDecoder = imageDecoder;
+        _recycleBin = recycleBin;
         _profileStore = controllerProfiles;
         _temporaries = temporaries;
         Clock = () => _stopwatch.Elapsed;
