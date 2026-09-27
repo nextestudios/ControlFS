@@ -102,7 +102,7 @@ public sealed partial class AppController
         LoadHistory();
         Places = BuildPlaces();
         PlacesFocus = IsGrid && HomeSections is [{ Places: [var first, ..] }, ..] ? first : 0; // grade: o primeiro cartão na tela
-        Screen = Screen.Home;
+        Screen = RestoreOpenTabs() ? Screen.Browser : Screen.Home;
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
         StartAutomaticUpdateCheck();
@@ -624,6 +624,7 @@ public sealed partial class AppController
 
     internal void RaiseChanged()
     {
+        SaveOpenTabs();
         UpdateHomeStats();
         UpdateDetailsWork();
         Changed?.Invoke();
@@ -638,11 +639,12 @@ public sealed partial class AppController
         RaiseChanged();
     }
 
-    internal void UpdateSettings(Func<AppSettings, AppSettings> change)
+    /// <param name="notify">Falso para dados que a camada de entrada e a janela não usam (ex.: as abas abertas).</param>
+    internal void UpdateSettings(Func<AppSettings, AppSettings> change, bool notify = true)
     {
         Settings = change(Settings);
         try { _settingsStore?.Save(Settings); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusMessage = "Não foi possível salvar as preferências."; }
-        SettingsChanged?.Invoke(Settings);
+        if (notify) SettingsChanged?.Invoke(Settings);
     }
 }

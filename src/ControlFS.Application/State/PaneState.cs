@@ -42,6 +42,12 @@ public sealed class PaneState(PaneMode mode)
     /// <summary>Incrementada a cada navegação; respostas atrasadas de outra geração são descartadas.</summary>
     public int Generation { get; internal set; }
 
+    /// <summary>Pasta de onde a aba foi restaurada na inicialização (#51); guardada mesmo se ela estiver indisponível.</summary>
+    public string? RestoredPath { get; internal set; }
+
+    /// <summary>A pasta restaurada não existe ou não respondeu: a aba mostra o início até abrir outra pasta.</summary>
+    public bool IsUnavailable { get; internal set; }
+
     public bool IsArchive => Location is ArchiveLocation;
     public bool CanGoBack => Back.Count > 0;
     public bool CanGoForward => Forward.Count > 0;

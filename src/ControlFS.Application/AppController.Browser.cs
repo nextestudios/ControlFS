@@ -222,7 +222,8 @@ public sealed partial class AppController
             if (target is PhysicalLocation p)
             {
                 pane.LastValidPhysical = p;
-                if (pane.Mode == PaneMode.Browse) RecordVisit(p.FullPath);
+                // Abas restauradas carregam em segundo plano: só a aba ativa entra nos recentes.
+                if (pane.Mode == PaneMode.Browse && ReferenceEquals(pane, Browser)) RecordVisit(p.FullPath);
             }
         }
         catch (FileOperationException ex) when (generation == pane.Generation)
@@ -242,8 +243,8 @@ public sealed partial class AppController
 
     private void FallbackAfterFailedOpen(PaneState pane)
     {
-        if (pane.Mode == PaneMode.Browse) GoHome();
-        else CancelPicker();
+        if (pane.Mode == PaneMode.PickFolder) CancelPicker();
+        else if (ReferenceEquals(pane, Browser)) GoHome(); // uma aba em segundo plano não tira a aba ativa da tela
     }
 
     private static void PushHistory(PaneState pane, Location current)
@@ -567,6 +568,8 @@ public sealed partial class AppController
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true),
             new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
                 Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true),
+            new($"Restaurar abas ao abrir: {(Settings.RestoreTabs ? "sim" : "não")}", ToggleRestoreTabs,
+                Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.NewTab, Section: privacy, KeepOpen: true),
             new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
                 Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>

@@ -51,6 +51,15 @@ public sealed record AppSettings
     /// <summary>Arquivos e compactados abertos recentemente, o mais recente primeiro (lista limitada).</summary>
     public IReadOnlyList<string> RecentFiles { get; init; } = [];
 
+    /// <summary>Reabre, ao iniciar, as abas deixadas abertas (2 ou mais). Desligar apaga <see cref="OpenTabs"/>.</summary>
+    public bool RestoreTabs { get; init; } = true;
+
+    /// <summary>Pasta do disco de cada aba aberta, na ordem da faixa (vazio com uma aba só).</summary>
+    public IReadOnlyList<string> OpenTabs { get; init; } = [];
+
+    /// <summary>Índice, em <see cref="OpenTabs"/>, da aba que estava ativa.</summary>
+    public int ActiveOpenTab { get; init; }
+
     /// <summary>
     /// Fluidez máxima: com a janela ativa, o controle é lido a cada quadro desenhado (120 vezes por segundo numa tela de
     /// 120 Hz, 144 numa de 144), em sincronia com a tela. Desligado (economia): um temporizador mais lento, que gasta

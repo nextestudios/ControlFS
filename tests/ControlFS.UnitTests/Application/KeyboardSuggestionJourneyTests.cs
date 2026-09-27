@@ -43,6 +43,7 @@ public class KeyboardSuggestionJourneyTests : IDisposable
         d.TypeOnKeyboard(kb, "Projeto final");
         d.PressKey(kb, KeyKind.Done);
         await UiContext.WaitUntil(() => app.TopModal is null, "teclado fechado");
+        await d.Idle(); // o teclado fecha antes de a pasta recarregar; o texto é guardado quando o envio termina
         Assert.Equal("Projeto final", app.Settings.TypedTexts[0]);
 
         // Senhas nunca têm sugestões, mesmo com uma fonte atribuída.

@@ -24,6 +24,7 @@ public sealed partial class AppController
         SearchLocation search => $"Busca: {search.Query}",
         RecycleBinLocation => "Lixeira",
         ThisPcLocation => "Meu computador",
+        null when tab.RestoredPath is { } restored => FolderLabel(restored) + (tab.IsUnavailable ? " (indisponível)" : string.Empty),
         _ => "Nova aba",
     };
 
@@ -163,5 +164,80 @@ public sealed partial class AppController
         SwitchTab(index, keepStripFocus: false);
         Browser.Region = PaneRegion.List;
         RaiseChanged();
+    }
+
+    // ---------- Abas entre sessões (#51) ----------
+
+    private bool _tabsRestored;
+
+    /// <summary>Pasta do disco que representa a aba ao salvar: a atual, a última antes de um compactado/busca ou a restaurada.</summary>
+    private static string? TabFolder(PaneState tab) =>
+        tab.Location is PhysicalLocation physical ? physical.FullPath : tab.LastValidPhysical?.FullPath ?? tab.RestoredPath;
+
+    /// <summary>
+    /// Na inicialização: com 2+ abas salvas, recria as abas e abre a que estava ativa. Cada pasta é conferida fora da
+    /// thread de UI (uma unidade de rede desligada não trava a tela); a que sumiu vira uma aba indisponível que mostra
+    /// o início com um aviso. Nada aqui derruba o app: caminhos inválidos no arquivo só geram abas indisponíveis.
+    /// </summary>
+    private bool RestoreOpenTabs()
+    {
+        _tabsRestored = true;
+        if (!Settings.RestoreTabs) return false;
+        var saved = Settings.OpenTabs.Where(p => !string.IsNullOrWhiteSpace(p)).Take(MaxTabs).ToList();
+        if (saved.Count < 2) return false;
+        _tabs.Clear();
+        foreach (var folder in saved) _tabs.Add(new PaneState(PaneMode.Browse) { RestoredPath = folder, IsLoading = true });
+        ActiveTab = Math.Clamp(Settings.ActiveOpenTab, 0, _tabs.Count - 1);
+        foreach (var tab in _tabs) Track(RestoreTabAsync(tab, tab.RestoredPath!));
+        return true;
+    }
+
+    private async Task RestoreTabAsync(PaneState tab, string folder)
+    {
+        var generation = tab.Generation;
+        bool exists;
+        try { exists = await Task.Run(() => SafeDirectoryExists(folder)); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { exists = false; }
+        if (generation != tab.Generation || !_tabs.Contains(tab)) return; // fechada ou já levada a outra pasta
+        if (exists)
+        {
+            await NavigateAsync(tab, new PhysicalLocation(folder), pushHistory: false);
+            if (tab.Location is not null || generation + 1 != tab.Generation || !_tabs.Contains(tab)) return;
+        }
+        tab.IsLoading = false;
+        tab.IsUnavailable = true;
+        StatusMessage = $"Aba \"{FolderLabel(folder)}\" indisponível: a pasta não existe ou não está acessível. Ela mostra o início.";
+        if (ReferenceEquals(tab, Browser) && Screen == Screen.Browser) GoHome();
+        else RaiseChanged();
+    }
+
+    /// <summary>Grava as abas quando mudam (chamado a cada atualização da tela; só escreve se algo mudou).</summary>
+    private void SaveOpenTabs()
+    {
+        if (!_tabsRestored || !Settings.RestoreTabs) return;
+        var folders = new List<string>();
+        var active = 0;
+        if (_tabs.Count >= 2)
+            for (var i = 0; i < _tabs.Count; i++)
+            {
+                if (TabFolder(_tabs[i]) is not { } folder) continue;
+                if (i == ActiveTab) active = folders.Count;
+                folders.Add(folder);
+            }
+        if (folders.Count < 2)
+        {
+            folders.Clear();
+            active = 0;
+        }
+        if (active == Settings.ActiveOpenTab && folders.SequenceEqual(Settings.OpenTabs, StringComparer.Ordinal)) return;
+        UpdateSettings(s => s with { OpenTabs = folders, ActiveOpenTab = active }, notify: false);
+    }
+
+    internal void ToggleRestoreTabs()
+    {
+        var restore = !Settings.RestoreTabs;
+        UpdateSettings(s => restore ? s with { RestoreTabs = true } : s with { RestoreTabs = false, OpenTabs = [], ActiveOpenTab = 0 });
+        SaveOpenTabs();
+        StatusMessage = restore ? "As abas abertas serão restauradas ao abrir o ControlFS." : "As abas não serão mais restauradas.";
     }
 }
