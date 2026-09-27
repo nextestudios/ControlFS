@@ -140,7 +140,7 @@ internal sealed class TopBarView
         _crumbs.Measure(infinite);
         _quick.Measure(infinite);
         var bar = Theme.Viewport.Width - Root.Margin.Left - Root.Margin.Right - Root.Padding.Left - Root.Padding.Right - (2 * Root.BorderThickness.Left)
-            - _lb.DesiredSize.Width - _lb.Margin.Left - (_divider.Width + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
+            - _lb.DesiredSize.Width - _lb.Margin.Left - (Theme.Hairline.Left + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
         var path = _crumbs.DesiredSize.Width;
         var labeled = _quick.DesiredSize.Width;
         _iconsOnly = _quickLabels.Count > 0 && path + labeled > bar;
@@ -155,7 +155,8 @@ internal sealed class TopBarView
             _quick.Measure(infinite);
         }
         var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel; // o focado mostra o nome
-        _crumbScroll.MaxWidth = Math.Max(Theme.Scaled(240), bar - quickWidth);
+        var max = Math.Max(Theme.Scaled(240), bar - quickWidth);
+        _crumbScroll.MaxWidth = double.IsFinite(max) ? max : double.PositiveInfinity; // antes da primeira faixa de layout há medidas NaN
     }
 
     private static double FontSize => Theme.FontCaption + 1;
