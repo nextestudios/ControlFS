@@ -14,7 +14,7 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Oeste | Marcar item | Apagar |
 | Norte | Ações do item | Maiúsculas |
 | LB / RB | — | Mover cursor |
-| LT / RT | Página anterior / próxima | — |
+| LT / RT | Página anterior / próxima | Cursor no início / fim |
 | Start | Menu do app | Concluir |
 | Select | (busca, ainda não) | Símbolos |
 
@@ -24,7 +24,7 @@ Só um controle comanda o app por vez: o primeiro a apertar um botão. Apertar u
 
 O rodapé mostra os botões do controle em uso (por exemplo `A Abrir` no Xbox, `✕ Abrir` no PlayStation) e troca assim que você usa outro controle. Ao usar o teclado, mostra as teclas (`Enter Abrir`, `Esc Voltar`) até você apertar um botão do controle de novo.
 
-O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma linha de funções (`⇧` Maiúsculas · `ABC` letras · `@#:` símbolos · espaço · `⌫`) e uma linha inferior (cursor `◀ ▶` · `…` mais · Cancelar · **Concluir**). `…` abre os acentos, **Limpar** e a troca PT-BR/EN. Maiúsculas: um toque deixa a próxima letra maiúscula, o segundo trava (`⇪`), o terceiro desliga. Teclas que o campo não aceita (ex.: `\ / : * ? " < > |` em nomes de arquivo) ficam apagadas. Segurar Oeste, LB/RB ou Sul sobre `⌫ ◀ ▶` repete (e acelera quanto mais tempo segurar); Concluir e as demais teclas nunca repetem.
+O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma linha de funções (`⇧` Maiúsculas · `ABC` letras · `@#:` símbolos · espaço · `⌫`) e uma linha inferior (cursor `◀ ▶` · `…` mais · Cancelar · **Concluir**). `…` abre os acentos, **Limpar** e a troca PT-BR/EN. Maiúsculas: um toque deixa a próxima letra maiúscula, o segundo trava (`⇪`), o terceiro desliga. Teclas que o campo não aceita (ex.: `\ / : * ? " < > |` em nomes de arquivo) ficam apagadas. Segurar Oeste, LB/RB ou Sul sobre `⌫ ◀ ▶` repete (e acelera quanto mais tempo segurar); Concluir e as demais teclas nunca repetem. O cursor é a barra na cor de destaque no campo de texto; LT/RT (ou Home/End) levam ao início ou ao fim, e movê-lo nunca muda o texto, a página nem as maiúsculas.
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 

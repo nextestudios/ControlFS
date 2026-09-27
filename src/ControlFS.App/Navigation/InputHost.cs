@@ -132,6 +132,8 @@ public sealed class InputHost : IInputSink, IDisposable
             VirtualKey.Space when !typing => InputAction.ToggleSelection,
             VirtualKey.F2 or VirtualKey.Application => InputAction.OpenContextMenu,
             VirtualKey.F10 => InputAction.OpenAppMenu,
+            VirtualKey.Home when typing => InputAction.PageUp, // início do texto
+            VirtualKey.End when typing => InputAction.PageDown, // fim do texto
             VirtualKey.PageUp => InputAction.PageUp,
             VirtualKey.PageDown => InputAction.PageDown,
             VirtualKey.F when ctrl => InputAction.Search,

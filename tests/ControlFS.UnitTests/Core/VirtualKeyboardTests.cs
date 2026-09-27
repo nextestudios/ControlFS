@@ -80,6 +80,27 @@ public class VirtualKeyboardTests
     }
 
     [Fact]
+    public void Jumps_to_start_and_end_and_types_at_the_caret_without_touching_page_or_shift()
+    {
+        var kb = new VirtualKeyboard(TextFieldKind.Generic, "t", "ControlFS" + new string('x', 200));
+        kb.Handle(InputAction.OpenContextMenu); // Maiúsculas uma vez
+        kb.Handle(InputAction.Search); // página de símbolos
+        kb.Handle(InputAction.PageUp); // LT
+        Assert.Equal(0, kb.Caret);
+        kb.Handle(InputAction.PageDown); // RT
+        Assert.Equal(kb.Length, kb.Caret);
+        kb.Handle(InputAction.PageUp);
+        for (var i = 0; i < 7; i++) kb.Handle(InputAction.NextRegion);
+        Assert.Equal(ShiftState.Once, kb.Shift);
+        Assert.Equal(KeyboardPage.Symbols, kb.Page);
+        Assert.Equal(209, kb.Length);
+
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.Character && k.Text == "-");
+        Assert.StartsWith("Control-FS", kb.Text);
+        Assert.Equal(8, kb.Caret);
+    }
+
+    [Fact]
     public void Backspace_removes_whole_surrogate_pair()
     {
         var kb = new VirtualKeyboard(TextFieldKind.Generic, "t", "a😀");

@@ -5,7 +5,9 @@ using ControlFS.Core.Text;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 
 namespace ControlFS.App.Views;
@@ -164,6 +166,28 @@ public static class ModalView
         return Card(stack, 760);
     }
 
+    private static (WeakReference<VirtualKeyboard>? Keyboard, int Caret, int Length) _lastCaret;
+
+    /// <summary>Só movimentos do cursor (texto igual) são anunciados ao Narrador, para não falar a cada tecla.</summary>
+    private static void AnnounceCaretMove(FrameworkElement field, VirtualKeyboard kb, string spoken)
+    {
+        var moved = _lastCaret.Keyboard is { } last && last.TryGetTarget(out var previous) && ReferenceEquals(previous, kb) && _lastCaret.Length == kb.Length && _lastCaret.Caret != kb.Caret;
+        _lastCaret = (new WeakReference<VirtualKeyboard>(kb), kb.Caret, kb.Length);
+        if (!moved) return;
+        field.Loaded += (_, _) => FrameworkElementAutomationPeer.CreatePeerForElement(field)?.RaiseNotificationEvent(
+            AutomationNotificationKind.Other, AutomationNotificationProcessing.MostRecent, spoken, "ControlFS.KeyboardCaret");
+    }
+
+    /// <summary>Texto com um cursor fixo (sem piscar) na cor de destaque, largo o bastante para ser visto a distância.</summary>
+    private static TextBlock CaretText(string display, int caret)
+    {
+        var text = new TextBlock { FontSize = Theme.FontItem, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
+        if (caret > 0) text.Inlines.Add(new Run { Text = display[..caret] });
+        text.Inlines.Add(new Run { Text = "┃", Foreground = Theme.Accent, FontWeight = FontWeights.Bold });
+        if (caret < display.Length) text.Inlines.Add(new Run { Text = display[caret..] });
+        return text;
+    }
+
     private static Border BuildKeyboard(AppController app, KeyboardModal modal)
     {
         var kb = modal.Keyboard;
@@ -172,6 +196,7 @@ public static class ModalView
 
         var display = kb.DisplayText;
         var caret = Math.Min(kb.Caret, display.Length);
+        var fieldText = CaretText(display, caret);
         var field = new Border
         {
             Background = Theme.SurfaceRaised,
@@ -179,15 +204,11 @@ public static class ModalView
             BorderThickness = Theme.Hairline,
             CornerRadius = Theme.Radius,
             Padding = new Thickness(Theme.SpaceM),
-            Child = new TextBlock
-            {
-                Text = display[..caret] + "│" + display[caret..],
-                FontSize = Theme.FontItem,
-                Foreground = Theme.Text,
-                TextWrapping = TextWrapping.Wrap,
-            },
+            Child = fieldText,
         };
-        AutomationProperties.SetName(field, kb.Kind == TextFieldKind.Password ? $"Senha, {kb.Length} caracteres" : $"Texto: {kb.Text}");
+        var caretSpoken = kb.Length == 0 ? "campo vazio" : caret == 0 ? "cursor no início" : caret >= kb.Length ? "cursor no fim" : $"cursor na posição {caret} de {kb.Length}";
+        AutomationProperties.SetName(field, (kb.Kind == TextFieldKind.Password ? $"Senha, {kb.Length} caracteres" : $"Texto: {kb.Text}") + ", " + caretSpoken);
+        AnnounceCaretMove(fieldText, kb, caretSpoken); // o TextBlock tem peer de automação; o Border não
         stack.Children.Add(field);
 
         var status = $"{(kb.Language == KeyboardLanguage.PortugueseBrazil ? "PT-BR" : "EN")} · {kb.Page switch { KeyboardPage.Symbols => "símbolos", KeyboardPage.Accents => "acentos", _ => "letras" }}" +

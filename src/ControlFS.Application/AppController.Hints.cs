@@ -29,6 +29,8 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.OpenContextMenu, "Maiúsculas"));
                 hints.Add(new(InputAction.PreviousRegion, "Cursor ◀"));
                 hints.Add(new(InputAction.NextRegion, "Cursor ▶"));
+                hints.Add(new(InputAction.PageUp, "Início"));
+                hints.Add(new(InputAction.PageDown, "Fim"));
                 hints.Add(new(InputAction.Search, "Símbolos"));
                 hints.Add(new(InputAction.OpenAppMenu, "Concluir"));
                 hints.Add(new(InputAction.Back, "Cancelar"));
