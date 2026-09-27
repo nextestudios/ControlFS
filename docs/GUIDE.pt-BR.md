@@ -54,6 +54,8 @@ Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo
 
 O caminho atual aparece em segmentos no topo. **LB** leva o foco da lista para a barra (na pasta acima da atual); **esquerda/direita** escolhem o segmento e **Sul** vai até ele, com o foco na pasta de onde você veio. **RB**, **baixo** ou **Leste** voltam para a lista. Dentro de um compactado, o próprio arquivo é um segmento depois de um `▸`, para separar a parte do disco do conteúdo do compactado. Caminhos longos recolhem o meio em `…`, que abre as pastas escondidas. Teclado: Ctrl+← / Ctrl+→. A mesma lista está em Menu → **Ir para pasta acima…**.
 
+Para pular direto para qualquer lugar, use Menu → **Ir para caminho…** (também no menu Start do seletor de pastas): o teclado virtual abre com a pasta atual selecionada, então digitar a substitui. Os caracteres de caminho (`\ / :`) ficam na página de símbolos (Select/View); com teclado físico dá para digitar ou colar (Ctrl+V) um caminho, com ou sem aspas, e variáveis como `%USERPROFILE%` funcionam. **Concluir** vai até lá; o caminho de um arquivo abre a pasta dele com o foco no arquivo. Caminho inexistente ou inválido mostra o erro e mantém o teclado aberto para corrigir.
+
 ## Abas
 
 A faixa de abas fica acima do caminho. Cada aba guarda a própria pasta, histórico, itens marcados e foco. **RB** leva o foco da lista para a faixa; nela, **LB/RB** (ou esquerda/direita) trocam de aba e **Norte** oferece **Nova aba** (a pasta atual numa aba nova) e **Fechar aba**. **Sul**, **baixo** ou **Leste** voltam para a lista. Norte numa pasta também tem **Abrir em nova aba**. Até 8 abas; clicar numa aba troca para ela.

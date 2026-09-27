@@ -54,6 +54,8 @@ Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips 
 
 The current path is shown as segments at the top. **LB** moves focus from the list to the path bar (on the folder above the current one); **Left/Right** pick a segment and **South** goes there, focusing the folder you came from. **RB**, **Down** or **East** go back to the list. Inside an archive, the archive file is its own segment after a `▸`, so the disk part and the inside of the archive are easy to tell apart. Long paths collapse the middle into `…`, which opens the hidden folders. Keyboard: Ctrl+← / Ctrl+→. The same list is in Menu → **Go to folder above…**.
 
+To jump anywhere, use Menu → **Go to path…** (also in the folder picker's Start menu): the on-screen keyboard opens with the current folder selected, so typing replaces it. Path characters (`\ / :`) are on the symbols page (Select/View); with a physical keyboard you can type or paste (Ctrl+V) a path, with or without quotes, and variables such as `%USERPROFILE%` work. **Done** goes there; a file's path opens its folder with the file focused. A missing or invalid path shows the error and keeps the keyboard open so you can fix it.
+
 ## Tabs
 
 The tab strip sits above the path. Each tab keeps its own folder, history, marked items and focus. **RB** moves focus from the list to the strip; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab) and **Close tab**. **South**, **Down** or **East** go back to the list. North on a folder also has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it.

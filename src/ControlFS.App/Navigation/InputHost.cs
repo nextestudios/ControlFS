@@ -243,10 +243,34 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
             e.Handled = true;
             return;
         }
+        if (typing && ctrl && key == VirtualKey.V)
+        {
+            _app.SetActiveController(null);
+            PasteIntoKeyboard();
+            e.Handled = true;
+            return;
+        }
         if (action is null) return;
         e.Handled = true;
         if (e.KeyStatus.WasKeyDown && !_app.IsRepeatableInContext(action.Value)) return;
         _app.Handle(action.Value);
+    }
+
+    /// <summary>Ctrl+V no teclado virtual: cola a primeira linha do texto da área de transferência do Windows.</summary>
+    private async void PasteIntoKeyboard()
+    {
+        try
+        {
+            var content = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+            if (!content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text)) return;
+            var text = await content.GetTextAsync();
+            var line = text.Split('\r', '\n')[0];
+            if (line.Length > 0) _app.TypeText(line);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            // Área de transferência ocupada por outro programa: nada é colado.
+        }
     }
 
     public void OnCharacter(char c)
