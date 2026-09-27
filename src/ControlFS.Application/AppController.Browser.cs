@@ -610,9 +610,9 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
                 Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? null
                     : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true),
-            new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima (acompanha a tela)" : "economia de bateria")}",
+            new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima" : "economia de bateria")}",
                 () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
-                Detail: "Máxima lê o controle a cada quadro da tela (120 vezes por segundo numa tela de 120 Hz). Economia gasta menos bateria em portáteis.",
+                Detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis.",
                 Icon: ActionIcon.Settings, Section: controls, KeepOpen: true),
             new($"Mira por giroscópio no teclado: {(Settings.GyroKeyboard ? "sim" : "não")} (experimental)", ToggleGyroKeyboard,
                 Detail: "Controles com giroscópio (ex.: DualSense): no teclado virtual, gire ou incline o controle para apontar as teclas; R3 recentraliza. O direcional continua funcionando.",

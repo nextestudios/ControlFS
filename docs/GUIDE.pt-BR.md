@@ -77,7 +77,7 @@ Para pular direto para qualquer lugar, use Menu → **Ir para caminho…** (tamb
 
 ## Fluidez
 
-O ControlFS desenha na taxa de atualização da sua tela (60, 120, 144 Hz…), definida no Windows. Com Menu → Configurações → **Fluidez: máxima** (o padrão) ele também lê o controle a cada quadro, então uma tela de 120 Hz recebe 120 leituras do controle por segundo, no ritmo do que você vê. **Economia de bateria** lê num temporizador mais lento, que gasta menos energia em portáteis. Uma tela de 60 Hz não mostra mais de 60 quadros por segundo: para ter 120, ajuste a tela para 120 Hz no Windows (Configurações → Tela → Configurações de vídeo avançadas).
+O ControlFS desenha na taxa de atualização da sua tela (60, 120, 144 Hz…), definida no Windows. Com Menu → Configurações → **Fluidez: máxima** (o padrão) ele lê o controle ~125 vezes por segundo, o bastante para uma tela de 120 Hz; **economia de bateria** lê num ritmo menor, que gasta menos energia em portáteis. Uma tela de 60 Hz não mostra mais de 60 quadros por segundo: para ter 120, ajuste a tela para 120 Hz no Windows (Configurações → Tela → Configurações de vídeo avançadas).
 
 ## Tema e cor de destaque
 

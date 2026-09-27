@@ -77,7 +77,7 @@ To jump anywhere, use Menu → **Go to path…** (also in the folder picker's St
 
 ## Smoothness
 
-ControlFS draws at your display's refresh rate (60, 120, 144 Hz…), as set in Windows. With Menu → Configurações → **Fluidez: máxima** (the default) it also reads the controller on every frame, so a 120 Hz screen gets 120 controller reads per second, in step with what you see. **Economia de bateria** reads it on a slower timer, which saves power on handhelds. A 60 Hz screen can't show more than 60 frames per second: to get 120, set the display to 120 Hz in Windows (Settings → Display → Advanced display).
+ControlFS draws at your display's refresh rate (60, 120, 144 Hz…), as set in Windows. With Menu → Configurações → **Fluidez: máxima** (the default) it reads the controller ~125 times per second, enough for a 120 Hz screen; **economia de bateria** reads it less often, which saves power on handhelds. A 60 Hz screen can't show more than 60 frames per second: to get 120, set the display to 120 Hz in Windows (Settings → Display → Advanced display).
 
 ## Theme and accent color
 
