@@ -74,11 +74,12 @@ Menu → **View** (or **Ctrl+G** on the keyboard) switches between the **list** 
 
 ## Search
 
-Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.
+Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Other search actions** → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.
 
-- **Subfolders:** included by default. Change it in Menu → "Search in subfolders" (for the next search) or North → "Subfolders" on the results (searches again).
+- **Subfolders:** included by default. Change it in Menu → "Search in subfolders" (for the next search) or North → **Other search actions** → "Subfolders" on the results (searches again).
 - **East/B** while searching stops it and keeps the partial results; East/B again goes back to the folder.
 - **South/A** on a result opens its folder with the item focused; Back returns to the results.
+- **Filters:** North on the results opens the filters. **South** toggles a type (Folders, Images, Videos, Music and audio, Documents, Archives, Executables; several types combine) or steps through **Size** and **Modified** ranges; the menu stays open so you can pick several. The list updates right away without searching again, the bottom bar shows "N of M results (filters: …)", and the filters stay on for later searches in this session until **Clear filters**.
 - Search never enters junctions, symbolic links or other reparse points (the link itself can show up as a result).
 
 ## Recent folders and files

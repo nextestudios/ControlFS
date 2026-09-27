@@ -74,11 +74,12 @@ Menu → **Exibição** (ou **Ctrl+G** no teclado) alterna entre **lista** e **g
 
 ## Busca
 
-Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.
+Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Outras ações da busca** → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.
 
-- **Subpastas:** incluídas por padrão. Troque em Menu → "Busca em subpastas" (vale para a próxima busca) ou em Norte → "Subpastas" nos resultados (busca de novo).
+- **Subpastas:** incluídas por padrão. Troque em Menu → "Busca em subpastas" (vale para a próxima busca) ou em Norte → **Outras ações da busca** → "Subpastas" nos resultados (busca de novo).
 - **Leste/B** durante a busca para a busca e mantém os resultados parciais; Leste/B de novo volta para a pasta.
 - **Sul/A** num resultado abre a pasta dele com o foco no item; Voltar retorna aos resultados.
+- **Filtros:** Norte nos resultados abre os filtros. **Sul** liga/desliga um tipo (Pastas, Imagens, Vídeos, Músicas e áudio, Documentos, Compactados, Executáveis; vários tipos se somam) ou avança as faixas de **Tamanho** e **Modificado**; o menu fica aberto para escolher vários. A lista muda na hora, sem buscar de novo, o rodapé mostra "N de M resultados (filtros: …)" e os filtros continuam valendo nas próximas buscas da sessão até **Limpar filtros**.
 - A busca nunca entra em junções, links simbólicos ou outros pontos de nova análise (o próprio link pode aparecer como resultado).
 
 ## Pastas e arquivos recentes
