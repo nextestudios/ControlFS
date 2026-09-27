@@ -13,7 +13,7 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Leste | Voltar / fechar | Cancelar sem aplicar |
 | Oeste | Marcar item | Apagar |
 | Norte | Ações do item | Maiúsculas |
-| LB / RB | Barra de caminho (LB) / abas (RB) | Mover cursor |
+| LB / RB | Barra superior: caminho e acesso rápido (LB) / abas (RB) | Mover cursor |
 | LT / RT | Página anterior / próxima | Cursor no início / fim |
 | Start | Menu do app | Concluir |
 | Select / View | Buscar | Símbolos |
@@ -51,7 +51,9 @@ Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos co
 
 Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo opcional. Sem nenhuma entrada por 20 segundos o assistente se cancela. Se o joystick já tem perfil, salvar pergunta antes de substituir (começando em "Cancelar"); cancelar em qualquer momento mantém o perfil salvo. O perfil volta a valer sempre que esse joystick é conectado, inclusive ao reabrir o ControlFS. Menu → Controles sem perfil também exporta um perfil para uma pasta e importa um (`.json`, até 64 KB, validado; qualquer coisa inesperada é recusada).
 
-## Barra de caminho
+## Barra superior: caminho e acesso rápido
+
+A barra superior é a mesma em todas as telas. À esquerda fica o caminho: um botão raiz (**Locais** no início, na Lixeira e na busca; **Meu computador** em pastas e compactados) seguido dos segmentos reais de onde você está, por exemplo `Meu computador › C:\ › Users › ana › Downloads`, ou `Locais › Início` na tela inicial. À direita fica o acesso rápido: **Favoritos**, **Arquivos recentes**, as pastas do Windows que existem neste PC (Downloads, Documentos, Área de trabalho, Imagens, Vídeos, Músicas), **Meu computador** e **Lixeira**, com os ícones do Windows. **LB** leva o foco para a barra: numa pasta, para a pasta de cima; no início, para Favoritos. **Esquerda/direita** percorrem a barra inteira (caminho e depois acesso rápido), **LT/RT** vão ao primeiro/último item da parte em que você está e **Sul** abre: um atalho de pasta abre na aba atual (Voltar retorna), Favoritos e Arquivos recentes abrem uma lista para escolher, Meu computador vai ao início na primeira unidade e o botão raiz vai ao início. **Baixo**, **Leste**, **LB** ou **RB** voltam para a lista. O atalho da pasta atual fica destacado.
 
 O caminho atual aparece em segmentos no topo. **LB** leva o foco da lista para a barra (na pasta acima da atual); **esquerda/direita** escolhem o segmento e **Sul** vai até ele, com o foco na pasta de onde você veio. **RB**, **baixo** ou **Leste** voltam para a lista. Dentro de um compactado, o próprio arquivo é um segmento depois de um `▸`, para separar a parte do disco do conteúdo do compactado. Caminhos longos recolhem o meio em `…`, que abre as pastas escondidas. Teclado: Ctrl+← / Ctrl+→. A mesma lista está em Menu → **Ir para pasta acima…**.
 
@@ -59,7 +61,7 @@ Para pular direto para qualquer lugar, use Menu → **Ir para caminho…** (tamb
 
 ## Abas
 
-A faixa de abas fica acima do caminho. Cada aba guarda a própria pasta, histórico, itens marcados e foco. **RB** leva o foco da lista para a faixa; nela, **LB/RB** (ou esquerda/direita) trocam de aba e **Norte** oferece **Nova aba** (a pasta atual numa aba nova) e **Fechar aba**. **Sul**, **baixo** ou **Leste** voltam para a lista. Norte numa pasta também tem **Abrir em nova aba**. Até 8 abas; clicar numa aba troca para ela.
+A faixa de abas fica no cabeçalho, ao lado do logo. Cada aba guarda a própria pasta, histórico, itens marcados e foco. **RB** leva o foco da lista para a faixa; nela, **LB/RB** (ou esquerda/direita) trocam de aba e **Norte** oferece **Nova aba** (a pasta atual numa aba nova) e **Fechar aba**. **Sul**, **baixo** ou **Leste** voltam para a lista. Norte numa pasta também tem **Abrir em nova aba**. Até 8 abas; clicar numa aba troca para ela.
 
 ## A lista
 

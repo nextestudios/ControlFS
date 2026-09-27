@@ -10,8 +10,8 @@ mouse-only or lose its test.** A later phase that moves a feature updates its "W
 
 | Phase | Scope | Status |
 |---|---|---|
-| A1 | This inventory, design tokens, footer (prompt colors, order, Lista/Grade), R3 → ChangeView | this PR |
-| A2 | Shared header (logo on every screen, tabs next to it) and top navigation bar (breadcrumb + quick access) | next |
+| A1 | This inventory, design tokens, footer (prompt colors, order, Lista/Grade), R3 → ChangeView | done |
+| A2 | Shared header (logo on every screen, tabs next to it) and top navigation bar (breadcrumb + quick access) | done |
 | B | Grid mode: Home cards ("Pastas principais" with real counts/sizes, "Unidades e dispositivos" with usage bars), folder tiles, This PC | planned |
 | C | List mode: column header, friendly dates, details panel | planned |
 
@@ -117,8 +117,8 @@ hardware, visual or timing checks that CI can't prove.
 | Browse real folders, open, up (Left in list), history Back with focus restore | content | South/Right, Left, East | `JourneyTests::Back_semantics_selection_then_history_then_home_then_confirmed_exit`, `BreadcrumbJourneyTests` |
 | Stale listing never overwrites a newer navigation | — | — | `JourneyTests::Late_listing_response_does_not_overwrite_newer_navigation` |
 | Focus by identity, survives resort/removal; focus ≠ selection | content | — | `StateTests` (5) |
-| Breadcrumb / path bar with archive boundary and collapse | top bar left segment (A2) | LB, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3); Manual "Barra de caminho (#30)" |
-| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador, Lixeira | top bar right segment (A2) | LB then Right, South | A2 journey test |
+| Breadcrumb / path bar with archive boundary and collapse, root chip (Locais / Meu computador) | top bar left segment (A2) | LB, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3), `TopBarJourneyTests`; Manual "Barra de caminho (#30)" |
+| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador, Lixeira | top bar right segment (A2) | LB then Right, South | `TopBarJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
 | Tabs (8 max), each with its own folder/history/marks/focus | header tab strip (A2) | RB, LB/RB, North new/close, "Abrir em nova aba" | `TabsJourneyTests`; Manual "Abas (#50)" |
 | Go to path (typed/pasted, quotes, %VARS%) | Menu → Ir para caminho… | Start | `GoToPathJourneyTests`, `TypedPathTests` |
 | Go to folder above… | Menu | Start | `BreadcrumbJourneyTests` (same menu as the `…` segment) |

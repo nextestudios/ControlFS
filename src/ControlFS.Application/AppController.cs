@@ -246,6 +246,16 @@ public sealed partial class AppController
 
     private void HandleHome(InputAction action)
     {
+        if (_homeRegion != PaneRegion.List)
+        {
+            HandleTopBar(action);
+            return;
+        }
+        if (action == InputAction.PreviousRegion)
+        {
+            EnterHomeTopBar();
+            return;
+        }
         if (IsGrid && GridNavigation.Move(PlacesFocus, Places.Count, GridColumns, GridRowsPerPage, action) is { } cell)
         {
             PlacesFocus = cell;
@@ -282,6 +292,8 @@ public sealed partial class AppController
         Browser.LoadCts?.Cancel();
         Browser.Generation++;
         Browser.IsLoading = false;
+        Browser.Region = PaneRegion.List;
+        _homeRegion = PaneRegion.List;
         Places = BuildPlaces();
         PlacesFocus = Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
         Screen = Screen.Home;

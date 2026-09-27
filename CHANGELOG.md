@@ -5,6 +5,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 ## [Unreleased]
 ### Melhorias
 - **Novo visual, primeira etapa do redesenho**: paleta azul-marinho com foco ciano (borda, fundo azul e um halo discreto, com transição curta) e rodapé maior, com as ações sempre na mesma ordem (Abrir · Voltar · Marcar · Ações · Menu · Buscar · Lista/Grade) e as cores das faces do Xbox nos glifos (A verde, B vermelho, X azul, Y amarelo). **R3** (apertar o analógico direito) alterna lista e grade, como Ctrl+G e Menu → Exibição; o rodapé mostra o destino: "Grade" na lista, "Lista" na grade.
+- **Barra superior e cabeçalho novos**: o logo com o nome aparece em todas as telas, com as abas ao lado (RB). Abaixo, uma barra única mostra o caminho real com um botão raiz ("Locais › Início" no início, "Meu computador › C:\ › …" nas pastas) e o acesso rápido: Favoritos, Arquivos recentes, as pastas do Windows, Meu computador e Lixeira, com os ícones do Windows. LB leva o foco à barra (numa pasta, na pasta de cima; no início, em Favoritos), esquerda/direita andam do caminho para os atalhos e Sul abre na mesma aba, com histórico.
 
 ## [0.5.0-alpha.1]
 ### Novidades

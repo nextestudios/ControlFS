@@ -45,11 +45,13 @@ public sealed class MainWindow : Window
     private ListDensity _density = ListDensity.Comfortable;
     private ViewMode _view = ViewMode.List;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
-    private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
-    private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0) };
-    private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, 0, 0, Theme.SpaceXs) };
-    private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
-    private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 4) };
+    private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Border _rb = new() { VerticalAlignment = VerticalAlignment.Center };
+    private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
+    private readonly IconLoader _navIcons;
+    private readonly TopBarView _topBar;
     private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
     private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -94,8 +96,15 @@ public sealed class MainWindow : Window
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
+        _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize);
+        _topBar = new TopBarView(_app, _navIcons);
         _icons.Invalidated += OnIconsInvalidated;
         _tileIcons.Invalidated += OnIconsInvalidated;
+        _navIcons.Invalidated += () =>
+        {
+            _topBar.ApplyLayout(); // refaz os atalhos com ícones no novo tamanho
+            Render();
+        };
 
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
@@ -156,29 +165,35 @@ public sealed class MainWindow : Window
     private Grid BuildLayout()
     {
         var layout = new Grid { Background = Theme.Background };
-        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // cabeçalho
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // barra superior
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // aviso do local (compactado, seletor)
         layout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // rodapé
 
-        // Cabeçalho
+        // Cabeçalho: logo com o nome, abas (RB) e, à direita, controle em uso e operação/atualização.
         var header = _header;
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var titleStack = new StackPanel();
         _logo.Source = Branding.Logo;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_logo, "ControlFS");
-        titleStack.Children.Add(_logo);
-        titleStack.Children.Add(_tabStrip);
-        titleStack.Children.Add(_badge);
-        titleStack.Children.Add(_location);
-        titleStack.Children.Add(_crumbs);
-        header.Children.Add(titleStack);
+        header.Children.Add(_logo);
+        _tabs.Children.Add(_tabStrip);
+        _tabs.Children.Add(_rb);
+        Grid.SetColumn(_tabs, 1);
+        header.Children.Add(_tabs);
         var right = _headerRight;
         right.Children.Add(_device);
         right.Children.Add(_operation);
-        Grid.SetColumn(right, 1);
+        Grid.SetColumn(right, 2);
         header.Children.Add(right);
         layout.Children.Add(header);
+
+        Grid.SetRow(_topBar.Root, 1);
+        layout.Children.Add(_topBar.Root);
+        Grid.SetRow(_badge, 2);
+        layout.Children.Add(_badge);
 
         // Lista e grade: as duas virtualizadas, preenchidas pelo mesmo código; só a ativa fica visível e com itens.
         _list.ItemTemplate = EntryRowTemplate.Create(_density);
@@ -191,7 +206,7 @@ public sealed class MainWindow : Window
         content.Children.Add(_list);
         content.Children.Add(_grid);
         content.Children.Add(_empty);
-        Grid.SetRow(content, 1);
+        Grid.SetRow(content, 3);
         layout.Children.Add(content);
 
         // Rodapé
@@ -200,10 +215,10 @@ public sealed class MainWindow : Window
         footer.Children.Add(_status);
         footer.Children.Add(_hints);
         _footerBar.Child = footer;
-        Grid.SetRow(_footerBar, 2);
+        Grid.SetRow(_footerBar, 4);
         layout.Children.Add(_footerBar);
 
-        Grid.SetRowSpan(_overlay, 3);
+        Grid.SetRowSpan(_overlay, 5);
         layout.Children.Add(_overlay);
         return layout;
     }
@@ -273,41 +288,24 @@ public sealed class MainWindow : Window
 
     private void Render()
     {
-        // Cabeçalho
+        // Cabeçalho e barra superior. O aviso abaixo da barra só aparece quando diz algo que o caminho não diz.
         var pane = _app.ActivePane;
-        switch (_app.Screen)
+        _badge.Text = _app.Screen switch
         {
-            case Screen.Home:
-                _badge.Text = "INÍCIO · LOCAIS";
-                _location.Text = string.Empty;
-                break;
-            case Screen.FolderPicker:
-                _badge.Text = "ESCOLHER PASTA · " + _app.PickerTitle;
-                _location.Text = pane.Location?.DisplayPath ?? "…";
-                break;
-            default:
-                _badge.Text = pane.Location switch
-                {
-                    ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
-                    SearchLocation => "BUSCA",
-                    RecycleBinLocation => "LIXEIRA DO WINDOWS",
-                    _ => "PASTA NO DISCO",
-                };
-                _location.Text = pane.Location?.DisplayPath ?? "…";
-                break;
-        }
-        // Logo só na tela inicial (as demais telas usam o espaço para o caminho).
-        _logo.Visibility = _app.Screen == Screen.Home && _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
-        var crumbs = _app.Breadcrumbs;
-        _location.Visibility = _app.Screen == Screen.Home || crumbs.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
-        RenderBreadcrumbs(crumbs, pane.Region == PaneRegion.Breadcrumbs && _app.Screen != Screen.Home ? pane.BreadcrumbFocus : -1);
+            Screen.FolderPicker => "ESCOLHER PASTA · " + _app.PickerTitle,
+            Screen.Browser when pane.Location is ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
+            _ => string.Empty,
+        };
+        _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        _logo.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
+        _topBar.Render();
         RenderTabs(_app.Screen == Screen.Browser, _app.Screen == Screen.Browser && pane.Region == PaneRegion.Tabs);
         var device = _input.ActiveDevice;
         _device.Text = !_input.BackendReady
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"
             : device is not null
-                ? $"🎮 {device.Name}" + (_input.Devices.Count > 1 ? $" (+{_input.Devices.Count - 1})" : string.Empty)
-                : _input.Devices.Count > 0 ? $"🎮 {_input.Devices.Count} controle(s) — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
+                ? device.Name + (_input.Devices.Count > 1 ? $" (+{_input.Devices.Count - 1})" : string.Empty)
+                : _input.Devices.Count > 0 ? $"{_input.Devices.Count} controle(s) — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
         var op = _app.Operations.Current;
         _operation.Text = op is null
             ? _app.UpdateState switch
@@ -315,7 +313,7 @@ public sealed class MainWindow : Window
                 UpdateState.Ready => $"⬆ Atualização {_app.ReadyUpdate!.Manifest.Version} pronta (Menu → Atualizações)",
                 UpdateState.Downloading => "⬆ Baixando atualização…",
                 UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
-                _ => _app.Clipboard is { } clip ? $"📋 {clip.Paths.Count} item(ns) {(clip.IsCut ? "recortado(s)" : "copiado(s)")} — Ações → Colar" : string.Empty,
+                _ => _app.Clipboard is { } clip ? $"Área de transferência: {clip.Paths.Count} item(ns) {(clip.IsCut ? "recortado(s)" : "copiado(s)")} — Ações → Colar" : string.Empty,
             }
             : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State switch { OperationState.WaitingForUser => "aguardando você", OperationState.Paused => "pausada", _ => "em andamento" })})";
 
@@ -328,7 +326,7 @@ public sealed class MainWindow : Window
         }
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
-        if (_app.Screen != Screen.Home && pane.Region != PaneRegion.List) focus = -1; // um só foco visível: o da barra de caminho ou das abas
+        if (_app.FocusRegion != PaneRegion.List) focus = -1; // um só foco visível: o da barra superior ou das abas
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
         if (focus >= items.Count) focus = -1;
         var sourceChanged = !ReferenceEquals(items, _shownItems);
@@ -372,8 +370,11 @@ public sealed class MainWindow : Window
         // Rodapé: somente ações válidas no contexto, com a legenda do dispositivo em uso (glifo do controle ou tecla)
         _hints.Children.Clear();
         var glyphHeight = FooterGlyphHeight;
+        // LB e RB aparecem na barra superior e ao lado das abas enquanto o foco está no conteúdo.
+        var regionsShownAbove = _app.TopModal is null && _app.FocusRegion == PaneRegion.List;
         foreach (var prompt in _app.Prompts)
         {
+            if (regionsShownAbove && prompt.Action is InputAction.PreviousRegion or InputAction.NextRegion) continue;
             var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS + Theme.SpaceXs };
             if (prompt is { Button: { } button, Family: { } family })
                 chip.Children.Add(ControllerGlyphs.Create(button, family, glyphHeight));
@@ -442,63 +443,19 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// Barra de caminho: segmentos focáveis (LB/RB entram e saem, esquerda/direita escolhem). A fronteira do compactado
-    /// usa "▸" e o segmento do compactado leva o símbolo de pacote; segmentos do meio de caminhos longos viram "…".
-    /// </summary>
-    private void RenderBreadcrumbs(IReadOnlyList<Breadcrumb> crumbs, int focus)
-    {
-        _crumbs.Children.Clear();
-        _crumbs.Visibility = crumbs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        for (var i = 0; i < crumbs.Count; i++)
-        {
-            var crumb = crumbs[i];
-            if (i > 0)
-            {
-                var boundary = crumb.Kind == BreadcrumbKind.Archive;
-                _crumbs.Children.Add(new TextBlock
-                {
-                    Text = boundary ? "▸" : "›",
-                    FontSize = Theme.FontItem,
-                    Foreground = boundary ? Theme.Accent : Theme.TextMuted,
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-            }
-            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs };
-            if (crumb.Kind == BreadcrumbKind.Archive)
-                content.Children.Add(new TextBlock { Text = "\uE7B8", FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = Theme.FontBody, Foreground = Theme.Accent, VerticalAlignment = VerticalAlignment.Center });
-            content.Children.Add(new TextBlock
-            {
-                Text = crumb.Label,
-                FontSize = Theme.FontItem,
-                FontWeight = crumb.IsCurrent ? FontWeights.SemiBold : FontWeights.Normal,
-                Foreground = crumb.IsCurrent ? Theme.Text : crumb.Kind is BreadcrumbKind.Archive or BreadcrumbKind.ArchiveFolder ? Theme.Accent : Theme.TextMuted,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxWidth = Theme.Scaled(260),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
-            var chip = new Border { Child = content, CornerRadius = Theme.Radius, Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2) };
-            Theme.ApplyFocus(chip, i == focus);
-            var index = i;
-            chip.Tapped += (_, _) => _app.PointerActivateBreadcrumb(index);
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, crumb.Kind switch
-            {
-                BreadcrumbKind.Collapsed => $"{crumb.Hidden.Count} pastas recolhidas",
-                BreadcrumbKind.Archive => $"{crumb.Label}, compactado",
-                _ => crumb.Label,
-            } + (crumb.IsCurrent ? ", pasta atual" : string.Empty));
-            _crumbs.Children.Add(chip);
-        }
-    }
-
-    /// <summary>
     /// Faixa de abas do navegador: a ativa em destaque; com o foco na faixa (RB), a ativa recebe o anel de foco e LB/RB
     /// trocam de aba. Só aparece no navegador.
     /// </summary>
     private void RenderTabs(bool visible, bool focused)
     {
         _tabStrip.Children.Clear();
-        _tabStrip.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        _tabs.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         if (!visible) return;
+        var rb = _app.PromptProvider.For(InputAction.NextRegion, "Abas");
+        _rb.Child = rb is { Button: { } button, Family: { } family }
+            ? ControllerGlyphs.Create(button, family, Math.Round(Theme.FontBody * 1.4))
+            : new TextBlock { Text = rb.Key, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(_rb, rb.AccessibilityText);
         var tabs = _app.Tabs;
         for (var i = 0; i < tabs.Count; i++)
         {
@@ -509,17 +466,21 @@ public sealed class MainWindow : Window
                 Child = new TextBlock
                 {
                     Text = title,
-                    FontSize = Theme.FontCaption,
+                    FontSize = Theme.FontCaption + 1,
                     FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal,
                     Foreground = active ? Theme.Text : Theme.TextMuted,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     MaxWidth = Theme.Scaled(200),
                 },
                 CornerRadius = Theme.Radius,
-                Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
+                Padding = new Thickness(Theme.SpaceS + Theme.SpaceXs, Theme.SpaceXs, Theme.SpaceS + Theme.SpaceXs, Theme.SpaceXs),
             };
             Theme.ApplyFocus(chip, focused && active);
-            if (active && !focused) chip.Background = Theme.SurfaceRaised; // ativa sem foco: destaque discreto
+            if (active && !focused)
+            {
+                chip.Background = Theme.SurfaceRaised; // ativa sem foco: destaque discreto
+                chip.BorderBrush = Theme.Border;
+            }
             var index = i;
             chip.Tapped += (_, _) => _app.PointerActivateTab(index);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, $"Aba {i + 1} de {tabs.Count}: {title}" + (active ? ", ativa" : string.Empty));
@@ -587,29 +548,27 @@ public sealed class MainWindow : Window
     internal string DescribeFit()
     {
         var viewport = Theme.Viewport;
-        var fit = $"cabeçalho {_header.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
+        var fit = $"cabeçalho {_header.ActualHeight:0} + barra {_topBar.Root.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
         if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
         {
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
             fit += $"; modal {card.ActualWidth:0}x{card.ActualHeight:0}" + (needed > viewport.Height + 0.5 ? " NÃO CABE" : " cabe");
         }
-        var layoutTooTall = _header.ActualHeight + _footerBar.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
+        var layoutTooTall = _header.ActualHeight + _topBar.Root.ActualHeight + _badge.ActualHeight + _footerBar.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
         return fit + (layoutTooTall ? " · LISTA ESPREMIDA" : string.Empty);
     }
 
     /// <summary>Aplica os tokens da faixa atual ao cabeçalho, à lista e ao rodapé e refaz a tela.</summary>
     private void ApplyLayout()
     {
-        _header.Padding = new Thickness(Theme.SpaceL, Theme.SpaceM, Theme.SpaceL, Theme.SpaceS);
-        _header.ColumnSpacing = Theme.SpaceM;
-        _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.4); // o caminho nunca é espremido pelo status
-        _logo.Height = Theme.Layout.LogoHeight;
-        _logo.Margin = new Thickness(0, 0, 0, Theme.SpaceXs);
-        _location.FontSize = Theme.FontTitle;
-        _crumbs.Spacing = Theme.SpaceXs;
+        _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL, Theme.SpaceM);
+        _header.ColumnSpacing = Theme.SpaceXl;
+        _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
+        _logo.Height = Math.Round(Theme.Layout.LogoHeight * 0.8);
         _tabStrip.Spacing = Theme.SpaceXs;
-        _tabStrip.Margin = new Thickness(-Theme.SpaceS, 0, 0, Theme.SpaceXs);
-        _crumbs.Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0);
+        _tabs.Spacing = Theme.SpaceS;
+        _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);
+        _topBar.ApplyLayout();
         _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
         _empty.FontSize = Theme.FontBody;
         _list.Padding = _grid.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
@@ -624,6 +583,7 @@ public sealed class MainWindow : Window
         var iconScale = Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale;
         _icons.SetScale(iconScale);
         _tileIcons.SetScale(iconScale);
+        _navIcons.SetScale(iconScale);
         UpdateGridMetrics();
         _shownItems = null; // recria as linhas com as novas medidas
         Render();

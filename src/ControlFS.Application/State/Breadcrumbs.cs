@@ -15,6 +15,12 @@ public enum BreadcrumbKind
 
     /// <summary>Segmentos do meio recolhidos em "…"; ativar mostra a lista deles.</summary>
     Collapsed,
+
+    /// <summary>
+    /// Raiz da barra superior: "Meu computador" em caminhos do disco e de compactados, "Locais" nas demais telas. Leva ao
+    /// início (no seletor de pasta, aos outros locais).
+    /// </summary>
+    Root,
 }
 
 /// <summary>
@@ -25,13 +31,16 @@ public sealed record Breadcrumb(string Label, BreadcrumbKind Kind, Location? Tar
     public IReadOnlyList<Breadcrumb> Hidden { get; init; } = [];
 }
 
-/// <summary>Região da tela do navegador que recebe as ações de navegação.</summary>
+/// <summary>Região da tela (navegador ou início) que recebe as ações de navegação.</summary>
 public enum PaneRegion
 {
     List,
     Breadcrumbs,
     /// <summary>Faixa de abas do navegador (RB entra; LB/RB trocam de aba).</summary>
     Tabs,
+
+    /// <summary>Acesso rápido da barra superior (Favoritos, Recentes, pastas do Windows, Meu computador, Lixeira).</summary>
+    QuickAccess,
 }
 
 public static class BreadcrumbTrail

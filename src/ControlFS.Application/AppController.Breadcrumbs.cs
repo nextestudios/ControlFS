@@ -6,8 +6,11 @@ namespace ControlFS.Application;
 
 public sealed partial class AppController
 {
-    /// <summary>Segmentos visíveis da barra de caminho do painel ativo (vazio na tela inicial).</summary>
-    public IReadOnlyList<Breadcrumb> Breadcrumbs => Screen == Screen.Home ? [] : BreadcrumbTrail.Collapse(BuildBreadcrumbs(ActivePane));
+    /// <summary>
+    /// Segmentos visíveis da barra superior: a raiz ("Locais"/"Meu computador") e o caminho real do painel ativo, com o
+    /// meio recolhido em caminhos longos. No início: "Locais › Início".
+    /// </summary>
+    public IReadOnlyList<Breadcrumb> Breadcrumbs => Screen == Screen.Home ? HomeTrail : Trail(ActivePane);
 
     /// <summary>Caminho completo, da raiz até a pasta atual (a última é a atual).</summary>
     internal List<Breadcrumb> BuildBreadcrumbs(PaneState pane)
@@ -50,7 +53,7 @@ public sealed partial class AppController
         }
     }
 
-    /// <summary>LB/RB alternam entre a lista e a barra de caminho; ao entrar, o foco vai para a pasta de cima.</summary>
+    /// <summary>LB leva à barra superior (foco na pasta de cima) e RB às abas; na barra, ver <see cref="HandleTopBar"/>.</summary>
     private bool HandleRegionSwitch(PaneState pane, InputAction action)
     {
         if (pane.Region == PaneRegion.Tabs)
@@ -72,41 +75,8 @@ public sealed partial class AppController
             pane.BreadcrumbFocus = crumbs.Count - 2;
             return true;
         }
-        HandleBreadcrumbs(pane, action);
+        HandleTopBar(action);
         return true;
-    }
-
-    private void HandleBreadcrumbs(PaneState pane, InputAction action)
-    {
-        var crumbs = Breadcrumbs;
-        if (crumbs.Count == 0 || pane.IsLoading)
-        {
-            pane.Region = PaneRegion.List;
-            return;
-        }
-        pane.BreadcrumbFocus = Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1);
-        switch (action)
-        {
-            case InputAction.NavigateLeft: pane.BreadcrumbFocus = Math.Max(0, pane.BreadcrumbFocus - 1); break;
-            case InputAction.NavigateRight: pane.BreadcrumbFocus = Math.Min(crumbs.Count - 1, pane.BreadcrumbFocus + 1); break;
-            case InputAction.PageUp: pane.BreadcrumbFocus = 0; break;
-            case InputAction.PageDown: pane.BreadcrumbFocus = crumbs.Count - 1; break;
-            case InputAction.Confirm: ActivateBreadcrumb(pane, crumbs[pane.BreadcrumbFocus]); break;
-            case InputAction.NextRegion:
-            case InputAction.PreviousRegion:
-            case InputAction.NavigateDown:
-            case InputAction.Back:
-                pane.Region = PaneRegion.List;
-                break;
-            case InputAction.OpenContextMenu:
-                ShowPathMenu(pane);
-                break;
-            case InputAction.OpenAppMenu:
-                pane.Region = PaneRegion.List;
-                if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
-                else ShowAppMenu();
-                break;
-        }
     }
 
     private void ActivateBreadcrumb(PaneState pane, Breadcrumb crumb)
@@ -114,6 +84,11 @@ public sealed partial class AppController
         if (crumb.Kind == BreadcrumbKind.Collapsed)
         {
             ShowPathMenu(pane, crumb.Hidden);
+            return;
+        }
+        if (crumb.Kind == BreadcrumbKind.Root)
+        {
+            ActivateRoot(pane, crumb);
             return;
         }
         pane.Region = PaneRegion.List;
@@ -139,12 +114,10 @@ public sealed partial class AppController
     /// <summary>Mouse/toque num segmento: mesmo efeito de focar e confirmar.</summary>
     public void PointerActivateBreadcrumb(int index)
     {
-        if (TopModal is not null || Screen == Screen.Home) return;
+        if (TopModal is not null) return;
         var crumbs = Breadcrumbs;
         if (index < 0 || index >= crumbs.Count) return;
-        var pane = ActivePane;
-        pane.Region = PaneRegion.Breadcrumbs;
-        pane.BreadcrumbFocus = index;
+        SetTopBar(PaneRegion.Breadcrumbs, index);
         Handle(InputAction.Confirm);
     }
 }
