@@ -38,9 +38,10 @@ public class UndoJourneyTests : IDisposable
         public bool CanRecycle(string path) => true;
         public FileEntry Rename(string path, string newName) => _real.Rename(path, newName);
 
-        public Task<OperationResult> RunAsync(FileOperationRequest request, IConflictInteraction conflicts, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+        public async Task<OperationResult> RunAsync(FileOperationRequest request, IConflictInteraction conflicts, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
         {
-            if (request.Kind != FileOperationKind.Delete || request.Permanent) return _real.RunAsync(request, conflicts, progress, cancellationToken);
+            if (request.Kind != FileOperationKind.Delete || request.Permanent) return await _real.RunAsync(request, conflicts, progress, cancellationToken);
+            await Task.Yield(); // como o motor real, termina depois de ser enfileirado
             var results = new List<ItemResult>();
             foreach (var source in request.Sources)
             {
@@ -49,7 +50,7 @@ public class UndoJourneyTests : IDisposable
                 Items.Add(new RecycledItem(stored, Path.GetFileName(source), source, false, new FileInfo(stored).Length, DateTimeOffset.Now));
                 results.Add(new ItemResult(Path.GetFileName(source), ItemOutcome.Succeeded, Message: "Movido para a Lixeira.") { SourcePath = source });
             }
-            return Task.FromResult(new OperationResult(OperationState.Completed, results));
+            return new OperationResult(OperationState.Completed, results);
         }
 
         public IReadOnlyList<RecycledItem> List(CancellationToken cancellationToken) => [.. Items];
