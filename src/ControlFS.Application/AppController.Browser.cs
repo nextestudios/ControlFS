@@ -262,6 +262,7 @@ public sealed partial class AppController
                 new MenuItem($"Copiar {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Copy), FileOpsUnavailable),
                 new MenuItem($"Mover {marked.Count} item(ns) para…", () => BeginTransferTo(pane, marked, FileOperationKind.Move), FileOpsUnavailable),
                 new MenuItem($"Compactar {marked.Count} item(ns)…", () => BeginCompress(pane, marked)),
+                new MenuItem($"Excluir {marked.Count} item(ns)…", () => BeginDelete(pane, marked), FileOpsUnavailable),
                 new MenuItem("Limpar marcação", () => pane.List.ClearSelection()),
             ]));
             return;
@@ -284,6 +285,7 @@ public sealed partial class AppController
             items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable));
             items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable));
             items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
+            items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable));
         }
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco."));
@@ -315,6 +317,7 @@ public sealed partial class AppController
         items.Add(new MenuItem("Copiar para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Copy), FileOpsUnavailable));
         items.Add(new MenuItem("Mover para…", () => BeginTransferTo(pane, [entry], FileOperationKind.Move), FileOpsUnavailable));
         items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry])));
+        items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable));
         if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane)));
         items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane)));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry)));
