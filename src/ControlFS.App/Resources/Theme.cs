@@ -1,6 +1,8 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using ControlFS.Core.Layout;
+using Windows.Foundation;
 using Windows.UI;
 
 namespace ControlFS.App.Resources;
@@ -26,20 +28,55 @@ public static class Theme
     public static readonly SolidColorBrush Scrim = new(ColorHelper.FromArgb(200, 0x08, 0x09, 0x0B));
     public static readonly SolidColorBrush Transparent = new(Colors.Transparent);
 
-    public const double SpaceXs = 4;
-    public const double SpaceS = 8;
-    public const double SpaceM = 16;
-    public const double SpaceL = 24;
-    public const double SpaceXl = 40;
+    /// <summary>
+    /// Faixa de layout atual (portátil, desktop, TV grande), escolhida pela janela a partir do tamanho efetivo, do DPI e
+    /// do fator de texto do Windows (ver <see cref="LayoutBreakpoints"/>). Os tokens abaixo derivam dela; as telas são
+    /// reconstruídas quando ela muda.
+    /// </summary>
+    public static LayoutProfile Layout { get; private set; } = LayoutProfile.Default;
 
-    public const double FontCaption = 14;
-    public const double FontBody = 18;
-    public const double FontItem = 20;
-    public const double FontTitle = 26;
+    /// <summary>Área do app em pixels efetivos (para limitar a altura de menus e diálogos ao que cabe na tela).</summary>
+    public static Size Viewport { get; private set; } = new(1920, 1080);
+
+    /// <summary>
+    /// Multiplicador extra das fontes. Só o gerador de capturas (--render-screens) usa, para simular o fator de texto do
+    /// Windows; no app normal é 1 porque o WinUI já aplica o fator de texto em cada texto.
+    /// </summary>
+    public static double SimulatedTextScale { get; private set; } = 1;
+
+    /// <summary>Troca a faixa de layout; devolve true se algo mudou (a janela então refaz as telas).</summary>
+    public static bool SetLayout(LayoutProfile profile, Size viewport, double simulatedTextScale = 1)
+    {
+        var changed = profile != Layout || simulatedTextScale != SimulatedTextScale;
+        Layout = profile;
+        Viewport = viewport;
+        SimulatedTextScale = simulatedTextScale;
+        return changed;
+    }
+
+    private static double Space(double value) => Layout.Snap(value * Layout.SpaceScale);
+
+    private static double Font(double value) => Math.Round(value * Layout.FontScale * SimulatedTextScale);
+
+    /// <summary>Medida fixa (largura máxima, altura de linha, ícone) na escala da faixa atual.</summary>
+    public static double Scaled(double value) => Layout.Snap(value * Math.Max(Layout.SpaceScale, Layout.FontScale * SimulatedTextScale));
+
+    public static double SpaceXs => Space(4);
+    public static double SpaceS => Space(8);
+    public static double SpaceM => Space(16);
+    public static double SpaceL => Space(24);
+    public static double SpaceXl => Space(40);
+
+    public static double FontCaption => Font(14);
+    public static double FontBody => Font(18);
+    public static double FontItem => Font(20);
+    public static double FontTitle => Font(26);
 
     public static readonly CornerRadius Radius = new(6);
-    public static readonly Thickness FocusRing = new(3);
-    public static readonly Thickness Hairline = new(1);
+    /// <summary>Anel de foco: 3 px a 1080p, mais grosso em telas grandes (visível a distância).</summary>
+    public static Thickness FocusRing => new(Layout.Snap(3 * Math.Max(1, Layout.SpaceScale)));
+
+    public static Thickness Hairline => new(Layout.Snap(1));
 
     /// <summary>
     /// Anel de foco único para lista, menus e diálogos: borda de destaque + fundo suave. A espessura não muda entre

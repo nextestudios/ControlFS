@@ -35,6 +35,7 @@ public static class ModalView
         return scrim;
     }
 
+    /// <summary>Largura máxima em pixels efetivos de 1080p, escalada pela faixa de layout (TV grande = cartão maior).</summary>
     private static Border Card(UIElement content, double maxWidth) => new()
     {
         Background = Theme.Surface,
@@ -42,12 +43,29 @@ public static class ModalView
         BorderThickness = Theme.Hairline,
         CornerRadius = Theme.Radius,
         Padding = new Thickness(Theme.SpaceL),
-        MaxWidth = maxWidth,
+        MaxWidth = Theme.Scaled(maxWidth),
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         Margin = new Thickness(Theme.SpaceM),
         Child = content,
     };
+
+    /// <summary>
+    /// Conteúdo rolável que nunca passa da altura da janela (menus longos em 1280×720): o cartão inteiro, com margens,
+    /// cabe na tela, e o item focado é trazido para a vista (<see cref="KeepInView"/>).
+    /// </summary>
+    private static ScrollViewer Scroll(UIElement content)
+    {
+        var chrome = 2 * (Theme.SpaceM + Theme.SpaceL + Theme.Hairline.Top);
+        return new ScrollViewer { Content = content, MaxHeight = Math.Max(160, Theme.Viewport.Height - chrome), VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+    }
+
+    /// <summary>
+    /// O foco é lógico (AppController), não do XAML: a cada quadro o modal é refeito, então o elemento focado pede
+    /// para ser mostrado, centralizado, assim que entra na árvore. Sem isso itens abaixo da dobra ficavam invisíveis.
+    /// </summary>
+    private static void KeepInView(FrameworkElement element) =>
+        element.Loaded += (_, _) => element.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false, VerticalAlignmentRatio = 0.5 });
 
     private static TextBlock Title(string text) => new()
     {
@@ -79,6 +97,7 @@ public static class ModalView
             CornerRadius = Theme.Radius,
         };
         Theme.ApplyFocus(border, focused);
+        if (focused) KeepInView(border);
         AutomationProperties.SetName(border, text + (enabled ? string.Empty : ", indisponível"));
         border.Tapped += (_, _) => onTap();
         return border;
@@ -96,7 +115,7 @@ public static class ModalView
             var secondary = !item.IsEnabled && focused ? "Indisponível: " + item.DisabledReason : item.Detail;
             stack.Children.Add(Choice(item.Label, focused, item.IsEnabled, () => app.PointerChooseModalOption(index), secondary));
         }
-        return Card(new ScrollViewer { Content = stack, MaxHeight = 640 }, 560);
+        return Card(Scroll(stack), 560);
     }
 
     private static Border BuildDialog(AppController app, DialogModal dialog)
@@ -127,7 +146,7 @@ public static class ModalView
             var label = option.Kind == DialogOptionKind.Toggle ? (option.IsChecked ? "☑ " : "☐ ") + option.Label : option.Label;
             stack.Children.Add(Choice(label, i == dialog.FocusIndex, true, () => app.PointerChooseModalOption(index), danger: option.Kind == DialogOptionKind.Danger));
         }
-        return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
+        return Card(Scroll(stack), 760);
     }
 
     private static Border BuildAbout(AboutModal about)
@@ -135,7 +154,7 @@ public static class ModalView
         var stack = new StackPanel { Spacing = Theme.SpaceS };
         if (Branding.Logo is { } logo)
         {
-            var image = new Image { Source = logo, Height = 72, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, Theme.SpaceM) };
+            var image = new Image { Source = logo, Height = Theme.Scaled(72), HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, Theme.SpaceM) };
             AutomationProperties.SetName(image, "ControlFS");
             stack.Children.Add(image);
         }
@@ -166,7 +185,7 @@ public static class ModalView
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, Theme.SpaceM, 0, 0),
         });
-        return Card(stack, 760);
+        return Card(Scroll(stack), 760);
     }
 
     private static (WeakReference<VirtualKeyboard>? Keyboard, int Caret, int Length) _lastCaret;
@@ -264,7 +283,7 @@ public static class ModalView
                 TextWrapping = TextWrapping.Wrap,
             });
         }
-        return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
+        return Card(Scroll(stack), 760);
     }
 
     /// <summary>Teste de controles: dispositivos, a última pressão em destaque e as anteriores (mais recente no topo).</summary>
@@ -310,7 +329,7 @@ public static class ModalView
         if (modal.Notice is { } notice)
             stack.Children.Add(new TextBlock { Text = notice, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap });
         stack.Children.Add(Choice($"Copiar relatório ({modal.Lines.Count} pressões)", false, true, app.CopyControllerReport));
-        return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
+        return Card(Scroll(stack), 760);
     }
 
     private static Border BuildKeyboard(AppController app, KeyboardModal modal)
@@ -343,11 +362,12 @@ public static class ModalView
         if (kb.ErrorMessage is { } error)
             stack.Children.Add(new TextBlock { Text = "⚠ " + error, FontSize = Theme.FontBody, Foreground = Theme.Danger, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, Theme.SpaceS, 0, 0) });
 
-        var grid = new Grid { ColumnSpacing = 6, RowSpacing = 6, Margin = new Thickness(0, Theme.SpaceM, 0, 0) };
+        var gap = Theme.Scaled(6);
+        var grid = new Grid { ColumnSpacing = gap, RowSpacing = gap, Margin = new Thickness(0, Theme.SpaceM, 0, 0) };
         for (var c = 0; c < VirtualKeyboardLayouts.Columns; c++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         for (var r = 0; r < kb.Rows.Count; r++)
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(56) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(Theme.Layout.KeyHeight) });
             var column = 0;
             for (var k = 0; k < kb.Rows[r].Count; k++)
             {
@@ -376,6 +396,7 @@ public static class ModalView
                         VerticalAlignment = VerticalAlignment.Center,
                     },
                 };
+                if (focused) KeepInView(cell);
                 AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
                 cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
                 Grid.SetRow(cell, r);
@@ -386,6 +407,6 @@ public static class ModalView
             }
         }
         stack.Children.Add(grid);
-        return Card(stack, 960);
+        return Card(Scroll(stack), 960);
     }
 }
