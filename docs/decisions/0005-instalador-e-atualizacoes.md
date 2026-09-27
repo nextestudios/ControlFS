@@ -37,7 +37,7 @@ assinatura com chave fora do repositório resolve isso sem depender de certifica
 
 - **Perda da chave privada:** ela existe apenas no secret do GitHub (não há cópia local). Se for perdida ou vazar, é
   preciso gerar outra, publicar uma versão com a nova chave pública e pedir aos usuários uma instalação manual dessa
-  versão. Rotação com duas chaves aceitas ainda não implementada.
+  versão. Rotação com mais de uma chave aceita e chave reserva: ver `0006`.
 - **Mesmos privilégios:** um processo malicioso já rodando como o usuário pode alterar o instalador em
   `%LOCALAPPDATA%\ControlFS\updates`; a reconferência antes de executar reduz, mas não elimina, essa janela.
 - **Congelamento:** quem bloquear o acesso ao GitHub impede atualizações (não há como forçar).

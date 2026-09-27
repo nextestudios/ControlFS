@@ -40,14 +40,22 @@ try {
 } finally { $key.Dispose() }
 [IO.File]::WriteAllText((Join-Path $dist "release-manifest.json.sig"), [Convert]::ToBase64String($signature) + "`n", [Text.Encoding]::ASCII)
 
-# Confere com a chave pública que o app usa de verdade (evita publicar com um secret trocado).
+# Confere com as chaves públicas que o app usa de verdade (evita publicar com um secret trocado). Durante uma rotação
+# (docs/decisions/0006) o app confia em mais de uma chave; a assinatura precisa conferir com uma delas.
 $trust = Get-Content -LiteralPath (Join-Path $root "src/ControlFS.Infrastructure.Updates/UpdateTrust.cs") -Raw
-$pem = [regex]::Match($trust, "-----BEGIN PUBLIC KEY-----[\s\S]+?-----END PUBLIC KEY-----").Value -replace '(?m)^\s+', ''
-$public = [Security.Cryptography.ECDsa]::Create()
-try {
-    $public.ImportFromPem($pem)
-    if (-not $public.VerifyData($bytes, $signature, [Security.Cryptography.HashAlgorithmName]::SHA256, [Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)) {
-        throw "A assinatura não confere com a chave pública do app (UpdateTrust.cs). Secret incorreto?"
-    }
-} finally { $public.Dispose() }
+$pems = @([regex]::Matches($trust, "-----BEGIN PUBLIC KEY-----[\s\S]+?-----END PUBLIC KEY-----") | ForEach-Object { $_.Value -replace '(?m)^\s+', '' })
+if (-not $pems) { throw "Nenhuma chave pública encontrada em UpdateTrust.cs." }
+$signedBy = $null
+foreach ($pem in $pems) {
+    $public = [Security.Cryptography.ECDsa]::Create()
+    try {
+        $public.ImportFromPem($pem)
+        if ($public.VerifyData($bytes, $signature, [Security.Cryptography.HashAlgorithmName]::SHA256, [Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)) {
+            $signedBy = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($public.ExportSubjectPublicKeyInfo())).ToLowerInvariant()
+            break
+        }
+    } finally { $public.Dispose() }
+}
+if (-not $signedBy) { throw "A assinatura não confere com nenhuma chave pública do app (UpdateTrust.cs). Secret incorreto?" }
+Write-Host "Assinado pela chave $signedBy ($($pems.Count) chave(s) confiável(is) no app)."
 Write-Host "Manifesto assinado e conferido: $json"

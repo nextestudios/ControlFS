@@ -8,28 +8,58 @@ namespace ControlFS.Infrastructure.Updates;
 
 /// <summary>
 /// Verifica a assinatura ECDSA P-256/SHA-256 (formato IEEE P1363, em base64) sobre os bytes EXATOS do manifesto e só
-/// então interpreta o JSON. Qualquer campo inesperado ou fora do formato é recusado.
+/// então interpreta o JSON. A assinatura vale se conferir com qualquer chave confiável de <see cref="UpdateTrust"/>
+/// (rotação, #86); chaves que não são P-256 nunca são usadas. Qualquer campo inesperado ou fora do formato é recusado.
 /// </summary>
 public static class ManifestVerifier
 {
     public const int MaxManifestBytes = 64 * 1024;
+    public const int MaxSignatureBytes = 1024;
+    private const string P256Oid = "1.2.840.10045.3.1.7";
 
     public static UpdateManifest Verify(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signatureFile, UpdateTrust trust)
     {
-        if (manifest.Length == 0 || manifest.Length > MaxManifestBytes || signatureFile.Length > 1024)
+        if (!IsSignedByTrustedKey(manifest, signatureFile, trust))
+            throw new UpdateException("Assinatura do manifesto inválida: a atualização foi recusada.");
+        return Parse(manifest, trust);
+    }
+
+    /// <summary>
+    /// A assinatura confere com alguma chave confiável. Tamanhos e formato inválidos lançam <see cref="UpdateException"/>;
+    /// assinatura bem formada que nenhuma chave confere devolve false (o serviço tenta então uma release anterior, que
+    /// ainda pode ter sido assinada por uma chave que esta cópia conhece).
+    /// </summary>
+    public static bool IsSignedByTrustedKey(ReadOnlySpan<byte> manifest, ReadOnlySpan<byte> signatureFile, UpdateTrust trust)
+    {
+        if (manifest.Length == 0 || manifest.Length > MaxManifestBytes || signatureFile.Length > MaxSignatureBytes)
             throw new UpdateException("Manifesto de atualização com tamanho inválido.");
+        if (trust.PublicKeysPem.Count is 0 or > UpdateTrust.MaxTrustedKeys)
+            throw new UpdateException("Configuração de chaves de atualização inválida.");
 
         byte[] signature;
         try { signature = Convert.FromBase64String(Encoding.ASCII.GetString(signatureFile).Trim()); }
         catch (FormatException ex) { throw new UpdateException("Assinatura do manifesto em formato inválido.", ex); }
+        if (signature.Length != 64) throw new UpdateException("Assinatura do manifesto em formato inválido.");
 
-        using (var ecdsa = ECDsa.Create())
+        foreach (var pem in trust.PublicKeysPem)
         {
-            ecdsa.ImportFromPem(trust.PublicKeyPem);
-            if (!ecdsa.VerifyData(manifest, signature, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
-                throw new UpdateException("Assinatura do manifesto inválida: a atualização foi recusada.");
+            using var ecdsa = ECDsa.Create();
+            try
+            {
+                ecdsa.ImportFromPem(pem);
+            }
+            catch (Exception ex) when (ex is ArgumentException or CryptographicException)
+            {
+                continue; // chave malformada nunca confere nada
+            }
+            if (ecdsa.ExportParameters(includePrivateParameters: false).Curve.Oid.Value != P256Oid) continue;
+            if (ecdsa.VerifyData(manifest, signature, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation)) return true;
         }
+        return false;
+    }
 
+    private static UpdateManifest Parse(ReadOnlySpan<byte> manifest, UpdateTrust trust)
+    {
         try
         {
             using var doc = JsonDocument.Parse(manifest.ToArray(), new JsonDocumentOptions { MaxDepth = 8 });
