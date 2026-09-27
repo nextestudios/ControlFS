@@ -212,22 +212,27 @@ public static class ModalView
                 var enabled = kb.IsKeyEnabled(key);
                 var row = r;
                 var keyIndex = k;
+                var isDone = key.Kind == KeyKind.Done;
+                var isCurrentPage = VirtualKeyboardLayouts.PageOf(key) == kb.Page;
+                var isActiveShift = key.Kind == KeyKind.Shift && kb.Shift != ShiftState.Off;
+                var label = key.Kind == KeyKind.Shift && kb.Shift == ShiftState.Locked ? "⇪" : kb.DisplayLabel(key);
                 var cell = new Border
                 {
-                    Background = focused ? Theme.AccentSoft : Theme.SurfaceRaised,
-                    BorderBrush = focused ? Theme.Accent : Theme.Border,
+                    Background = focused ? Theme.AccentSoft : key.IsFunction ? Theme.Surface : Theme.SurfaceRaised,
+                    BorderBrush = focused || isDone ? Theme.Accent : Theme.Border,
                     BorderThickness = focused ? Theme.FocusRing : Theme.Hairline,
                     CornerRadius = Theme.Radius,
                     Child = new TextBlock
                     {
-                        Text = kb.DisplayLabel(key),
-                        FontSize = Theme.FontItem,
-                        Foreground = enabled ? Theme.Text : Theme.TextDisabled,
+                        Text = label,
+                        FontSize = key.IsFunction && label.Length > 3 ? Theme.FontBody : Theme.FontItem,
+                        FontWeight = isDone || isCurrentPage || isActiveShift ? FontWeights.SemiBold : FontWeights.Normal,
+                        Foreground = !enabled ? Theme.TextDisabled : isCurrentPage || isActiveShift || isDone ? Theme.Accent : Theme.Text,
                         HorizontalAlignment = HorizontalAlignment.Center,
                         VerticalAlignment = VerticalAlignment.Center,
                     },
                 };
-                AutomationProperties.SetName(cell, key.Name + (enabled ? string.Empty : ", indisponível neste campo"));
+                AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
                 cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
                 Grid.SetRow(cell, r);
                 Grid.SetColumn(cell, column);
@@ -237,6 +242,6 @@ public static class ModalView
             }
         }
         stack.Children.Add(grid);
-        return Card(stack, 880);
+        return Card(stack, 960);
     }
 }

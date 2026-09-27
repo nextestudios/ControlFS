@@ -18,6 +18,8 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Alt+Tab para outro app: botões do controle não fazem nada no ControlFS até voltar.
 - [ ] 1280×720, 1280×800, 1920×1080 e 4K com escala 100–200%: nenhuma ação essencial fica inacessível.
 - [ ] Narrador lê o nome dos itens e das teclas do teclado virtual.
+- [ ] Teclado virtual em 1920×1080 e num portátil (1280×800): as seis linhas cabem sem rolagem, a tecla focada é clara a 3 m e `Concluir`/página atual/Maiúsculas se destacam.
+- [ ] Digitar "Relatório ação 2026" só com direcional e Sul, em cada campo: nova pasta, renomear, senha de arquivo, nome do compactado.
 
 ## Formatos, compactar e abrir com o Windows
 

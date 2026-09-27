@@ -28,7 +28,15 @@ public static class KeyboardDriver
         }
     }
 
+    /// <summary>Navega até a tecla e confirma. Se a tecla estiver em outra página (ex.: Limpar e idioma em "…"), troca de página antes.</summary>
     public static void Press(Action<InputAction> send, Func<VirtualKeyboard> kb, Func<VirtualKey, bool> target)
+    {
+        for (var attempt = 0; attempt < 3 && !kb().Rows.Any(r => r.Any(target)); attempt++)
+            MoveToAndConfirm(send, kb, k => k.Kind == NextPage(kb().Page));
+        MoveToAndConfirm(send, kb, target);
+    }
+
+    private static void MoveToAndConfirm(Action<InputAction> send, Func<VirtualKeyboard> kb, Func<VirtualKey, bool> target)
     {
         MoveTo(send, kb, target);
         send(InputAction.Confirm);
@@ -39,16 +47,18 @@ public static class KeyboardDriver
         for (var attempt = 0; attempt < 3; attempt++)
         {
             if (kb().Rows.Any(r => r.Any(k => k.Kind == KeyKind.Character && k.Text == character))) return true;
-            var next = kb().Page switch
-            {
-                KeyboardPage.Letters => KeyKind.PageAccents,
-                KeyboardPage.Accents => KeyKind.PageSymbols,
-                _ => KeyKind.PageLetters,
-            };
-            Press(send, kb, k => k.Kind == next);
+            var next = NextPage(kb().Page);
+            MoveToAndConfirm(send, kb, k => k.Kind == next);
         }
         return false;
     }
+
+    private static KeyKind NextPage(KeyboardPage page) => page switch
+    {
+        KeyboardPage.Letters => KeyKind.PageAccents,
+        KeyboardPage.Accents => KeyKind.PageSymbols,
+        _ => KeyKind.PageLetters,
+    };
 
     private static void MoveTo(Action<InputAction> send, Func<VirtualKeyboard> kb, Func<VirtualKey, bool> target)
     {
