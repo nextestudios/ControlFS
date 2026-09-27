@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 
 namespace ControlFS.Infrastructure.Windows.Settings;
@@ -33,7 +34,7 @@ public sealed class JsonSettingsStore(string directory) : ISettingsStore
             var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), Options) ?? throw new InvalidDataException("Vazio.");
             if (settings.SchemaVersion > AppSettings.CurrentSchemaVersion)
                 return new(new AppSettings(), false, "Configuração criada por versão mais nova; usando padrões sem sobrescrever o arquivo.");
-            return new(settings with { SchemaVersion = AppSettings.CurrentSchemaVersion }, false, null);
+            return new(Migrate(settings), false, null);
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)
         {
@@ -41,6 +42,14 @@ public sealed class JsonSettingsStore(string directory) : ISettingsStore
             try { File.Move(FilePath, backup); } catch (IOException) { }
             return new(new AppSettings(), true, $"Configuração corrompida foi preservada em {Path.GetFileName(backup)} e os padrões foram restaurados.");
         }
+    }
+
+    private static AppSettings Migrate(AppSettings settings)
+    {
+        // v1 não tinha "automático": Generic era só o padrão, não uma escolha. Passa a seguir o controle ativo.
+        if (settings.SchemaVersion < 2 && settings.LabelStyle == ButtonLabelStyle.Generic)
+            settings = settings with { LabelStyle = ButtonLabelStyle.Automatic };
+        return settings with { SchemaVersion = AppSettings.CurrentSchemaVersion };
     }
 
     public void Save(AppSettings settings)

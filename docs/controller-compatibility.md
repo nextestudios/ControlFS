@@ -25,4 +25,5 @@ dotnet run --project tools/ControlFS.InputProbe -- 30
 dotnet run --project tools/ControlFS.InputProbe -- 30 --east-confirms
 ```
 
-Registre modelo, transporte, modo, firmware (se conhecido), versão do Windows e a saída do probe nesta tabela.
+Registre modelo, transporte, modo, firmware (se conhecido), versão do Windows e a saída do probe nesta tabela,
+incluindo a `família` detectada (Xbox, PlayStation, Nintendo ou Generic) — ela decide as legendas no modo automático.

@@ -31,7 +31,11 @@ public sealed class InputHost : IInputSink, IDisposable
     {
         _app = app;
         Router = new InputRouter(new ActionMap(app.Settings.Convention), InputSettings.Default, app.Handle);
-        Router.ActiveDeviceChanged += _ => StatusChanged?.Invoke();
+        Router.ActiveDeviceChanged += _ =>
+        {
+            app.SetActiveController(ActiveDevice?.Family); // troca de controle muda as legendas na hora
+            StatusChanged?.Invoke();
+        };
         app.ModalContextChanged += () =>
         {
             Router.LatchHeld();

@@ -28,7 +28,7 @@ while (clock.Elapsed < end)
     Thread.Sleep(8); // cadência ativa ~120 Hz; o app reduz a cadência em segundo plano
 }
 Console.WriteLine($"Dispositivos no fim: {backend.Devices.Count}");
-foreach (var d in backend.Devices) Console.WriteLine($"  {d.SessionKey} {d.Name} [{d.TypeName}] vid={d.VendorId:X4} pid={d.ProductId:X4} gamepad={d.IsGamepad} virtual={d.IsVirtual} guid={d.StableId}");
+foreach (var d in backend.Devices) Console.WriteLine($"  {d.SessionKey} {d.Name} [{d.TypeName}] família={d.Family} vid={d.VendorId:X4} pid={d.ProductId:X4} gamepad={d.IsGamepad} virtual={d.IsVirtual} guid={d.StableId}");
 return 0;
 
 sealed class ProbeSink(InputRouter router) : IInputSink
@@ -40,7 +40,7 @@ sealed class ProbeSink(InputRouter router) : IInputSink
     }
 
     public void OnDeviceAdded(InputDeviceInfo device) =>
-        Console.WriteLine($"+ conectado: {device.Name} ({device.SessionKey}, {device.TypeName}, gamepad={device.IsGamepad})");
+        Console.WriteLine($"+ conectado: {device.Name} ({device.SessionKey}, {device.TypeName}, família={device.Family}, gamepad={device.IsGamepad})");
 
     public void OnDeviceRemoved(string deviceKey)
     {

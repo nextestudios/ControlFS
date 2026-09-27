@@ -32,8 +32,14 @@ Guide/Home não é mapeado. L3/R3 não são usados.
 - Confirmar/voltar/menus disparam uma vez por transição; **nunca repetem** (`InputRouterTests`).
 - Navegação repete após 380 ms, acelerando de 130 ms até 45 ms.
 - Ao abrir/fechar modal, botões mantidos ficam travados até serem soltos — o botão que abriu o diálogo não o aceita.
-- Somente um dispositivo comanda a UI; o primeiro a pressionar assume. Com modal sensível aberto (conflito, substituir,
-  sair), outro dispositivo não assume. Desconexão do ativo libera a vaga; operações em disco continuam.
+- Somente um dispositivo comanda a UI; o primeiro a pressionar assume. Outro controle assume com uma nova pressão
+  quando o ativo não está segurando nada (troca a quente; evita ação dupla de um par físico+virtual). Com modal sensível
+  aberto (conflito, substituir, sair), outro dispositivo não assume. Desconexão do ativo libera a vaga; operações em
+  disco continuam.
+- Família do controle (`ControllerFamilies.Detect`): tipo de gamepad do SDL (`xbox360`/`xboxone` → Xbox,
+  `ps3`/`ps4`/`ps5` → PlayStation, `switchpro`/`joycon*`/`gamecube` → Nintendo); se o SDL não souber, o vendor ID
+  (Microsoft, Sony, Nintendo); senão, genérico. Joystick sem perfil é sempre genérico. Nunca pelo nome do dispositivo.
+  Só muda legendas. "Legendas: automáticas" (padrão) segue o controle ativo; o menu pode fixar uma família.
 - Janela sem foco: roteamento suspenso; ao voltar, estados limpos e só novas transições contam.
 - Analógico: zona morta 0,25, ativação 0,55, liberação 0,40 (histerese), dominância 1,25 (diagonais ambíguas ignoradas).
 
@@ -55,5 +61,5 @@ Guide/Home não é mapeado. L3/R3 não são usados.
 
 ## Pendente
 
-Troca explícita de dispositivo ativo pela UI, recuperação após suspensão do sistema (testar), duplicidade físico+virtual
+Troca explícita de dispositivo ativo pela UI, preferência de físico sobre virtual na troca a quente (ex.: Steam Input), recuperação após suspensão do sistema (testar), duplicidade físico+virtual
 com diagnóstico, assistente para controles sem perfil, remapeamento, rumble opcional.

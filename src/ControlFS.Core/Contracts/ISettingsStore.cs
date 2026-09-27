@@ -4,11 +4,12 @@ namespace ControlFS.Core.Contracts;
 
 public sealed record AppSettings
 {
-    public const int CurrentSchemaVersion = 1;
+    /// <summary>2: <see cref="ButtonLabelStyle.Automatic"/> passou a ser o padrão (antes era Generic).</summary>
+    public const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion { get; init; } = CurrentSchemaVersion;
     public ConfirmBackConvention Convention { get; init; } = ConfirmBackConvention.SouthConfirms;
-    public ButtonLabelStyle LabelStyle { get; init; } = ButtonLabelStyle.Generic;
+    public ButtonLabelStyle LabelStyle { get; init; } = ButtonLabelStyle.Automatic;
     public bool ShowHidden { get; init; }
     public bool ReducedMotion { get; init; }
     public string? LastLocation { get; init; }

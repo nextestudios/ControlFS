@@ -1,23 +1,25 @@
+using ControlFS.Core.Input;
+
 namespace ControlFS.Core.Actions;
 
 /// <summary>Legendas por estilo. Somente rótulos: o comportamento segue a posição física e a convenção.</summary>
 public static class ButtonGlyphs
 {
-    public static string For(PhysicalControl control, ButtonLabelStyle style) => style switch
+    public static string For(PhysicalControl control, ControllerFamily family) => family switch
     {
-        ButtonLabelStyle.Xbox => control switch
+        ControllerFamily.Xbox => control switch
         {
             PhysicalControl.South => "A", PhysicalControl.East => "B", PhysicalControl.West => "X", PhysicalControl.North => "Y",
             PhysicalControl.LeftShoulder => "LB", PhysicalControl.RightShoulder => "RB", PhysicalControl.LeftTrigger => "LT", PhysicalControl.RightTrigger => "RT",
             PhysicalControl.Start => "☰", PhysicalControl.Select => "⧉", _ => Direction(control),
         },
-        ButtonLabelStyle.PlayStation => control switch
+        ControllerFamily.PlayStation => control switch
         {
             PhysicalControl.South => "✕", PhysicalControl.East => "○", PhysicalControl.West => "□", PhysicalControl.North => "△",
             PhysicalControl.LeftShoulder => "L1", PhysicalControl.RightShoulder => "R1", PhysicalControl.LeftTrigger => "L2", PhysicalControl.RightTrigger => "R2",
             PhysicalControl.Start => "Options", PhysicalControl.Select => "Create", _ => Direction(control),
         },
-        ButtonLabelStyle.Nintendo => control switch
+        ControllerFamily.Nintendo => control switch
         {
             PhysicalControl.South => "B", PhysicalControl.East => "A", PhysicalControl.West => "Y", PhysicalControl.North => "X",
             PhysicalControl.LeftShoulder => "L", PhysicalControl.RightShoulder => "R", PhysicalControl.LeftTrigger => "ZL", PhysicalControl.RightTrigger => "ZR",

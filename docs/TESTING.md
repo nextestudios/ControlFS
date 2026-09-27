@@ -42,4 +42,9 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 ## Controles da matriz
 
 Xbox (USB/BT), DualShock 4, DualSense, Switch Pro, 8BitDo, um genérico. Para cada um: navegação, confirmar/voltar na
-posição certa, gatilhos (página), Start (menu), reconexão.
+posição certa, gatilhos (página), Start (menu), reconexão, família detectada no probe e legendas certas em "Legendas: automáticas".
+
+- [ ] Troca a quente: com um Xbox ativo, apertar um botão num DualSense passa o comando para ele e as legendas mudam
+      sem reiniciar; voltar ao Xbox faz o mesmo.
+- [ ] Segurar o direcional no controle ativo e apertar um botão no outro: o outro **não** assume até o primeiro ser solto.
+- [ ] Menu → Legendas fixada em "PlayStation" com um Xbox ativo: legendas continuam PlayStation.
