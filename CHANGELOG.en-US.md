@@ -5,6 +5,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 ## [Unreleased]
 ### What's new
 - **Text selection** on the on-screen keyboard: **Select all** on the `…` page (or Ctrl+A), the selection is highlighted and underlined, typing replaces it, `⌫` deletes it and `◀ ▶` drop it. Rename opens with the name before the extension selected (`example-file.zip` → type `novo` → `novo.zip`). (#44)
+- **Drive types**: local disk, USB stick, optical drive and network drive each get their own symbol and text on the home screen and in the folder picker (with label, letter and free/total space), and Narrator reads the type. Plugging in or removing a USB stick while the app is open updates the list without restarting and keeps the focus on the same place. (#25)
 
 ## [0.4.0-alpha.1]
 ### What's new

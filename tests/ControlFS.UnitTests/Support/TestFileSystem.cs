@@ -14,7 +14,10 @@ public sealed class TestFileSystem(string root) : IFileSystemProvider
 
     public Dictionary<string, TimeSpan> Delays { get; } = new(StringComparer.Ordinal);
 
-    public IReadOnlyList<FileEntry> GetPlaces() => [new FileEntry("place:" + root, "Pasta de teste", EntryKind.KnownFolder, FullPath: root)];
+    /// <summary>Unidades simuladas depois da pasta de teste (pendrive "conectado" durante o teste).</summary>
+    public List<FileEntry> Drives { get; } = [];
+
+    public IReadOnlyList<FileEntry> GetPlaces() => [new FileEntry("place:" + root, "Pasta de teste", EntryKind.KnownFolder, FullPath: root), .. Drives];
 
     public async Task<DirectoryListing> ListAsync(string path, bool includeHidden, CancellationToken cancellationToken)
     {

@@ -25,7 +25,7 @@ namespace ControlFS.App.Views;
 /// Janela única: cabeçalho (local + estado), lista virtualizada, rodapé de comandos contextuais
 /// e camada modal. Toda interação vira InputAction no AppController.
 /// </summary>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost e o serviço de atualização são descartados no evento Closed da janela.")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost, o serviço de atualização, os ícones e o monitor de unidades são descartados no evento Closed da janela.")]
 public sealed class MainWindow : Window
 {
     private readonly AppController _app;
@@ -34,6 +34,7 @@ public sealed class MainWindow : Window
     private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
     private bool _layoutPinned;
     private readonly ShellIconProvider _iconProvider = new();
+    private readonly DriveWatcher _drives = new();
     private readonly IconLoader _icons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
     private HashSet<string> _specialFolders = new(StringComparer.OrdinalIgnoreCase);
@@ -120,6 +121,7 @@ public sealed class MainWindow : Window
             _input.Dispose();
             _updates?.Dispose();
             _iconProvider.Dispose();
+            _drives.Dispose();
         };
 
         _app.Changed += Render;
@@ -134,6 +136,8 @@ public sealed class MainWindow : Window
             _shownItems = null; // recria as linhas no novo modelo
         };
         _app.Start();
+        // Pendrive conectado ou removido com o app aberto: os locais se atualizam sem reiniciar.
+        _drives.Changed += () => DispatcherQueue.TryEnqueue(_app.RefreshDrives);
         ApplyLayout();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
         AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");

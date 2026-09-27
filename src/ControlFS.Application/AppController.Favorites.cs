@@ -93,6 +93,26 @@ public sealed partial class AppController
         PlacesFocus = Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
     }
 
+    /// <summary>
+    /// Unidades mudaram (pendrive conectado/removido, unidade de rede mapeada): refaz os locais sem reiniciar. O foco fica
+    /// no mesmo local quando ele continua na lista; favoritos numa unidade que voltou ficam disponíveis de novo.
+    /// </summary>
+    public void RefreshDrives()
+    {
+        var focusedId = PlacesFocus >= 0 && PlacesFocus < Places.Count ? Places[PlacesFocus].Id : null;
+        Places = BuildPlaces();
+        var index = focusedId is null ? -1 : IndexOfPlace(focusedId);
+        PlacesFocus = index >= 0 ? index : Math.Clamp(PlacesFocus, 0, Math.Max(0, Places.Count - 1));
+        RaiseChanged();
+    }
+
+    private int IndexOfPlace(string id)
+    {
+        for (var i = 0; i < Places.Count; i++)
+            if (Places[i].Id == id) return i;
+        return -1;
+    }
+
     /// <summary>Item de menu que adiciona ou remove <paramref name="path"/> dos favoritos.</summary>
     private MenuItem FavoriteToggleItem(string path, string? label = null) => IsFavorite(path)
         ? new MenuItem(label is null ? "Remover dos favoritos" : $"Remover {label} dos favoritos", () => RemoveFavorite(path))
