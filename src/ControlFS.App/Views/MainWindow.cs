@@ -39,6 +39,7 @@ public sealed class MainWindow : Window
     private readonly Grid _overlay = new();
     private IReadOnlyList<FileEntry>? _shownItems;
     private HashSet<string> _shownSelection = [];
+    private object? _shownClipboard;
     private bool _fullScreen;
 
     public MainWindow()
@@ -117,7 +118,7 @@ public sealed class MainWindow : Window
         _list.ContainerContentChanging += (_, args) =>
         {
             if (args.InRecycleQueue || args.Item is not FileEntry entry) return;
-            EntryRowTemplate.Fill(args.ItemContainer, entry, _shownSelection.Contains(entry.Id));
+            EntryRowTemplate.Fill(args.ItemContainer, entry, _shownSelection.Contains(entry.Id), _app.IsCut(entry));
         };
         _list.ItemClick += (_, e) =>
         {
@@ -173,7 +174,7 @@ public sealed class MainWindow : Window
                 UpdateState.Ready => $"⬆ Atualização {_app.ReadyUpdate!.Manifest.Version} pronta (Menu → Atualizações)",
                 UpdateState.Downloading => "⬆ Baixando atualização…",
                 UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
-                _ => string.Empty,
+                _ => _app.Clipboard is { } clip ? $"📋 {clip.Paths.Count} item(ns) {(clip.IsCut ? "recortado(s)" : "copiado(s)")} — Ações → Colar" : string.Empty,
             }
             : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State == OperationState.WaitingForUser ? "aguardando você" : "em andamento")})";
 
@@ -181,8 +182,9 @@ public sealed class MainWindow : Window
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
-        if (!ReferenceEquals(items, _shownItems) || !selection.SetEquals(_shownSelection))
+        if (!ReferenceEquals(items, _shownItems) || !selection.SetEquals(_shownSelection) || !ReferenceEquals(_app.Clipboard, _shownClipboard))
         {
+            _shownClipboard = _app.Clipboard;
             _shownItems = items;
             _shownSelection = selection;
             _list.ItemsSource = items.ToList();
