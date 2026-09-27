@@ -40,6 +40,11 @@ Guide/Home não é mapeado. L3/R3 não são usados.
   `ps3`/`ps4`/`ps5` → PlayStation, `switchpro`/`joycon*`/`gamecube` → Nintendo); se o SDL não souber, o vendor ID
   (Microsoft, Sony, Nintendo); senão, genérico. Joystick sem perfil é sempre genérico. Nunca pelo nome do dispositivo.
   Só muda legendas. "Legendas: automáticas" (padrão) segue o controle ativo; o menu pode fixar uma família.
+- Legendas do rodapé: `AppController.Hints` (ações válidas no contexto) passam por `IControllerPromptProvider`
+  (`ControllerPromptProvider`), que devolve glifo + família, tecla e texto para o Narrador. Usa a convenção
+  confirmar/voltar (`ActionMap.ControlFor`), então trocar a convenção troca comportamento e legenda. Sem controle ativo,
+  ou depois de uma tecla do teclado físico, mostra teclas; a próxima pressão do controle volta aos glifos. A UI nunca
+  testa nomes de dispositivo.
 - Janela sem foco: roteamento suspenso; ao voltar, estados limpos e só novas transições contam.
 - Analógico: zona morta 0,25, ativação 0,55, liberação 0,40 (histerese), dominância 1,25 (diagonais ambíguas ignoradas).
 

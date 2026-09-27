@@ -33,8 +33,20 @@ public static class ButtonGlyphs
         },
     };
 
-    /// <summary>Tecla física equivalente (teclado), usada nas legendas quando não há controle ativo.</summary>
-    public static string KeyboardFor(InputAction action) => action switch
+    /// <summary>
+    /// Tecla física equivalente (teclado), usada nas legendas quando não há controle ativo. No teclado virtual
+    /// (<paramref name="typing"/>) as teclas mudam: Enter conclui, ←/→ movem o cursor, Backspace apaga.
+    /// </summary>
+    public static string KeyboardFor(InputAction action, bool typing = false) => typing switch
+    {
+        true when action == InputAction.OpenAppMenu => "Enter",
+        true when action == InputAction.PreviousRegion => "←",
+        true when action == InputAction.NextRegion => "→",
+        true when action == InputAction.ToggleSelection => "⌫",
+        _ => KeyboardKey(action),
+    };
+
+    private static string KeyboardKey(InputAction action) => action switch
     {
         InputAction.Confirm => "Enter",
         InputAction.Back => "Esc",

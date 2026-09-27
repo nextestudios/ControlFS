@@ -220,14 +220,13 @@ public sealed class MainWindow : Window
         else
             _status.Text = _app.StatusMessage ?? string.Empty;
 
-        // Rodapé: somente ações válidas no contexto, com o rótulo do dispositivo em uso
+        // Rodapé: somente ações válidas no contexto, com a legenda do dispositivo em uso (glifo do controle ou tecla)
         _hints.Children.Clear();
-        var map = new ActionMap(_app.Settings.Convention);
-        foreach (var hint in _app.Hints)
+        foreach (var prompt in _app.Prompts)
         {
             var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
-            if (device is not null && map.ControlFor(hint.Action) is { } control)
-                chip.Children.Add(ControllerGlyphs.Create(ControllerButtons.From(control), _app.PromptFamily, Theme.FontCaption * 1.6));
+            if (prompt is { Button: { } button, Family: { } family })
+                chip.Children.Add(ControllerGlyphs.Create(button, family, Theme.FontCaption * 1.6));
             else
                 chip.Children.Add(new Border
                 {
@@ -236,9 +235,10 @@ public sealed class MainWindow : Window
                     BorderThickness = Theme.Hairline,
                     CornerRadius = Theme.Radius,
                     Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2),
-                    Child = new TextBlock { Text = ButtonGlyphs.KeyboardFor(hint.Action), FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
+                    Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
                 });
-            chip.Children.Add(new TextBlock { Text = hint.Label, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center });
+            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center });
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, prompt.AccessibilityText);
             _hints.Children.Add(chip);
         }
 
