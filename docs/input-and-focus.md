@@ -61,6 +61,13 @@ Guide/Home não é mapeado. L3/R3 não são usados.
   campos conhecidos, faixas e controles obrigatórios conferidos) e `JsonControllerProfileStore` (`<dados>\controllers`,
   um arquivo por GUID ou vendor/product, gravação atômica + `.bak`). Aplicado por GUID e, se ele mudar, por vendor/product.
   Substituir um perfil sempre pede confirmação.
+- Controle de dois botões: um perfil sem Norte (Ações) e/ou sem Start (Menu) ganha `LongPressFallback` (Core, testado
+  com o `InputRouter`). O `InputHost` passa os controles do perfil pelo `LongPressTranslator`: Confirmar/Voltar só saem
+  ao soltar (pressão curta igual a antes) e, mantidos por 0,6 s, viram uma pressão de Norte/Start — Ações/Menu — e o
+  soltar não gera mais nada. Só vale para o que falta no perfil; gamepads e perfis completos não mudam. O rodapé mostra
+  Ações/Menu no glifo de Confirmar/Voltar com "(segure)". Consequência: nesses controles, segurar Sul sobre `⌫ ◀ ▶` do
+  teclado virtual não repete (abre Ações = Maiúsculas).
+  Na tela Teste de controles o substituto não age: cada pressão aparece como o controle do perfil.
 
 ## Rodapé por contexto
 

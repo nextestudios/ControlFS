@@ -147,7 +147,32 @@ public sealed partial class AppController
     public IReadOnlyList<Hint> Hints => BuildHints();
 
     /// <summary>Legendas do rodapé para o dispositivo em uso (glifo do controle ativo ou tecla do teclado).</summary>
-    public IReadOnlyList<ControllerPrompt> Prompts => [.. BuildHints().Select(h => PromptProvider.For(h.Action, h.Label))];
+    public IReadOnlyList<ControllerPrompt> Prompts => [.. BuildHints().Select(h => LongPressPrompt(h) ?? PromptProvider.For(h.Action, h.Label))];
+
+    /// <summary>
+    /// Substituto de dois botões do controle ativo (perfil sem Ações e/ou Menu; null: nenhum). Publicado pela camada de
+    /// entrada: o rodapé mostra Ações/Menu no botão de Confirmar/Voltar com "segure".
+    /// </summary>
+    public Core.Input.Mapping.LongPressFallback? LongPressFallback { get; private set; }
+
+    public void SetLongPressFallback(Core.Input.Mapping.LongPressFallback? fallback)
+    {
+        if (LongPressFallback == fallback) return;
+        LongPressFallback = fallback;
+        RaiseChanged();
+    }
+
+    private ControllerPrompt? LongPressPrompt(Hint hint)
+    {
+        if (ActiveController is null || LongPressFallback is not { } fallback) return null;
+        InputAction? button = hint.Action switch
+        {
+            InputAction.OpenContextMenu when fallback.ConfirmOpensActions => InputAction.Confirm,
+            InputAction.OpenAppMenu when fallback.BackOpensMenu => InputAction.Back,
+            _ => null,
+        };
+        return button is { } held ? PromptProvider.For(held, $"{hint.Label} (segure)") with { Action = hint.Action } : null;
+    }
 
     public IControllerPromptProvider PromptProvider { get; }
 

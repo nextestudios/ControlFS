@@ -26,7 +26,7 @@ O rodapé mostra os botões do controle em uso (por exemplo `A Abrir` no Xbox, `
 
 O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma linha de funções (`⇧` Maiúsculas · `ABC` letras · `@#:` símbolos · espaço · `⌫`) e uma linha inferior (cursor `◀ ▶` · `…` mais · Cancelar · **Concluir**). `…` abre os acentos, **Limpar** e a troca PT-BR/EN. Maiúsculas: um toque deixa a próxima letra maiúscula, o segundo trava (`⇪`), o terceiro desliga. Teclas que o campo não aceita (ex.: `\ / : * ? " < > |` em nomes de arquivo) ficam apagadas. Segurar Oeste, LB/RB ou Sul sobre `⌫ ◀ ▶` repete (e acelera quanto mais tempo segurar); Concluir e as demais teclas nunca repetem. O cursor é a barra na cor de destaque no campo de texto; LT/RT (ou Home/End) levam ao início ou ao fim, e movê-lo nunca muda o texto, a página nem as maiúsculas.
 
-Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
+Toda ação essencial está nos menus (Start / Norte). Num joystick mapeado só com direcional, Confirmar e Voltar, **segure Confirmar** (0,6 s) para abrir Ações e **segure Voltar** para abrir o Menu; pressões curtas continuam confirmando e voltando, e o rodapé mostra "(segure)" nesses botões.
 
 ### Teste de controles
 
@@ -39,7 +39,7 @@ Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos co
 1. Segure qualquer botão do joystick por 2 segundos (ou, pelo teclado ou outro controle, Menu → **Controles sem perfil…** → Configurar).
 2. Solte tudo por um segundo enquanto o ControlFS mede cada eixo em repouso.
 3. Aperte o que quiser para **Cima, Baixo, Esquerda, Direita, Confirmar e Voltar**, um por vez, soltando entre os passos. Direcionais, alavancas (inclusive eixos invertidos) e botões funcionam; uma entrada já usada é recusada.
-4. Depois vêm os botões opcionais (Ações, Menu, Marcar, regiões, páginas, Buscar). Recomenda-se mapear **Ações** e **Menu**. Aperte o Voltar do joystick (ou Enter) para pular um deles.
+4. Depois vêm os botões opcionais (Ações, Menu, Marcar, regiões, páginas, Buscar). Recomenda-se mapear **Ações** e **Menu**; sem eles, segurar Confirmar abre Ações e segurar Voltar abre o Menu. Aperte o Voltar do joystick (ou Enter) para pular um deles.
 5. **Teste** o mapeamento novo: o joystick já comanda a tela; escolha **Salvar perfil**, **Refazer um passo…** ou **Cancelar sem salvar**.
 
 Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo opcional. Sem nenhuma entrada por 20 segundos o assistente se cancela. Se o joystick já tem perfil, salvar pergunta antes de substituir (começando em "Cancelar"); cancelar em qualquer momento mantém o perfil salvo. O perfil volta a valer sempre que esse joystick é conectado, inclusive ao reabrir o ControlFS. Menu → Controles sem perfil também exporta um perfil para uma pasta e importa um (`.json`, até 64 KB, validado; qualquer coisa inesperada é recusada).
