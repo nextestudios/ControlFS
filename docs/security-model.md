@@ -107,6 +107,11 @@ não é confiável.
   disfarçados (cabeçalho `MZ`), fora da thread de UI. A decodificação acontece nas threads do próprio Media Foundation;
   a aplicação só lê um retrato do estado a cada quadro. Os controles de mídia do sistema ficam desligados, fechar para o
   som e libera o arquivo na hora (`AudioPreviewJourneyTests`, `MediaPlayerIntegrationTests`).
+- O reprodutor de vídeo (#61, #170) segue as mesmas regras do áudio (fluxo local, executáveis disfarçados recusados,
+  só codecs do Windows, fechar para e libera o arquivo). Legendas externas só são usadas quando são arquivos comuns
+  (sem link/junção), com o mesmo nome do vídeo, na mesma pasta e com até 5 MB, lidas como fluxo local pelo próprio
+  Windows. "Continuar de onde parou" guarda em `playback.json` só um resumo SHA-256 (caminho + tamanho + data) e os
+  segundos, no máximo 500 entradas; arquivo ilegível recomeça vazio (`VideoPlayerJourneyTests`).
 - Arquivos dentro de compactados não são visualizados.
 
 ## Atualizações automáticas

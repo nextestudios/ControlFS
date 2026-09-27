@@ -81,6 +81,10 @@ public sealed class MainWindow : Window
     private Grid? _layout;
     private readonly TextBlock _status = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
     private readonly Grid _overlay = new();
+    private readonly VideoPlayerView _video = new();
+
+    /// <summary>A janela entrou em tela cheia por causa do vídeo (e sai ao fechá-lo); F11 do usuário não é desfeito.</summary>
+    private bool _fullScreenForVideo;
     private IReadOnlyList<FileEntry>? _shownItems;
     private HashSet<string> _shownSelection = [];
     private int _shownFocus = -1;
@@ -114,7 +118,9 @@ public sealed class MainWindow : Window
             Git = new Infrastructure.Git.GitStatusReader(),
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
+            PlaybackPositions = new JsonPlaybackPositionStore(data),
         };
+        if (dataDirectory is null) _video.ActiveChanged += OnVideoActive; // nas capturas a janela não muda de modo
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
@@ -291,6 +297,9 @@ public sealed class MainWindow : Window
         Grid.SetRow(_footerBar, 4);
         layout.Children.Add(_footerBar);
 
+        // Vídeo (#61, #170): cobre a janela inteira, sob a camada modal (menus e diálogos aparecem por cima dele).
+        Grid.SetRowSpan(_video.Root, 5);
+        layout.Children.Add(_video.Root);
         Grid.SetRowSpan(_overlay, 5);
         layout.Children.Add(_overlay);
         return layout;
@@ -670,6 +679,8 @@ public sealed class MainWindow : Window
         // Com um modal aberto, as legendas ficam no próprio painel: as do rodapé somem sem mudar a altura dele.
         _hints.Opacity = _app.TopModal is null ? 1 : 0;
 
+        _video.Render(_app);
+
         // Camada modal
         // O mesmo painel mantido (só o foco mudou) fica na árvore: tirar e recolocar refaria a rolagem e o painel fosco.
         var modal = ModalView.Build(_app);
@@ -950,6 +961,21 @@ public sealed class MainWindow : Window
         UpdateGridMetrics();
         _shownItems = null; // recria as linhas com as novas medidas
         Render();
+    }
+
+    /// <summary>Vídeo aberto: tela cheia (se a janela ainda não estava); fechado: volta ao que era.</summary>
+    private void OnVideoActive(bool active)
+    {
+        if (active && !_fullScreen)
+        {
+            _fullScreenForVideo = true;
+            ToggleFullScreen();
+        }
+        else if (!active && _fullScreenForVideo)
+        {
+            _fullScreenForVideo = false;
+            if (_fullScreen) ToggleFullScreen();
+        }
     }
 
     private void ToggleFullScreen()

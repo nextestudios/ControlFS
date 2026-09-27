@@ -146,6 +146,31 @@ public sealed partial class AppController
                 }
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
+            case VideoPlayerModal video:
+                if (video.Session is not null && video.DisplayError is null)
+                {
+                    if (video.SeekTarget is not null)
+                    {
+                        hints.Add(new(InputAction.Confirm, "Ir agora"));
+                        hints.Add(new(InputAction.Back, "Cancelar salto"));
+                        return hints;
+                    }
+                    var playing = video.Status.State is MediaPlaybackState.Playing or MediaPlaybackState.Buffering;
+                    hints.Add(new(InputAction.Confirm, playing ? "Pausar" : video.Status.State == MediaPlaybackState.Ended ? "Ver de novo" : "Tocar"));
+                    if (video.Status.CanSeek)
+                    {
+                        hints.Add(new(InputAction.NavigateLeft, "±10 s"));
+                        hints.Add(new(InputAction.PreviousRegion, "−1 min"));
+                        hints.Add(new(InputAction.NextRegion, "+1 min"));
+                        hints.Add(new(InputAction.PageDown, "Linha do tempo"));
+                    }
+                    hints.Add(new(InputAction.NavigateUp, "Volume"));
+                    hints.Add(new(InputAction.OpenContextMenu, "Legendas e áudio"));
+                    hints.Add(new(InputAction.Back, video.OverlayVisible && playing ? "Esconder" : "Voltar à lista"));
+                    return hints;
+                }
+                hints.Add(new(InputAction.Back, "Voltar à lista"));
+                return hints;
             case DialogModal dialog:
                 // Confirmar executa a opção em foco; diálogo sem opções só fecha com Voltar.
                 if (dialog.Options.Count > 0) hints.Add(new(InputAction.Confirm, dialog.Options[dialog.FocusIndex].Label));

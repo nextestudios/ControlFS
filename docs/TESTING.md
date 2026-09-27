@@ -551,6 +551,21 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Sem nenhum dispositivo de som (desativado no Painel de Som): aparece "Nenhuma saída de áudio foi encontrada neste PC…" (é o que o runner do CI mostra).
 - [ ] Legível a ~3 m em 1080p/4K e em 1280×720.
 
+## Vídeo (#61, #170) — não validado em hardware
+
+- [ ] Sul num MP4 (H.264/AAC) pela lista e pela grade: a janela entra em tela cheia e o vídeo toca; a sobreposição some em
+      ~3 s e volta com qualquer botão; Voltar esconde, Voltar de novo volta à lista com a mesma pasta, foco e seleção, e
+      a janela sai da tela cheia (se F11 não estava ligado antes).
+- [ ] Esquerda/Direita, LB/RB e LT/RT: o destino aparece grande e na barra, o salto acontece ao parar; Sul pula na hora;
+      Voltar cancela; nunca passa do início/fim.
+- [ ] MKV com duas faixas de áudio e legendas embutidas, e um MP4 com `.srt` ao lado: Norte lista as faixas; trocar
+      funciona; legendas legíveis a ~3 m (estilo das Legendas do Windows).
+- [ ] Sair no meio e reabrir: "Continuar de …" retoma; "Começar do início" começa do zero; outro arquivo com o mesmo nome
+      em outra pasta não pergunta; Configurações → Apagar onde os vídeos pararam limpa.
+- [ ] HEVC/VP9 sem extensões instaladas: mensagem clara, Voltar sai sem reiniciar o ControlFS.
+- [ ] Legível e sem cortes em 1280×720/800 (portátil), 1080p e 4K; um menu (Norte) por cima não esconde o vídeo nem
+      rouba o foco de um diálogo.
+
 ## Visualização de texto (#58)
 
 - [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem

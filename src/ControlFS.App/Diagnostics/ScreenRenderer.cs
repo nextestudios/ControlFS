@@ -390,6 +390,21 @@ internal static class ScreenRenderer
             }
             CloseModals(app);
         }
+
+        // Vídeo em tela cheia (#61, #170): AVI sem compressão gerado aqui; pausado e com um destino de busca em preparo.
+        // Sem dispositivo de som no runner o Windows pode recusar: a captura mostra então a mensagem de erro sobre o vídeo.
+        if (Wanted("mv"))
+        {
+            await FocusAsync(app, stage, "clipe.avi");
+            app.Handle(InputAction.Confirm);
+            if (await WaitForAsync(() => app.TopModal is Application.State.VideoPlayerModal v && v.Status.State != Core.Contracts.MediaPlaybackState.Opening || app.TopModal is Application.State.VideoPlayerModal { Error: not null }))
+            {
+                if (app.TopModal is Application.State.VideoPlayerModal { Status.State: Core.Contracts.MediaPlaybackState.Playing }) app.Handle(InputAction.Confirm);
+                app.Handle(InputAction.NavigateRight);
+                await CaptureAsync(stage, target, dir, "mv-video-player", window);
+            }
+            CloseModals(app);
+        }
         app.GoHome();
     }
 
@@ -432,7 +447,75 @@ internal static class ScreenRenderer
         File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
         File.WriteAllBytes(Path.Join(folder, "manual.pdf"), SamplePdf());
         File.WriteAllBytes(Path.Join(folder, "tom.wav"), SampleWav(seconds: 30));
+        File.WriteAllBytes(Path.Join(folder, "clipe.avi"), SampleAvi(160, 90, frames: 40, fps: 2));
         return folder;
+    }
+
+    /// <summary>AVI sem compressão (RGB 24 bits), só vídeo: faixas de cor que mudam a cada quadro.</summary>
+    private static byte[] SampleAvi(int width, int height, int frames, int fps)
+    {
+        var stride = ((width * 3) + 3) & ~3;
+        var frameBytes = stride * height;
+        using var memory = new MemoryStream();
+        using var w = new BinaryWriter(memory);
+        void Fourcc(string code) => w.Write(System.Text.Encoding.ASCII.GetBytes(code));
+        long Begin(string code) { Fourcc(code); w.Write(0); return memory.Position; }
+        void End(long start)
+        {
+            var end = memory.Position;
+            memory.Position = start - 4;
+            w.Write((int)(end - start));
+            memory.Position = end;
+        }
+
+        var riff = Begin("RIFF");
+        Fourcc("AVI ");
+        var hdrl = Begin("LIST");
+        Fourcc("hdrl");
+        var avih = Begin("avih");
+        w.Write(1_000_000 / fps); w.Write(frameBytes * fps); w.Write(0); w.Write(0x10); w.Write(frames); w.Write(0); w.Write(1);
+        w.Write(frameBytes); w.Write(width); w.Write(height); w.Write(0); w.Write(0); w.Write(0); w.Write(0);
+        End(avih);
+        var strl = Begin("LIST");
+        Fourcc("strl");
+        var strh = Begin("strh");
+        Fourcc("vids"); Fourcc("DIB "); w.Write(0); w.Write((short)0); w.Write((short)0); w.Write(0); w.Write(1); w.Write(fps); w.Write(0);
+        w.Write(frames); w.Write(frameBytes); w.Write(-1); w.Write(0); w.Write((short)0); w.Write((short)0); w.Write((short)width); w.Write((short)height);
+        End(strh);
+        var strf = Begin("strf");
+        w.Write(40); w.Write(width); w.Write(height); w.Write((short)1); w.Write((short)24); w.Write(0); w.Write(frameBytes); w.Write(0); w.Write(0); w.Write(0); w.Write(0);
+        End(strf);
+        End(strl);
+        End(hdrl);
+        var movi = Begin("LIST");
+        var moviStart = memory.Position;
+        Fourcc("movi");
+        var offsets = new List<int>();
+        var frame = new byte[frameBytes];
+        for (var f = 0; f < frames; f++)
+        {
+            for (var y = 0; y < height; y++)
+                for (var x = 0; x < width; x++)
+                {
+                    var i = (y * stride) + (x * 3);
+                    var band = ((x * 4 / width) + f) % 4;
+                    (frame[i], frame[i + 1], frame[i + 2]) = band switch { 0 => ((byte)0xFF, (byte)0xC7, (byte)0x11), 1 => ((byte)0x1A, (byte)0x10, (byte)0x06), 2 => ((byte)0x4E, (byte)0xC1, (byte)0xF2), _ => ((byte)0xFC, (byte)0xF8, (byte)0xF5) };
+                }
+            offsets.Add((int)(memory.Position - moviStart));
+            Fourcc("00db");
+            w.Write(frameBytes);
+            w.Write(frame);
+        }
+        End(movi);
+        var idx = Begin("idx1");
+        foreach (var offset in offsets)
+        {
+            Fourcc("00db"); w.Write(0x10); w.Write(offset); w.Write(frameBytes);
+        }
+        End(idx);
+        End(riff);
+        w.Flush();
+        return memory.ToArray();
     }
 
     /// <summary>WAV PCM 16 bits mono 8 kHz, silêncio (a captura não toca som no runner).</summary>
