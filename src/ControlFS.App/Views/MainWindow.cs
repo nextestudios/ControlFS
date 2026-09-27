@@ -523,7 +523,8 @@ public sealed class MainWindow : Window
         else if (previous != size)
         {
             // Mesma faixa: só o que depende do tamanho exato (altura máxima de menus, largura do status).
-            _headerRight.MaxWidth = Math.Max(240, size.Width * 0.4);
+            _headerRight.MaxWidth = Math.Max(240, size.Width * 0.35);
+            _topBar.Invalidate();
             Render();
         }
     }

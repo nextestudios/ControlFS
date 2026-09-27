@@ -38,6 +38,9 @@ internal sealed class TopBarView
     private readonly Border _divider = new() { VerticalAlignment = VerticalAlignment.Stretch };
     private readonly List<Border> _crumbRings = [];
     private readonly List<Border> _quickRings = [];
+    private readonly List<TextBlock> _quickLabels = [];
+    private readonly List<bool> _quickActive = [];
+    private bool _iconsOnly;
     private string? _shownKey;
     private (PaneRegion Region, int Crumb, int Quick)? _shownFocus;
 
@@ -89,6 +92,9 @@ internal sealed class TopBarView
         _shownKey = null;
     }
 
+    /// <summary>A janela mudou de tamanho dentro da mesma faixa: redistribui a largura no próximo Render.</summary>
+    public void Invalidate() => _shownKey = null;
+
     public void Render()
     {
         var crumbs = _app.Breadcrumbs;
@@ -97,22 +103,25 @@ internal sealed class TopBarView
         var crumbFocus = region == PaneRegion.Breadcrumbs ? _app.BreadcrumbFocus : -1;
         var quickFocus = region == PaneRegion.QuickAccess && quick.Count > 0 ? Math.Clamp(_app.QuickAccessFocus, 0, quick.Count - 1) : -1;
         var lb = _app.PromptProvider.For(InputAction.PreviousRegion, "Barra superior");
-        var (iconsOnly, pathWidth) = Fit(crumbs, quick);
-        _crumbScroll.MaxWidth = pathWidth;
         var key = string.Join("|", crumbs.Select(c => $"{c.Kind}:{c.Label}:{c.IsCurrent}"))
             + "#" + string.Join("|", quick.Select(q => $"{q.Label}:{_app.IsQuickAccessActive(q)}"))
-            + $"#{lb.Button}:{lb.Family}:{lb.Key}#{iconsOnly}" + (iconsOnly ? $"#{quickFocus}" : string.Empty);
+            + $"#{lb.Button}:{lb.Family}:{lb.Key}";
         if (key != _shownKey)
         {
             _shownKey = key;
             _shownFocus = null;
-            Build(crumbs, quick, lb, iconsOnly, quickFocus);
+            Build(crumbs, quick, lb);
+            Fit();
         }
         var focus = (region, crumbFocus, quickFocus);
         if (_shownFocus == focus) return;
         _shownFocus = focus;
         for (var i = 0; i < _crumbRings.Count; i++) SetCrumbFocus(_crumbRings[i], crumbs[i], i == crumbFocus);
-        for (var i = 0; i < _quickRings.Count; i++) Theme.ApplyFocus(_quickRings[i], i == quickFocus);
+        for (var i = 0; i < _quickRings.Count; i++)
+        {
+            Theme.ApplyFocus(_quickRings[i], i == quickFocus);
+            _quickLabels[i].Visibility = !_iconsOnly || _quickActive[i] || i == quickFocus ? Visibility.Visible : Visibility.Collapsed;
+        }
         var target = crumbFocus >= 0 && crumbFocus < _crumbRings.Count ? _crumbRings[crumbFocus]
             : quickFocus >= 0 && quickFocus < _quickRings.Count ? _quickRings[quickFocus] : null;
         if (target is not null) target.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true });
@@ -120,27 +129,38 @@ internal sealed class TopBarView
     }
 
     /// <summary>
-    /// Divide a largura da barra (estimativa pelo número de caracteres, sem medir de novo a cada quadro). O caminho vem
-    /// primeiro: se caminho e atalhos com nome não cabem juntos, os atalhos mostram só o ícone (menos o focado e o do
-    /// local atual) e o caminho fica com o resto; só um caminho maior que isso rola (mostrando a pasta atual).
+    /// Divide a largura da barra medindo os chips uma vez por conteúdo novo. O caminho vem primeiro: se caminho e atalhos
+    /// com nome não cabem juntos, os atalhos mostram só o ícone (menos o focado e o do local atual) e o caminho fica com o
+    /// resto; só um caminho maior que isso rola, mostrando a pasta atual.
     /// </summary>
-    private (bool IconsOnly, double PathWidth) Fit(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick)
+    private void Fit()
     {
-        static double Text(string s, double size) => s.Length * size * 0.56;
-        var chrome = (2 * (Theme.SpaceS + Theme.SpaceXs)) + (2 * (Theme.FocusRing.Left + Theme.GlowRing.Left));
-        var icon = Theme.Scaled(IconSize) + Theme.SpaceS;
-        var bar = Theme.Viewport.Width - (2 * Theme.SpaceL) - (2 * Theme.SpaceS) - (4 * Theme.SpaceS) - Math.Round(Theme.FontBody * 2.6);
-        var path = crumbs.Sum(c => Math.Min(Text(c.Label, Theme.FontBody), Theme.Scaled(220)) + chrome + Theme.FontCaption + Theme.SpaceXs
-            + (c.Kind is BreadcrumbKind.Root or BreadcrumbKind.Archive ? icon : 0));
-        var labeled = quick.Sum(q => Text(q.Label, FontSize) + Theme.SpaceS + icon + chrome + _quick.Spacing);
-        var iconic = quick.Sum(_ => icon + chrome + _quick.Spacing) + Text("Arquivos recentes", FontSize); // o focado mostra o nome
-        if (path + labeled <= bar) return (false, bar - labeled);
-        return (quick.Count > 0, Math.Max(Theme.Scaled(240), bar - iconic));
+        var infinite = new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity);
+        _lb.Measure(infinite);
+        _crumbs.Measure(infinite);
+        _quick.Measure(infinite);
+        var bar = Theme.Viewport.Width - Root.Margin.Left - Root.Margin.Right - Root.Padding.Left - Root.Padding.Right - (2 * Root.BorderThickness.Left)
+            - _lb.DesiredSize.Width - _lb.Margin.Left - (_divider.Width + _divider.Margin.Left + _divider.Margin.Right) - (3 * _grid.ColumnSpacing) - Theme.SpaceXs;
+        var path = _crumbs.DesiredSize.Width;
+        var labeled = _quick.DesiredSize.Width;
+        _iconsOnly = _quickLabels.Count > 0 && path + labeled > bar;
+        var widestLabel = 0.0;
+        if (_iconsOnly)
+        {
+            for (var i = 0; i < _quickLabels.Count; i++)
+            {
+                widestLabel = Math.Max(widestLabel, _quickLabels[i].DesiredSize.Width + Theme.SpaceS);
+                if (!_quickActive[i]) _quickLabels[i].Visibility = Visibility.Collapsed;
+            }
+            _quick.Measure(infinite);
+        }
+        var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel; // o focado mostra o nome
+        _crumbScroll.MaxWidth = Math.Max(Theme.Scaled(240), bar - quickWidth);
     }
 
     private static double FontSize => Theme.FontCaption + 1;
 
-    private void Build(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick, Application.Prompts.ControllerPrompt lb, bool iconsOnly, int quickFocus)
+    private void Build(IReadOnlyList<Breadcrumb> crumbs, IReadOnlyList<QuickAccessItem> quick, Application.Prompts.ControllerPrompt lb)
     {
         _lb.Child = lb is { Button: { } button, Family: { } family }
             ? ControllerGlyphs.Create(button, family, Math.Round(Theme.FontBody * 1.5))
@@ -206,6 +226,8 @@ internal sealed class TopBarView
 
         _quick.Children.Clear();
         _quickRings.Clear();
+        _quickLabels.Clear();
+        _quickActive.Clear();
         _divider.Visibility = _quickScroll.Visibility = quick.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         for (var i = 0; i < quick.Count; i++)
         {
@@ -220,7 +242,6 @@ internal sealed class TopBarView
                 FontWeight = active ? FontWeights.SemiBold : FontWeights.Normal,
                 Foreground = active ? Theme.Accent : Theme.Text,
                 VerticalAlignment = VerticalAlignment.Center,
-                Visibility = !iconsOnly || active || i == quickFocus ? Visibility.Visible : Visibility.Collapsed,
             };
             content.Children.Add(label);
             var ring = Ring(content);
@@ -230,6 +251,8 @@ internal sealed class TopBarView
             AutomationProperties.SetName(glow, item.Label + (active ? ", local atual" : string.Empty));
             ToolTipService.SetToolTip(glow, item.Kind == QuickAccessKind.Folder ? item.Path : item.Label);
             _quickRings.Add(ring);
+            _quickLabels.Add(label);
+            _quickActive.Add(active);
             _quick.Children.Add(glow);
         }
     }
