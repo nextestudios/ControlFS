@@ -22,6 +22,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **AES-encrypted ZIP (WinZip AE-1/AE-2, 128/192/256-bit) validated**: without a password the app asks for one, the right password extracts identical content and a wrong one is now reported as "wrong password" (asks again) instead of "wrong password or corrupt data". (#64)
 - **Tabs** in the browser: each tab keeps its own folder, history, marked items and focus. RB moves to the tab strip, LB/RB switch tabs and North creates or closes one; North on a folder has "Open in new tab". A copy or move refreshes every tab showing its source or destination. (#50)
 - **Go to path…** (Menu, and in the folder picker): the on-screen keyboard opens with the current folder selected; type or paste (Ctrl+V) a path, with or without quotes and with variables such as `%USERPROFILE%`, and Done goes there. A missing or invalid path shows the error without closing the keyboard; a file's path opens its folder with the file focused. (#54)
+- **More informative archive browser**: the header shows the format, files, uncompressed size and how many entries are password-protected or blocked; each file shows how much it takes compressed (%); folders show **Explore** and, with entries marked, North becomes **Extract selection (N)** and the menu opens on that option. (#68)
 
 ## [0.4.0-alpha.1]
 ### What's new

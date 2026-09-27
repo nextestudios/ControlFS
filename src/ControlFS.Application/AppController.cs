@@ -73,6 +73,9 @@ public sealed partial class AppController
     public ExtractionLimits Limits { get; set; } = ExtractionLimits.Default;
     public string? StatusMessage { get; private set; }
 
+    /// <summary>Cabeçalho do compactado aberto (formato, arquivos, tamanho, com senha, bloqueadas); null fora de um compactado.</summary>
+    public string? ArchiveSummary => ActivePane is { Location: ArchiveLocation, Archive: { } tree } ? tree.Summary : null;
+
     /// <summary>Família do controle ativo (null: nenhum controle ativo; legendas de teclado).</summary>
     public ControllerFamily? ActiveController { get; private set; }
 

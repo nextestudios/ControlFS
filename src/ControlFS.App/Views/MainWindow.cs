@@ -286,7 +286,7 @@ public sealed class MainWindow : Window
             default:
                 _badge.Text = pane.Location switch
                 {
-                    ArchiveLocation => "COMPACTADO · SOMENTE LEITURA",
+                    ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
                     SearchLocation => "BUSCA",
                     RecycleBinLocation => "LIXEIRA DO WINDOWS",
                     _ => "PASTA NO DISCO",

@@ -159,6 +159,14 @@ Ainda manual, num aparelho real:
 - [ ] Menu → "Busca em subpastas: não incluir": a busca seguinte só lê a pasta atual.
 - [ ] OneDrive com arquivos sob demanda: pastas marcadas como ponto de nova análise não são percorridas (limitação conhecida; anotar o que aparece).
 
+## Navegador de compactados (#68)
+
+- [ ] Abrir um ZIP com senha e links (ou um RAR com arquivos protegidos): o cabeçalho mostra formato, arquivos, tamanho,
+      "N com senha" e "N bloqueadas", legível a ~3 m numa TV e sem cortar o caminho em 1280×720.
+- [ ] As linhas mostram "compactado: … (N%)", o cadeado nas entradas com senha e "Bloqueado: motivo" nas bloqueadas; o
+      Narrador lê o estado.
+- [ ] Marcar uma entrada: o rodapé mostra "Extrair seleção (1)" com o glifo do botão Norte do controle em uso.
+
 ## Formatos, compactar e abrir com o Windows
 
 - [ ] Abrir e extrair um RAR e um 7z reais baixados da internet (conferir a marca de origem nos extraídos).

@@ -248,6 +248,7 @@ public static class EntryRowTemplate
         if (entry.FoundIn is { } folder) yield return "em " + folder;
         yield return TypeName(entry);
         if (entry.Size is long size && !entry.IsContainer) yield return Format(size);
+        if (entry.Kind == EntryKind.ArchiveFile && entry.Detail is { Length: > 0 } compression) yield return compression;
         if (entry.Modified is { } m) yield return m.LocalDateTime.ToString("g");
         foreach (var flag in Flags(entry)) yield return flag;
     }
