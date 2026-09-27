@@ -56,7 +56,8 @@ public sealed class MainWindow : Window
     private readonly ListView _list = new();
     private readonly GridView _grid = new();
     private readonly WrapPanel _hints = new();
-    private readonly StackPanel _footer = new() { Background = Theme.Surface };
+    private readonly StackPanel _footer = new();
+    private readonly Border _footerBar = new() { Background = Theme.Surface, BorderBrush = Theme.Border };
     private readonly Grid _header = new();
     private readonly StackPanel _headerRight = new() { VerticalAlignment = VerticalAlignment.Center };
     private Grid? _layout;
@@ -198,8 +199,9 @@ public sealed class MainWindow : Window
         var footer = _footer;
         footer.Children.Add(_status);
         footer.Children.Add(_hints);
-        Grid.SetRow(footer, 2);
-        layout.Children.Add(footer);
+        _footerBar.Child = footer;
+        Grid.SetRow(_footerBar, 2);
+        layout.Children.Add(_footerBar);
 
         Grid.SetRowSpan(_overlay, 3);
         layout.Children.Add(_overlay);
@@ -365,14 +367,16 @@ public sealed class MainWindow : Window
             _status.Text = $"{pane.InaccessibleCount} item(ns) sem permissão de leitura foram omitidos.";
         else
             _status.Text = _app.StatusMessage ?? string.Empty;
+        _status.Visibility = _status.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed; // sem aviso, o rodapé fica só com as legendas
 
         // Rodapé: somente ações válidas no contexto, com a legenda do dispositivo em uso (glifo do controle ou tecla)
         _hints.Children.Clear();
+        var glyphHeight = FooterGlyphHeight;
         foreach (var prompt in _app.Prompts)
         {
-            var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
+            var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS + Theme.SpaceXs };
             if (prompt is { Button: { } button, Family: { } family })
-                chip.Children.Add(ControllerGlyphs.Create(button, family, Math.Round(Theme.FontCaption * 1.6)));
+                chip.Children.Add(ControllerGlyphs.Create(button, family, glyphHeight));
             else
                 chip.Children.Add(new Border
                 {
@@ -380,10 +384,12 @@ public sealed class MainWindow : Window
                     BorderBrush = Theme.Border,
                     BorderThickness = Theme.Hairline,
                     CornerRadius = Theme.Radius,
+                    MinHeight = glyphHeight * 0.8,
+                    VerticalAlignment = VerticalAlignment.Center,
                     Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
-                    Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold },
+                    Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
                 });
-            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, VerticalAlignment = VerticalAlignment.Center });
+            chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = Theme.FontBody, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, prompt.AccessibilityText);
             _hints.Children.Add(chip);
         }
@@ -394,6 +400,9 @@ public sealed class MainWindow : Window
         RestoreKeyboardFocus();
         Announce();
     }
+
+    /// <summary>Glifos do rodapé grandes o bastante para ler a distância (a referência usa botões redondos de ~2,5× o texto).</summary>
+    private static double FooterGlyphHeight => Math.Round(Theme.FontBody * 1.9);
 
     /// <summary>
     /// Narrador: o foco do XAML fica na raiz, então cada mudança do foco lógico (item, menu, diálogo, tecla) vira uma
@@ -578,13 +587,13 @@ public sealed class MainWindow : Window
     internal string DescribeFit()
     {
         var viewport = Theme.Viewport;
-        var fit = $"cabeçalho {_header.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footer.ActualHeight:0} de {viewport.Height:0} px efetivos";
+        var fit = $"cabeçalho {_header.ActualHeight:0}, {(_view == ViewMode.Grid ? $"grade {_app.GridColumns}x{_app.GridRowsPerPage}" : "lista")} {ActiveList.ActualHeight:0}, rodapé {_footerBar.ActualHeight:0} de {viewport.Height:0} px efetivos";
         if (_overlay.Children.Count > 0 && _overlay.Children[0] is Panel { Children.Count: > 0 } scrim && scrim.Children[0] is FrameworkElement card)
         {
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
             fit += $"; modal {card.ActualWidth:0}x{card.ActualHeight:0}" + (needed > viewport.Height + 0.5 ? " NÃO CABE" : " cabe");
         }
-        var layoutTooTall = _header.ActualHeight + _footer.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
+        var layoutTooTall = _header.ActualHeight + _footerBar.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
         return fit + (layoutTooTall ? " · LISTA ESPREMIDA" : string.Empty);
     }
 
@@ -606,10 +615,11 @@ public sealed class MainWindow : Window
         _list.Padding = _grid.Padding = new Thickness(Theme.SpaceM, 0, Theme.SpaceM, 0);
         _list.ItemTemplate = EntryRowTemplate.Create(_density);
         _grid.ItemTemplate = EntryRowTemplate.CreateTile(_density);
-        _footer.Padding = new Thickness(Theme.SpaceL, Theme.SpaceS, Theme.SpaceL, Theme.SpaceM);
-        _footer.Spacing = Theme.SpaceXs;
-        _hints.HorizontalSpacing = Theme.SpaceL;
-        _hints.VerticalSpacing = Theme.SpaceXs;
+        _footerBar.BorderThickness = new Thickness(0, Theme.Hairline.Top, 0, 0);
+        _footer.Padding = new Thickness(Theme.SpaceL + Theme.SpaceS, Theme.SpaceM, Theme.SpaceL, Theme.SpaceM);
+        _footer.Spacing = Theme.SpaceS;
+        _hints.HorizontalSpacing = Theme.SpaceXl;
+        _hints.VerticalSpacing = Theme.SpaceS;
         // Ícones do sistema no tamanho em pixels físicos da linha (DPI × escala da faixa).
         var iconScale = Theme.Layout.RasterizationScale * Theme.Layout.FontScale * Theme.SimulatedTextScale;
         _icons.SetScale(iconScale);

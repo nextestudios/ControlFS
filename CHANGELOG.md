@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Novo visual, primeira etapa do redesenho**: paleta azul-marinho com foco ciano (borda, fundo azul e um halo discreto, com transição curta) e rodapé maior, com as ações sempre na mesma ordem (Abrir · Voltar · Marcar · Ações · Menu · Buscar · Lista/Grade) e as cores das faces do Xbox nos glifos (A verde, B vermelho, X azul, Y amarelo). **R3** (apertar o analógico direito) alterna lista e grade, como Ctrl+G e Menu → Exibição; o rodapé mostra o destino: "Grade" na lista, "Lista" na grade.
 
 ## [0.5.0-alpha.1]
 ### Novidades

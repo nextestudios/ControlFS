@@ -23,9 +23,11 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
 | Select / View | Busca (no teclado virtual: símbolos) | Ctrl+F |
+| R3 (pressionar analógico direito) | Lista ↔ grade (`ChangeView`) | Ctrl+G |
 
 "Confirmar com botão direito" (menu do app) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
-Guide/Home não é mapeado. L3/R3 não são usados.
+Guide/Home não é mapeado. L3 não é usado; R3 troca lista ↔ grade (também Ctrl+G e Menu → Exibição). Joysticks sem
+perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
 
 ## Regras implementadas e testadas (unitário)
 
@@ -72,10 +74,14 @@ Guide/Home não é mapeado. L3/R3 não são usados.
 ## Rodapé por contexto
 
 `AppController.BuildHints` é a fonte única; `HintJourneyTests` cobre os contextos. Ação que não funciona não aparece.
+Nas telas (não nos modais) a ordem é fixa: Confirmar, Voltar, Marcar, Ações, Menu, Buscar, Lista/Grade, LB, RB
+(`PromptJourneyTests`). Lista/Grade (R3, Ctrl+G) aparece no início, nas pastas, na busca e na Lixeira e diz a exibição
+de destino: "Grade" na lista, "Lista" na grade. No Xbox, os glifos das faces têm as cores do controle (A verde,
+B vermelho, X azul, Y amarelo); as outras famílias mantêm seus desenhos.
 
 | Contexto | Legendas |
 |---|---|
-| Pasta / arquivo | Abrir · Marcar/Desmarcar · Ações · Menu · Voltar |
+| Pasta / arquivo | Abrir · Voltar · Marcar/Desmarcar · Ações · Menu · Lista/Grade |
 | Compactado no disco | Explorar · Marcar · Extrair… (o menu abre em "Extrair para \"nome\"") · Menu · Voltar |
 | Dentro de um compactado | Abrir/Detalhes · Marcar · Extrair… · Menu · Voltar |
 | Itens marcados | Abrir · Desmarcar/Marcar · Operações (N) · Menu · Cancelar seleção |

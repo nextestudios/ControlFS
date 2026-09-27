@@ -17,12 +17,13 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | LT / RT | Página anterior / próxima | Cursor no início / fim |
 | Start | Menu do app | Concluir |
 | Select / View | Buscar | Símbolos |
+| R3 (pressionar analógico direito) | Lista ↔ grade | — |
 
 **Voltar** fecha primeiro o menu aberto, depois limpa a seleção, depois volta no histórico e por fim vai à tela inicial. Sair do app sempre pede confirmação, começando em "Cancelar".
 
 Só um controle comanda o app por vez: o primeiro a apertar um botão. Apertar um botão em outro controle (com o ativo solto) passa o comando para ele. Com a janela em segundo plano, a entrada é ignorada. O menu tem "Confirmar com: botão inferior/direito" e o estilo das legendas: **automáticas** (padrão: seguem a família do controle em uso: Xbox, PlayStation, Nintendo ou genérico) ou fixas em genérico, Xbox, PlayStation ou Nintendo.
 
-O rodapé mostra os botões do controle em uso (por exemplo `A Abrir` no Xbox, `✕ Abrir` no PlayStation) e troca assim que você usa outro controle. Ao usar o teclado, mostra as teclas (`Enter Abrir`, `Esc Voltar`) até você apertar um botão do controle de novo.
+O rodapé mostra os botões do controle em uso (por exemplo `A Abrir` no Xbox, com as cores das faces do Xbox: A verde, B vermelho, X azul, Y amarelo; `✕ Abrir` no PlayStation) e troca assim que você usa outro controle. Ao usar o teclado, mostra as teclas (`Enter Abrir`, `Esc Voltar`) até você apertar um botão do controle de novo.
 
 O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma linha de funções (`⇧` Maiúsculas · `ABC` letras · `@#:` símbolos · espaço · `⌫`) e uma linha inferior (cursor `◀ ▶` · `…` mais · Cancelar · **Concluir**). `…` abre os acentos, **Selecionar tudo** (`Sel. tudo`), **Limpar** e a troca PT-BR/EN. O texto selecionado fica destacado e sublinhado: digitar o substitui, `⌫` o apaga e `◀ ▶` só desfazem a seleção (Ctrl+A no teclado físico seleciona tudo). Renomear já abre com o nome antes da extensão selecionado: digitar `novo` em `example-file.zip` resulta em `novo.zip`. Maiúsculas: um toque deixa a próxima letra maiúscula, o segundo trava (`⇪`), o terceiro desliga. Teclas que o campo não aceita (ex.: `\ / : * ? " < > |` em nomes de arquivo) ficam apagadas. Segurar Oeste, LB/RB ou Sul sobre `⌫ ◀ ▶` repete (e acelera quanto mais tempo segurar); Concluir e as demais teclas nunca repetem. O cursor é a barra na cor de destaque no campo de texto; LT/RT (ou Home/End) levam ao início ou ao fim, e movê-lo nunca muda o texto, a página nem as maiúsculas.
 
@@ -68,7 +69,7 @@ Norte → **Marcar todos (N)** marca todos os itens da pasta ou do compactado (n
 
 Menu → **Densidade da lista** alterna entre **confortável** (duas linhas por item, para a TV) e **compacta** (uma linha com colunas de tipo, tamanho e data). A escolha fica salva.
 
-Menu → **Exibição** (ou **Ctrl+G** no teclado) alterna entre **lista** e **grade** de ícones grandes, nas pastas e na tela inicial. Na grade, o direcional e o analógico andam para cima, baixo, esquerda e direita entre os blocos: esquerda/direita continuam na linha anterior/seguinte nas pontas, e descer para uma última linha mais curta vai ao último item. Os gatilhos paginam uma tela de linhas. Como a esquerda não sobe de pasta na grade, use Voltar ou a barra de caminho (LB). A densidade vale também para a grade (compacta = blocos menores), e trocar de exibição mantém o item focado.
+Menu → **Exibição** (ou **R3**, apertando o analógico direito, ou **Ctrl+G** no teclado) alterna entre **lista** e **grade** de ícones grandes, nas pastas e na tela inicial. Na grade, o direcional e o analógico andam para cima, baixo, esquerda e direita entre os blocos: esquerda/direita continuam na linha anterior/seguinte nas pontas, e descer para uma última linha mais curta vai ao último item. Os gatilhos paginam uma tela de linhas. Como a esquerda não sobe de pasta na grade, use Voltar ou a barra de caminho (LB). A densidade vale também para a grade (compacta = blocos menores), e trocar de exibição mantém o item focado.
 
 **Tamanho da pasta:** Norte numa pasta ou unidade → **Propriedades** → **Calcular tamanho** soma todos os arquivos dentro dela (inclusive os ocultos, como o "Tamanho" do Explorador), mostrando o total parcial enquanto calcula. **Leste** cancela na hora e mantém o valor parcial. Junções e links nunca são seguidos (aparecem contados à parte) e pastas que não puderam ser lidas são listadas em vez de puladas em silêncio.
 

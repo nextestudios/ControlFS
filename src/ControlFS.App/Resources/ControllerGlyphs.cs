@@ -56,13 +56,20 @@ public static class ControllerGlyphs
     private static Grid Face(ControllerButton button, ControllerFamily family, GlyphPalette p)
     {
         var g = Box(Unit);
+        if (family == ControllerFamily.Xbox)
+        {
+            // Xbox: as cores das faces (A verde, B vermelho, X azul, Y amarelo) ajudam a achar o botão; a letra continua.
+            var (body, letter) = Theme.XboxFace(button);
+            g.Children.Add(Disc(new SolidColorBrush(body)));
+            g.Children.Add(Letter(ControllerButtons.FaceLetter(button, family), new SolidColorBrush(letter), 14));
+            return g;
+        }
         g.Children.Add(Disc(p.Body));
         switch (family)
         {
             case ControllerFamily.PlayStation:
                 FaceShape(g, button, p.Symbol);
                 break;
-            case ControllerFamily.Xbox:
             case ControllerFamily.Nintendo:
                 g.Children.Add(Letter(ControllerButtons.FaceLetter(button, family), p.Symbol, 14));
                 break;

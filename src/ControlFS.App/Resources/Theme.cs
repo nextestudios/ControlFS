@@ -8,25 +8,46 @@ using Windows.UI;
 namespace ControlFS.App.Resources;
 
 /// <summary>
-/// Tokens visuais (tema escuro grafite). Perigo nunca é indicado só por cor: textos levam "⚠".
-/// Tema claro e cor de destaque configurável: pendentes (ver PROGRESS.md).
+/// Tokens visuais do redesenho (docs/ui-redesign.md): escuro azul-marinho, destaque ciano. Perigo nunca é indicado só por
+/// cor: textos levam "⚠". Tema claro e cor de destaque configurável: pendentes (#37).
 /// </summary>
 public static class Theme
 {
-    public static readonly Color BackgroundColor = ColorHelper.FromArgb(255, 0x17, 0x19, 0x1D);
+    public static readonly Color BackgroundColor = ColorHelper.FromArgb(255, 0x06, 0x10, 0x1A);
     public static readonly SolidColorBrush Background = new(BackgroundColor);
-    public static readonly SolidColorBrush Surface = new(ColorHelper.FromArgb(255, 0x21, 0x24, 0x29));
-    public static readonly SolidColorBrush SurfaceRaised = new(ColorHelper.FromArgb(255, 0x2B, 0x2F, 0x35));
-    public static readonly SolidColorBrush Border = new(ColorHelper.FromArgb(255, 0x3A, 0x3F, 0x47));
-    public static readonly SolidColorBrush Text = new(ColorHelper.FromArgb(255, 0xEC, 0xEE, 0xF1));
-    public static readonly SolidColorBrush TextMuted = new(ColorHelper.FromArgb(255, 0xA3, 0xA9, 0xB3));
-    public static readonly SolidColorBrush TextDisabled = new(ColorHelper.FromArgb(255, 0x6C, 0x72, 0x7B));
-    public static readonly SolidColorBrush Accent = new(ColorHelper.FromArgb(255, 0x5B, 0xC0, 0xEB));
-    public static readonly SolidColorBrush AccentSoft = new(ColorHelper.FromArgb(255, 0x1E, 0x3A, 0x48));
+
+    /// <summary>Faixas de cabeçalho, barra superior e rodapé.</summary>
+    public static readonly SolidColorBrush Surface = new(ColorHelper.FromArgb(255, 0x0A, 0x16, 0x23));
+
+    /// <summary>Cartões, menus, diálogos e teclas.</summary>
+    public static readonly SolidColorBrush SurfaceRaised = new(ColorHelper.FromArgb(255, 0x0F, 0x1D, 0x2A));
+    public static readonly SolidColorBrush Border = new(ColorHelper.FromArgb(255, 0x17, 0x36, 0x4D));
+    public static readonly SolidColorBrush Text = new(ColorHelper.FromArgb(255, 0xF5, 0xF8, 0xFC));
+
+    /// <summary>Texto secundário (detalhes, legendas).</summary>
+    public static readonly SolidColorBrush TextMuted = new(ColorHelper.FromArgb(255, 0xA4, 0xB4, 0xC8));
+    public static readonly SolidColorBrush TextDisabled = new(ColorHelper.FromArgb(255, 0x60, 0x72, 0x86));
+
+    /// <summary>Cor do foco (borda do anel, cursor, símbolos em destaque).</summary>
+    public static readonly SolidColorBrush Accent = new(ColorHelper.FromArgb(255, 0x11, 0xC7, 0xFF));
+
+    /// <summary>Azul principal (barras de uso, local ativo).</summary>
+    public static readonly SolidColorBrush Primary = new(ColorHelper.FromArgb(255, 0x07, 0x9C, 0xFF));
+
+    /// <summary>Fundo do item focado (cartão focado).</summary>
+    public static readonly SolidColorBrush AccentSoft = new(ColorHelper.FromArgb(255, 0x12, 0x3B, 0x5A));
+
+    /// <summary>Halo discreto em volta do anel de foco.</summary>
+    public static readonly SolidColorBrush FocusGlow = new(ColorHelper.FromArgb(0x55, 0x11, 0xC7, 0xFF));
     public static readonly SolidColorBrush Selected = new(ColorHelper.FromArgb(255, 0xF2, 0xC1, 0x4E));
     public static readonly SolidColorBrush Danger = new(ColorHelper.FromArgb(255, 0xFF, 0x7A, 0x6E));
-    public static readonly SolidColorBrush Scrim = new(ColorHelper.FromArgb(200, 0x08, 0x09, 0x0B));
+    public static readonly SolidColorBrush Scrim = new(ColorHelper.FromArgb(200, 0x02, 0x07, 0x0C));
     public static readonly SolidColorBrush Transparent = new(Colors.Transparent);
+
+    /// <summary>Durações das animações curtas (foco, troca de exibição, painéis). Nada passa de 200 ms.</summary>
+    public static readonly TimeSpan MotionFast = TimeSpan.FromMilliseconds(120);
+    public static readonly TimeSpan MotionFocus = TimeSpan.FromMilliseconds(160);
+    public static readonly TimeSpan MotionPanel = TimeSpan.FromMilliseconds(200);
 
     /// <summary>
     /// Faixa de layout atual (portátil, desktop, TV grande), escolhida pela janela a partir do tamanho efetivo, do DPI e
@@ -72,20 +93,51 @@ public static class Theme
     public static double FontItem => Font(20);
     public static double FontTitle => Font(26);
 
-    public static readonly CornerRadius Radius = new(6);
-    /// <summary>Anel de foco: 3 px a 1080p, mais grosso em telas grandes (visível a distância).</summary>
-    public static Thickness FocusRing => new(Layout.Snap(3 * Math.Max(1, Layout.SpaceScale)));
+    public static readonly CornerRadius Radius = new(8);
+
+    /// <summary>Anel de foco: 2 px a 1080p (mais o halo), mais grosso em telas grandes (visível a distância).</summary>
+    public static Thickness FocusRing => new(Layout.Snap(2 * Math.Max(1, Layout.SpaceScale)));
 
     public static Thickness Hairline => new(Layout.Snap(1));
 
+    /// <summary>Espessura do halo do foco (fora do anel; sempre reservada, então o foco não muda o layout).</summary>
+    public static Thickness GlowRing => new(Layout.Snap(2 * Math.Max(1, Layout.SpaceScale)));
+
     /// <summary>
-    /// Anel de foco único para lista, menus e diálogos: borda de destaque + fundo suave. A espessura não muda entre
-    /// focado e não focado (sem "pulo" de layout); o foco nunca depende só da cor de fundo.
+    /// Anel de foco único para lista, barra superior, menus e diálogos: borda ciano + fundo azul e, quando o anel está
+    /// dentro de um <see cref="WithGlow"/>, um halo ciano translúcido. A espessura não muda entre focado e não focado (sem
+    /// "pulo" de layout); o foco nunca depende só da cor de fundo.
     /// </summary>
     public static void ApplyFocus(Microsoft.UI.Xaml.Controls.Border border, bool focused)
     {
         border.BorderThickness = FocusRing;
         border.BorderBrush = focused ? Accent : Transparent;
         border.Background = focused ? AccentSoft : Transparent;
+        if (border.Parent is Microsoft.UI.Xaml.Controls.Border { Tag: GlowTag } glow) glow.BorderBrush = focused ? FocusGlow : Transparent;
     }
+
+    private const string GlowTag = "glow";
+
+    /// <summary>Envolve um anel num halo (ver <see cref="ApplyFocus"/>) e anima a troca de fundo em <see cref="MotionFocus"/>.</summary>
+    public static Microsoft.UI.Xaml.Controls.Border WithGlow(Microsoft.UI.Xaml.Controls.Border ring)
+    {
+        ring.BackgroundTransition = new BrushTransition { Duration = MotionFocus };
+        return new Microsoft.UI.Xaml.Controls.Border
+        {
+            Tag = GlowTag,
+            Child = ring,
+            BorderThickness = GlowRing,
+            BorderBrush = Transparent,
+            CornerRadius = new CornerRadius(ring.CornerRadius.TopLeft + GlowRing.Left),
+        };
+    }
+
+    /// <summary>Cores das faces do Xbox nas legendas (A verde, B vermelho, X azul, Y amarelo) e a cor da letra por cima.</summary>
+    public static (Color Body, Color Letter) XboxFace(Core.Actions.ControllerButton button) => button switch
+    {
+        Core.Actions.ControllerButton.FaceSouth => (ColorHelper.FromArgb(255, 0x2E, 0xB3, 0x4A), Colors.White),
+        Core.Actions.ControllerButton.FaceEast => (ColorHelper.FromArgb(255, 0xE5, 0x39, 0x3F), Colors.White),
+        Core.Actions.ControllerButton.FaceWest => (ColorHelper.FromArgb(255, 0x2C, 0x7F, 0xE8), Colors.White),
+        _ => (ColorHelper.FromArgb(255, 0xF4, 0xC4, 0x2F), ColorHelper.FromArgb(255, 0x1A, 0x1A, 0x1A)),
+    };
 }
