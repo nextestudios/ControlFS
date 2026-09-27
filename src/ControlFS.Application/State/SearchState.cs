@@ -32,6 +32,17 @@ public sealed class SearchState(SearchLocation location)
     /// <summary>Pastas que não puderam ser lidas (sem permissão ou indisponíveis): relatadas, nunca puladas em silêncio.</summary>
     public IReadOnlyList<string> SkippedFolders => Skipped;
 
+    /// <summary>Filtros aplicados aos resultados (a lista mostra só os que passam; os demais continuam guardados).</summary>
+    public SearchFilter Filter { get; internal set; } = SearchFilter.None;
+
+    /// <summary>Resultados que passam pelos filtros atuais.</summary>
+    public IEnumerable<FileEntry> VisibleResults()
+    {
+        if (!Filter.IsActive) return Results;
+        var now = DateTimeOffset.Now;
+        return Results.Where(r => Filter.Matches(r, now));
+    }
+
     public bool IsRunning => Status == SearchStatus.Running;
     public bool IsPartial => Status is SearchStatus.Running or SearchStatus.Cancelled or SearchStatus.LimitReached;
 
@@ -41,6 +52,7 @@ public sealed class SearchState(SearchLocation location)
         get
         {
             var count = Results.Count == 1 ? "1 resultado" : $"{Results.Count} resultados";
+            if (Filter.IsActive) count = $"{VisibleResults().Count()} de {count} (filtros: {Filter.Describe()})";
             var text = Status switch
             {
                 SearchStatus.Running => $"Buscando… {count} até agora (parcial)",

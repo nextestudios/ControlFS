@@ -60,7 +60,7 @@ public sealed partial class AppController
         pane.IsLoading = false;
         // Nova busca a partir dos resultados substitui a anterior no mesmo lugar do histórico.
         if (pane.Location is { } current and not SearchLocation) PushHistory(pane, current);
-        var search = new SearchState(location) { Cts = cts };
+        var search = new SearchState(location) { Cts = cts, Filter = SearchFilter };
         pane.Search = search;
         pane.Archive = null;
         pane.ArchivePassword = null;
@@ -204,7 +204,11 @@ public sealed partial class AppController
             if (found.Count == 0 && skipped.Count == 0) return;
             search.Results.AddRange(found);
             search.Skipped.AddRange(skipped);
-            if (pane.ActiveSearch == search) pane.List.AppendItems(found);
+            if (pane.ActiveSearch == search)
+            {
+                var now = DateTimeOffset.Now;
+                pane.List.AppendItems(search.Filter.IsActive ? found.Where(f => search.Filter.Matches(f, now)).ToList() : found);
+            }
         }
     }
 }

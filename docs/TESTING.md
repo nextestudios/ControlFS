@@ -101,6 +101,12 @@ Ainda manual, num aparelho real:
       respondendo; Leste cancela em menos de um segundo e mostra o parcial.
 - [ ] O total bate com Propriedades do Explorador ("Tamanho", não "Tamanho em disco") para uma pasta comum.
 
+## Filtros da busca (#47)
+
+- [ ] Com o controle: nos resultados, Norte abre os filtros; Sul em "Imagens" e "Vídeos" marca os dois (✓ visível e lido
+      pelo Narrador) sem fechar o menu; a lista atrás muda na hora.
+- [ ] Com uma busca grande ainda em andamento, ligar um filtro não reinicia a busca; os novos resultados já chegam filtrados.
+
 ## Lista: estados e densidade (#28)
 
 - [ ] Captura de tela da lista convertida para tons de cinza: item focado, item marcado, item focado **e** marcado, item

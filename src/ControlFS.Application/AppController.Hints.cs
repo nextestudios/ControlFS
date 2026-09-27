@@ -130,7 +130,7 @@ public sealed partial class AppController
         {
             // Resultados de busca: abrir leva à pasta do item; Voltar primeiro cancela a busca em andamento.
             if (pane.List.Focused is not null) hints.Add(new(InputAction.Confirm, "Mostrar na pasta"));
-            hints.Add(new(InputAction.OpenContextMenu, "Ações"));
+            hints.Add(new(InputAction.OpenContextMenu, search.Filter.IsActive ? "Filtros (ativos)" : "Filtros"));
             hints.Add(new(InputAction.Search, "Nova busca"));
             hints.Add(new(InputAction.NextRegion, TabsHint));
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));

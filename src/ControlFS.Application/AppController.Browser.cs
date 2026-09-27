@@ -42,7 +42,7 @@ public sealed partial class AppController
                 break;
             case InputAction.OpenContextMenu:
                 if (pane.Mode == PaneMode.PickFolder) ShowPickerMenu();
-                else if (pane.ActiveSearch is { } search) ShowSearchMenu(pane, search);
+                else if (pane.ActiveSearch is { } search) ShowSearchFilters(pane, search);
                 else ShowItemMenu(pane);
                 break;
             case InputAction.Search:
@@ -201,7 +201,7 @@ public sealed partial class AppController
                     break;
                 case SearchLocation search when pane.Search is { } state && state.Location == search:
                     // Voltar de um resultado aberto: os resultados guardados reaparecem (a busca não roda de novo).
-                    entries = [.. state.Results];
+                    entries = [.. state.VisibleResults()];
                     break;
                 default:
                     return;
