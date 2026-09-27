@@ -22,7 +22,7 @@
     <ProjectPriFileName>resources.pri</ProjectPriFileName>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- Ícone oficial (logos/controlfs-icon.png → assets/controlfs.ico): executável, atalhos, Alt+Tab. -->
+    <!-- Ícone oficial (logos/controlfs-icon.png → assets/controlfs.ico, gerado por build/make-icons.py com fundo transparente): executável, atalhos, Alt+Tab. -->
     <ApplicationIcon>..\..\assets\controlfs.ico</ApplicationIcon>
   </PropertyGroup>
   <!-- Portátil: um único .exe que se extrai sozinho na primeira execução. -->
