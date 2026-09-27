@@ -178,6 +178,20 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real, mouse).
 - [ ] Abrir uma pasta pelo meio de outra lista: o foco começa no primeiro item; Voltar/Esquerda focam a pasta de origem.
 - [ ] Janela estreita: a coluna de tipo some antes do nome ficar ilegível.
 
+## Painel de detalhes (redesenho, fase C2)
+
+Não validado em hardware (controle real, TV a ~3 m, DPI real).
+- [ ] 1920×1080 e 4K (100/200%): painel à direita com ícone grande, nome, tipo e linhas legíveis; capturas `1-home`,
+      `2d-details-folder`, `2e-details-image`, `2f-details-archive` do `--render-screens` conferem.
+- [ ] 1280×720/800 (portátil) e 4K a 300%: o painel sai e a lista usa a largura toda (sem espremer o nome).
+- [ ] Percorrer rápido uma pasta com muitas subpastas grandes segurando o direcional: nada trava; só a pasta em que o
+      foco parar é somada ("Calculando…" e depois os valores); voltar a ela não soma de novo por 10 minutos.
+- [ ] Foto grande real (JPG de celular 12 MP): miniatura aparece em segundo plano, na orientação certa; imagem acima dos
+      limites mostra "Sem miniatura: …" sem decodificar.
+- [ ] ZIP/7z com milhares de entradas: contagem de arquivos em até ~3 s ou omitida; RAR/TAR.GZ sem contagem (só formato).
+- [ ] Unidade (Meu computador em lista, início): sistema de arquivos, capacidade, livre, usado e barra de uso reais.
+- [ ] Narrador: o painel tem nome "Detalhes: …" com as linhas.
+
 ## Grade (#29)
 
 - [ ] Menu → Exibição: grade (e Ctrl+G): o item focado continua o mesmo nas duas direções; fechar e abrir o app mantém.
