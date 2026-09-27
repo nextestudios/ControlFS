@@ -242,11 +242,8 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             if (item.Entry.Modified is DateTimeOffset modified && modified.Year is > 1980 and < 2200)
                 File.SetLastWriteTimeUtc(staged, modified.UtcDateTime);
 
-            // Revalidação imediatamente antes da gravação final.
-            guard.Revalidate(item.Components, parentCount);
-            var final = Path.Join(parent, name);
-            guard.AssertContained(final);
-            return await PlaceAsync(staged, final, parent, name, item, zone, interaction, state, ct).ConfigureAwait(false);
+            // Colocação final com a cadeia de pastas presa e verificada por handle (ver DestinationGuard).
+            return await PlaceAsync(staged, name, parentCount, guard, item, zone, interaction, state, ct).ConfigureAwait(false);
         }
         finally
         {
@@ -254,15 +251,22 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         }
     }
 
-    private static async Task<ItemResult> PlaceAsync(string staged, string final, string parent, string name, PlannedEntry item, string? zone,
+    private static async Task<ItemResult> PlaceAsync(string staged, string name, int parentCount, DestinationGuard guard, PlannedEntry item, string? zone,
         IExtractionInteraction interaction, RunState state, CancellationToken ct)
     {
-        if (!PathExists(final) && TryMoveNoOverwrite(staged, final))
+        string final;
+        using (var parent = guard.Pin(item.Components, parentCount, create: false))
         {
-            MarkOfTheWeb.Apply(final, zone);
-            return new ItemResult(item.RelativePath, ItemOutcome.Succeeded, FinalPath: final);
+            final = Path.Join(parent.FullPath, name);
+            guard.AssertContained(final);
+            if (!PathExists(final) && parent.MoveHere(staged, name, replace: false))
+            {
+                MarkOfTheWeb.Apply(final, zone);
+                return new ItemResult(item.RelativePath, ItemOutcome.Succeeded, FinalPath: final);
+            }
         }
 
+        // A pergunta ao usuário acontece sem a cadeia presa; ela é presa e verificada de novo antes de agir.
         var existing = new FileInfo(final);
         var existingDir = new DirectoryInfo(final);
         var conflict = new ConflictInfo(
@@ -282,24 +286,31 @@ public sealed class SafeExtractor(IArchiveEngine engine)
             case ConflictChoice.Skip:
                 return new ItemResult(item.RelativePath, ItemOutcome.Skipped, Message: "Existente preservado.", FinalPath: final);
             case ConflictChoice.KeepBoth:
+            {
+                using var parent = guard.Pin(item.Components, parentCount, create: false);
                 for (var attempt = 0; attempt < 5; attempt++)
                 {
-                    var alternative = Path.Join(parent, UniqueNames.Next(name, n => PathExists(Path.Join(parent, n))));
-                    if (TryMoveNoOverwrite(staged, alternative))
+                    var alternative = UniqueNames.Next(name, n => PathExists(Path.Join(parent.FullPath, n)));
+                    if (parent.MoveHere(staged, alternative, replace: false))
                     {
-                        MarkOfTheWeb.Apply(alternative, zone);
-                        return new ItemResult(item.RelativePath, ItemOutcome.Renamed, Message: $"Salvo como \"{Path.GetFileName(alternative)}\".", FinalPath: alternative);
+                        var placed = Path.Join(parent.FullPath, alternative);
+                        MarkOfTheWeb.Apply(placed, zone);
+                        return new ItemResult(item.RelativePath, ItemOutcome.Renamed, Message: $"Salvo como \"{alternative}\".", FinalPath: placed);
                     }
                 }
                 return new ItemResult(item.RelativePath, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Não foi possível obter um nome livre.");
+            }
             case ConflictChoice.Replace:
-                if (existingDir.Exists)
+            {
+                using var parent = guard.Pin(item.Components, parentCount, create: false);
+                if (Directory.Exists(final))
                     return new ItemResult(item.RelativePath, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe uma pasta com esse nome; pastas não são substituídas por arquivos.");
-                if (DestinationGuard.IsLink(existing))
+                if (DestinationGuard.IsLink(new FileInfo(final)))
                     return new ItemResult(item.RelativePath, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "O item existente é um link; não será substituído.");
-                File.Move(staged, final, overwrite: true);
+                parent.MoveHere(staged, name, replace: true);
                 MarkOfTheWeb.Apply(final, zone);
                 return new ItemResult(item.RelativePath, ItemOutcome.Replaced, FinalPath: final);
+            }
             default:
                 state.CancelledByUser = true;
                 return new ItemResult(item.RelativePath, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; existente preservado.", final);
@@ -451,19 +462,6 @@ public sealed class SafeExtractor(IArchiveEngine engine)
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
-    }
-
-    private static bool TryMoveNoOverwrite(string source, string target)
-    {
-        try
-        {
-            File.Move(source, target, overwrite: false);
-            return true;
-        }
-        catch (IOException) when (PathExists(target))
-        {
-            return false;
-        }
     }
 
     private static bool PathExists(string path) => File.Exists(path) || Directory.Exists(path) || new FileInfo(path).LinkTarget is not null;

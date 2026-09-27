@@ -13,7 +13,7 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
 | Contenção por construção: nome vira lista de componentes validados; rejeita `..`, raiz, `C:`, `C:x`, `\\`, `\\?\`, `\\.\`, NUL, `//`, `:` (ADS), reservados, ponto/espaço final, caracteres inválidos. Nada é "corrigido" em silêncio. | `ArchivePathPolicy`, `WindowsNameRules` | `ArchivePathPolicyTests`, `SafeExtractorTests.Malicious_paths_never_write_outside_destination` (prova por snapshot do disco) |
 | Defesa em profundidade: caminho final normalizado precisa estar abaixo da raiz. | `DestinationGuard.AssertContained` | idem |
 | Links e tipos especiais do compactado bloqueados (inclui symlink Unix em ZIP, que o motor não expõe como link). | `SharpCompressZipEngine.IsLinkOrSpecial` | `ZipEngineTests`, `Symlink_entries_are_blocked` |
-| Diretórios existentes no destino que sejam link/junction/reparse point não são atravessados; cadeia **revalidada** imediatamente antes de cada gravação final. | `DestinationGuard` | `Existing_link_in_destination_is_not_followed` (symlink, macOS); junction: `WindowsIntegrationTests` (**passou** na CI `windows-latest` (2026-09-26)) |
+| Diretórios existentes no destino que sejam link/junction/reparse point não são atravessados. No Windows, a cadeia raiz → pasta de destino é aberta **por handle** (`FILE_FLAG_OPEN_REPARSE_POINT`, sem `FILE_SHARE_DELETE`) e conferida pelo handle (atributos sem reparse point; caminho final igual ao esperado) imediatamente antes de cada gravação final; enquanto presa, nenhuma pasta da cadeia pode ser renomeada, apagada ou trocada por junction, e a movimentação final é feita **relativa ao handle** da pasta (`SetFileInformationByHandle(FileRenameInfo)`). A identidade da raiz é fixada no início: raiz trocada no meio recusa as gravações seguintes. Vale para extração e para copiar/mover. | `PinnedDirectory`, `DestinationGuard`, `FileOperationService` | `Existing_link_in_destination_is_not_followed` (symlink, macOS); junction: `WindowsBehaviorTests`; corrida adversarial (troca contínua por junction durante extração, cópia e movimentação) e pasta presa que não pode ser renomeada: `JunctionRaceTests` (Windows) |
 | Colisões por caixa, normalização Unicode (NFC) e arquivo×pasta são rejeitadas com motivo. | `SafeExtractor.BuildPlan` | `Case_and_type_collisions_are_rejected_not_merged` |
 | Nunca sobrescreve em silêncio; escolha inicial preserva o existente; "substituir" exige segunda confirmação; "aplicar aos demais" vale só para a operação. | `SafeExtractor.PlaceAsync`, `AppController.ShowConflictDialog` | `Conflicts_*`, `Apply_to_remaining_*`, jornadas de conflito |
 | Staging privado no mesmo volume (`.controlfs-staging-<128 bits aleatórios>` com manifesto), arquivo `CreateNew`, move sem sobrescrita. Temporários removidos em sucesso, falha e cancelamento. | `SafeExtractor` | vários (verificam ausência de `.controlfs-`) |
@@ -26,9 +26,19 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
 
 ## Limites honestos da proteção
 
-- **Corrida (TOCTOU):** a verificação usa atributos por caminho, não handles abertos com `FILE_FLAG_OPEN_REPARSE_POINT`.
-  Um processo malicioso **com os mesmos privilégios** pode trocar uma pasta por junction entre a revalidação e o `File.Move`.
-  Mitigação por handles está planejada (Etapa 3). Não anunciamos proteção contra corrida.
+- **Corrida (TOCTOU), o que ainda resta:** as pastas **abaixo** da raiz do destino ficam presas por handle durante cada
+  gravação final, então não podem ser trocadas por junction nesse intervalo (`JunctionRaceTests`). Continuam fora dessa garantia:
+  - a própria raiz escolhida pelo usuário e as pastas **acima** dela (ex.: `C:\Users\voce`): podem ser links legítimos e são
+    confiadas como escolha do usuário; a raiz é presa e sua identidade conferida a cada gravação, mas quem controla uma pasta
+    acima dela pode redirecionar o caminho entre duas gravações (a gravação seguinte é recusada);
+  - arquivos temporários são criados **por caminho** dentro da pasta presa (o Win32 não cria arquivo relativo a um handle);
+    a cadeia presa impede o redirecionamento, mas não a leitura do temporário por outro processo com os mesmos privilégios;
+  - o que acontece **depois** da gravação (outro processo pode mover a pasta assim que ela é solta) e metadados aplicados por
+    caminho (data de modificação, Mark of the Web) logo após a colocação;
+  - pastas presas não podem ser renomeadas/apagadas pelo próprio usuário durante a gravação de cada arquivo (efeito colateral
+    intencional);
+  - fora do Windows (apenas desenvolvimento/testes) a verificação é por caminho, sem proteção contra corrida;
+  - sistemas de arquivos de rede que não aceitam renomear relativo a um handle usam o caminho completo da pasta presa.
 - A extração roda **no mesmo processo** (thread de trabalho). Não há worker isolado nem sandbox; um decodificador que não
   respeite cancelamento só é interrompido pelo limite de tempo ao término do bloco atual.
 - A string da senha exigida pelo motor (`ReaderOptions.Password`) é imutável e fica na memória gerenciada até ser coletada.

@@ -16,6 +16,9 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Ícones nativos do Windows** na lista (início, pastas, seletor e compactados): tipos de arquivo, pastas, pastas especiais e unidades. Os ícones carregam em segundo plano, sem travar a rolagem, e acompanham a escala da tela; nenhum emoji na lista. (#24)
 - **Cursor visível** no teclado virtual (barra fixa na cor de destaque, posição lida pelo Narrador) e **LT/RT** (ou Home/End) para ir ao início ou ao fim do texto. (#43)
 
+### Segurança
+- Destinos de extração, cópia e movimentação são conferidos **por handle** no Windows: as pastas do destino ficam presas enquanto cada arquivo é colocado, então outro programa não consegue trocá-las por uma junction para gravar fora do destino. Limites restantes em `docs/security-model.md`. (#81)
+
 ### Melhorias
 - **Foco mais claro e sempre num lugar válido:** a lista usa o mesmo anel de destaque dos menus e diálogos; ao excluir ou mover itens o foco vai para o próximo item que sobrou (ou o anterior); ao abrir uma pasta o item focado já aparece rolado na tela; e o teclado físico volta a responder logo depois de fechar um menu ou diálogo. (#31)
 - **Lista mais clara:** focado, marcado e recortado têm formas próprias (anel; faixa + caixa marcada + "Marcado"; tesoura + "Recortado"), legíveis sem depender de cor. Tipo, tamanho e data aparecem sempre na mesma ordem, e o item focado mostra o nome inteiro. Nova **densidade da lista** no menu (confortável ou compacta com colunas), salva entre sessões. (#28)

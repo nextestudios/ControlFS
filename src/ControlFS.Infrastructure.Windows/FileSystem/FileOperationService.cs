@@ -32,6 +32,7 @@ public sealed partial class FileOperationService : IFileOperationService
         CancellationToken ct)
     {
         var run = new Run(conflicts, progress, ct);
+        if (request.DestinationFolder is { } root) run.Root = Path.GetFullPath(root);
         string? destination = null;
         try
         {
@@ -139,11 +140,14 @@ public sealed partial class FileOperationService : IFileOperationService
             if (move && SameVolume(source, destDir))
             {
                 var length = SafeLength(source);
-                if (!Exists(final) && TryMove(source, final, overwrite: false))
+                using (var dir = Pin(run, destDir))
                 {
-                    run.Results.Add(new ItemResult(name, ItemOutcome.Succeeded, FinalPath: final));
-                    run.Report(name, length, fileDone: true);
-                    return;
+                    if (!Exists(final) && dir.MoveHere(source, name, replace: false))
+                    {
+                        run.Results.Add(new ItemResult(name, ItemOutcome.Succeeded, FinalPath: final));
+                        run.Report(name, length, fileDone: true);
+                        return;
+                    }
                 }
                 var decision = await AskAsync(final, source, name, incomingIsDirectory: false, run).ConfigureAwait(false);
                 run.Results.Add(ApplyMoveDecision(source, destDir, final, name, decision, run));
@@ -155,8 +159,14 @@ public sealed partial class FileOperationService : IFileOperationService
             var temp = Path.Join(destDir, TempPrefix + Guid.NewGuid().ToString("N") + ".part");
             try
             {
-                await CopyContentAsync(source, temp, name, run).ConfigureAwait(false);
-                var placed = await PlaceAsync(temp, final, destDir, name, source, run).ConfigureAwait(false);
+                ItemResult? placed = null;
+                // A cadeia de pastas do destino fica presa enquanto o temporário é gravado e colocado no lugar.
+                using (var dir = Pin(run, destDir))
+                {
+                    await CopyContentAsync(source, temp, name, run).ConfigureAwait(false);
+                    if (!Exists(final) && dir.MoveHere(temp, name, replace: false)) placed = new ItemResult(name, ItemOutcome.Succeeded, FinalPath: final);
+                }
+                placed ??= await PlaceAsync(temp, final, destDir, name, source, run).ConfigureAwait(false);
                 if (move && placed.Outcome is ItemOutcome.Succeeded or ItemOutcome.Renamed or ItemOutcome.Replaced)
                 {
                     try
@@ -190,11 +200,11 @@ public sealed partial class FileOperationService : IFileOperationService
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileOperationException)
         {
             var (kind, message) = Map(ex);
             if (kind is OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable) throw new FatalException(kind, message);
-            run.Results.Add(new ItemResult(name, ItemOutcome.Failed, kind, message));
+            run.Results.Add(new ItemResult(name, OutcomeOf(kind), kind, message));
             run.Report(name, 0, fileDone: true);
         }
         finally
@@ -221,30 +231,18 @@ public sealed partial class FileOperationService : IFileOperationService
         File.SetCreationTimeUtc(temp, File.GetCreationTimeUtc(source));
     }
 
+    /// <summary>Conflito ao colocar o temporário: pergunta sem prender nada e prende de novo antes de agir.</summary>
     private static async Task<ItemResult> PlaceAsync(string temp, string final, string destDir, string name, string source, Run run)
     {
-        if (!Exists(final) && TryMove(temp, final, overwrite: false)) return new ItemResult(name, ItemOutcome.Succeeded, FinalPath: final);
         var decision = await AskAsync(final, source, name, incomingIsDirectory: false, run).ConfigureAwait(false);
         switch (decision.Choice)
         {
             case ConflictChoice.Skip:
                 return new ItemResult(name, ItemOutcome.Skipped, Message: "Existente preservado.", FinalPath: final);
             case ConflictChoice.KeepBoth:
-                for (var attempt = 0; attempt < 5; attempt++)
-                {
-                    var alternative = Path.Join(destDir, UniqueNames.Next(name, n => Exists(Path.Join(destDir, n))));
-                    if (TryMove(temp, alternative, overwrite: false))
-                        return new ItemResult(name, ItemOutcome.Renamed, Message: $"Salvo como \"{Path.GetFileName(alternative)}\".", FinalPath: alternative);
-                }
-                return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Não foi possível obter um nome livre.");
+                return KeepBoth(temp, destDir, name, "Salvo como", run);
             case ConflictChoice.Replace:
-                if (Directory.Exists(final))
-                    return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe uma pasta com esse nome; pastas não são substituídas por arquivos.");
-                if (IsLink(final))
-                    return new ItemResult(name, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "O item existente é um link; não será substituído.");
-                ClearReadOnly(final);
-                File.Move(temp, final, overwrite: true);
-                return new ItemResult(name, ItemOutcome.Replaced, FinalPath: final);
+                return Replace(temp, destDir, final, name, run);
             default:
                 run.Cancelled = true;
                 return new ItemResult(name, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; existente preservado.", final);
@@ -258,26 +256,52 @@ public sealed partial class FileOperationService : IFileOperationService
             case ConflictChoice.Skip:
                 return new ItemResult(name, ItemOutcome.Skipped, Message: "Existente preservado; o original não foi movido.", FinalPath: final);
             case ConflictChoice.KeepBoth:
-                for (var attempt = 0; attempt < 5; attempt++)
-                {
-                    var alternative = Path.Join(destDir, UniqueNames.Next(name, n => Exists(Path.Join(destDir, n))));
-                    if (TryMove(source, alternative, overwrite: false))
-                        return new ItemResult(name, ItemOutcome.Renamed, Message: $"Movido como \"{Path.GetFileName(alternative)}\".", FinalPath: alternative);
-                }
-                return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Não foi possível obter um nome livre.");
+                return KeepBoth(source, destDir, name, "Movido como", run);
             case ConflictChoice.Replace:
-                if (Directory.Exists(final))
-                    return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe uma pasta com esse nome; pastas não são substituídas por arquivos.");
-                if (IsLink(final))
-                    return new ItemResult(name, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "O item existente é um link; não será substituído.");
-                ClearReadOnly(final);
-                File.Move(source, final, overwrite: true);
-                return new ItemResult(name, ItemOutcome.Replaced, FinalPath: final);
+                return Replace(source, destDir, final, name, run);
             default:
                 run.Cancelled = true;
                 return new ItemResult(name, ItemOutcome.Skipped, OperationErrorKind.Cancelled, "Cancelado no conflito; nada foi alterado.", final);
         }
     }
+
+    /// <summary>"Manter ambos": move para um nome livre dentro da pasta de destino presa.</summary>
+    private static ItemResult KeepBoth(string from, string destDir, string name, string verb, Run run)
+    {
+        using var dir = Pin(run, destDir);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var alternative = UniqueNames.Next(name, n => Exists(Path.Join(dir.FullPath, n)));
+            if (dir.MoveHere(from, alternative, replace: false))
+                return new ItemResult(name, ItemOutcome.Renamed, Message: $"{verb} \"{alternative}\".", FinalPath: Path.Join(dir.FullPath, alternative));
+        }
+        return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Não foi possível obter um nome livre.");
+    }
+
+    /// <summary>"Substituir" (já confirmado): só arquivos comuns são substituídos, dentro da pasta de destino presa.</summary>
+    private static ItemResult Replace(string from, string destDir, string final, string name, Run run)
+    {
+        using var dir = Pin(run, destDir);
+        if (Directory.Exists(final))
+            return new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe uma pasta com esse nome; pastas não são substituídas por arquivos.");
+        if (IsLink(final))
+            return new ItemResult(name, ItemOutcome.Blocked, OperationErrorKind.DestinationTraversesLink, "O item existente é um link; não será substituído.");
+        ClearReadOnly(final);
+        dir.MoveHere(from, name, replace: true);
+        return new ItemResult(name, ItemOutcome.Replaced, FinalPath: final);
+    }
+
+    /// <summary>Prende a cadeia raiz do destino → <paramref name="folder"/> (ver <see cref="PinnedDirectory"/>).</summary>
+    private static PinnedDirectory Pin(Run run, string folder, bool create = false)
+    {
+        var root = run.Root ?? throw new InvalidOperationException("Operação sem pasta de destino.");
+        var pinned = PinnedDirectory.Open(root, PinnedDirectory.Relative(root, folder), create, run.RootIdentity);
+        run.RootIdentity ??= pinned.RootIdentity;
+        return pinned;
+    }
+
+    private static ItemOutcome OutcomeOf(OperationErrorKind kind) =>
+        kind is OperationErrorKind.DestinationTraversesLink or OperationErrorKind.PathRejected ? ItemOutcome.Blocked : ItemOutcome.Failed;
 
     // ---------------- Pastas ----------------
 
@@ -290,19 +314,17 @@ public sealed partial class FileOperationService : IFileOperationService
         {
             if (move && SameVolume(source, destDir) && !Exists(target))
             {
-                try
+                bool moved;
+                using (var dir = Pin(run, destDir)) moved = dir.MoveHere(source, name, replace: false);
+                if (moved)
                 {
-                    Directory.Move(source, target);
                     var (files, bytes) = Measure([target]);
                     run.Results.Add(new ItemResult(label, ItemOutcome.Succeeded, FinalPath: target));
                     run.Report(name, bytes, fileDone: false);
                     run.FilesDone += files;
                     return;
                 }
-                catch (IOException) when (Exists(target))
-                {
-                    // Surgiu um item com o mesmo nome: segue pelo fluxo de conflito abaixo.
-                }
+                // Surgiu um item com o mesmo nome: segue pelo fluxo de conflito abaixo.
             }
 
             if (Exists(target))
@@ -315,7 +337,7 @@ public sealed partial class FileOperationService : IFileOperationService
                         return;
                     case ConflictChoice.KeepBoth:
                         target = Path.Join(destDir, UniqueNames.Next(name, n => Exists(Path.Join(destDir, n)), isDirectory: true));
-                        Directory.CreateDirectory(target);
+                        using (Pin(run, target, create: true)) { }
                         break;
                     case ConflictChoice.Replace when !Directory.Exists(target):
                         run.Results.Add(new ItemResult(label, ItemOutcome.Failed, OperationErrorKind.AlreadyExists, "Existe um arquivo com esse nome; ele não é substituído por uma pasta."));
@@ -335,7 +357,7 @@ public sealed partial class FileOperationService : IFileOperationService
             }
             else
             {
-                Directory.CreateDirectory(target);
+                using (Pin(run, target, create: true)) { }
             }
             Directory.SetLastWriteTimeUtc(target, Directory.GetLastWriteTimeUtc(source));
 
@@ -388,11 +410,11 @@ public sealed partial class FileOperationService : IFileOperationService
         {
             throw;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileOperationException)
         {
             var (kind, message) = Map(ex);
             if (kind is OperationErrorKind.InsufficientSpace or OperationErrorKind.DestinationUnavailable) throw new FatalException(kind, message);
-            run.Results.Add(new ItemResult(label, ItemOutcome.Failed, kind, message));
+            run.Results.Add(new ItemResult(label, OutcomeOf(kind), kind, message));
         }
         finally
         {
@@ -665,19 +687,6 @@ public sealed partial class FileOperationService : IFileOperationService
         }
     }
 
-    private static bool TryMove(string from, string to, bool overwrite)
-    {
-        try
-        {
-            File.Move(from, to, overwrite);
-            return true;
-        }
-        catch (IOException) when (Exists(to))
-        {
-            return false;
-        }
-    }
-
     private static (OperationErrorKind Kind, string Message) Map(Exception ex) => ex switch
     {
         FileOperationException f => (f.Kind, f.Message),
@@ -706,6 +715,9 @@ public sealed partial class FileOperationService : IFileOperationService
         public int Total { get; set; }
         public long BytesTotal { get; set; }
         public int FilesDone { get; set; }
+        /// <summary>Pasta de destino autorizada (raiz das cadeias presas) e sua identidade no Windows, fixada na primeira verificação.</summary>
+        public string? Root { get; set; }
+        public string? RootIdentity { get; set; }
         private long _bytes;
 
         /// <summary>Associa à origem e à pasta de destino os resultados adicionados desde <paramref name="from"/> sem origem própria.</summary>
