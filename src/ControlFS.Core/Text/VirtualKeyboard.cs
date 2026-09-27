@@ -39,6 +39,7 @@ public sealed class VirtualKeyboard
     private char[] _buffer;
     private int _length;
     private readonly Func<string, string?>? _validator;
+    private VirtualKey? _confirmedKey;
 
     public VirtualKeyboard(TextFieldKind kind, string title, string initialText = "", KeyboardLanguage language = KeyboardLanguage.PortugueseBrazil,
         Func<string, string?>? validator = null, int? maxLength = null, int? initialCaret = null)
@@ -98,10 +99,24 @@ public sealed class VirtualKeyboard
         ? key.Label.ToUpper(CultureInfo.CurrentCulture)
         : key.Label;
 
+    /// <summary>
+    /// Ações de edição seguras para repetir enquanto o botão fica pressionado: apagar e mover o cursor, inclusive
+    /// Confirmar mantido sobre ⌫/◀/▶ (desde que o foco não tenha mudado desde o toque). Concluir, Cancelar e
+    /// caracteres nunca repetem.
+    /// </summary>
+    public bool IsRepeatable(InputAction action) => Outcome == KeyboardOutcome.None && action switch
+    {
+        InputAction.ToggleSelection or InputAction.PreviousRegion or InputAction.NextRegion => true,
+        InputAction.Confirm => _confirmedKey is { Kind: KeyKind.Backspace or KeyKind.CaretLeft or KeyKind.CaretRight } key
+            && ReferenceEquals(key, FocusedKey),
+        _ => false,
+    };
+
     /// <summary>Processa uma ação semântica. Retorna true se consumida.</summary>
     public bool Handle(InputAction action)
     {
         if (Outcome != KeyboardOutcome.None) return false;
+        _confirmedKey = action == InputAction.Confirm ? FocusedKey : null;
         switch (action)
         {
             case InputAction.NavigateUp: MoveVertical(-1); return true;

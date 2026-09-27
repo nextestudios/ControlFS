@@ -1,4 +1,5 @@
 using ControlFS.Core.Actions;
+using ControlFS.Core.Input;
 using ControlFS.Core.Text;
 using ControlFS.UnitTests.Support;
 
@@ -43,6 +44,39 @@ public class VirtualKeyboardTests
         kb.Handle(InputAction.ToggleSelection);
         Assert.Equal("arquivo_2.txt", kb.Text);
         Assert.Equal(8, kb.Caret);
+    }
+
+    [Fact]
+    public void Holding_backspace_deletes_continuously_and_stops_on_release()
+    {
+        var kb = new VirtualKeyboard(TextFieldKind.Generic, "t", new string('a', 200));
+        var router = new InputRouter(new ActionMap(ConfirmBackConvention.SouthConfirms), InputSettings.Default, a => kb.Handle(a))
+        {
+            RepeatPolicy = a => a.IsRepeatable() || kb.IsRepeatable(a),
+        };
+        static TimeSpan Ms(int ms) => TimeSpan.FromMilliseconds(ms);
+
+        router.OnControl("p1", PhysicalControl.West, true, Ms(0));
+        for (var t = 0; t <= 2000; t += 5) router.Tick(Ms(t));
+        router.OnControl("p1", PhysicalControl.West, false, Ms(2001));
+        var afterHold = kb.Length;
+        Assert.True(afterHold < 200 - 20, $"restaram {afterHold}");
+        for (var t = 2005; t <= 4000; t += 5) router.Tick(Ms(t));
+        Assert.Equal(afterHold, kb.Length); // parou ao soltar
+
+        // Sul mantido sobre ⌫ também repete; sobre um caractere, digita uma vez só.
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.Backspace);
+        var afterTap = kb.Length;
+        router.OnControl("p1", PhysicalControl.South, true, Ms(5000));
+        for (var t = 5000; t <= 6000; t += 5) router.Tick(Ms(t));
+        router.OnControl("p1", PhysicalControl.South, false, Ms(6001));
+        Assert.True(kb.Length < afterTap - 5, $"restaram {kb.Length}");
+
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.Character && k.Text == "q");
+        var beforeLetter = kb.Length;
+        router.OnControl("p1", PhysicalControl.South, true, Ms(7000));
+        for (var t = 7000; t <= 9000; t += 5) router.Tick(Ms(t));
+        Assert.Equal(beforeLetter + 1, kb.Length);
     }
 
     [Fact]
