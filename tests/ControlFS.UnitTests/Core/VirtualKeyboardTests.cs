@@ -10,10 +10,10 @@ public class VirtualKeyboardTests
     public void Types_accented_name_using_only_directions_and_confirm()
     {
         var kb = new VirtualKeyboard(TextFieldKind.FileName, "Nome", "");
-        KeyboardDriver.Type(a => kb.Handle(a), () => kb, "Ação 1");
+        KeyboardDriver.Type(a => kb.Handle(a), () => kb, "Relatório ação 2026");
         KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.Done);
         Assert.Equal(KeyboardOutcome.Submitted, kb.Outcome);
-        Assert.Equal("Ação 1", kb.Text);
+        Assert.Equal("Relatório ação 2026", kb.Text);
     }
 
     [Fact]
@@ -107,13 +107,30 @@ public class VirtualKeyboardTests
     public void Vertical_navigation_keeps_column_across_wide_keys()
     {
         var kb = new VirtualKeyboard(TextFieldKind.Generic, "t");
-        // Linha de letras "q" (coluna 0) -> descer até a barra de espaço e voltar.
+        // Coluna 7 ("8") desce pelas letras até a barra de espaço (colunas 6-8) e segue para Concluir (colunas 6-10).
+        for (var i = 0; i < 7; i++) kb.Handle(InputAction.NavigateRight);
         for (var i = 0; i < 4; i++) kb.Handle(InputAction.NavigateDown);
-        Assert.Equal(KeyKind.PageSymbols, kb.FocusedKey.Kind);
-        for (var i = 0; i < 3; i++) kb.Handle(InputAction.NavigateRight);
-        Assert.Equal(".", kb.FocusedKey.Text);
+        Assert.Equal(KeyKind.Space, kb.FocusedKey.Kind);
+        kb.Handle(InputAction.NavigateDown);
+        Assert.Equal(KeyKind.Done, kb.FocusedKey.Kind);
         kb.Handle(InputAction.NavigateUp);
-        Assert.Equal("b", kb.FocusedKey.Text); // coluna 5 na linha "⇧zxcvbnm-_"
+        kb.Handle(InputAction.NavigateUp);
+        Assert.Equal("m", kb.FocusedKey.Text); // coluna 6, início da barra de espaço, na linha "zxcvbnm,._!"
+    }
+
+    [Fact]
+    public void Every_page_fills_the_grid_and_keeps_the_function_and_bottom_rows()
+    {
+        foreach (var page in Enum.GetValues<KeyboardPage>())
+        foreach (var password in new[] { false, true })
+        {
+            var rows = VirtualKeyboardLayouts.Build(page, KeyboardLanguage.PortugueseBrazil, password);
+            Assert.Equal(6, rows.Count);
+            Assert.All(rows, r => Assert.Equal(VirtualKeyboardLayouts.Columns, r.Sum(k => k.Span)));
+            Assert.Equal([KeyKind.Shift, KeyKind.PageLetters, KeyKind.PageSymbols, KeyKind.Space, KeyKind.Backspace], rows[4].Select(k => k.Kind));
+            Assert.Equal(KeyKind.Done, rows[5][^1].Kind);
+            Assert.Equal(password, rows[5].Any(k => k.Kind == KeyKind.Reveal));
+        }
     }
 
     [Fact]
@@ -121,8 +138,9 @@ public class VirtualKeyboardTests
     {
         var kb = new VirtualKeyboard(TextFieldKind.Generic, "t");
         Assert.Contains(kb.Rows[2], k => k.Text == "ç");
-        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.SwitchLanguage);
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.SwitchLanguage); // fica na página "…"
         Assert.Equal(KeyboardLanguage.English, kb.Language);
+        KeyboardDriver.Press(a => kb.Handle(a), () => kb, k => k.Kind == KeyKind.PageLetters);
         Assert.DoesNotContain(kb.Rows[2], k => k.Text == "ç");
     }
 }

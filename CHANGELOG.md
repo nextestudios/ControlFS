@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Novidades
+- **Novo layout do teclado virtual**: campo em cima, quatro linhas de caracteres, linha de funções (`⇧`, `ABC`, `@#:`, espaço, `⌫`) e linha inferior com cursor, `…` (acentos, idioma e limpar) e **Concluir** largo. (#41)
 
 ## [0.3.0-alpha.1]
 ### Novidades

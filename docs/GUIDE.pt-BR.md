@@ -15,12 +15,14 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Norte | Ações do item | Maiúsculas |
 | LB / RB | — | Mover cursor |
 | LT / RT | Página anterior / próxima | — |
-| Start | Menu do app | OK |
+| Start | Menu do app | Concluir |
 | Select | (busca, ainda não) | Símbolos |
 
 **Voltar** fecha primeiro o menu aberto, depois limpa a seleção, depois volta no histórico e por fim vai à tela inicial. Sair do app sempre pede confirmação, começando em "Cancelar".
 
 Só um controle comanda o app por vez: o primeiro a apertar um botão. Com a janela em segundo plano, a entrada é ignorada. O menu tem "Confirmar com: botão inferior/direito" e o estilo das legendas (genérico, Xbox, PlayStation, Nintendo).
+
+O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma linha de funções (`⇧` Maiúsculas · `ABC` letras · `@#:` símbolos · espaço · `⌫`) e uma linha inferior (cursor `◀ ▶` · `…` mais · Cancelar · **Concluir**). `…` abre os acentos, **Limpar** e a troca PT-BR/EN. Maiúsculas: um toque deixa a próxima letra maiúscula, o segundo trava (`⇪`), o terceiro desliga. Teclas que o campo não aceita (ex.: `\ / : * ? " < > |` em nomes de arquivo) ficam apagadas.
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 
