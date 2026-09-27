@@ -505,6 +505,15 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Um `.exe` renomeado para `.png` e uma imagem acima de 80 megapixels mostram o motivo da recusa, sem abrir nada.
 - [ ] O Narrador lê o nome da imagem, a posição e a resolução.
 
+## Legendas da visualização de imagens (#171) — não validado em hardware
+
+- [ ] Com Xbox, PlayStation, Nintendo (Switch Pro) e um controle genérico: cada glifo do painel faz a ação do rótulo
+      (Anterior/Próxima, Mais/Menos zoom, Ajustar à tela, Fechar).
+- [ ] Ao abrir, as legendas aparecem; após ~4 s sem entrada esmaecem (Fechar continua forte, o topo diz "qualquer botão
+      mostra os comandos"); qualquer botão as mostra de novo e a imagem não muda de tamanho.
+- [ ] Legíveis a ~3 m em 1080p e 4K e num portátil 1280×720/800, abrindo a imagem pela grade e pela lista.
+- [ ] Imagem com erro (ex.: bomba de 80+ MP): a mensagem continua inteira visível; Fechar volta à lista.
+
 ## Visualização de texto (#58)
 
 - [ ] Sul num `.log` de 50 MB: a tela não trava, aparece o aviso de prévia parcial (primeiras 10.000 linhas) e a rolagem

@@ -103,11 +103,9 @@ public sealed partial class AppController
                     hints.Add(new(InputAction.NavigateLeft, "Mover"));
                     hints.Add(new(InputAction.Confirm, "Ajustar à tela"));
                 }
-                if (preview.Images.Count > 1)
-                {
-                    hints.Add(new(InputAction.PreviousRegion, "Anterior"));
-                    hints.Add(new(InputAction.NextRegion, "Próxima"));
-                }
+                // Só o que funciona agora (#171): na primeira imagem não há "Anterior", na última não há "Próxima".
+                if (preview.Index > 0) hints.Add(new(InputAction.PreviousRegion, "Anterior"));
+                if (preview.Index < preview.Images.Count - 1) hints.Add(new(InputAction.NextRegion, "Próxima"));
                 if (preview.ZoomIndex > 0) hints.Add(new(InputAction.PageUp, "Menos zoom"));
                 if (preview.Image is not null && preview.ZoomIndex < ImagePreviewModal.ZoomLevels.Count - 1) hints.Add(new(InputAction.PageDown, "Mais zoom"));
                 hints.Add(new(InputAction.Back, "Fechar"));

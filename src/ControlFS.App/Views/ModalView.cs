@@ -141,7 +141,7 @@ public static partial class ModalView
     /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela) e, embaixo, o aviso do rodapé (se
     /// houver) e as legendas do controle em uso. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
     /// </summary>
-    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null, bool compact = false)
+    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null, bool compact = false, bool fadedHints = false)
     {
         var padding = compact ? MenuPadding : PanelPadding;
         var grid = new Grid { RowSpacing = compact ? Theme.Space(12) : Theme.SpaceM };
@@ -170,7 +170,8 @@ public static partial class ModalView
         Grid.SetRow((FrameworkElement)content, 1);
         grid.Children.Add(content);
 
-        var footer = new Border { Child = Footer(app) };
+        var footer = new Border { Child = Footer(app, fadedHints) };
+        _hintsFaded = fadedHints;
         footerSink?.Invoke(footer);
         Grid.SetRow(footer, 2);
         grid.Children.Add(footer);
@@ -271,7 +272,7 @@ public static partial class ModalView
     /// Rodapé do painel: o aviso do momento (ex.: por que uma opção está indisponível) e as legendas do controle em uso,
     /// as mesmas do rodapé da janela (glifo certo por família; só ações que funcionam neste modal).
     /// </summary>
-    private static StackPanel Footer(AppController app)
+    private static StackPanel Footer(AppController app, bool fadedHints = false)
     {
         var footer = new StackPanel { Spacing = Theme.SpaceS };
         footer.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider, Margin = new Thickness(0, 0, 0, Theme.SpaceXs) });
@@ -282,8 +283,36 @@ public static partial class ModalView
             line.Children.Add(new TextBlock { Text = status, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
             footer.Children.Add(line);
         }
-        footer.Children.Add(PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody));
+        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody);
+        if (fadedHints) FadeHints(bar);
+        footer.Children.Add(bar);
         return footer;
+    }
+
+    /// <summary>Se as legendas já estavam recolhidas no quadro anterior (o modal da imagem é refeito a cada quadro).</summary>
+    private static bool _hintsFaded;
+
+    /// <summary>Opacidade das legendas recolhidas: ainda legíveis de perto, sem disputar atenção com a imagem.</summary>
+    private const double FadedHintOpacity = 0.3;
+
+    /// <summary>
+    /// Estado mínimo das legendas (#171): esmaecem sem mudar o tamanho do rodapé (a imagem não pula); Fechar continua em
+    /// destaque. Só o quadro em que recolhem anima; qualquer entrada as mostra de novo na hora.
+    /// </summary>
+    private static void FadeHints(WrapPanel bar)
+    {
+        var animate = !_hintsFaded && !Theme.ReduceMotion;
+        foreach (var child in bar.Children)
+        {
+            if (child is not StackPanel { Tag: ControllerPrompt prompt } chip || prompt.Action == InputAction.Back) continue;
+            if (!animate)
+            {
+                chip.Opacity = FadedHintOpacity;
+                continue;
+            }
+            chip.OpacityTransition = new ScalarTransition { Duration = TimeSpan.FromMilliseconds(400) };
+            chip.Loaded += (_, _) => chip.Opacity = FadedHintOpacity;
+        }
     }
 
     private static double PromptGlyphHeight => Math.Round(Theme.FontBody * (Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? 1.6 : 1.8));
@@ -319,6 +348,7 @@ public static partial class ModalView
             });
         chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = labelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
         AutomationProperties.SetName(chip, prompt.AccessibilityText);
+        chip.Tag = prompt;
         return chip;
     }
 

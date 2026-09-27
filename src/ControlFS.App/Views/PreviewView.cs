@@ -42,6 +42,7 @@ public static partial class ModalView
         var details = new List<string> { $"{modal.Index + 1} de {modal.Images.Count}" };
         if (modal.Info is { } info) details.Add($"{info.Width} × {info.Height} · {info.Format.ToString().ToUpperInvariant()}");
         if (modal.Image is not null) details.Add(string.Create(CultureInfo.CurrentCulture, $"zoom {modal.Zoom * 100:0}%"));
+        if (modal.HintsFaded) details.Add("qualquer botão mostra os comandos");
         var header = Header(entry.Name, modal.Icon, string.Join(" · ", details));
         var (boxWidth, boxHeight) = PreviewBox(app, header);
         var area = new Grid
@@ -103,7 +104,7 @@ public static partial class ModalView
             AutomationProperties.SetLiveSetting(text, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
             area.Children.Add(text);
         }
-        return Panel(app, header, area, 100_000, scroll: false, stretch: true);
+        return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
     }
 
     /// <summary>Colunas desenhadas por linha: o resto da linha fica fora da tela (Esquerda/Direita deslocam).</summary>
