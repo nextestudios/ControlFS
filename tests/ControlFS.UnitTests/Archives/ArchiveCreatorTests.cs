@@ -31,6 +31,7 @@ public class ArchiveCreatorTests : IDisposable
     [Theory]
     [InlineData(CompressionFormat.Zip, ArchiveFormat.Zip)]
     [InlineData(CompressionFormat.TarGZip, ArchiveFormat.TarGZip)]
+    [InlineData(CompressionFormat.SevenZip, ArchiveFormat.SevenZip)]
     public async Task Round_trip_create_then_extract(CompressionFormat format, ArchiveFormat detected)
     {
         var folder = MakeSource();
@@ -54,6 +55,33 @@ public class ArchiveCreatorTests : IDisposable
         Assert.Equal("primeiro", File.ReadAllText(Path.Join(root, "Relatórios", "ação.txt")));
         Assert.Equal(File.ReadAllBytes(Path.Join(folder, "sub", "dados.bin")), File.ReadAllBytes(Path.Join(root, "Relatórios", "sub", "dados.bin")));
         Assert.Equal("solto", File.ReadAllText(Path.Join(root, "solto.txt")));
+    }
+
+    [Theory]
+    [InlineData(CompressionStrength.Fast)]
+    [InlineData(CompressionStrength.Maximum)]
+    public async Task SevenZip_keeps_empty_files_and_folders_and_compresses(CompressionStrength strength)
+    {
+        // 7z guarda pastas e arquivos vazios fora do fluxo LZMA (bits "empty stream"/"empty file" no cabeçalho).
+        var root = _tmp.MakeDir("origem", "caixa");
+        Directory.CreateDirectory(Path.Join(root, "vazia"));
+        File.WriteAllBytes(Path.Join(root, "zero.txt"), []);
+        File.WriteAllText(Path.Join(root, "texto ção.txt"), string.Concat(Enumerable.Repeat("linha repetida para comprimir\n", 5000)));
+        var destination = _tmp.Sub("origem", "caixa.7z");
+
+        var created = await _service.CompressAsync(new CompressionRequest { SourcePaths = [root], DestinationPath = destination, Format = CompressionFormat.SevenZip, Strength = strength },
+            null, CancellationToken.None);
+
+        Assert.True(created.FinalState == OperationState.Completed, $"{created.FinalState} {created.Error} {created.Message}");
+        Assert.True(new FileInfo(destination).Length < 10_000, $"{new FileInfo(destination).Length} bytes");
+        var info = await _service.InspectAsync(destination, null, ControlFS.Core.Policies.ExtractionLimits.Default, CancellationToken.None);
+        Assert.Equal(["caixa", "caixa/texto ção.txt", "caixa/vazia", "caixa/zero.txt"], info.Entries.Select(e => e.RawKey.Replace('\\', '/')).Order(StringComparer.Ordinal));
+        var extracted = await _service.ExtractAsync(new ExtractionRequest { ArchivePath = destination, DestinationDirectory = _tmp.MakeDir("volta") }, new NoConflicts(), null, CancellationToken.None);
+        Assert.True(extracted.FinalState == OperationState.Completed, $"{extracted.FinalState} {extracted.Error} {extracted.Message}");
+        var back = Path.Join(extracted.Destination!, "caixa");
+        Assert.True(Directory.Exists(Path.Join(back, "vazia")));
+        Assert.Equal(0, new FileInfo(Path.Join(back, "zero.txt")).Length);
+        Assert.Equal(File.ReadAllText(Path.Join(root, "texto ção.txt")), File.ReadAllText(Path.Join(back, "texto ção.txt")));
     }
 
     [Fact]

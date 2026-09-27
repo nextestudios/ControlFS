@@ -244,7 +244,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Batch rename (#71): Y Operações (N) → Renomear em lote…; numbering, find/replace, prefix/suffix, case; live preview = result; conflicts block before disk; Start applies; undoable | `BatchRenameJourneyTests` (2) |
 | Create folder (accented, invalid name keeps keyboard with the reason) | `JourneyTests::Vertical_journey_…`, `::Invalid_folder_name_keeps_keyboard_open_with_reason` |
 | Clipboard copy/cut/paste across folders and tabs | `ClipboardJourneyTests` (2) |
-| Compress (zip/tar.gz, name typed, existing never overwritten, links not followed) | `ShellAndCompressJourneyTests::Compress_…` (2), `ArchiveCreatorTests` (4) |
+| Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67) | `ShellAndCompressJourneyTests::Compress_…` (2), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
 | Operations center: progress, cancel, results, errors, retry, history persisted without passwords | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text (Manual) |
 | Undo/redo with checks | `UndoJourneyTests` (4) |
 | Leftover cleanup after a crash | `LeftoverCleanupTests` (2); Manual "Limpeza após queda" |

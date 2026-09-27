@@ -11,6 +11,7 @@ SharpCompress 1.0.0
   Origem: https://github.com/adamhathcock/sharpcompress (commit b6cc95af73950c914e0c6ce7ea3511528ede1121)
   Licença: MIT — Copyright (c) 2014 Adam Hathcock
   Texto: https://github.com/adamhathcock/sharpcompress/blob/master/LICENSE.txt
+  Inclui o porte em C# do LZMA SDK de Igor Pavlov (domínio público), usado para ler e, desde #67, criar 7z.
 
 ppy.SDL3-CS 2026.722.0 (binding C#)
   Origem: https://github.com/ppy/SDL3-CS (commit 7f836c9f21dad8ee68e70432e5b7d38ceae47eaa)

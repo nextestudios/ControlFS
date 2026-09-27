@@ -51,6 +51,8 @@ public enum CompressionFormat
 {
     Zip,
     TarGZip,
+    /// <summary>7z sólido com LZMA (ver docs/decisions/0008).</summary>
+    SevenZip,
 }
 
 public enum CompressionStrength
@@ -69,7 +71,12 @@ public sealed class CompressionRequest
     public CompressionFormat Format { get; init; } = CompressionFormat.Zip;
     public CompressionStrength Strength { get; init; } = CompressionStrength.Normal;
 
-    public static string Extension(CompressionFormat format) => format == CompressionFormat.TarGZip ? ".tar.gz" : ".zip";
+    public static string Extension(CompressionFormat format) => format switch
+    {
+        CompressionFormat.TarGZip => ".tar.gz",
+        CompressionFormat.SevenZip => ".7z",
+        _ => ".zip",
+    };
 }
 
 /// <summary>Conflitos durante a extração (mesmo contrato das demais operações de arquivo).</summary>

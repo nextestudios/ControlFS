@@ -8,7 +8,7 @@ using ControlFS.Infrastructure.Archives.Security;
 namespace ControlFS.Infrastructure.Archives.Creation;
 
 /// <summary>
-/// Cria ZIP (BCL, Deflate, nomes UTF-8) ou TAR.GZ (PAX + GZip). Não segue links/junctions da origem (são listados como
+/// Cria ZIP (BCL, Deflate, nomes UTF-8), TAR.GZ (PAX + GZip) ou 7z (LZMA sólido, <see cref="SevenZipWriter"/>). Não segue links/junctions da origem (são listados como
 /// ignorados), grava num temporário na pasta de destino e só o renomeia para o nome final ao concluir, sem sobrescrever.
 /// Cancelamento ou falha fatal remove o temporário; nada parcial fica visível.
 /// </summary>
@@ -63,8 +63,12 @@ public static class ArchiveCreator
         {
             using (var output = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
             {
-                if (request.Format == CompressionFormat.Zip) WriteZip(output, request.Strength, plan, results, Report, ct);
-                else WriteTarGz(output, request.Strength, plan, results, Report, ct);
+                switch (request.Format)
+                {
+                    case CompressionFormat.Zip: WriteZip(output, request.Strength, plan, results, Report, ct); break;
+                    case CompressionFormat.SevenZip: SevenZipWriter.Write(output, request.Strength, plan, results, Report, ct); break;
+                    default: WriteTarGz(output, request.Strength, plan, results, Report, ct); break;
+                }
                 output.Flush(flushToDisk: true);
             }
             File.Move(temp, destination, overwrite: false);

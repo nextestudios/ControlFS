@@ -63,7 +63,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
 - **Extração segura:** nada é gravado fora do destino, links são bloqueados, colisões de nome são recusadas, limites de tamanho, staging temporário, verificação CRC ([modelo de segurança](docs/security-model.md))
 
-**Extrair:** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. volumes divididos (`.7z.001`, `.part1.rar`, `.z01`) abrem a partir de qualquer parte. RAR não pode ser criado (formato proprietário); criar 7z ainda não é suportado ([matriz](docs/archive-support.md)).
+**Extrair:** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. Volumes divididos (`.7z.001`, `.part1.rar`, `.z01`) abrem a partir de qualquer parte. **Criar:** ZIP, TAR.GZ, 7z. RAR não pode ser criado (formato proprietário) ([matriz](docs/archive-support.md)).
 
 ## Roadmap
 

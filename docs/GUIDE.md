@@ -169,7 +169,7 @@ Blocked entries (unsafe names like `../`, links, reserved Windows names) show a 
 
 ## Compressing
 
-Mark items with West (or focus one) → North → **Compress…**. Choose the name (on-screen keyboard), ZIP or TAR.GZ and the compression level, then **Compress**. The archive is written to a temporary file and only appears when finished; an existing file is never overwritten (the name gets "(2)"). Links and junctions inside folders are skipped and listed in the result. RAR can't be created (proprietary format).
+Mark items with West (or focus one) → North → **Compress…**. Choose the name (on-screen keyboard), ZIP, TAR.GZ or 7z (smaller, slower to create; opens in 7-Zip and in the current Windows 11 File Explorer) and the compression level, then **Compress**. The archive is written to a temporary file and only appears when finished; an existing file is never overwritten (the name gets "(2)"). Links and junctions inside folders are skipped and listed in the result. RAR can't be created (proprietary format).
 
 ## Operations center
 
