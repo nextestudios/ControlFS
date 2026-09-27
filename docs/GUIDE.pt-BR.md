@@ -28,6 +28,18 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 Toda ação essencial está nos menus (Start / Norte), então um controle só com direcional e dois botões continua funcionando.
 
+### Joysticks sem perfil
+
+Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos como gamepad. O ControlFS os detecta, mas eles só navegam depois de mapeados:
+
+1. Segure qualquer botão do joystick por 2 segundos (ou, pelo teclado ou outro controle, Menu → **Controles sem perfil…** → Configurar).
+2. Solte tudo por um segundo enquanto o ControlFS mede cada eixo em repouso.
+3. Aperte o que quiser para **Cima, Baixo, Esquerda, Direita, Confirmar e Voltar**, um por vez, soltando entre os passos. Direcionais, alavancas (inclusive eixos invertidos) e botões funcionam; uma entrada já usada é recusada.
+4. Depois vêm os botões opcionais (Ações, Menu, Marcar, regiões, páginas, Buscar). Recomenda-se mapear **Ações** e **Menu**. Aperte o Voltar do joystick (ou Enter) para pular um deles.
+5. **Teste** o mapeamento novo: o joystick já comanda a tela; escolha **Salvar perfil**, **Refazer um passo…** ou **Cancelar sem salvar**.
+
+Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo opcional. Sem nenhuma entrada por 20 segundos o assistente se cancela. Se o joystick já tem perfil, salvar pergunta antes de substituir (começando em "Cancelar"); cancelar em qualquer momento mantém o perfil salvo. O perfil volta a valer sempre que esse joystick é conectado, inclusive ao reabrir o ControlFS. Menu → Controles sem perfil também exporta um perfil para uma pasta e importa um (`.json`, até 64 KB, validado; qualquer coisa inesperada é recusada).
+
 ## A lista
 
 O item focado tem um anel de destaque e mostra o nome inteiro (até três linhas); os outros nomes longos terminam em "…". Itens marcados ganham uma faixa à esquerda, uma caixa marcada e "Marcado"; recortados ganham uma tesoura e "Recortado" e ficam esmaecidos até serem colados; entradas de compactados com senha mostram um cadeado. Nada disso depende só de cor.

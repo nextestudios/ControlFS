@@ -38,4 +38,4 @@ API confirmada por reflexão (não por suposição): `SDL_Init(SDL_InitFlags)`, 
 ## Pendências
 
 - Executar o probe e o app em Windows 11 x64 com controles reais (matriz em `docs/controller-compatibility.md`).
-- Joysticks sem perfil de gamepad são detectados e listados, mas não comandam a UI até existir o assistente (Etapa 3).
+- Joysticks sem perfil de gamepad publicam eventos crus; comandam a UI depois do assistente de mapeamento (#79).

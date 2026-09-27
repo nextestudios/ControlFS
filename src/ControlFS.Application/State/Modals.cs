@@ -69,3 +69,19 @@ public sealed class AboutModal(string version, IReadOnlyList<(string Label, stri
 }
 
 public sealed record Hint(InputAction Action, string Label);
+
+/// <summary>
+/// Assistente de mapeamento de um joystick sem perfil. Os eventos crus do próprio joystick conduzem os passos; o
+/// teclado (ou outro controle) pula, refaz e cancela. No teste, o rascunho já comanda as opções abaixo.
+/// </summary>
+public sealed class MappingWizardModal(Core.Contracts.InputDeviceInfo device, Core.Input.Mapping.ControllerMappingWizard wizard) : Modal("Configurar controle")
+{
+    public static IReadOnlyList<string> ReviewOptions { get; } = ["Salvar perfil", "Refazer um passo…", "Cancelar sem salvar"];
+
+    public Core.Contracts.InputDeviceInfo Device { get; } = device;
+    public Core.Input.Mapping.ControllerMappingWizard Wizard { get; } = wizard;
+    public int ReviewFocus { get; internal set; }
+
+    /// <summary>Outro controle não assume no meio do mapeamento.</summary>
+    public override bool IsSensitive => true;
+}

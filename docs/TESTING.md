@@ -86,6 +86,25 @@ posição certa, gatilhos (página), Start (menu), reconexão, família detectad
 - [ ] Segurar o direcional no controle ativo e apertar um botão no outro: o outro **não** assume até o primeiro ser solto.
 - [ ] Menu → Legendas fixada em "PlayStation" com um Xbox ativo: legendas continuam PlayStation.
 
+## Joystick sem perfil (assistente, #79)
+
+A CI só prova a máquina de estados, a validação dos perfis e o fluxo com eventos crus simulados. Com um controle USB
+genérico **não reconhecido como gamepad** (registre o resultado em `controller-compatibility.md`):
+
+- [ ] Conectar com o app aberto: apertar um botão mostra o aviso "segure qualquer botão…"; segurar 2 s abre o assistente.
+- [ ] Neutro: com tudo solto o assistente avança em ~1 s; segurando um botão ele espera soltar.
+- [ ] Mapear direções num hat e, em outro controle, num analógico (inclusive um eixo invertido); cada passo só avança
+      depois de soltar; apertar de novo uma entrada já usada é recusado.
+- [ ] Um eixo que repousa em -1 (gatilho) não dispara sozinho e funciona como botão quando mapeado.
+- [ ] Pular opcionais com o Voltar do próprio joystick; refazer com ← do teclado e, no teste, por "Refazer um passo…".
+- [ ] Teste antes de salvar: direções movem o foco, Confirmar escolhe, Voltar pergunta antes de descartar.
+- [ ] Ficar 20 s sem tocar em nada: o assistente fecha com "nada foi salvo".
+- [ ] Desconectar o joystick no meio: o assistente fecha sem salvar e o app continua respondendo ao teclado.
+- [ ] Salvar, fechar o ControlFS e reabrir: o joystick navega sem configurar de novo; reconectar em outra porta USB também.
+- [ ] Com perfil salvo, configurar de novo e cancelar (Esc e "Cancelar" na confirmação): o perfil antigo continua valendo.
+- [ ] Exportar para uma pasta, importar em outro computador (ou após apagar `controllers\` na pasta de dados) e usar.
+- [ ] Importar um `.json` qualquer (não perfil) e um perfil editado com um campo extra: ambos recusados com mensagem clara.
+
 ## Glifos dos botões
 
 - [ ] Com Legendas fixadas em cada estilo (genéricas, Xbox, PlayStation, Nintendo) e um controle ativo, o rodapé mostra

@@ -22,7 +22,7 @@ Comandos: `dotnet test ControlFS.slnx`.
 | Entrada | Segurar confirmar ao abrir diálogo | **testado** (unidade: `Held_button_is_latched_*`) |
 | Entrada | Drift e direções mantidas | **testado** (unidade: zona morta, histerese, repetição só de navegação) |
 | Entrada | Físico + virtual simultâneos | parcial: um dispositivo ativo; diagnóstico/escolha explícita pendentes |
-| Entrada | Controle sem sticks/gatilhos | todas as ações essenciais têm caminho por menu (Start/North → itens); **sem hardware**; joystick sem perfil ainda não comanda |
+| Entrada | Controle sem sticks/gatilhos | todas as ações essenciais têm caminho por menu (Start/North → itens); **sem hardware**; joystick sem perfil comanda após o assistente (#79; testado com eventos simulados) |
 | Foco | Modais, renomear, excluir | modais e criação de pasta **testados**; renomear/excluir não implementados |
 | Texto | Acentos e extensão | acentos **testados**; edição de extensão depende de "renomear" (Etapa 2) |
 | Arquivos | Falta de espaço, bloqueio, permissão | mapeamento de erros implementado; **sem teste** |

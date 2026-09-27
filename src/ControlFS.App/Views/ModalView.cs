@@ -1,6 +1,7 @@
 using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Application.State;
+using ControlFS.Core.Input.Mapping;
 using ControlFS.Core.Text;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -24,6 +25,7 @@ public static class ModalView
             DialogModal dialog => BuildDialog(app, dialog),
             KeyboardModal keyboard => BuildKeyboard(app, keyboard),
             AboutModal about => BuildAbout(about),
+            MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             _ => null,
         };
         if (panel is null) return null;
@@ -186,6 +188,82 @@ public static class ModalView
         text.Inlines.Add(new Run { Text = "┃", Foreground = Theme.Accent, FontWeight = FontWeights.Bold });
         if (caret < display.Length) text.Inlines.Add(new Run { Text = display[caret..] });
         return text;
+    }
+
+    private static Border BuildMappingWizard(AppController app, MappingWizardModal modal)
+    {
+        var wizard = modal.Wizard;
+        var stack = new StackPanel { Spacing = Theme.SpaceS };
+        stack.Children.Add(Title($"Configurar {wizard.DeviceName}"));
+        var required = wizard.Targets.Count(t => !t.Optional);
+        string headline;
+        string detail;
+        switch (wizard.Phase)
+        {
+            case MappingPhase.Neutral:
+                headline = "Solte todos os botões e alavancas";
+                detail = "Medindo a posição de repouso de cada eixo…";
+                break;
+            case MappingPhase.Review:
+                headline = "Teste antes de salvar";
+                detail = "O controle já funciona com este mapeamento: use as direções e confirmar para escolher. Nada foi salvo ainda." +
+                    (wizard.LastTested is { } tested ? $"\nÚltimo comando: {wizard.Targets.FirstOrDefault(t => t.Control == tested)?.Label ?? tested.ToString()}" : string.Empty);
+                break;
+            default:
+                var target = wizard.Current!;
+                headline = wizard.Phase == MappingPhase.WaitRelease ? "Solte para continuar" : $"Aperte: {target.Label}";
+                detail = $"Passo {wizard.StepIndex + 1} de {wizard.Targets.Count}" + (target.Optional
+                    ? $" · opcional — aperte o botão de Voltar do controle (ou Enter) para pular"
+                    : wizard.StepIndex < required ? " · obrigatório" : string.Empty);
+                break;
+        }
+        stack.Children.Add(new TextBlock { Text = headline, FontSize = Theme.FontTitle, Foreground = Theme.Accent, TextWrapping = TextWrapping.Wrap });
+        stack.Children.Add(new TextBlock { Text = detail, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        if (wizard.Feedback is { } feedback)
+            stack.Children.Add(new TextBlock { Text = feedback, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceXs, Margin = new Thickness(0, Theme.SpaceS, 0, Theme.SpaceS) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        for (var i = 0; i < wizard.Targets.Count; i++)
+        {
+            var t = wizard.Targets[i];
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var current = wizard.Phase is MappingPhase.Capture or MappingPhase.WaitRelease && i == wizard.StepIndex;
+            var label = new TextBlock { Text = (current ? "▶ " : string.Empty) + t.Label, FontSize = Theme.FontCaption, Foreground = current ? Theme.Accent : Theme.TextMuted };
+            var value = new TextBlock
+            {
+                Text = wizard.Bindings.TryGetValue(t.Control, out var b) ? b.Describe() : i < wizard.StepIndex ? "sem botão" : "—",
+                FontSize = Theme.FontCaption,
+                Foreground = wizard.LastTested == t.Control ? Theme.Accent : Theme.Text,
+            };
+            Grid.SetRow(label, i);
+            Grid.SetRow(value, i);
+            Grid.SetColumn(value, 1);
+            grid.Children.Add(label);
+            grid.Children.Add(value);
+        }
+        stack.Children.Add(grid);
+
+        if (wizard.Phase == MappingPhase.Review)
+        {
+            for (var i = 0; i < MappingWizardModal.ReviewOptions.Count; i++)
+            {
+                var index = i;
+                stack.Children.Add(Choice(MappingWizardModal.ReviewOptions[i], i == modal.ReviewFocus, true, () => app.PointerChooseModalOption(index), danger: i == 2));
+            }
+        }
+        else
+        {
+            stack.Children.Add(new TextBlock
+            {
+                Text = "Teclado: Esc cancela sem salvar · ← refaz o passo anterior · Enter pula um passo opcional. Sem nenhuma entrada por 20 s, a configuração é cancelada.",
+                FontSize = Theme.FontCaption,
+                Foreground = Theme.TextMuted,
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+        return Card(new ScrollViewer { Content = stack, MaxHeight = 720 }, 760);
     }
 
     private static Border BuildKeyboard(AppController app, KeyboardModal modal)

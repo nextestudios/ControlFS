@@ -28,6 +28,18 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 Every essential action is reachable through menus (Start / North), so a pad with only a D-pad and two buttons still works.
 
+### Joysticks without a profile
+
+Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads. ControlFS detects them but they can't move around until you map them:
+
+1. Hold any button on the joystick for 2 seconds (or, with the keyboard or another controller, Menu → **Controllers without a profile…** → Configure).
+2. Let go of everything for a second while ControlFS measures each axis at rest.
+3. Press what you want for **Up, Down, Left, Right, Confirm and Back**, one at a time, releasing between steps. D-pads, sticks (including inverted axes) and buttons all work; an input already used is refused.
+4. Optional buttons follow (Actions, Menu, Mark, regions, pages, Search). Mapping **Actions** and **Menu** is recommended. Press the joystick's Back button (or Enter) to skip one.
+5. **Test** the new mapping: the joystick already drives the screen; choose **Save profile**, **Redo a step…** or **Cancel without saving**.
+
+Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips an optional step. With no input for 20 seconds the wizard cancels itself. If the joystick already has a profile, saving asks before replacing it (starting on "Cancel"); cancelling at any point leaves the saved profile untouched. The profile applies again whenever that joystick is connected, including after restarting ControlFS. Menu → Controllers without a profile also exports a profile to a folder and imports one (`.json`, up to 64 KB, validated; anything unexpected is refused).
+
 ## The list
 
 The focused item has a highlight ring and shows its full name (up to three lines); other long names end in "…". Marked items get a stripe on the left, a checked box and "Marked"; cut items get scissors and "Cut" and are dimmed until pasted; password-protected archive entries show a lock. None of these rely on color alone.

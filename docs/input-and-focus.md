@@ -46,6 +46,22 @@ Guide/Home não é mapeado. L3/R3 não são usados.
   ou depois de uma tecla do teclado físico, mostra teclas; a próxima pressão do controle volta aos glifos. A UI nunca
   testa nomes de dispositivo.
 
+## Joysticks sem perfil (#79)
+
+- `Sdl3InputBackend` publica eventos crus (botões, hats, eixos) só de joysticks sem perfil de gamepad
+  (`IInputSink.OnRawInput`) e o estado instantâneo (`GetRawState`) para calibrar o neutro.
+- `InputHost` entrega o evento ao `AppController.OnRawInput`: com assistente em andamento ou joystick ainda sem perfil,
+  a aplicação consome; com perfil salvo, `ControllerProfileTranslator` gera `PhysicalControl` (neutro e zona morta
+  calibrados, histerese, diagonal de hat ignorada) e segue pelo `InputRouter` como qualquer gamepad.
+- `ControllerMappingWizard` (Core, testado): neutro (1 s com tudo solto, mede ruído → zona morta 0,2–0,6) → um passo
+  por controle (direções, confirmar e voltar conforme "Confirmar com", depois opcionais) → teste. Cada passo exige soltar
+  tudo antes do próximo; entrada repetida é recusada; o Voltar já mapeado pula opcionais; sem entrada por 20 s (60 s no
+  teste) cancela. O sentido de um eixo é a inversão (Cima em +1 = eixo invertido).
+- Perfis: `ControllerProfileSerializer` (JSON versionado, `format` + `schemaVersion`, até 64 KB, profundidade 4, só
+  campos conhecidos, faixas e controles obrigatórios conferidos) e `JsonControllerProfileStore` (`<dados>\controllers`,
+  um arquivo por GUID ou vendor/product, gravação atômica + `.bak`). Aplicado por GUID e, se ele mudar, por vendor/product.
+  Substituir um perfil sempre pede confirmação.
+
 ## Rodapé por contexto
 
 `AppController.BuildHints` é a fonte única; `HintJourneyTests` cobre os contextos. Ação que não funciona não aparece.
@@ -96,4 +112,4 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 ## Pendente
 
 Troca explícita de dispositivo ativo pela UI, preferência de físico sobre virtual na troca a quente (ex.: Steam Input), recuperação após suspensão do sistema (testar), duplicidade físico+virtual
-com diagnóstico, assistente para controles sem perfil, remapeamento, rumble opcional.
+com diagnóstico, remapeamento de gamepads conhecidos, rumble opcional.

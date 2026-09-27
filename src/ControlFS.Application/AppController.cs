@@ -35,8 +35,10 @@ public sealed partial class AppController
     private Action? _pickerCancel;
 
     public AppController(IFileSystemProvider fileSystem, IArchiveService archives, ISettingsStore? settingsStore = null, IUpdateService? updates = null,
-        IShellService? shell = null, IFileOperationService? fileOperations = null)
+        IShellService? shell = null, IFileOperationService? fileOperations = null, IControllerProfileStore? controllerProfiles = null)
     {
+        _profileStore = controllerProfiles;
+        Clock = () => _stopwatch.Elapsed;
         _shell = shell;
         _fileOps = fileOperations;
         _fs = fileSystem;
@@ -84,6 +86,7 @@ public sealed partial class AppController
             Settings = loaded.Settings;
             StatusMessage = loaded.Notice;
         }
+        LoadControllerProfiles();
         Places = BuildPlaces();
         PlacesFocus = 0;
         Screen = Screen.Home;
@@ -107,6 +110,7 @@ public sealed partial class AppController
     public void Handle(InputAction action)
     {
         StatusMessage = null;
+        MappingWizard?.Wizard.Touch(Clock()); // quem está agindo não perde a configuração por inatividade
         if (TopModal is { } modal) HandleModal(modal, action);
         else if (Screen == Screen.Home) HandleHome(action);
         else HandlePane(ActivePane, action);
@@ -159,6 +163,9 @@ public sealed partial class AppController
                 break;
             case DialogModal dialog when index >= 0 && index < dialog.Options.Count:
                 dialog.FocusIndex = index;
+                break;
+            case MappingWizardModal { Wizard.Phase: Core.Input.Mapping.MappingPhase.Review } wizard when index >= 0 && index < MappingWizardModal.ReviewOptions.Count:
+                wizard.ReviewFocus = index;
                 break;
             default:
                 return;
@@ -239,6 +246,7 @@ public sealed partial class AppController
             case KeyboardModal keyboard: HandleKeyboard(keyboard, action); break;
             case DialogModal dialog: HandleDialog(dialog, action); break;
             case AboutModal about: HandleAbout(about, action); break;
+            case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
         }
     }
 

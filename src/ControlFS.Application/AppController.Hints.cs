@@ -35,6 +35,15 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.OpenAppMenu, "Concluir"));
                 hints.Add(new(InputAction.Back, "Cancelar"));
                 return hints;
+            case MappingWizardModal { Wizard.Phase: Core.Input.Mapping.MappingPhase.Review } wizard:
+                hints.Add(new(InputAction.Confirm, MappingWizardModal.ReviewOptions[wizard.ReviewFocus]));
+                hints.Add(new(InputAction.Back, "Descartar"));
+                return hints;
+            case MappingWizardModal wizard:
+                if (wizard.Wizard.CanSkip) hints.Add(new(InputAction.Confirm, "Pular"));
+                if (wizard.Wizard.CanRedoPrevious) hints.Add(new(InputAction.NavigateLeft, "Refazer anterior"));
+                hints.Add(new(InputAction.Back, "Cancelar"));
+                return hints;
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
