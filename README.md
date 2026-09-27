@@ -41,7 +41,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Features
 
-- Real folders and drives, history, sorting, hidden items, marking (select all / clear), properties, **favorite folders** and **recent folders/files** on Home and a **navigable path bar**
+- Real folders and drives, history, sorting, hidden items, marking (select all / clear), properties, **favorite folders** and **recent folders/files** on Home, a **navigable path bar** and **tabs**
 - **Controller prompts** that match the pad in your hands (Xbox, PlayStation, Nintendo, generic), original vector glyphs, a context-sensitive action bar, and a **mapping wizard** for joysticks without a profile
 - **Responsive layout** for 720p/800p handhelds, desktops and 1080p/4K TVs
 - **Retry** a failed operation or only its failed items; leftovers of interrupted operations are cleaned up on the next launch

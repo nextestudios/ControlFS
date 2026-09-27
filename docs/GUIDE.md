@@ -13,7 +13,7 @@ Buttons follow **physical position** (SDL3 convention), not printed letters.
 | East | Back / close | Cancel without applying |
 | West | Mark item | Backspace |
 | North | Item actions | Shift |
-| LB / RB | Path bar (breadcrumbs) | Move cursor |
+| LB / RB | Path bar (LB) / tabs (RB) | Move cursor |
 | LT / RT | Page up / down | Cursor to start / end |
 | Start | App menu | Done |
 | Select / View | Search | Symbols |
@@ -53,6 +53,10 @@ Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips 
 ## Path bar
 
 The current path is shown as segments at the top. **LB** moves focus from the list to the path bar (on the folder above the current one); **Left/Right** pick a segment and **South** goes there, focusing the folder you came from. **RB**, **Down** or **East** go back to the list. Inside an archive, the archive file is its own segment after a `▸`, so the disk part and the inside of the archive are easy to tell apart. Long paths collapse the middle into `…`, which opens the hidden folders. Keyboard: Ctrl+← / Ctrl+→. The same list is in Menu → **Go to folder above…**.
+
+## Tabs
+
+The tab strip sits above the path. Each tab keeps its own folder, history, marked items and focus. **RB** moves focus from the list to the strip; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab) and **Close tab**. **South**, **Down** or **East** go back to the list. North on a folder also has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it.
 
 ## The list
 

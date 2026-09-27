@@ -53,8 +53,18 @@ public sealed partial class AppController
     /// <summary>LB/RB alternam entre a lista e a barra de caminho; ao entrar, o foco vai para a pasta de cima.</summary>
     private bool HandleRegionSwitch(PaneState pane, InputAction action)
     {
+        if (pane.Region == PaneRegion.Tabs)
+        {
+            HandleTabs(pane, action);
+            return true;
+        }
         if (pane.Region == PaneRegion.List)
         {
+            if (action == InputAction.NextRegion && pane.Mode == PaneMode.Browse)
+            {
+                pane.Region = PaneRegion.Tabs;
+                return true;
+            }
             if (action != InputAction.PreviousRegion || pane.IsLoading) return false;
             var crumbs = Breadcrumbs;
             if (crumbs.Count < 2) return true;

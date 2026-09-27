@@ -30,6 +30,8 @@ public enum PaneRegion
 {
     List,
     Breadcrumbs,
+    /// <summary>Faixa de abas do navegador (RB entra; LB/RB trocam de aba).</summary>
+    Tabs,
 }
 
 public static class BreadcrumbTrail
