@@ -28,6 +28,7 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
       visível sem rolar manualmente. Voltar de uma subpasta numa pasta com milhares de itens: o item de origem aparece
       focado já no primeiro quadro.
 - [ ] Com controle real: segurar Oeste por 2 s apaga vários caracteres e para na hora ao soltar; segurar LB/RB move o cursor continuamente; segurar Sul em Concluir não repete.
+- [ ] Favoritar uma pasta num pendrive, fechar o app, remover o pendrive e reabrir: o favorito aparece primeiro como indisponível (⚠); reconectar e voltar ao início: volta a abrir.
 
 ## Formatos, compactar e abrir com o Windows
 

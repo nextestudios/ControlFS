@@ -45,7 +45,11 @@ public sealed partial class AppController
 
         if (Screen == Screen.Home)
         {
-            if (Places.Count > 0) hints.Add(new(InputAction.Confirm, "Abrir"));
+            if (Places.Count > 0)
+            {
+                hints.Add(new(InputAction.Confirm, "Abrir"));
+                hints.Add(new(InputAction.OpenContextMenu, "Ações"));
+            }
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             hints.Add(new(InputAction.Back, "Sair"));
             return hints;
