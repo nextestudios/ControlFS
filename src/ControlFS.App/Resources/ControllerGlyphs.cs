@@ -170,16 +170,22 @@ public static class ControllerGlyphs
                 if (start) g.Children.Add(Place(new Rectangle { Width = 2.6, Height = 11, Fill = p.Symbol }, 10.7, 6.5));
                 return g;
             }
-            case ControllerFamily.PlayStation:
+            case ControllerFamily.PlayStation when start:
             {
                 var g = Pill(p);
-                if (start) Lines(g, p.Symbol, 12, 24, 7.5, 12, 16.5);
-                else
-                {
-                    // caneta: traço diagonal com ponta
-                    g.Children.Add(Segment(13, 16, 21, 8, p.Symbol, 2));
-                    g.Children.Add(Shape(new Polygon { Fill = p.Symbol }, (11.5, 17.5), (12.2, 14.4), (14.6, 16.8)));
-                }
+                Lines(g, p.Symbol, 12, 24, 7.5, 12, 16.5);
+                return g;
+            }
+            case ControllerFamily.PlayStation:
+            {
+                // Create/Share: o botão físico é uma pílula vertical à esquerda do touchpad; o "brilho" de três traços
+                // ao lado indica compartilhar/criar. Desenho próprio (formas simples), sem copiar o ícone do console.
+                var g = Box(Unit);
+                g.Children.Add(Disc(p.Body));
+                g.Children.Add(Place(new Rectangle { Width = 5, Height = 9.5, RadiusX = 2.5, RadiusY = 2.5, Fill = p.Symbol }, 6.5, 9.5));
+                g.Children.Add(Segment(13, 8, 13, 4.5, p.Symbol, 1.8));
+                g.Children.Add(Segment(14.6, 8.4, 17.1, 5.9, p.Symbol, 1.8));
+                g.Children.Add(Segment(15, 10, 18.5, 10, p.Symbol, 1.8));
                 return g;
             }
             default:
