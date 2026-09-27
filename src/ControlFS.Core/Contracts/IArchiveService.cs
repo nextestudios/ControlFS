@@ -51,7 +51,7 @@ public enum CompressionFormat
 {
     Zip,
     TarGZip,
-    /// <summary>7z sólido com LZMA (ver docs/decisions/0008).</summary>
+    /// <summary>7z sólido com LZMA (ver docs/decisions/0010).</summary>
     SevenZip,
 }
 
