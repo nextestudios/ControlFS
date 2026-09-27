@@ -104,6 +104,7 @@ public sealed partial class AppController
     /// <summary>Chamado pelo laço de entrada: prazo do assistente, medição do neutro e "segurar para configurar".</summary>
     public void TickControllers()
     {
+        TickPreviews();
         if (TickControllerTest()) return;
         var now = Clock();
         if (MappingWizard is { } modal)

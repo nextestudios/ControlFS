@@ -293,6 +293,14 @@ public sealed class ImagePreviewModal : Modal
     internal int Generation { get; set; }
     internal CancellationTokenSource? Loading { get; set; }
 
+    /// <summary>
+    /// Legendas recolhidas depois de um tempo sem entrada (#171): a tela as esmaece e deixa só Fechar em destaque; qualquer
+    /// entrada as mostra de novo (e ainda faz o que o botão faz).
+    /// </summary>
+    public bool HintsFaded { get; internal set; }
+
+    internal TimeSpan LastInput { get; set; }
+
     internal void ChangeZoom(int delta)
     {
         ZoomIndex = Math.Clamp(ZoomIndex + delta, 0, ZoomLevels.Count - 1);

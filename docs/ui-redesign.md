@@ -255,6 +255,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Feature | Where | Test |
 |---|---|---|
 | Image preview (zoom, pan, next/previous, bomb refusal, EXIF) | modal over the shell | `ImagePreviewJourneyTests`, `ImagePreviewPolicyTests` (3); Manual "Visualização de imagens (#57)" |
+| Image preview prompts (#171): only available actions (no Anterior/Próxima at the ends, Ajustar only when zoomed), controller family glyphs, fade after 4 s without input (Close stays), any input reveals and still acts; footer size constant | image preview footer | `ImagePreviewJourneyTests::Hints_fade_…`; Manual "Legendas da visualização de imagens (#171)" |
 | Text preview (encodings, limits, binary refused) | modal | `TextPreviewJourneyTests`, `TextPreviewTests` (2); Manual "(#58)" |
 | On-screen keyboard: PT-BR/EN, shift/caps, numbers, symbols, accents, space, backspace (repeat), clear, caret, selection, OK/cancel, name/path/password fields, masking/reveal, controller navigation | modal; footer shows Selecionar/Apagar/…/Concluir/Cancelar | `VirtualKeyboardTests` (13), `HintJourneyTests::On_screen_keyboard_…`, UIA |
 | Dialogs name the focused choice; destructive dialogs start on the safe option | modal | `HintJourneyTests::Dialogs_and_menus_…`, UIA |

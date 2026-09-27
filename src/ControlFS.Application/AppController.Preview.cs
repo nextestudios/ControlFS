@@ -11,6 +11,9 @@ public sealed partial class AppController
 {
     public PreviewLimits PreviewLimits { get; set; } = PreviewLimits.Default;
 
+    /// <summary>Tempo sem entrada até as legendas da visualização de imagem se recolherem (#171).</summary>
+    public static readonly TimeSpan PreviewHintsFadeAfter = TimeSpan.FromSeconds(4);
+
     internal static bool IsPreviewableImage(FileEntry entry) =>
         entry is { Kind: EntryKind.File, FullPath: not null, IsBlocked: false } && ImageHeader.IsImageExtension(entry.Extension);
 
@@ -27,7 +30,7 @@ public sealed partial class AppController
             images = [entry];
             index = 0;
         }
-        var modal = new ImagePreviewModal(pane, images, index);
+        var modal = new ImagePreviewModal(pane, images, index) { LastInput = Clock() };
         PushModal(modal);
         LoadPreviewImage(modal);
     }
@@ -81,6 +84,8 @@ public sealed partial class AppController
 
     private void HandleImagePreview(ImagePreviewModal modal, InputAction action)
     {
+        modal.LastInput = Clock();
+        modal.HintsFaded = false;
         var zoomed = modal.ZoomIndex > 0;
         switch (action)
         {
@@ -115,6 +120,16 @@ public sealed partial class AppController
         }
         modal.Index = target;
         LoadPreviewImage(modal);
+    }
+
+    /// <summary>Chamado pelo laço de entrada: recolhe as legendas da imagem depois de um tempo sem entrada.</summary>
+    private void TickPreviews()
+    {
+        if (TopModal is ImagePreviewModal { HintsFaded: false } preview && Clock() - preview.LastInput >= PreviewHintsFadeAfter)
+        {
+            preview.HintsFaded = true;
+            RaiseChanged();
+        }
     }
 
     /// <summary>Fecha e deixa o foco da lista na última imagem vista.</summary>

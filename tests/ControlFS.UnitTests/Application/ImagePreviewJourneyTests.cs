@@ -2,6 +2,7 @@ using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Input;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.UnitTests.Support;
 
@@ -69,5 +70,47 @@ public class ImagePreviewJourneyTests : IDisposable
         d.Press(InputAction.Back);
         Assert.Null(app.TopModal);
         Assert.Equal("d.jpg", app.Browser.List.Focused?.Name);
+    });
+
+    [Fact]
+    public void Hints_fade_after_inactivity_and_any_input_reveals_them_while_still_acting() => UiContext.Run(async () =>
+    {
+        File.WriteAllBytes(_tmp.Sub("a.png"), ImageFixtures.Png(64, 64));
+        File.WriteAllBytes(_tmp.Sub("b.png"), ImageFixtures.Png(64, 64));
+        var now = TimeSpan.Zero;
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), imageDecoder: new FakeDecoder()) { Clock = () => now };
+        app.Start();
+        app.SetActiveController(ControllerFamily.PlayStation);
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("a.png");
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        var preview = Assert.IsType<ImagePreviewModal>(app.TopModal);
+
+        // Ao abrir: só o que funciona (primeira imagem: sem "Anterior"; sem zoom: sem "Ajustar à tela"), com os botões da família em uso.
+        Assert.Equal([InputAction.NextRegion, InputAction.PageDown, InputAction.Back], app.Prompts.Select(p => p.Action));
+        Assert.All(app.Prompts, p => Assert.Equal(ControllerFamily.PlayStation, p.Family));
+        Assert.False(preview.HintsFaded);
+
+        now += AppController.PreviewHintsFadeAfter - TimeSpan.FromMilliseconds(1);
+        app.TickControllers();
+        Assert.False(preview.HintsFaded);
+        now += TimeSpan.FromMilliseconds(1);
+        app.TickControllers();
+        Assert.True(preview.HintsFaded);
+
+        // Qualquer entrada mostra as legendas de novo e ainda faz o que o botão faz (nunca é "engolida").
+        d.Press(InputAction.NextRegion);
+        await d.Idle();
+        Assert.False(preview.HintsFaded);
+        Assert.Equal("b.png", preview.Current.Name);
+        Assert.Equal([InputAction.PreviousRegion, InputAction.PageDown, InputAction.Back], app.Prompts.Select(p => p.Action)); // última imagem
+        now += AppController.PreviewHintsFadeAfter;
+        app.TickControllers();
+        Assert.True(preview.HintsFaded);
+        d.Press(InputAction.Back);
+        Assert.Null(app.TopModal);
+        Assert.Equal("b.png", app.Browser.List.Focused?.Name);
     });
 }
