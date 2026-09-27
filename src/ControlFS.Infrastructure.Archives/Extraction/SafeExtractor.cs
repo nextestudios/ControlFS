@@ -218,7 +218,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
 
             var guard = new DestinationGuard(root);
             var (staging, stagingRegistration) = CreateStaging(root);
-            var zone = MarkOfTheWeb.Read(request.ArchivePath);
+            var zone = MarkOfTheWeb.ReadForArchive(request.ArchivePath);
             var results = new List<ItemResult>(planResults);
             var state = new RunState();
             var fatal = OperationErrorKind.None;

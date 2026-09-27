@@ -62,11 +62,11 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
 - **Extração segura:** nada é gravado fora do destino, links são bloqueados, colisões de nome são recusadas, limites de tamanho, staging temporário, verificação CRC ([modelo de segurança](docs/security-model.md))
 
-**Extrair:** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. RAR não pode ser criado (formato proprietário); criar 7z e volumes divididos ainda não são suportados ([matriz](docs/archive-support.md)).
+**Extrair:** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Criar:** ZIP, TAR.GZ. volumes divididos (`.7z.001`, `.part1.rar`, `.z01`) abrem a partir de qualquer parte. RAR não pode ser criado (formato proprietário); criar 7z ainda não é suportado ([matriz](docs/archive-support.md)).
 
 ## Roadmap
 
-**Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: tema claro, dois painéis, pré-visualização de PDF, volumes divididos, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** validação com controles reais (#78) e assinatura de código (#84), depois os itens *Could*: tema claro, dois painéis, pré-visualização de PDF, renomear em lote, montar ISO ([roadmap por prioridade MoSCoW](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois (fora da 1.0):** pré-visualização de vídeo, status do Git, terminal integrado. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Política de assinatura de código (Code signing policy)
 

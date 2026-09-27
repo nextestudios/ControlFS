@@ -26,7 +26,14 @@ public sealed class ArchiveService : IArchiveService
 
     public ArchiveFormat Detect(string path)
     {
-        try { return FormatDetector.Detect(path); }
+        try
+        {
+            // Volume de um compactado dividido: o formato vem do primeiro volume (os seguintes não têm assinatura). Sem ele,
+            // o nome decide, para que abrir mostre quais volumes faltam em vez de tratar o arquivo como desconhecido.
+            if (VolumeSet.Find(path) is not { } volumes) return FormatDetector.Detect(path);
+            var format = volumes.DetectionPath is { } probe ? FormatDetector.Detect(probe) : ArchiveFormat.Unknown;
+            return format == ArchiveFormat.Unknown && volumes.IsMultiPart ? volumes.NameHint : format;
+        }
         catch (IOException) { return ArchiveFormat.Unknown; }
         catch (UnauthorizedAccessException) { return ArchiveFormat.Unknown; }
     }

@@ -2,8 +2,12 @@ using System.Reflection;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
+using ControlFS.Infrastructure.Archives.Inspection;
 using ControlFS.Infrastructure.Archives.Security;
 using SharpCompress.Archives;
+using SharpCompress.Archives.Rar;
+using SharpCompress.Archives.SevenZip;
+using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
@@ -12,6 +16,7 @@ namespace ControlFS.Infrastructure.Archives.Engines;
 /// <summary>
 /// ZIP, 7z, RAR e GZ por acesso aleatório (API Archive do SharpCompress). TAR e TAR.GZ ficam com <see cref="BclTarEngine"/>:
 /// o leitor de TAR do SharpCompress não interpreta cabeçalhos PAX. Cada formato é validado por fixtures.
+/// Compactados divididos em volumes abrem a partir de qualquer volume (<see cref="VolumeSet"/>); faltando algum, nada é lido.
 /// </summary>
 public sealed class SharpCompressEngine : IArchiveEngine
 {
@@ -32,26 +37,40 @@ public sealed class SharpCompressEngine : IArchiveEngine
     public IArchiveReadSession Open(string archivePath, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken cancellationToken)
     {
         if (!Supports(format)) throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, "Formato não suportado por este motor.");
+        var volumes = VolumeSet.Find(archivePath);
+        if (volumes is { Missing.Count: > 0 }) throw MissingVolumes(volumes.Missing);
         try
         {
-            return RandomAccessSession.Open(archivePath, format, password, limits, cancellationToken);
+            return RandomAccessSession.Open(archivePath, volumes, format, password, limits, cancellationToken);
         }
         catch (Exception ex) when (ex is not ArchiveAccessException and not OperationCanceledException)
         {
+            // Divisão simples de ZIP/RAR não diz quantos volumes são: sem o último, o motor só vê um arquivo truncado.
+            if (volumes is { IsMultiPart: true } && Translate(ex, password).Kind is OperationErrorKind.Corrupt or OperationErrorKind.MissingVolume or OperationErrorKind.Unknown)
+                throw new ArchiveAccessException(OperationErrorKind.MissingVolume,
+                    $"Não foi possível ler o conjunto de {volumes.Parts.Count} volumes: pode faltar o volume seguinte a {Path.GetFileName(volumes.Parts[^1])}, ou algum está corrompido.", ex);
             // 7z com a lista criptografada não tem verificador de senha: a senha errada só aparece como uma lista ilegível
             // (CRC do cabeçalho, dados LZMA inválidos). Se sem senha o motor pede uma, o problema é a senha informada.
-            if (password is not null && ex is not CryptographicException && HeadersNeedPassword(archivePath))
+            if (password is not null && ex is not CryptographicException && HeadersNeedPassword(archivePath, volumes, format))
                 throw new ArchiveAccessException(OperationErrorKind.WrongPassword, "Senha incorreta (ou lista de arquivos corrompida).", ex);
             throw Translate(ex, password);
         }
     }
 
+    internal static ArchiveAccessException MissingVolumes(IReadOnlyList<string> missing)
+    {
+        const int Shown = 10;
+        var names = string.Join(", ", missing.Take(Shown)) + (missing.Count > Shown ? $" e mais {missing.Count - Shown}" : string.Empty);
+        return new ArchiveAccessException(OperationErrorKind.MissingVolume,
+            missing.Count == 1 ? $"Falta um volume do compactado dividido: {names}." : $"Faltam {missing.Count} volumes do compactado dividido: {names}.");
+    }
+
     /// <summary>A lista de arquivos (cabeçalhos) só pode ser lida com senha?</summary>
-    private static bool HeadersNeedPassword(string archivePath)
+    private static bool HeadersNeedPassword(string archivePath, VolumeSet? volumes, ArchiveFormat format)
     {
         try
         {
-            using var archive = ArchiveFactory.Open(archivePath, new ReaderOptions { LookForHeader = false });
+            using var archive = OpenArchive(archivePath, volumes, format, new ReaderOptions { LookForHeader = false });
             _ = archive.Entries.FirstOrDefault();
             return false;
         }
@@ -128,10 +147,29 @@ public sealed class SharpCompressEngine : IArchiveEngine
                 || (format == ArchiveFormat.Rar && e.IsEncrypted) ? null : (uint)crc.Value);
     }
 
-    internal static ArchiveInfo BuildInfo(string path, ArchiveFormat format, List<ArchiveEntry> entries, bool solid)
+    /// <summary>Volumes vão para o leitor do formato já detectado, na ordem de <see cref="VolumeSet.Parts"/>.</summary>
+    private static IArchive OpenArchive(string path, VolumeSet? volumes, ArchiveFormat format, ReaderOptions options)
+    {
+        if (volumes is not { Parts.Count: > 1 }) return ArchiveFactory.Open(volumes?.Parts[0] ?? path, options);
+        if (format == ArchiveFormat.Zip && volumes.IsSpannedZip)
+        {
+            options.LeaveStreamOpen = false; // o fluxo juntado é nosso: fecha junto com o compactado
+            return ZipArchive.Open(SpannedZip.Open(volumes.Parts), options);
+        }
+        var files = volumes.Parts.Select(p => new FileInfo(p)).ToList();
+        return format switch
+        {
+            ArchiveFormat.Zip => ZipArchive.Open(files, options),
+            ArchiveFormat.SevenZip => SevenZipArchive.Open(files, options),
+            ArchiveFormat.Rar => RarArchive.Open(files, options),
+            _ => throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, $"{ArchiveFormats.DisplayName(format)} dividido em volumes não é suportado."),
+        };
+    }
+
+    internal static ArchiveInfo BuildInfo(string path, ArchiveFormat format, List<ArchiveEntry> entries, bool solid, int volumeCount = 1)
     {
         var encrypted = entries.Any(e => e.IsEncrypted);
-        var limitations = new List<string> { "Arquivos divididos em volumes ainda não são suportados." };
+        var limitations = new List<string>();
         if (solid) limitations.Add("Arquivo sólido: cada entrada depende das anteriores; extrair uma seleção pode ser lento.");
         if (format == ArchiveFormat.GZip) limitations.Add("GZ não guarda CRC acessível por entrada; a integridade não é verificada.");
         var caps = new ArchiveCapabilities(
@@ -140,13 +178,14 @@ public sealed class SharpCompressEngine : IArchiveEngine
             CanExtractSelection: true,
             CanReadEncryptedPayload: format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar,
             CanReadEncryptedHeaders: format is ArchiveFormat.SevenZip or ArchiveFormat.Rar,
-            CanReadMultiVolume: false,
+            CanReadMultiVolume: format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar,
             CanVerifyIntegrity: format is ArchiveFormat.Zip or ArchiveFormat.SevenZip or ArchiveFormat.Rar,
             CanCancelCooperatively: true,
             CanPauseInSession: false,
             CanResumeAfterRestart: false,
             CanCreate: false);
-        return new ArchiveInfo(path, format, entries, caps, encrypted, IsMultiVolume: false, limitations);
+        if (volumeCount > 1) limitations.Add($"Compactado dividido em {volumeCount} volumes: todos são lidos juntos.");
+        return new ArchiveInfo(path, format, entries, caps, encrypted, IsMultiVolume: volumeCount > 1, limitations);
     }
 
     private static ArchiveType ExpectedType(ArchiveFormat format) => format switch
@@ -168,9 +207,9 @@ public sealed class SharpCompressEngine : IArchiveEngine
     {
         public ArchiveInfo Info { get; } = info;
 
-        public static RandomAccessSession Open(string path, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken ct)
+        public static RandomAccessSession Open(string path, VolumeSet? volumes, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken ct)
         {
-            var archive = ArchiveFactory.Open(path, new ReaderOptions { Password = password, LookForHeader = false });
+            var archive = OpenArchive(path, volumes, format, new ReaderOptions { Password = password, LookForHeader = false });
             try
             {
                 if (archive.Type != ExpectedType(format))
@@ -184,7 +223,11 @@ public sealed class SharpCompressEngine : IArchiveEngine
                     entries.Add(Map(entries.Count, e, format, path));
                     sources.Add(e);
                 }
-                return new RandomAccessSession(archive, sources, BuildInfo(path, format, entries, archive.IsSolid));
+                // RAR: uma entrada que continua num volume ausente (ou começa num anterior) nunca vira extração "completa".
+                if (volumes is { IsMultiPart: true } && sources.Any(s => !s.IsComplete))
+                    throw new ArchiveAccessException(OperationErrorKind.MissingVolume,
+                        $"O conjunto de volumes está incompleto: falta o volume seguinte a {Path.GetFileName(volumes.Parts[^1])}.");
+                return new RandomAccessSession(archive, sources, BuildInfo(path, format, entries, archive.IsSolid, volumes?.Parts.Count ?? 1));
             }
             catch
             {

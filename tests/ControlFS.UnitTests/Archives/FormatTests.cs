@@ -15,7 +15,7 @@ namespace ControlFS.UnitTests.Archives;
 /// </summary>
 public class FormatTests : IDisposable
 {
-    private static readonly HashSet<string> OriginalHashes =
+    internal static readonly HashSet<string> OriginalHashes =
     [
         "8557928804f57ecc340b3bb38b095a3607474ec8deb0076f316fcfe02b562106", // exe/test.exe
         "b251c7501fb0f55dd4a92feabe0a6f5733bc40a02679498155fae9b30138fc53", // jpg/test.jpg

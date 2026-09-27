@@ -57,4 +57,32 @@ public class BatchExtractionJourneyTests : IDisposable
             Assert.Single(Directory.EnumerateFileSystemEntries(_tmp.Sub(folder)));
         Assert.False(Directory.Exists(_tmp.Sub("notas")));
     });
+
+    [Fact]
+    public void Marked_volumes_of_one_split_archive_are_extracted_once() => UiContext.Run(async () =>
+    {
+        // Qualquer volume abre o conjunto inteiro: marcar os três não pode extrair o mesmo conteúdo três vezes.
+        for (var i = 1; i <= 3; i++) File.Copy(FixturePath($"7z/volumes.7z.00{i}"), _tmp.Sub($"volumes.7z.00{i}"));
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        for (var i = 1; i <= 3; i++)
+        {
+            await d.FocusItem($"volumes.7z.00{i}");
+            d.Press(InputAction.ToggleSelection);
+        }
+        d.Press(InputAction.OpenContextMenu);
+        var menu = await d.WaitMenu();
+        Assert.Equal("Extrair cada um para a própria pasta (1)", menu.Items[menu.FocusIndex].Label);
+        Assert.Null(menu.Items[menu.FocusIndex].Detail);
+        d.Press(InputAction.Confirm);
+        d.ChooseOption(await d.WaitDialog("Extrair 1 compactado"), "Extrair");
+        await d.WaitDialog("Extração de 1 compactado concluída");
+        await d.Idle();
+
+        Assert.Equal("conteúdo do segundo arquivo\n", File.ReadAllText(_tmp.Sub("volumes", "docs", "leia.txt")));
+        Assert.Equal(70400, new FileInfo(_tmp.Sub("volumes", "volumes.txt")).Length);
+        Assert.False(Directory.Exists(_tmp.Sub("volumes (2)")));
+    });
 }

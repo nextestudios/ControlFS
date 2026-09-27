@@ -3,6 +3,7 @@ using System.IO.Compression;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
+using ControlFS.Infrastructure.Archives.Inspection;
 using ControlFS.Infrastructure.Archives.Security;
 
 namespace ControlFS.Infrastructure.Archives.Engines;
@@ -23,6 +24,9 @@ public sealed class BclTarEngine : IArchiveEngine
     public IArchiveReadSession Open(string archivePath, ArchiveFormat format, string? password, ExtractionLimits limits, CancellationToken cancellationToken)
     {
         if (!Supports(format)) throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, "Formato não suportado por este motor.");
+        // Um TAR dividido não diz onde termina: ler só uma parte daria uma extração "completa" pela metade.
+        if (VolumeSet.Find(archivePath) is { IsMultiPart: true })
+            throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, "TAR e TAR.GZ divididos em volumes não são suportados: junte as partes antes.");
         try
         {
             var entries = new List<ArchiveEntry>();

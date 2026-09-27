@@ -62,11 +62,11 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Automatic, verified updates** (installed version): daily check, background download, "Install and restart" or install on quit; signed manifest + SHA-256; can be turned off ([how it works](docs/GUIDE.md#updates))
 - **Safe extraction:** nothing is written outside the destination, links are blocked, name collisions are refused, size limits, temporary staging, CRC check ([security model](docs/security-model.md))
 
-**Extract:** ZIP (including ZIP64 and AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Create:** ZIP, TAR.GZ. RAR can't be created (proprietary); 7z creation and split volumes are not supported yet ([matrix](docs/archive-support.md)).
+**Extract:** ZIP (including ZIP64 and AES), 7z, RAR4/RAR5, TAR, TAR.GZ, GZ. **Create:** ZIP, TAR.GZ. split volumes (`.7z.001`, `.part1.rar`, `.z01`) open from any part. RAR can't be created (proprietary); 7z creation is not supported yet ([matrix](docs/archive-support.md)).
 
 ## Roadmap
 
-**Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: light theme, two panes, PDF preview, split volumes, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** validation on real controllers (#78) and code signing (#84), then the *Could* items: light theme, two panes, PDF preview, batch rename, ISO mounting ([roadmap by MoSCoW priority](https://github.com/nextestudios/ControlFS/issues/95)) · **Later (not planned for 1.0):** video preview, Git status, integrated terminal. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## Code signing policy
 
