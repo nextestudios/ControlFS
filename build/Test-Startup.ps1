@@ -12,6 +12,16 @@ $ErrorActionPreference = "Continue"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $started = Get-Date
 Remove-Item (Join-Path $env:LOCALAPPDATA "ControlFS\logs"), (Join-Path (Split-Path -Parent $Exe) "ControlFS_Data\logs") -Recurse -Force -ErrorAction SilentlyContinue
+# Dump completo se o app cair (WER LocalDumps; o runner é administrador). Analisado com o cdb no fim, se houver.
+$dumpDir = Join-Path $OutDir "dumps"
+New-Item -ItemType Directory -Force -Path $dumpDir | Out-Null
+$wer = "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\$(Split-Path -Leaf $Exe)"
+try {
+    New-Item -Path $wer -Force | Out-Null
+    Set-ItemProperty -Path $wer -Name DumpFolder -Value (Resolve-Path $dumpDir).Path -Type ExpandString
+    Set-ItemProperty -Path $wer -Name DumpType -Value 2 -Type DWord
+    Set-ItemProperty -Path $wer -Name DumpCount -Value 3 -Type DWord
+} catch { Write-Host "LocalDumps indisponível: $($_.Exception.Message)" }
 $p = Start-Process -FilePath $Exe -WorkingDirectory (Split-Path -Parent $Exe) -PassThru
 Start-Sleep -Seconds $Seconds
 $p.Refresh()
@@ -54,6 +64,8 @@ Write-Host ($report | ConvertTo-Json)
 Write-Host "---- eventos ----"
 Get-Content (Join-Path $OutDir "events.txt") | Select-Object -First 80
 Get-ChildItem $OutDir -Filter *.log | ForEach-Object { Write-Host "---- $($_.Name) ----"; Get-Content $_.FullName | Select-Object -First 120 }
+if (-not $alive) { Start-Sleep -Seconds 5 } # o WER termina de gravar o dump
+& (Join-Path $PSScriptRoot "Analyze-Dumps.ps1") -DumpDir $dumpDir -OutFile (Join-Path $OutDir "dump-analysis.txt")
 if (-not $alive -or $report.mainWindowHandle -eq 0) { Write-Host "::error::ControlFS não ficou aberto com janela"; exit 1 }
 Write-Host "ControlFS abriu e manteve a janela por $Seconds s"
 exit 0
