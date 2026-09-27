@@ -174,6 +174,27 @@ public class JourneyTests : IDisposable
     });
 
     [Fact]
+    public void Test_integrity_from_actions_menu_reports_the_corrupted_entry_without_extracting() => UiContext.Run(async () =>
+    {
+        var zip = Create(_tmp.Sub("baixado.zip"), Text("ok.txt", "intacto"),
+            new Item("dados.txt", System.Text.Encoding.ASCII.GetBytes("CONTEUDO-ORIGINAL-1234567890"), Level: System.IO.Compression.CompressionLevel.NoCompression));
+        var bytes = File.ReadAllBytes(zip);
+        bytes[bytes.AsSpan().IndexOf("ORIGINAL"u8)] ^= 0x20;
+        File.WriteAllBytes(zip, bytes);
+        var (d, _) = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("baixado.zip");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Testar integridade");
+
+        var result = await d.WaitDialog("Integridade: problemas encontrados");
+        Assert.Contains(result.Lines, l => l.Item1 == "Conferidas pelo CRC" && l.Item2 == "1");
+        Assert.Contains(result.Lines, l => l.Item1 == "• dados.txt");
+        Assert.Contains("não é uma verificação de vírus", result.Message, StringComparison.Ordinal);
+        Assert.Equal(["baixado.zip"], Directory.EnumerateFileSystemEntries(_tmp.Path).Select(Path.GetFileName));
+    });
+
+    [Fact]
     public void Password_flow_retries_after_wrong_password() => UiContext.Run(async () =>
     {
         File.Copy(FixturePath("zip/zipcrypto-senha-certa.zip"), _tmp.Sub("cofre.zip"));

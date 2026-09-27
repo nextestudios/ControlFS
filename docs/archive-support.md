@@ -26,6 +26,13 @@ SharpCompress expunha cabeçalhos PAX como arquivos falsos.
 | GZ | arquivo único | — | gerada no teste | **validado** (vira um arquivo, não uma pasta) | Tamanho declarado não é usado (módulo 2³²). |
 | Volumes divididos (.001, .part1.rar, .z01) | — | — | — | **não suportado** | — |
 
+## Testar integridade
+
+Norte → **Testar integridade** lê cada entrada até o fim pelo mesmo caminho da extração (limites, tamanho, CRC) e descarta os dados:
+nada é gravado. **Validado** em ZIP (entrada com CRC corrompido apontada pelo nome; as demais conferem; cancelamento no meio
+marca o restante como não verificado) e TAR (entradas lidas, marcadas como "sem checksum"). GZ e ZIP AES (AE-2) também não
+têm CRC por entrada para conferir. Não é antivírus.
+
 ## Criar
 
 | Formato | Resultado | Observações |

@@ -41,6 +41,126 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
         }
     }
 
+    /// <summary>
+    /// Teste de integridade: o mesmo caminho de leitura da extração (limites, tamanho, CRC), com os dados descartados.
+    /// Nada é gravado em disco, nem staging. Não é verificação de vírus.
+    /// </summary>
+    public async Task<OperationResult> TestAsync(ArchiveFormat format, ArchiveTestRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+    {
+        request.Limits.Validate();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(request.Limits.MaxDuration);
+        try
+        {
+            return await Task.Run(() => RunTest(format, request, progress, timeout.Token, cancellationToken), CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new OperationResult(OperationState.Failed, [], OperationErrorKind.LimitExceeded, "Tempo máximo de processamento atingido.");
+        }
+        catch (OperationCanceledException)
+        {
+            return new OperationResult(OperationState.Cancelled, [], OperationErrorKind.Cancelled, "Teste cancelado.");
+        }
+    }
+
+    private OperationResult RunTest(ArchiveFormat format, ArchiveTestRequest request, IProgress<OperationProgress>? progress, CancellationToken ct, CancellationToken userToken)
+    {
+        IArchiveReadSession session;
+        try
+        {
+            session = engine.Open(request.ArchivePath, format, request.Password, request.Limits, ct);
+        }
+        catch (ArchiveAccessException ex)
+        {
+            return Fail(ex.Kind, ex.Message);
+        }
+
+        using (session)
+        {
+            var files = session.Info.Entries.Where(e => !e.IsDirectory).ToDictionary(e => e.Index);
+            if (files.Values.Any(e => e.IsEncrypted) && string.IsNullOrEmpty(request.Password))
+                return Fail(OperationErrorKind.PasswordRequired, "O arquivo está protegido por senha.");
+            var names = files.Values.ToDictionary(e => e.Index, e => ArchivePathPolicy.Sanitize(e.RawKey, request.Limits.MaxDepth, request.Limits.MaxRelativePathLength) is { IsAccepted: true } ok
+                ? ok.RelativePath : Printable(e.RawKey));
+            var declared = files.Values.Sum(e => e.Size ?? 0);
+            var results = new List<ItemResult>();
+            var state = new RunState();
+            var fatal = OperationErrorKind.None;
+            string? fatalMessage = null;
+            var cancelled = false;
+            var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
+            try
+            {
+                using var entries = session.ReadFiles(files.Keys.ToHashSet(), ct).GetEnumerator();
+                while (fatal == OperationErrorKind.None)
+                {
+                    if (ct.IsCancellationRequested) { cancelled = true; break; }
+                    bool hasNext;
+                    try
+                    {
+                        hasNext = entries.MoveNext();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        (fatal, fatalMessage) = ErrorMapper.Map(ex, files.Values.Any(e => e.IsEncrypted));
+                        if (fatal is OperationErrorKind.Unknown) fatal = OperationErrorKind.Corrupt;
+                        break;
+                    }
+                    if (!hasNext) break;
+                    var (entry, open) = entries.Current;
+                    if (!names.TryGetValue(entry.Index, out var name)) continue;
+                    progress?.Report(new OperationProgress(name, state.FilesDone, files.Count, state.TotalBytes, declared));
+                    try
+                    {
+                        bool hasCrc;
+                        using (var source = open()) hasCrc = CopyVerified(source, Stream.Null, entry, request.Limits, state, buffer, ct);
+                        results.Add(new ItemResult(name, ItemOutcome.Succeeded, Message: hasCrc ? "CRC confere." : "Lida por completo; o formato não guarda checksum.") { NoChecksum = !hasCrc });
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        var (kind, message) = ErrorMapper.Map(ex, entry.IsEncrypted);
+                        results.Add(new ItemResult(name, ItemOutcome.Failed, kind, message));
+                        if (IsFatal(kind))
+                        {
+                            fatal = kind;
+                            fatalMessage = message;
+                        }
+                    }
+                    state.FilesDone++;
+                    if (cancelled) break;
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+
+            progress?.Report(new OperationProgress(null, state.FilesDone, files.Count, state.TotalBytes, declared));
+            var processed = results.Select(r => r.Name).ToHashSet(StringComparer.Ordinal);
+            foreach (var name in names.Values)
+                if (!processed.Contains(name)) results.Add(new ItemResult(name, ItemOutcome.NotProcessed));
+
+            if (cancelled || userToken.IsCancellationRequested)
+                return new OperationResult(OperationState.Cancelled, results, OperationErrorKind.Cancelled, "Teste cancelado; as entradas restantes não foram verificadas.");
+            if (fatal != OperationErrorKind.None)
+                return new OperationResult(OperationState.Failed, results, fatal, fatalMessage);
+            var failures = results.Count(r => r.Outcome != ItemOutcome.Succeeded);
+            return failures == 0
+                ? new OperationResult(OperationState.Completed, results, Message: "Nenhum problema encontrado.")
+                : new OperationResult(OperationState.CompletedWithWarnings, results, Message: $"{failures} entrada(s) com problema.");
+        }
+    }
+
     private async Task<OperationResult> RunAsync(ArchiveFormat format, ExtractionRequest request, IExtractionInteraction interaction,
         IProgress<OperationProgress>? progress, CancellationToken ct, CancellationToken userToken)
     {
@@ -208,38 +328,12 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
         var staged = Path.Join(staging, Guid.NewGuid().ToString("N") + ".part");
         try
         {
-            var crc = new Crc32();
-            long written = 0;
             using (var source = openEntry())
             using (var target = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
             {
-                int read;
-                while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    written += read;
-                    state.TotalBytes += read;
-                    if (written > limits.MaxEntryBytes)
-                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Entrada excede o tamanho máximo configurado.");
-                    if (state.TotalBytes > limits.MaxTotalBytes)
-                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Extração excede o total máximo configurado.");
-                    if (item.Entry.Size is long size && written > size)
-                        throw new FileOperationException(OperationErrorKind.Corrupt, "A entrada produziu mais dados que o declarado.");
-                    if (written > limits.RatioCheckThresholdBytes && item.Entry.CompressedSize is > 0 and var compressed && written / (double)compressed > limits.MaxCompressionRatio)
-                        throw new FileOperationException(OperationErrorKind.LimitExceeded, "Relação de expansão suspeita (possível bomba de descompressão).");
-                    crc.Append(buffer.AsSpan(0, read));
-                    target.Write(buffer, 0, read);
-                }
+                CopyVerified(source, target, item.Entry, limits, state, buffer, ct);
                 target.Flush(flushToDisk: true);
             }
-
-            if (item.Entry.Size is long expected && written != expected)
-                throw new FileOperationException(item.Entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
-                    "Tamanho extraído difere do declarado (arquivo truncado ou corrompido).");
-            // Entradas AES (AE-2) declaram CRC 0; nesse caso a verificação CRC não se aplica.
-            if (item.Entry.Crc32 is uint expectedCrc && (expectedCrc != 0 || written == 0) && crc.Value != expectedCrc)
-                throw new FileOperationException(item.Entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
-                    item.Entry.IsEncrypted ? "Falha de integridade: senha incorreta ou dados corrompidos." : "Falha de integridade (CRC não confere).");
 
             if (item.Entry.Modified is DateTimeOffset modified && modified.Year is > 1980 and < 2200)
                 File.SetLastWriteTimeUtc(staged, modified.UtcDateTime);
@@ -251,6 +345,44 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
         {
             if (File.Exists(staged)) File.Delete(staged);
         }
+    }
+
+    /// <summary>
+    /// Lê a entrada inteira para <paramref name="sink"/>, aplicando os limites sobre os bytes efetivamente lidos, e confere
+    /// o tamanho declarado e o CRC. Usado pela extração (sink = arquivo em staging) e pelo teste de integridade (sink nulo).
+    /// </summary>
+    /// <returns>Se havia um CRC para conferir (TAR/GZ e AES AE-2 não têm).</returns>
+    private static bool CopyVerified(Stream source, Stream sink, ArchiveEntry entry, ExtractionLimits limits, RunState state, byte[] buffer, CancellationToken ct)
+    {
+        var crc = new Crc32();
+        long written = 0;
+        int read;
+        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            ct.ThrowIfCancellationRequested();
+            written += read;
+            state.TotalBytes += read;
+            if (written > limits.MaxEntryBytes)
+                throw new FileOperationException(OperationErrorKind.LimitExceeded, "Entrada excede o tamanho máximo configurado.");
+            if (state.TotalBytes > limits.MaxTotalBytes)
+                throw new FileOperationException(OperationErrorKind.LimitExceeded, "Extração excede o total máximo configurado.");
+            if (entry.Size is long size && written > size)
+                throw new FileOperationException(OperationErrorKind.Corrupt, "A entrada produziu mais dados que o declarado.");
+            if (written > limits.RatioCheckThresholdBytes && entry.CompressedSize is > 0 and var compressed && written / (double)compressed > limits.MaxCompressionRatio)
+                throw new FileOperationException(OperationErrorKind.LimitExceeded, "Relação de expansão suspeita (possível bomba de descompressão).");
+            crc.Append(buffer.AsSpan(0, read));
+            sink.Write(buffer, 0, read);
+        }
+
+        if (entry.Size is long expected && written != expected)
+            throw new FileOperationException(entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
+                "Tamanho extraído difere do declarado (arquivo truncado ou corrompido).");
+        // Entradas AES (AE-2) declaram CRC 0; nesse caso a verificação CRC não se aplica.
+        var hasCrc = entry.Crc32 is uint expectedCrc && (expectedCrc != 0 || written == 0);
+        if (hasCrc && crc.Value != entry.Crc32)
+            throw new FileOperationException(entry.IsEncrypted ? OperationErrorKind.WrongPasswordOrCorrupt : OperationErrorKind.Corrupt,
+                entry.IsEncrypted ? "Falha de integridade: senha incorreta ou dados corrompidos." : "Falha de integridade (CRC não confere).");
+        return hasCrc;
     }
 
     private static async Task<ItemResult> PlaceAsync(string staged, string name, int parentCount, DestinationGuard guard, PlannedEntry item, string? zone,

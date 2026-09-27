@@ -49,6 +49,15 @@ public sealed class ArchiveService : IArchiveService
         return new SafeExtractor(engine, _journal).ExtractAsync(format, request, interaction, progress, cancellationToken);
     }
 
+    public Task<OperationResult> TestAsync(ArchiveTestRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+    {
+        var format = Detect(request.ArchivePath);
+        IArchiveEngine engine;
+        try { engine = EngineFor(format); }
+        catch (ArchiveAccessException ex) { return Task.FromResult(new OperationResult(OperationState.Failed, [], ex.Kind, ex.Message)); }
+        return new SafeExtractor(engine, _journal).TestAsync(format, request, progress, cancellationToken);
+    }
+
     private IArchiveEngine EngineFor(ArchiveFormat format) =>
         _engines.FirstOrDefault(e => e.Supports(format))
         ?? throw new ArchiveAccessException(OperationErrorKind.UnsupportedFormat, format == ArchiveFormat.Unknown

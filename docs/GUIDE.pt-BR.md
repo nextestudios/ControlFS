@@ -95,6 +95,7 @@ Num compactado o rodapé mostra **Sul Explorar** (abre somente leitura), **Oeste
 - **Extrair aqui**: na pasta do arquivo; conflitos de nome perguntam.
 - **Extrair para…**: escolha uma pasta dentro do app (dá para criar uma ali).
 - Dentro de um compactado aberto, marque entradas com Oeste e use **Extrair seleção**.
+- **Testar integridade** (Norte num compactado, ou dentro dele): lê todas as entradas e confere o CRC sem gravar nada, com progresso e cancelamento em Menu → Operações. O resultado mostra quantas entradas conferiram, quais falharam (com o nome) e quantas não têm checksum para conferir (TAR, GZ, ZIP AES AE-2). Não é uma verificação de vírus.
 
 Antes de começar você vê origem, destino, entradas e política de conflitos. Conflitos começam em **Pular (manter existente)**; **Substituir** pergunta de novo. O compactado nunca é apagado e nada extraído é aberto ou executado.
 

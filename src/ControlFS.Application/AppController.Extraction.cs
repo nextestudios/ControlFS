@@ -91,9 +91,13 @@ public sealed partial class AppController
         else Enqueue(plan, password: null);
     }
 
-    private void AskPassword(ExtractionPlan plan, string? retryMessage)
+    private void AskPassword(ExtractionPlan plan, string? retryMessage) =>
+        AskSecretFor(plan.ArchivePath, retryMessage, secret => Enqueue(plan, secret));
+
+    /// <summary>Teclado de senha de um compactado. A senha sai do teclado (zerado) direto para o pedido.</summary>
+    private void AskSecretFor(string archivePath, string? retryMessage, Action<string> onSecret)
     {
-        var keyboard = new VirtualKeyboard(TextFieldKind.Password, $"Senha de {Path.GetFileName(plan.ArchivePath)}");
+        var keyboard = new VirtualKeyboard(TextFieldKind.Password, $"Senha de {Path.GetFileName(archivePath)}");
         if (retryMessage is not null) keyboard.SetExternalError(retryMessage);
         KeyboardModal? modal = null;
         modal = new KeyboardModal(keyboard, k =>
@@ -105,7 +109,7 @@ public sealed partial class AppController
             }
             var secret = k.TakeSecret();
             CloseModal(modal!);
-            Enqueue(plan, secret);
+            onSecret(secret);
             return Task.CompletedTask;
         });
         PushModal(modal);
@@ -150,6 +154,11 @@ public sealed partial class AppController
         if (item.Result is { } compressed && _compressions.Remove(item.Id, out var compressPlan))
         {
             OnCompressionCompleted(item, compressPlan, compressed);
+            return;
+        }
+        if (item.Result is { } tested && _archiveTests.Remove(item.Id, out var testedPath))
+        {
+            OnArchiveTestCompleted(item, testedPath, tested);
             return;
         }
         if (!_extractions.Remove(item.Id, out var plan) || item.Result is not { } result) return;
