@@ -3,6 +3,7 @@ using ControlFS.Application;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Input;
+using ControlFS.Core.Input.Mapping;
 using ControlFS.Infrastructure.Input.Sdl3;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
@@ -16,8 +17,10 @@ namespace ControlFS.App.Navigation;
 /// Liga as fontes físicas (SDL3 e teclado) ao AppController por meio de ações semânticas.
 /// O SDL é inicializado e bombeado na thread de UI por um DispatcherQueueTimer curto; em
 /// segundo plano a cadência cai e o roteamento para a UI é suspenso (sem capturar comandos globais).
+/// Joysticks sem perfil de gamepad: eventos crus vão ao assistente (AppController) ou, com perfil salvo, viram
+/// controles físicos pelo <see cref="ControllerProfileTranslator"/> e seguem o mesmo caminho dos gamepads.
 /// </summary>
-public sealed class InputHost : IInputSink, IDisposable
+public sealed class InputHost : IInputSink, IRawControllerSource, IDisposable
 {
     private static readonly TimeSpan ActiveInterval = TimeSpan.FromMilliseconds(8);
     private static readonly TimeSpan BackgroundInterval = TimeSpan.FromMilliseconds(120);
@@ -26,6 +29,7 @@ public sealed class InputHost : IInputSink, IDisposable
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly DispatcherQueueTimer _timer;
     private readonly Dictionary<string, InputDeviceInfo> _devices = [];
+    private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
 
     public InputHost(AppController app, DispatcherQueue queue)
     {
@@ -43,6 +47,11 @@ public sealed class InputHost : IInputSink, IDisposable
             Router.AllowAutomaticActivation = app.TopModal?.IsSensitive != true;
         };
         app.SettingsChanged += s => Router.UpdateMap(new ActionMap(s.Convention));
+        app.ControllerProfilesChanged += () =>
+        {
+            foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device);
+        };
+        app.AttachRawControllers(this);
 
         BackendReady = _backend.Initialize(this, out var error);
         BackendError = error;
@@ -58,6 +67,7 @@ public sealed class InputHost : IInputSink, IDisposable
     public string? BackendError { get; }
     public string BackendDescription => _backend.BackendDescription;
     public IReadOnlyCollection<InputDeviceInfo> Devices => _devices.Values;
+    public IReadOnlyList<InputDeviceInfo> RawDevices => [.. _devices.Values.Where(d => !d.IsGamepad)];
     public InputDeviceInfo? ActiveDevice => Router.ActiveDeviceKey is { } key && _devices.TryGetValue(key, out var d) ? d : null;
 
     public event Action? StatusChanged;
@@ -79,6 +89,7 @@ public sealed class InputHost : IInputSink, IDisposable
     private void Pump()
     {
         _backend.Pump();
+        if (!Router.IsSuspended) _app.TickControllers();
         Router.Tick(_clock.Elapsed);
     }
 
@@ -93,12 +104,33 @@ public sealed class InputHost : IInputSink, IDisposable
     public void OnDeviceAdded(InputDeviceInfo device)
     {
         _devices[device.SessionKey] = device;
+        if (!device.IsGamepad) ApplyProfile(device);
         StatusChanged?.Invoke();
+    }
+
+    public void OnRawInput(string deviceKey, RawInputEvent input, TimeSpan timestamp)
+    {
+        if (Router.IsSuspended || !_devices.TryGetValue(deviceKey, out var device)) return;
+        if (_app.OnRawInput(device, input)) return; // assistente em andamento ou joystick ainda sem perfil
+        if (_translators.TryGetValue(deviceKey, out var translator))
+            translator.Apply(input, (control, pressed) => OnControl(deviceKey, control, pressed, timestamp));
+    }
+
+    public RawJoystickState? GetState(string deviceKey) => _backend.GetRawState(deviceKey);
+
+    /// <summary>Aplica (ou troca) o perfil salvo do joystick cru, soltando o que o perfil anterior mantinha pressionado.</summary>
+    private void ApplyProfile(InputDeviceInfo device)
+    {
+        var key = device.SessionKey;
+        if (_translators.Remove(key, out var old)) old.ReleaseAll((control, _) => Router.OnControl(key, control, false, _clock.Elapsed));
+        if (_app.ProfileFor(device) is { } profile) _translators[key] = new ControllerProfileTranslator(profile);
     }
 
     public void OnDeviceRemoved(string deviceKey)
     {
         _devices.Remove(deviceKey);
+        _translators.Remove(deviceKey);
+        _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
         StatusChanged?.Invoke();
     }

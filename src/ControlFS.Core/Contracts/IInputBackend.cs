@@ -1,5 +1,6 @@
 using ControlFS.Core.Actions;
 using ControlFS.Core.Input;
+using ControlFS.Core.Input.Mapping;
 
 namespace ControlFS.Core.Contracts;
 
@@ -27,6 +28,11 @@ public interface IInputSink
     void OnDeviceAdded(InputDeviceInfo device);
 
     void OnDeviceRemoved(string deviceKey);
+
+    /// <summary>Entrada crua de um joystick sem perfil de gamepad (botões, hats e eixos), para o assistente e perfis salvos.</summary>
+    void OnRawInput(string deviceKey, RawInputEvent input, TimeSpan timestamp)
+    {
+    }
 }
 
 public interface IInputBackend : IDisposable
@@ -38,6 +44,9 @@ public interface IInputBackend : IDisposable
     void Pump();
 
     IReadOnlyList<InputDeviceInfo> Devices { get; }
+
+    /// <summary>Estado instantâneo de um joystick cru (null: não é joystick cru ou não está conectado).</summary>
+    RawJoystickState? GetRawState(string deviceKey);
 
     string BackendDescription { get; }
 }

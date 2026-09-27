@@ -56,7 +56,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 ## Roadmap
 
-**Próximos:** botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, assistente para controles desconhecidos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
+**Próximos:** botões do controle no rodapé, novo teclado virtual, busca, favoritos ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Depois:** dois painéis, busca, favoritos, volumes divididos, tema claro. Detalhes em [docs/roadmap.md](docs/roadmap.md).
 
 ## Mais
 

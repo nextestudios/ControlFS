@@ -56,7 +56,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 ## Roadmap
 
-**Next:** controller button prompts, virtual keyboard redesign, search, favorites ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, search, favorites, split volumes, unknown-controller wizard, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
+**Next:** controller button prompts, virtual keyboard redesign, search, favorites ([roadmap](https://github.com/nextestudios/ControlFS/issues/95)) · **Later:** two panes, search, favorites, split volumes, light theme. Details in [docs/roadmap.md](docs/roadmap.md).
 
 ## More
 

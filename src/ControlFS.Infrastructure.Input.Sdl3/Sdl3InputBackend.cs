@@ -2,6 +2,7 @@ using System.Diagnostics;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Input;
+using ControlFS.Core.Input.Mapping;
 using ControlFS.Infrastructure.Input.Sdl3.Devices;
 using ControlFS.Infrastructure.Input.Sdl3.Normalization;
 using SDL;
@@ -12,7 +13,8 @@ namespace ControlFS.Infrastructure.Input.Sdl3;
 /// <summary>
 /// Backend único de controles (SDL3). Não cria janelas SDL. <see cref="Initialize"/> e <see cref="Pump"/>
 /// devem ocorrer na MESMA thread (a thread de UI do WinUI), por um temporizador curto — nunca em Task.Run.
-/// Joysticks sem perfil de gamepad são registrados, mas não comandam a UI até existir o assistente (Etapa 3).
+/// Joysticks sem perfil de gamepad publicam entradas cruas (botões, hats, eixos) para o assistente de mapeamento e
+/// para os perfis salvos; gamepads conhecidos publicam só os controles normalizados.
 /// </summary>
 public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBackend
 {
@@ -79,10 +81,38 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
                 if (_devices.TryGetValue(e.gbutton.which, out var dev) && SdlControlMapping.FromButton((SDL_GamepadButton)e.gbutton.button) is { } control)
                     _sink?.OnControl(dev.Info.SessionKey, control, e.gbutton.down, now);
                 break;
+            // O SDL também envia eventos de joystick para gamepads; só os joysticks crus (sem perfil de gamepad) os usam.
+            case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+            case SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP:
+                if (IsRaw(e.jbutton.which, out var rawButton)) _sink?.OnRawInput(rawButton.Info.SessionKey, RawInputEvent.Button(e.jbutton.button, e.jbutton.down), now);
+                break;
+            case SDL_EventType.SDL_EVENT_JOYSTICK_HAT_MOTION:
+                if (IsRaw(e.jhat.which, out var rawHat)) _sink?.OnRawInput(rawHat.Info.SessionKey, RawInputEvent.Hat(e.jhat.hat, e.jhat.value), now);
+                break;
+            case SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION:
+                if (IsRaw(e.jaxis.which, out var rawAxis)) _sink?.OnRawInput(rawAxis.Info.SessionKey, RawInputEvent.Axis(e.jaxis.axis, e.jaxis.value / 32767.0), now);
+                break;
             case SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION:
                 if (_devices.TryGetValue(e.gaxis.which, out var device)) OnAxis(device, (SDL_GamepadAxis)e.gaxis.axis, e.gaxis.value / 32767.0, now);
                 break;
         }
+    }
+
+    private bool IsRaw(SDL_JoystickID id, out SdlDevice device) =>
+        _devices.TryGetValue(id, out device!) && device.Gamepad == null && device.Joystick != null;
+
+    public RawJoystickState? GetRawState(string deviceKey)
+    {
+        var device = _devices.Values.FirstOrDefault(d => d.Info.SessionKey == deviceKey);
+        if (device is null || device.Gamepad != null || device.Joystick == null) return null;
+        var joy = device.Joystick;
+        var axes = new double[Math.Clamp(SDL_GetNumJoystickAxes(joy), 0, ControllerProfileSerializer.MaxRawIndex + 1)];
+        for (var i = 0; i < axes.Length; i++) axes[i] = Math.Clamp(SDL_GetJoystickAxis(joy, i) / 32767.0, -1, 1);
+        var buttons = new bool[Math.Clamp(SDL_GetNumJoystickButtons(joy), 0, ControllerProfileSerializer.MaxRawIndex + 1)];
+        for (var i = 0; i < buttons.Length; i++) buttons[i] = SDL_GetJoystickButton(joy, i);
+        var hats = new int[Math.Clamp(SDL_GetNumJoystickHats(joy), 0, ControllerProfileSerializer.MaxRawIndex + 1)];
+        for (var i = 0; i < hats.Length; i++) hats[i] = SDL_GetJoystickHat(joy, i);
+        return new RawJoystickState(axes, buttons, hats);
     }
 
     private void OnAxis(SdlDevice device, SDL_GamepadAxis axis, double value, TimeSpan now)
