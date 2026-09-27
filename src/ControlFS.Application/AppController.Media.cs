@@ -84,6 +84,7 @@ public sealed partial class AppController
             changed = true;
         }
         if (changed) RaiseChanged();
+        foreach (var video in _modals.OfType<VideoPlayerModal>().ToList()) TickVideo(video);
     }
 
     /// <summary>O que a tela mostra de um retrato: a posição conta por segundo inteiro.</summary>

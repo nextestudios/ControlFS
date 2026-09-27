@@ -131,6 +131,7 @@ public sealed partial class AppController
         else if (IsPreviewableImage(entry) && _imageDecoder is not null) OpenImagePreview(pane, entry);
         else if (IsPdf(entry) && PdfRenderer is not null) OpenPdfPreview(pane, entry);
         else if (IsPlayableAudio(entry) && MediaPlayer is not null) OpenAudioPreview(pane, entry);
+        else if (IsPlayableVideo(entry) && MediaPlayer is not null) OpenVideo(pane, entry);
         else if (OpensAsText(entry)) OpenTextPreview(pane, entry);
         else OpenExternally(entry, path);
     }
@@ -458,6 +459,7 @@ public sealed partial class AppController
             items.Add(TestIntegrityItem(file));
         }
         if (IsPreviewableImage(entry)) items.Add(new MenuItem("Visualizar imagem", () => OpenImagePreview(pane, entry), ImagePreviewUnavailable, Icon: ActionIcon.Image, Section: "Abrir"));
+        else if (IsPlayableVideo(entry)) items.Add(new MenuItem("Assistir aqui", () => OpenVideo(pane, entry), MediaUnavailable, Detail: "Tela cheia com os codecs do Windows; nada é executado.", Icon: ActionIcon.Video, Section: "Abrir"));
         else if (IsPlayableAudio(entry)) items.Add(new MenuItem("Ouvir aqui", () => OpenAudioPreview(pane, entry), MediaUnavailable, Detail: "Com os codecs do Windows; nada é executado.", Icon: ActionIcon.Audio, Section: "Abrir"));
         else if (IsPdf(entry)) items.Add(new MenuItem("Visualizar PDF", () => OpenPdfPreview(pane, entry), PdfPreviewUnavailable, Detail: "Só as páginas; links e anexos nunca abrem.", Icon: ActionIcon.Pdf, Section: "Abrir"));
         else if (!ArchiveFormats.CanExtract(format))
@@ -583,6 +585,8 @@ public sealed partial class AppController
                 Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true),
             new($"Restaurar abas ao abrir: {(Settings.RestoreTabs ? "sim" : "não")}", ToggleRestoreTabs,
                 Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.NewTab, Section: privacy, KeepOpen: true),
+            new("Apagar onde os vídeos pararam", ForgetAllPositions, PlaybackPositions is null ? "Posições não são lembradas nesta compilação." : null,
+                Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true),
             new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
                 Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
@@ -672,6 +676,7 @@ public sealed partial class AppController
         _ when IsPreviewableImage(entry) => ActionIcon.Image,
         _ when IsPdf(entry) => ActionIcon.Pdf,
         _ when IsPlayableAudio(entry) => ActionIcon.Audio,
+        _ when IsPlayableVideo(entry) => ActionIcon.Video,
         _ => ActionIcon.File,
     };
 

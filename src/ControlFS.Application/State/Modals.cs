@@ -385,6 +385,9 @@ public abstract class MediaPreviewModal : Modal
     public Core.Models.FileEntry Entry { get; }
     internal Core.Contracts.IMediaSession? Session { get; set; }
 
+    /// <summary>Superfície de vídeo do reprodutor para a tela (null antes de abrir, em áudio e nos testes).</summary>
+    public object? VideoSurface => Session?.VideoSurface;
+
     public Core.Contracts.MediaStatus Status { get; internal set; } = new(Core.Contracts.MediaPlaybackState.Opening, TimeSpan.Zero, TimeSpan.Zero, 1, false);
 
     /// <summary>Recusa antes do reprodutor (executável disfarçado, arquivo ilegível).</summary>
@@ -399,6 +402,43 @@ public abstract class MediaPreviewModal : Modal
 public sealed class AudioPreviewModal : MediaPreviewModal
 {
     internal AudioPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Ouvir áudio", pane, entry) => Icon = ActionIcon.Audio;
+}
+
+/// <summary>
+/// Reprodutor de vídeo em tela cheia (#61, #170): a imagem ocupa a janela inteira; a sobreposição (título, tempo, barra,
+/// volume, legendas, faixa de áudio e legendas do controle) aparece com qualquer entrada e some depois de um tempo tocando.
+/// Esquerda/Direita, LB/RB e LT/RT acumulam um destino de busca mostrado antes de aplicar.
+/// </summary>
+public sealed class VideoPlayerModal : MediaPreviewModal
+{
+    internal VideoPlayerModal(PaneState pane, Core.Models.FileEntry entry, string resumeKey, TimeSpan? resumeAt, string? subtitlePath)
+        : base("Vídeo", pane, entry)
+    {
+        Icon = ActionIcon.Video;
+        ResumeKey = resumeKey;
+        ResumeAt = resumeAt;
+        SubtitlePath = subtitlePath;
+    }
+
+    /// <summary>Sobreposição de controles à mostra.</summary>
+    public bool OverlayVisible { get; internal set; } = true;
+
+    /// <summary>Destino da busca em preparo (mostrado na barra); aplicado quando os toques param.</summary>
+    public TimeSpan? SeekTarget { get; internal set; }
+
+    /// <summary>Legenda externa encontrada ao lado do vídeo (mesmo nome, .srt/.vtt).</summary>
+    public string? SubtitlePath { get; }
+
+    internal string ResumeKey { get; }
+
+    /// <summary>Posição a retomar assim que o vídeo abrir (null: do início).</summary>
+    internal TimeSpan? ResumeAt { get; set; }
+
+    internal TimeSpan LastInput { get; set; }
+    internal TimeSpan LastSeekInput { get; set; }
+
+    /// <summary>"Esquecer onde parei" foi escolhido: fechar não guarda a posição.</summary>
+    internal bool ForgetOnClose { get; set; }
 }
 
 /// <summary>
