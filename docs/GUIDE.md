@@ -65,6 +65,10 @@ The current path is shown as segments at the top. **LB** moves focus from the li
 
 To jump anywhere, use Menu → **Go to path…** (also in the folder picker's Start menu): the on-screen keyboard opens with the current folder selected, so typing replaces it. Path characters (`\ / :`) are on the symbols page (Select/View); with a physical keyboard you can type or paste (Ctrl+V) a path, with or without quotes, and variables such as `%USERPROFILE%` work. **Done** goes there; a file's path opens its folder with the file focused. A missing or invalid path shows the error and keeps the keyboard open so you can fix it.
 
+## Smoothness
+
+ControlFS draws at your display's refresh rate (60, 120, 144 Hz…), as set in Windows. With Menu → **Fluidez: máxima** (the default) it also reads the controller on every frame, so a 120 Hz screen gets 120 controller reads per second, in step with what you see. **Economia de bateria** reads it on a slower timer, which saves power on handhelds. A 60 Hz screen can't show more than 60 frames per second: to get 120, set the display to 120 Hz in Windows (Settings → Display → Advanced display).
+
 ## Tabs
 
 Each tab keeps its own folder, history, marked items and focus. With two or more tabs, the tab strip shows in the header next to the logo (with one tab it would only repeat the path, so it is hidden). To reach it, enter the top bar (LB or RB) and press **Up**; there, **LB/RB** (or Left/Right) switch tabs and **North** offers **New tab** (the current folder in a new tab), **Close tab** and the list of tabs. **South**, **Down** or **East** go back to the list. Menu → **Abas** (tabs) does the same without the strip, and North on a folder has **Open in new tab**. Up to 8 tabs; clicking a tab switches to it. Menu → **Nova aba** (new tab) opens the current folder in a new tab from anywhere. **With two or more tabs, LT/RT (L2/R2) switch to the previous/next tab** while browsing (wrapping around at the ends); with a single tab they keep paging the list and jumping between Home sections. L1/R1 always stay on the top bar, and inside menus, the keyboard and previews the triggers belong to them.

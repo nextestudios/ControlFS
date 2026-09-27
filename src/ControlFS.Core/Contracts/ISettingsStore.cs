@@ -51,6 +51,13 @@ public sealed record AppSettings
     /// <summary>Arquivos e compactados abertos recentemente, o mais recente primeiro (lista limitada).</summary>
     public IReadOnlyList<string> RecentFiles { get; init; } = [];
 
+    /// <summary>
+    /// Fluidez máxima: com a janela ativa, o controle é lido a cada quadro desenhado (120 vezes por segundo numa tela de
+    /// 120 Hz, 144 numa de 144), em sincronia com a tela. Desligado (economia): um temporizador mais lento, que gasta
+    /// menos bateria em portáteis.
+    /// </summary>
+    public bool SyncInputToDisplay { get; init; } = true;
+
     /// <summary>Sugestões locais no teclado virtual (nunca em senhas). Desligar apaga <see cref="TypedTexts"/>.</summary>
     public bool KeyboardSuggestions { get; init; } = true;
 
