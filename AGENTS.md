@@ -36,7 +36,9 @@ temporary rule:
 - `release/X.Y.Z[-pre]`: branch from `develop` when a release is ready; only fixes, docs and changelog entries. Pull request into `main`, tag the merge on `main` (this publishes the release), then merge `main` back into `develop`.
 - `hotfix/X.Y.Z[-pre]`: branch from `main` for urgent fixes; pull request into `main`, tag, then merge back into `develop`.
 
-CI runs only at the Gitflow integration points: pull requests into `develop` (build + tests), pull requests into `main` (build + tests + launching the real app), tags on `main` (release) and CodeQL on `main`/weekly. Tags that don't point to a commit on `main` fail the release workflow.
+CI runs only at the Gitflow integration points: pull requests (build + tests), tags on `main` (release, which builds the packages and launches the real app before publishing) and CodeQL on `main`/weekly. Pull requests don't build packages; the Smoke workflow is manual.
+
+**Releases:** merge pull requests as they are ready; publish a release only when the maintainer asks. Versions stay `0.x.y-alpha.N` until the maintainer says to go to 1.0. Releases are published as regular (not pre-release) GitHub releases so the newest shows as "Latest". Tags that don't point to a commit on `main` fail the release workflow.
 
 ## Conventions
 
