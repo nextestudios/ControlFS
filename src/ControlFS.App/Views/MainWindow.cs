@@ -86,7 +86,8 @@ public sealed class MainWindow : Window
         // Temporários (staging, cópias parciais) registrados para limpeza na próxima inicialização se o app cair no meio.
         var temporaries = new TemporaryJournal(Path.Join(data, "operations"));
         _app = new AppController(new LocalFileSystemProvider(), new ArchiveService(temporaries), settingsStore, _updates, new WindowsShellService(),
-            new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries, new JsonOperationHistoryStore(data));
+            new FileOperationService(temporaries), new JsonControllerProfileStore(data), temporaries, new JsonOperationHistoryStore(data),
+            new Preview.WicImageDecoder());
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);

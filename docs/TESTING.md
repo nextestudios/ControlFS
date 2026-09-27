@@ -229,3 +229,14 @@ genérico **não reconhecido como gamepad** (registre o resultado em `controller
       `.controlfs-copy-*.part`) sumiu do destino; nada mais na pasta mudou.
 - [ ] Com duas janelas do ControlFS abertas, iniciar uma extração numa e reabrir a outra no meio: a extração em andamento
       não é afetada (os temporários de uma instância viva nunca são limpos).
+
+## Visualização de imagens (#57)
+
+- [ ] Sul numa foto de celular (JPG com EXIF de rotação): abre em pé, sem travar; o nome, "N de M" e a resolução aparecem.
+- [ ] Imagem grande (ex.: 12000 × 6000, ~60 MB): o rodapé e o controle continuam respondendo enquanto carrega; depois
+      abre nítida em 4K (100% e 200%).
+- [ ] Esquerda/Direita e LB/RB seguem a ordem da lista; no início/fim o rodapé avisa; ao fechar, o foco fica na última imagem.
+- [ ] RT/LT dão zoom até 800%; com zoom, o direcional percorre a imagem sem passar das bordas; Sul volta a ajustar.
+- [ ] PNG com transparência, GIF animado (primeiro quadro), BMP e WebP (Windows 11) aparecem corretamente.
+- [ ] Um `.exe` renomeado para `.png` e uma imagem acima de 80 megapixels mostram o motivo da recusa, sem abrir nada.
+- [ ] O Narrador lê o nome da imagem, a posição e a resolução.

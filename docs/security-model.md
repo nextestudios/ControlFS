@@ -55,6 +55,15 @@ estruturas de diretório que redirecionem gravações (links/junctions já exist
   "Cancelar"; SmartScreen/Mark of the Web do Windows continuam valendo. Nada é aberto automaticamente após extrair.
   Testado de verdade no runner Windows (`ShellIntegrationTests`: abre o Bloco de Notas, mostra no Explorador).
 
+## Visualizações internas
+
+- A visualização de imagens nunca executa nada: só o decodificador de imagens do Windows (WIC) lê os pixels, fora da thread de UI.
+- Antes de decodificar, `ImagePreviewPolicy` (Core) confere o formato real pelo conteúdo (PNG, JPEG, GIF, BMP, WebP), o
+  tamanho do arquivo (100 MB) e a resolução declarada (80 megapixels): uma "bomba" de poucos bytes que declara
+  100 000 × 100 000 é recusada sem chegar ao decodificador (`ImagePreviewPolicyTests`, `ImagePreviewJourneyTests`).
+- A imagem é reduzida na decodificação para no máximo 4096 px no lado maior (~64 MB por imagem em memória).
+- Arquivos dentro de compactados não são visualizados.
+
 ## Atualizações automáticas
 
 Manifesto de release assinado (ECDSA P-256/SHA-256) com chave que existe só no secret `UPDATE_SIGNING_KEY` do GitHub;

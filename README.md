@@ -50,6 +50,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Drive types** at a glance (local, USB, optical, network), refreshed when a USB stick is plugged in or removed
 - **File operations:** rename, copy, cut, paste, move and delete to the Recycle Bin, with conflict handling (skip / keep both / replace / merge folders) and per-item results
 - Own **on-screen keyboard** (Portuguese/English, accents, symbols, visible caret, hold-to-repeat, masked passwords) usable with only directions + confirm + back
+- **Image preview** (JPG, PNG, GIF, BMP, WebP) with zoom, pan and next/previous on the controller; size and resolution limits checked before decoding
 - **Search by name** in the current folder, with or without subfolders: results stream in, can be cancelled, open in their folder; no indexing, links never followed
 - **Create folder** with Windows naming rules
 - **Archives:** browse ZIP, 7z, RAR, TAR, TAR.GZ and GZ without extracting; extract all or a selection; passwords; conflicts (skip / keep both / replace with confirmation); progress and per-item results
