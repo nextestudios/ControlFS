@@ -212,6 +212,7 @@ public sealed partial class AppController
             case MenuModal menu: HandleMenu(menu, action); break;
             case KeyboardModal keyboard: HandleKeyboard(keyboard, action); break;
             case DialogModal dialog: HandleDialog(dialog, action); break;
+            case AboutModal about: HandleAbout(about, action); break;
         }
     }
 

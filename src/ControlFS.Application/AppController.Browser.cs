@@ -371,6 +371,7 @@ public sealed partial class AppController
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 4) })),
             new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null),
+            new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only"),
             new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null),
             new("Sair", ShowExitDialog),
         };
