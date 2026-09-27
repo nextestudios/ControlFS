@@ -13,7 +13,7 @@ Os botões seguem a **posição física** (convenção do SDL3), não as letras 
 | Leste | Voltar / fechar | Cancelar sem aplicar |
 | Oeste | Marcar item | Apagar |
 | Norte | Ações do item | Maiúsculas |
-| LB / RB | — | Mover cursor |
+| LB / RB | Barra de caminho | Mover cursor |
 | LT / RT | Página anterior / próxima | Cursor no início / fim |
 | Start | Menu do app | Concluir |
 | Select | (busca, ainda não) | Símbolos |
@@ -39,6 +39,9 @@ Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos co
 5. **Teste** o mapeamento novo: o joystick já comanda a tela; escolha **Salvar perfil**, **Refazer um passo…** ou **Cancelar sem salvar**.
 
 Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo opcional. Sem nenhuma entrada por 20 segundos o assistente se cancela. Se o joystick já tem perfil, salvar pergunta antes de substituir (começando em "Cancelar"); cancelar em qualquer momento mantém o perfil salvo. O perfil volta a valer sempre que esse joystick é conectado, inclusive ao reabrir o ControlFS. Menu → Controles sem perfil também exporta um perfil para uma pasta e importa um (`.json`, até 64 KB, validado; qualquer coisa inesperada é recusada).
+## Barra de caminho
+
+O caminho atual aparece em segmentos no topo. **LB** leva o foco da lista para a barra (na pasta acima da atual); **esquerda/direita** escolhem o segmento e **Sul** vai até ele, com o foco na pasta de onde você veio. **RB**, **baixo** ou **Leste** voltam para a lista. Dentro de um compactado, o próprio arquivo é um segmento depois de um `▸`, para separar a parte do disco do conteúdo do compactado. Caminhos longos recolhem o meio em `…`, que abre as pastas escondidas. Teclado: Ctrl+← / Ctrl+→. A mesma lista está em Menu → **Ir para pasta acima…**.
 
 ## A lista
 

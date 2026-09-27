@@ -24,6 +24,12 @@ public sealed class PaneState(PaneMode mode)
     public ArchiveTree? Archive { get; internal set; }
     public PhysicalLocation? LastValidPhysical { get; internal set; }
 
+    /// <summary>Lista ou barra de caminho (LB/RB alternam).</summary>
+    public PaneRegion Region { get; internal set; } = PaneRegion.List;
+
+    /// <summary>Segmento focado na barra de caminho (índice nos segmentos visíveis).</summary>
+    public int BreadcrumbFocus { get; internal set; }
+
     /// <summary>Senha do compactado aberto (cabeçalhos protegidos). Só na memória, só enquanto o compactado está aberto.</summary>
     internal string? ArchivePassword { get; set; }
 

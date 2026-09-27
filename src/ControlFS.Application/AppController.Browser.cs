@@ -12,6 +12,7 @@ public sealed partial class AppController
 {
     private void HandlePane(PaneState pane, InputAction action)
     {
+        if (HandleRegionSwitch(pane, action)) return;
         var list = pane.List;
         switch (action)
         {
@@ -368,6 +369,8 @@ public sealed partial class AppController
             new(PasteLabel, () => Paste(pane), inBrowser ? PasteUnavailable(pane) : "Abra uma pasta do disco para colar."),
             new("Nova pasta", () => BeginCreateFolder(pane), inBrowser && pane.Location is PhysicalLocation ? null : "Abra uma pasta do disco primeiro."),
             new("Atualizar", () => Refresh(pane), inBrowser ? null : "Nada para atualizar na tela inicial."),
+            new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
+                Detail: "Também pela barra de caminho (botão de ombro esquerdo)."),
             new($"Ordenar por: {SortLabel(sort.Field)}", () =>
             {
                 pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) });
@@ -483,6 +486,7 @@ public sealed partial class AppController
         {
             new("Escolher esta pasta", () => CompletePicker(here!.FullPath), here is null ? "Nenhuma pasta aberta." : null, here?.FullPath),
             new("Criar pasta aqui", () => BeginCreateFolder(Picker), here is null ? "Nenhuma pasta aberta." : null),
+            new("Ir para pasta acima…", () => ShowPathMenu(Picker), BuildBreadcrumbs(Picker).Count > 1 ? null : "Não há pastas acima desta."),
             new("Ir para outro local", ShowPickerPlaces),
             new("Cancelar escolha", CancelPicker),
         };

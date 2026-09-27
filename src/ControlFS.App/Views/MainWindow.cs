@@ -2,6 +2,7 @@ using ControlFS.App.Controls;
 using ControlFS.App.Navigation;
 using ControlFS.App.Resources;
 using ControlFS.Application;
+using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
@@ -36,6 +37,7 @@ public sealed class MainWindow : Window
     private ListDensity _density = ListDensity.Comfortable;
     private readonly ContentControl _root = new() { IsTabStop = true, UseSystemFocusVisuals = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch };
     private readonly TextBlock _location = new() { FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text, TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly StackPanel _crumbs = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, Margin = new Thickness(-Theme.SpaceS, Theme.SpaceXs, 0, 0) };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 4) };
     private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right };
@@ -133,6 +135,7 @@ public sealed class MainWindow : Window
         titleStack.Children.Add(_logo);
         titleStack.Children.Add(_badge);
         titleStack.Children.Add(_location);
+        titleStack.Children.Add(_crumbs);
         header.Children.Add(titleStack);
         var right = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         right.Children.Add(_device);
@@ -202,7 +205,9 @@ public sealed class MainWindow : Window
         }
         // Logo só na tela inicial (as demais telas usam o espaço para o caminho).
         _logo.Visibility = _app.Screen == Screen.Home && _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
-        _location.Visibility = _app.Screen == Screen.Home ? Visibility.Collapsed : Visibility.Visible;
+        var crumbs = _app.Breadcrumbs;
+        _location.Visibility = _app.Screen == Screen.Home || crumbs.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        RenderBreadcrumbs(crumbs, pane.Region == PaneRegion.Breadcrumbs && _app.Screen != Screen.Home ? pane.BreadcrumbFocus : -1);
         var device = _input.ActiveDevice;
         _device.Text = !_input.BackendReady
             ? $"Controles indisponíveis ({_input.BackendError}) · use teclado/mouse"
@@ -229,6 +234,7 @@ public sealed class MainWindow : Window
         }
         IReadOnlyList<FileEntry> items = _app.Screen == Screen.Home ? _app.Places : pane.List.Items;
         var focus = _app.Screen == Screen.Home ? _app.PlacesFocus : pane.List.FocusIndex;
+        if (_app.Screen != Screen.Home && pane.Region == PaneRegion.Breadcrumbs) focus = -1; // um só foco visível: o da barra de caminho
         var selection = _app.Screen == Screen.Home ? new HashSet<string>() : pane.List.SelectedIds.ToHashSet();
         if (focus >= items.Count) focus = -1;
         var sourceChanged = !ReferenceEquals(items, _shownItems);
@@ -303,6 +309,55 @@ public sealed class MainWindow : Window
         for (var current = element; current is not null; current = VisualTreeHelper.GetParent(current))
             if (ReferenceEquals(current, _root)) return true;
         return false;
+    }
+
+    /// <summary>
+    /// Barra de caminho: segmentos focáveis (LB/RB entram e saem, esquerda/direita escolhem). A fronteira do compactado
+    /// usa "▸" e o segmento do compactado leva o símbolo de pacote; segmentos do meio de caminhos longos viram "…".
+    /// </summary>
+    private void RenderBreadcrumbs(IReadOnlyList<Breadcrumb> crumbs, int focus)
+    {
+        _crumbs.Children.Clear();
+        _crumbs.Visibility = crumbs.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        for (var i = 0; i < crumbs.Count; i++)
+        {
+            var crumb = crumbs[i];
+            if (i > 0)
+            {
+                var boundary = crumb.Kind == BreadcrumbKind.Archive;
+                _crumbs.Children.Add(new TextBlock
+                {
+                    Text = boundary ? "▸" : "›",
+                    FontSize = Theme.FontItem,
+                    Foreground = boundary ? Theme.Accent : Theme.TextMuted,
+                    VerticalAlignment = VerticalAlignment.Center,
+                });
+            }
+            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs };
+            if (crumb.Kind == BreadcrumbKind.Archive)
+                content.Children.Add(new TextBlock { Text = "\uE7B8", FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"), FontSize = Theme.FontBody, Foreground = Theme.Accent, VerticalAlignment = VerticalAlignment.Center });
+            content.Children.Add(new TextBlock
+            {
+                Text = crumb.Label,
+                FontSize = Theme.FontItem,
+                FontWeight = crumb.IsCurrent ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = crumb.IsCurrent ? Theme.Text : crumb.Kind is BreadcrumbKind.Archive or BreadcrumbKind.ArchiveFolder ? Theme.Accent : Theme.TextMuted,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MaxWidth = 260,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            var chip = new Border { Child = content, CornerRadius = Theme.Radius, Padding = new Thickness(Theme.SpaceS, 2, Theme.SpaceS, 2) };
+            Theme.ApplyFocus(chip, i == focus);
+            var index = i;
+            chip.Tapped += (_, _) => _app.PointerActivateBreadcrumb(index);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(chip, crumb.Kind switch
+            {
+                BreadcrumbKind.Collapsed => $"{crumb.Hidden.Count} pastas recolhidas",
+                BreadcrumbKind.Archive => $"{crumb.Label}, compactado",
+                _ => crumb.Label,
+            } + (crumb.IsCurrent ? ", pasta atual" : string.Empty));
+            _crumbs.Children.Add(chip);
+        }
     }
 
     private void ToggleFullScreen()

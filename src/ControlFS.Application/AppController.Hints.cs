@@ -75,6 +75,16 @@ public sealed partial class AppController
             return hints;
         }
 
+        var crumbs = Breadcrumbs;
+        if (pane.Region == PaneRegion.Breadcrumbs && crumbs.Count > 0)
+        {
+            var crumb = crumbs[Math.Clamp(pane.BreadcrumbFocus, 0, crumbs.Count - 1)];
+            hints.Add(new(InputAction.Confirm, crumb.Kind == BreadcrumbKind.Collapsed ? "Mostrar pastas" : crumb.IsCurrent ? "Voltar à lista" : "Ir para"));
+            hints.Add(new(InputAction.OpenContextMenu, "Caminho completo"));
+            hints.Add(new(InputAction.Back, "Voltar à lista"));
+            return hints;
+        }
+
         var focused = pane.List.Focused;
         var selection = pane.List.SelectionCount;
         var archiveOnDisk = focused is { Kind: EntryKind.File, IsBlocked: false } && ArchiveFormats.HasExtractableExtension(focused.Name);
@@ -84,6 +94,7 @@ public sealed partial class AppController
         else if (focused is { Kind: EntryKind.File } && pane.Mode == PaneMode.Browse) hints.Add(new(InputAction.Confirm, "Abrir"));
         else if (focused is { Kind: EntryKind.ArchiveFile }) hints.Add(new(InputAction.Confirm, "Detalhes"));
 
+        if (crumbs.Count > 1) hints.Add(new(InputAction.PreviousRegion, "Caminho"));
         if (pane.Mode == PaneMode.PickFolder)
         {
             hints.Add(new(InputAction.OpenAppMenu, "Escolher esta pasta…"));

@@ -19,7 +19,7 @@ Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppControll
 | East | Voltar / fechar | Esc, Backspace |
 | West | Marcar/desmarcar | Espaço |
 | North | Ações do item | F2, tecla Menu |
-| LB / RB | Região anterior/próxima (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
+| LB / RB | Barra de caminho ↔ lista (no teclado virtual: mover cursor) | Ctrl+← / Ctrl+→ |
 | LT / RT | Página anterior/próxima (10 itens) | PgUp / PgDn |
 | Start | Menu do aplicativo (no teclado virtual: OK) | F10 (no teclado virtual: Enter) |
 | Select | Busca (ainda não implementada; não aparece nas legendas) | Ctrl+F |
@@ -95,6 +95,9 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 
 ## Foco
 
+- Regiões do navegador (#30): lista e barra de caminho (`PaneState.Region`). LB entra na barra com foco na pasta acima;
+  esquerda/direita escolhem; Sul navega (com histórico) e foca o filho de onde viemos; RB/baixo/Leste voltam à lista;
+  Norte mostra o caminho completo em menu. Só um foco fica visível: na barra, o anel da lista some.
 - Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização. Item focado removido (excluir,
   mover, mudança externa) → o **próximo item que sobreviveu** na ordem anterior; sem próximo, o anterior. Com itens na
   lista, o foco nunca fica vazio (`StateTests`).
