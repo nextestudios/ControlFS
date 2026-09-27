@@ -11,7 +11,9 @@ public sealed partial class AppController
     private readonly Dictionary<int, ExtractionPlan> _extractions = [];
 
     /// <summary>Parâmetros de uma extração antes de virar pedido (sem senha: ela só existe no pedido em execução).</summary>
-    internal sealed record ExtractionPlan(string ArchivePath, string Destination, bool Dedicated, IReadOnlyCollection<string>? Selected, string BasePath);
+    /// <param name="Batch">Lote de "extrair cada um para a própria pasta" (#69): o resultado vai para o resumo do lote.</param>
+    internal sealed record ExtractionPlan(string ArchivePath, string Destination, bool Dedicated, IReadOnlyCollection<string>? Selected, string BasePath,
+        ExtractionBatch? Batch = null);
 
     internal void PickDestinationThenExtract(string archivePath, string startFolder, IReadOnlyCollection<string>? selected, string basePath)
     {
@@ -92,10 +94,11 @@ public sealed partial class AppController
     }
 
     private void AskPassword(ExtractionPlan plan, string? retryMessage) =>
-        AskSecretFor(plan.ArchivePath, retryMessage, secret => Enqueue(plan, secret));
+        AskSecretFor(plan.ArchivePath, retryMessage, secret => Enqueue(plan, secret),
+            plan.Batch is { Reported: false } batch ? () => RecordBatchResult(batch, plan.ArchivePath, OperationState.Failed, "senha não informada") : null);
 
     /// <summary>Teclado de senha de um compactado. A senha sai do teclado (zerado) direto para o pedido.</summary>
-    private void AskSecretFor(string archivePath, string? retryMessage, Action<string> onSecret)
+    private void AskSecretFor(string archivePath, string? retryMessage, Action<string> onSecret, Action? onCancel = null)
     {
         var keyboard = new VirtualKeyboard(TextFieldKind.Password, $"Senha de {Path.GetFileName(archivePath)}");
         if (retryMessage is not null) keyboard.SetExternalError(retryMessage);
@@ -111,7 +114,7 @@ public sealed partial class AppController
             CloseModal(modal!);
             onSecret(secret);
             return Task.CompletedTask;
-        });
+        }, onCancel);
         PushModal(modal);
     }
 
@@ -168,7 +171,8 @@ public sealed partial class AppController
             return;
         }
         SetExtractionRetryFailed(item, plan, result);
-        ShowExtractionResult(item, plan, result);
+        if (plan.Batch is { Reported: false } batch) RecordBatchResult(batch, plan.ArchivePath, result);
+        else ShowExtractionResult(item, plan, result);
         if (Browser.Location is PhysicalLocation here && result.Destination is { } dest &&
             (string.Equals(Path.GetDirectoryName(dest), here.FullPath, StringComparison.OrdinalIgnoreCase) || string.Equals(dest, here.FullPath, StringComparison.OrdinalIgnoreCase)))
             Refresh(Browser);

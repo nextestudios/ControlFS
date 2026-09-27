@@ -54,7 +54,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Visualização de imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima no controle; limites de tamanho e resolução conferidos antes de decodificar
 - **Busca por nome** na pasta atual, com ou sem subpastas: resultados aparecem enquanto são encontrados, dá para cancelar e abrir na pasta; sem índice, links nunca seguidos
 - **Criar pasta** com as regras de nomes do Windows
-- **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; testar integridade sem extrair; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
+- **Compactados:** navegar em ZIP, 7z, RAR, TAR, TAR.GZ e GZ sem extrair; extrair tudo ou uma seleção; vários compactados de uma vez, cada um na sua pasta; testar integridade sem extrair; senhas; conflitos (pular / manter ambos / substituir com confirmação); progresso e resultado por item
 - **Compactar** em ZIP ou TAR.GZ a partir dos itens marcados, com o nome digitado no teclado virtual
 - **Abrir com o Windows:** programa padrão, "Abrir com…", "Mostrar no Explorador de Arquivos"; programas e scripts pedem confirmação
 - **Atualizações automáticas e verificadas** (versão instalada): verificação diária, download em segundo plano, "Instalar e reiniciar" ou instalar ao sair; manifesto assinado + SHA-256; desligável ([como funciona](docs/GUIDE.pt-BR.md#atualizações))
