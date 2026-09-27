@@ -11,6 +11,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Recent** on the home screen: the last folders you visited and files/archives you opened (up to 10 of each), one press away with Home → Recent → South/A. They stay on this computer only, in your settings; North on "Recent" clears the lists, and Menu → "Recent" turns the feature off (which also erases what was stored). (#49)
 ### Improvements
 - **ZIP64 validated**: ZIP archives with entries over 4 GB or more than 65,535 entries extract with sizes and CRCs checked; the safety limits still apply. (#63)
+- **AES-encrypted ZIP (WinZip AE-1/AE-2, 128/192/256-bit) validated**: without a password the app asks for one, the right password extracts identical content and a wrong one is now reported as "wrong password" (asks again) instead of "wrong password or corrupt data". (#64)
 
 ## [0.4.0-alpha.1]
 ### What's new
