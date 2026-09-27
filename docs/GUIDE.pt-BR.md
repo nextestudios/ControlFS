@@ -32,6 +32,8 @@ O teclado virtual tem o campo de texto em cima, quatro linhas de caracteres, uma
 
 **Sugestões:** em campos de nome, busca e caminho, uma faixa acima das teclas sugere nomes que combinam (maiúsculas e acentos não importam: `rel` acha `Relatório 2026`): nomes que você já digitou e nomes da pasta atual; em caminhos, seus favoritos e pastas recentes. Aperte cima na primeira linha para chegar à faixa, esquerda/direita para escolher, Sul para usar (substitui o texto) e baixo para voltar às teclas; cima de novo segue até a última linha. Tudo fica neste PC; campos de senha nunca mostram nem guardam sugestões. Menu → Configurações → **Sugestões do teclado** desliga e apaga o histórico digitado.
 
+**Mira por giroscópio (experimental, desligada por padrão):** Menu → Configurações → **Mira por giroscópio no teclado** deixa um controle com giroscópio (DualSense, DualShock 4, Switch Pro…) apontar as teclas do teclado virtual: gire ou incline o controle e o foco acompanha; Sul digita como sempre, o direcional continua funcionando e **R3** recentraliza. O sensor só é ligado com este ajuste ativo. Ainda não testado em hardware (ver `docs/decisions/0007`).
+
 Toda ação essencial está nos menus (Start / Norte). Num joystick mapeado só com direcional, Confirmar e Voltar, **segure Confirmar** (0,6 s) para abrir Ações e **segure Voltar** para abrir o Menu; pressões curtas continuam confirmando e voltando, e o rodapé mostra "(segure)" nesses botões.
 
 ### Menus e diálogos
@@ -40,7 +42,7 @@ Todo menu e diálogo abre no mesmo painel escuro sobre a tela escurecida. O cabe
 
 As ações do item (Norte) e o Menu do app (Start) abrem com as ações mais usadas numa **grade de blocos** no topo — ícone com um rótulo curto embaixo, legível do sofá (ex.: **Abrir**, **Recortar**, **Copiar**, **Colar**, **Renomear**, **Propriedades**, **Excluir**; no Menu, **Colar**, **Nova pasta**, **Nova aba**, **Atualizar**, **Caminho**, **Operações**, **Configurações**, **Início**). As demais ações vêm numa lista compacta; a linha sob o bloco ou a linha focada diz o nome completo e o que ela faz (ou por que está indisponível). Na grade, **esquerda/direita** andam entre os blocos e param nas pontas, **baixo** na última linha entra na lista e **cima** no topo da lista volta ao bloco de onde você veio; o bloco vermelho apaga e fica sempre por último. Clicar num bloco o escolhe.
 
-Todos os ajustes ficam em Menu → **Configurações**, em grupos: **Exibição** (lista/grade, densidade, painel de detalhes, ordenação, itens ocultos), **Busca e privacidade** (busca em subpastas, recentes, sugestões do teclado), **Controles** (botão de confirmar, legendas, Fluidez, controle ativo, teste de controles, controles sem perfil) e **ControlFS** (atualizações). Mudar um ajuste mantém Configurações aberto com o valor novo, para mudar vários seguidos; Voltar fecha.
+Todos os ajustes ficam em Menu → **Configurações**, em grupos: **Exibição** (lista/grade, densidade, painel de detalhes, ordenação, itens ocultos), **Busca e privacidade** (busca em subpastas, recentes, sugestões do teclado), **Controles** (botão de confirmar, legendas, Fluidez, mira por giroscópio (experimental), controle ativo, teste de controles, controles sem perfil) e **ControlFS** (atualizações). Mudar um ajuste mantém Configurações aberto com o valor novo, para mudar vários seguidos; Voltar fecha.
 
 ### Teste de controles
 

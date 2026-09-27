@@ -67,6 +67,12 @@ public sealed record AppSettings
     /// </summary>
     public bool SyncInputToDisplay { get; init; } = true;
 
+    /// <summary>
+    /// Experimental (#77): no teclado virtual, girar/inclinar um controle com giroscópio (DualSense e outros que o SDL expõe)
+    /// aponta as teclas. Desligado por padrão; o sensor só é ligado com isto ativo. O direcional continua funcionando.
+    /// </summary>
+    public bool GyroKeyboard { get; init; }
+
     /// <summary>Sugestões locais no teclado virtual (nunca em senhas). Desligar apaga <see cref="TypedTexts"/>.</summary>
     public bool KeyboardSuggestions { get; init; } = true;
 

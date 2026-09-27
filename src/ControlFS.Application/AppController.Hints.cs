@@ -65,6 +65,7 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.PageUp, "Início"));
                 hints.Add(new(InputAction.PageDown, "Fim"));
                 hints.Add(new(InputAction.Search, "Símbolos"));
+                if (GyroAimAvailable) hints.Add(new(InputAction.ChangeView, "Recentralizar mira"));
                 hints.Add(new(InputAction.OpenAppMenu, "Concluir"));
                 hints.Add(new(InputAction.Back, "Cancelar"));
                 return hints;

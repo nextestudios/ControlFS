@@ -400,6 +400,28 @@ public sealed class VirtualKeyboard
         Column = Math.Clamp(column, 0, Rows[Row].Count - 1);
     }
 
+    /// <summary>
+    /// Centro da tecla focada na grade (x em colunas de <see cref="VirtualKeyboardLayouts.Columns"/>, y em linhas), de
+    /// onde o ponteiro do giroscópio (#77) parte.
+    /// </summary>
+    public (double X, double Y) FocusCenter
+    {
+        get
+        {
+            if (Rows.Count == 0) return (0, 0);
+            var (start, end) = ColumnRange(Row, Column);
+            return ((start + end) / 2.0, Row + 0.5);
+        }
+    }
+
+    /// <summary>Tecla sob um ponto da grade (fora dela, a tecla da borda mais próxima; nunca dá a volta).</summary>
+    public (int Row, int Column) KeyAt(double x, double y)
+    {
+        if (Rows.Count == 0) return (0, 0);
+        var row = Math.Clamp((int)Math.Floor(y), 0, Rows.Count - 1);
+        return (row, KeyAtColumn(row, Math.Max(0, (int)Math.Floor(x))));
+    }
+
     public void SetExternalError(string message) => ErrorMessage = message;
 
     /// <summary>Permite nova tentativa após um erro externo (ex.: nome já existe).</summary>

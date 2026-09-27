@@ -32,6 +32,8 @@ The on-screen keyboard has the text field on top, four character rows, a functio
 
 **Suggestions:** in name, search and path fields a strip above the keys suggests matching names (case and accents don't matter: `rel` finds `Relatório 2026`): names you typed before and names in the current folder; for paths, your favorites and recent folders. Press Up from the first row to reach the strip, Left/Right to pick, South to use it (it replaces the text), Down to go back to the keys; Up again continues to the last row. Everything stays on this PC; password fields never show or store suggestions. Menu → Configurações (settings) → **Sugestões do teclado** turns them off and erases the typed history.
 
+**Gyro aiming (experimental, off by default):** Menu → Configurações → **Mira por giroscópio no teclado** lets a controller with a gyroscope (DualSense, DualShock 4, Switch Pro…) point at keys on the on-screen keyboard: turn or tilt the controller and the focus follows; South types as usual, the D-pad keeps working and **R3** recenters. The sensor is only turned on while this setting is on. Not yet tested on real hardware (see `docs/decisions/0007`).
+
 Every essential action is reachable through menus (Start / North). On a joystick mapped with only directions, Confirm and Back, **hold Confirm** (0.6 s) to open Actions and **hold Back** to open the Menu; short presses still confirm and go back, and the bottom bar shows "(segure)" ("hold") on those buttons.
 
 ### Menus and dialogs
@@ -40,7 +42,7 @@ Every menu and dialog opens in the same dark panel over the dimmed screen. The h
 
 Item actions (North) and the app Menu (Start) open with the most used actions as a **grid of tiles** at the top — icon with a short label underneath, readable from the couch (e.g. **Abrir**, **Recortar**, **Copiar**, **Colar**, **Renomear**, **Propriedades**, **Excluir**; in the Menu, **Colar**, **Nova pasta**, **Nova aba**, **Atualizar**, **Caminho**, **Operações**, **Configurações**, **Início**). The other actions follow in a compact list; the line under the focused tile or list row says its full name and what it does (or why it's unavailable). In the grid, **Left/Right** move between tiles and stop at the edges, **Down** from the last row goes into the list and **Up** from the top of the list goes back to the tile you came from; a red tile deletes and is always last. Clicking a tile chooses it.
 
-All settings live in Menu → **Configurações** (settings), grouped under **Exibição** (view, density, details panel, sort, hidden items), **Busca e privacidade** (search in subfolders, recents, keyboard suggestions), **Controles** (confirm button, button labels, Fluidez (controller read rate), active controller, controller test, controllers without a profile) and **ControlFS** (updates). Changing a setting keeps Configurações open with the new value, so you can change several in a row; Back closes it.
+All settings live in Menu → **Configurações** (settings), grouped under **Exibição** (view, density, details panel, sort, hidden items), **Busca e privacidade** (search in subfolders, recents, keyboard suggestions), **Controles** (confirm button, button labels, Fluidez (controller read rate), gyro aiming (experimental), active controller, controller test, controllers without a profile) and **ControlFS** (updates). Changing a setting keeps Configurações open with the new value, so you can change several in a row; Back closes it.
 
 ### Controller test
 

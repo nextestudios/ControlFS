@@ -35,6 +35,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
     private readonly Dictionary<string, LongPressTranslator> _longPress = [];
     private readonly Dictionary<string, AnalogScroller> _scrollers = [];
+    private readonly Dictionary<string, GyroPointer> _gyros = [];
 
     public InputHost(AppController app, DispatcherQueue queue)
     {
@@ -45,6 +46,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         {
             app.SetActiveController(ActiveDevice?.Family); // troca de controle muda as legendas na hora
             PublishLongPress();
+            PublishGyro();
             StatusChanged?.Invoke();
         };
         app.ModalContextChanged += () =>
@@ -56,6 +58,8 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         app.SettingsChanged += s =>
         {
             UpdateCadence();
+            _backend.SetGyroEnabled(s.GyroKeyboard);
+            PublishGyro();
             Router.UpdateMap(new ActionMap(s.Convention));
             foreach (var device in _devices.Values.Where(d => !d.IsGamepad).ToList()) ApplyProfile(device); // Confirmar/Voltar do substituto
         };
@@ -68,6 +72,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
 
         BackendReady = _backend.Initialize(this, out var error);
         BackendError = error;
+        _backend.SetGyroEnabled(app.Settings.GyroKeyboard);
         _timer = queue.CreateTimer();
         _timer.Interval = ActiveInterval;
         _timer.IsRepeating = true;
@@ -123,6 +128,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _active = active;
         if (active) Router.Resume();
         else Router.Suspend();
+        foreach (var gyro in _gyros.Values) gyro.Reset();
         foreach (var scroller in _scrollers.Values) scroller.Reset(); // o temporizador lento continua detectando conexão/desconexão
         UpdateCadence();
     }
@@ -142,6 +148,21 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     }
 
     public void OnControl(string deviceKey, PhysicalControl control, bool pressed, TimeSpan timestamp) => Route(deviceKey, control, pressed, null);
+
+    /// <summary>
+    /// Giroscópio (#77, experimental): só o controle ativo mira, e só no teclado virtual; o filtro roda sempre que chega
+    /// leitura para a calibração continuar aprendendo o desvio do sensor.
+    /// </summary>
+    public void OnGyro(string deviceKey, double pitchRadiansPerSecond, double yawRadiansPerSecond, TimeSpan timestamp)
+    {
+        if (Router.IsSuspended || !_app.Settings.GyroKeyboard || !string.Equals(Router.ActiveDeviceKey, deviceKey, StringComparison.Ordinal)) return;
+        if (!_gyros.TryGetValue(deviceKey, out var gyro)) _gyros[deviceKey] = gyro = new GyroPointer(GyroSettings.Default);
+        var (dx, dy) = gyro.Update(pitchRadiansPerSecond, yawRadiansPerSecond, timestamp);
+        if (_app.TopModal is Application.State.KeyboardModal) _app.AimKeyboard(dx, dy);
+    }
+
+    private void PublishGyro() =>
+        _app.SetGyroAimAvailable(_app.Settings.GyroKeyboard && Router.ActiveDeviceKey is { } key && _backend.HasGyro(key));
 
     /// <summary>
     /// Analógico direito (#175): rola a superfície ativa. Pressionar o analógico (R3, lista ↔ grade) trava a rolagem até
@@ -172,6 +193,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     {
         _devices[device.SessionKey] = device;
         if (!device.IsGamepad) ApplyProfile(device);
+        PublishGyro();
         _app.OnControllersChanged();
         StatusChanged?.Invoke();
     }
@@ -226,6 +248,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _translators.Remove(deviceKey);
         _longPress.Remove(deviceKey);
         _scrollers.Remove(deviceKey);
+        _gyros.Remove(deviceKey);
         _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
         _app.OnControllersChanged();

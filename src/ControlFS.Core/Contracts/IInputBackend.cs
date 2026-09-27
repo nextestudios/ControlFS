@@ -37,6 +37,14 @@ public interface IInputSink
     {
     }
 
+    /// <summary>
+    /// Giroscópio de um gamepad (rad/s; convenção SDL), só enquanto a mira experimental está ligada (#77). Filtrado pelo
+    /// <see cref="GyroPointer"/>.
+    /// </summary>
+    void OnGyro(string deviceKey, double pitchRadiansPerSecond, double yawRadiansPerSecond, TimeSpan timestamp)
+    {
+    }
+
     /// <summary>Entrada crua de um joystick sem perfil de gamepad (botões, hats e eixos), para o assistente e perfis salvos.</summary>
     void OnRawInput(string deviceKey, RawInputEvent input, TimeSpan timestamp)
     {

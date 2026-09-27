@@ -586,3 +586,11 @@ Não validado em hardware:
 ## Uso do disco (#72) — não validado em hardware
 - [ ] Unidade real grande (SSD de portátil): Norte na unidade em Meu computador → Analisar uso do disco; o total parcial anda, a tela não trava e Leste cancela em menos de 1 s. O total bate com o "Tamanho" das Propriedades do Explorador (pasta com junções: o Explorador também não segue).
 - [ ] Com controle real: descer/subir níveis com Sul/Leste; rótulos "nome — tamanho (%)" legíveis a 3 m e em 1280×720.
+
+## Mira por giroscópio no teclado (#77, experimental) — não validado em hardware
+Detalhes e o que medir: `docs/decisions/0007`.
+- [ ] DualSense por USB e por Bluetooth: ligar Configurações → Controles → Mira por giroscópio; no teclado virtual, girar para os lados e inclinar move o foco tecla a tecla, sem saltos; nas bordas para (não dá a volta); Sul digita a tecla focada; R3 recentraliza (legenda "Recentralizar mira" no rodapé).
+- [ ] Controle parado na mesa por 1 min com o teclado aberto: o foco não anda sozinho (calibração contínua).
+- [ ] Digitando só com o direcional, com a mira ligada: o foco não "escapa" por tremor ao apertar botões com força.
+- [ ] Cronometrar um nome de 10–15 letras com o direcional e com a mira; anotar o resultado em `docs/decisions/0007`.
+- [ ] Xbox (sem giroscópio) e mira ligada: nada muda, sem legenda de recentralizar. Mira desligada: o sensor não é ligado (bateria do DualSense igual).
