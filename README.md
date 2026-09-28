@@ -11,6 +11,10 @@ A **native Windows file manager made for the controller**, with a **built-in ext
 
 > **Pre-alpha.** The first vertical journey works and is covered by automated tests on real files, but the app has **not been validated on real Windows hardware or with physical controllers yet**. See [PROGRESS.md](PROGRESS.md) (Portuguese).
 
+<p align="center">
+  <img src="docs/images/controlfs-tour.gif" alt="Animated tour of ControlFS: browse from the couch with the D-pad, big image previews, a full-screen video player with subtitles and audio tracks, extracting ZIP, 7z, RAR, TAR and GZ, the on-screen keyboard, and dark or light themes with accent colors" width="800">
+</p>
+
 ## Screenshots
 
 The interface is in Portuguese today; these are real captures of the app (dark theme, 1920x1080, rendered by the project's CI).
