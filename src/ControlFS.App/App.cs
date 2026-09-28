@@ -39,7 +39,7 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
             _window = new MainWindow();
             AppLog.Info("OnLaunched: ativando janela");
             _window.Activate();
-            AppLog.Info("Janela ativada");
+            AppLog.Info($"Janela ativada ({AppLog.SinceProcessStart()} ms desde o início do processo)");
         }
         catch (Exception ex)
         {

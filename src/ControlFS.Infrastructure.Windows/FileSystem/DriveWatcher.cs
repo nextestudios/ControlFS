@@ -5,19 +5,39 @@ namespace ControlFS.Infrastructure.Windows.FileSystem;
 /// num leitor). Compara, a cada intervalo, as letras e tipos (GetLogicalDrives/GetDriveType: sem tocar na mídia) e a
 /// prontidão só de unidades removíveis e ópticas; unidades de rede nunca são consultadas (poderiam travar).
 /// <see cref="Changed"/> é disparado numa thread do pool: quem assina volta para a thread de UI.
+/// <see cref="Pause"/> para a consulta (janela em segundo plano); <see cref="Resume"/> confere na hora e retoma.
 /// </summary>
 public sealed class DriveWatcher : IDisposable
 {
     private readonly Timer _timer;
     private readonly object _gate = new();
+    private readonly TimeSpan _period;
     private string _last;
     private bool _disposed;
 
     public DriveWatcher(TimeSpan? interval = null)
     {
         _last = Snapshot();
-        var period = interval ?? TimeSpan.FromSeconds(2);
-        _timer = new Timer(_ => Poll(), null, period, period);
+        _period = interval ?? TimeSpan.FromSeconds(2);
+        _timer = new Timer(_ => Poll(), null, _period, _period);
+    }
+
+    /// <summary>Sem nenhuma consulta até <see cref="Resume"/>: o temporizador fica parado, sem acordar o processo.</summary>
+    public void Pause()
+    {
+        lock (_gate)
+        {
+            if (!_disposed) _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        }
+    }
+
+    /// <summary>Confere já (o pendrive pode ter mudado enquanto estava parado) e volta ao intervalo normal.</summary>
+    public void Resume()
+    {
+        lock (_gate)
+        {
+            if (!_disposed) _timer.Change(TimeSpan.Zero, _period);
+        }
     }
 
     public event Action? Changed;

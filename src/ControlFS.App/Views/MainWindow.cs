@@ -14,6 +14,7 @@ using ControlFS.Infrastructure.Windows.FileSystem;
 using ControlFS.Infrastructure.Windows.Shell;
 using ControlFS.Infrastructure.Windows.Settings;
 using ControlFS.Core.Text;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -47,6 +48,10 @@ public sealed class MainWindow : Window
     private readonly bool _captures;
     private readonly ShellIconProvider _iconProvider = new();
     private readonly DriveWatcher _drives = new();
+    /// <summary>"Leve em segundo plano" (docs/performance.md); null nas capturas.</summary>
+    private readonly BackgroundMode? _background;
+    private bool _activated = true;
+    private bool _foreground = true;
     private readonly IconLoader _icons;
     private readonly IconLoader _tileIcons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
@@ -123,6 +128,7 @@ public sealed class MainWindow : Window
         var icon = Path.Join(AppContext.BaseDirectory, "controlfs.ico");
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
         _captures = dataDirectory is not null;
+        var startup = System.Diagnostics.Stopwatch.StartNew();
         var data = dataDirectory ?? AppPaths.DataDirectory;
         var settingsStore = new JsonSettingsStore(data);
         _updates = dataDirectory is null ? GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(data, "updates")) : null;
@@ -139,6 +145,7 @@ public sealed class MainWindow : Window
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
             PlaybackPositions = new JsonPlaybackPositionStore(data),
             // Boas-vindas (#231) só na primeira execução do app de verdade: nunca nas capturas nem com --no-onboarding.
+            DeferUpdateCheckToFirstFrame = dataDirectory is null,
             OfferOnboarding = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
         };
         if (dataDirectory is null)
@@ -146,15 +153,19 @@ public sealed class MainWindow : Window
             _phone = new Infrastructure.Remote.PhoneLinkServer();
             _app.AttachPhoneLink(_phone);
         }
+        var inputStarted = startup.ElapsedMilliseconds;
         _input = new InputHost(_app, DispatcherQueue);
+        if (dataDirectory is null) _background = new BackgroundMode(_app, DispatcherQueue, _drives);
+        AppLog.Info($"MainWindow: serviços em {inputStarted} ms; entrada (SDL) em {startup.ElapsedMilliseconds - inputStarted} ms");
         _icons = new IconLoader(_iconProvider);
-        _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
-        _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize);
+        // Caches por tamanho: ícones grandes custam mais por entrada (144 px no dobro da escala ≈ 330 KB), então guardam menos.
+        _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize, capacity: 256);
+        _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize, capacity: 128);
         _topBar = new TopBarView(_app, _navIcons);
-        _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
+        _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize, capacity: 128);
         _home = new HomeView(_app, _cardIcons);
         _listHeader = new ListHeaderView(_app);
-        _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
+        _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize, capacity: 32);
         _details = new DetailsPanelView(_detailIcons);
         _paneView = new PaneView(_app, _icons);
         _toast = new StatusToastView(DispatcherQueue);
@@ -189,7 +200,7 @@ public sealed class MainWindow : Window
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
         _root.Content = _layout = BuildLayout();
-        AppLog.Info("MainWindow: layout montado");
+        AppLog.Info($"MainWindow: layout montado ({startup.ElapsedMilliseconds} ms)");
         _root.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Windows.System.VirtualKey.F11) { _app.ToggleFullScreen(); e.Handled = true; return; }
@@ -203,10 +214,14 @@ public sealed class MainWindow : Window
             UpdateLayoutProfile();
             _root.XamlRoot.Changed += (_, _) =>
             {
+                if (_titleBar.IsMinimized) return; // minimizar não refaz o layout (nem o desfaz ao voltar)
                 UpdateLayoutProfile(); // tamanho, monitor ou DPI
                 _titleBar.Update();
             };
             _titleBar.Update();
+            // Prioridade baixa: roda depois do layout e do desenho do primeiro quadro (sem CompositionTarget.Rendering,
+            // que derrubava o app no WARP). Trabalho adiável da inicialização começa aqui.
+            if (!_captures) DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, OnFirstFrame);
         };
         // Tamanho do texto do Windows (Acessibilidade): o WinUI aumenta cada texto; o layout decide o que cabe.
         _uiSettings.TextScaleFactorChanged += (_, _) => DispatcherQueue.TryEnqueue(UpdateLayoutProfile);
@@ -225,10 +240,13 @@ public sealed class MainWindow : Window
         Activated += (_, e) =>
         {
             var active = e.WindowActivationState != WindowActivationState.Deactivated;
-            _input.OnWindowActivated(active);
+            _activated = active;
+            UpdateForeground();
             _titleBar.SetActive(active);
             if (active) _root.Focus(FocusState.Programmatic);
         };
+        // Minimizar a única janela da área de trabalho a deixa ativa (sem Deactivated): o estado do presenter também conta.
+        AppWindow.Changed += (_, _) => UpdateForeground();
         Closed += (_, _) =>
         {
             _app.ReleaseMediaForShutdown();
@@ -267,7 +285,23 @@ public sealed class MainWindow : Window
         _drives.Changed += () => DispatcherQueue.TryEnqueue(_app.RefreshDrives);
         ApplyLayout();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
-        AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
+        AppLog.Info($"MainWindow: controlador iniciado ({startup.ElapsedMilliseconds} ms); entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
+    }
+
+    /// <summary>Janela ativa e não minimizada: só assim os controles são lidos no ritmo rápido e o processo fica "à frente".</summary>
+    private void UpdateForeground()
+    {
+        var foreground = _activated && !_titleBar.IsMinimized;
+        if (foreground == _foreground) return;
+        _foreground = foreground;
+        _input.OnWindowActivated(foreground);
+        _background?.OnWindowActivated(foreground);
+    }
+
+    private void OnFirstFrame()
+    {
+        AppLog.Info($"Primeiro quadro ({AppLog.SinceProcessStart()} ms desde o início do processo)");
+        _app.OnFirstFrame(); // verificação automática de atualizações, se for a hora
     }
 
     private Grid BuildLayout()

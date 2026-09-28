@@ -72,6 +72,10 @@ public sealed partial class AppController
     /// Chamado a cada quadro: lê o retrato dos reprodutores abertos (mesmo sob um diálogo) e só redesenha quando algo que
     /// a tela mostra mudou (estado, segundo da posição, duração, volume, faixas, erro).
     /// </summary>
+    /// <summary>Áudio ou vídeo tocando (ou abrindo) agora: "Leve em segundo plano" não rebaixa o processo.</summary>
+    public bool IsMediaPlaying => _modals.Any(m => m is MediaPreviewModal { Session: { } session } &&
+        session.Status.State is MediaPlaybackState.Playing or MediaPlaybackState.Buffering or MediaPlaybackState.Opening);
+
     private void TickMedia()
     {
         var changed = false;

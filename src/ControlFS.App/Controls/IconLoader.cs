@@ -12,9 +12,10 @@ namespace ControlFS.App.Controls;
 /// <summary>
 /// Carrega ícones do sistema para as linhas da lista sem travar a UI: o símbolo aparece na hora e a imagem entra quando
 /// chega. Pedidos iguais (mesma extensão) viram um só; linhas recicladas cancelam o pedido. Cache limitado, por tipo e
-/// tamanho em pixels; trocar a escala (DPI) esvazia o cache. Usar somente na thread de UI.
+/// tamanho em pixels (<paramref name="capacity"/> entradas: menos para os ícones grandes); trocar a escala (DPI) esvazia o
+/// cache. Usar somente na thread de UI.
 /// </summary>
-public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoader.RowIconSize)
+public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoader.RowIconSize, int capacity = 512)
 {
     /// <summary>Tamanho do ícone na linha, em pixels independentes de dispositivo.</summary>
     public const double RowIconSize = 48;
@@ -22,7 +23,7 @@ public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoa
     /// <summary>Tamanho do ícone no bloco da grade (a lista de 256 px do Shell, reduzida com nitidez).</summary>
     public const double TileIconSize = 64;
 
-    private readonly LruCache<string, ImageSource?> _cache = new(512);
+    private readonly LruCache<string, ImageSource?> _cache = new(capacity);
     private readonly Dictionary<string, Flight> _inflight = [];
     private readonly ConditionalWeakTable<Image, CancellationTokenSource> _pending = [];
 

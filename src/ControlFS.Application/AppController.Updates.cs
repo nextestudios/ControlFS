@@ -43,8 +43,31 @@ public sealed partial class AppController
         _ => "Atualizações",
     };
 
+    /// <summary>
+    /// A verificação automática espera <see cref="OnFirstFrame"/> (o app de verdade chama depois de desenhar a janela):
+    /// preparar a conexão HTTPS não disputa a thread de UI com a abertura. Os testes deixam desligado.
+    /// </summary>
+    public bool DeferUpdateCheckToFirstFrame { get; init; }
+
+    private bool _firstFrameSeen;
+    private bool _updateCheckAfterFirstFrame;
+
+    /// <summary>Janela desenhada pela primeira vez: começa o trabalho adiável da inicialização.</summary>
+    public void OnFirstFrame()
+    {
+        _firstFrameSeen = true;
+        if (!_updateCheckAfterFirstFrame) return;
+        _updateCheckAfterFirstFrame = false;
+        StartAutomaticUpdateCheck();
+    }
+
     private void StartAutomaticUpdateCheck()
     {
+        if (DeferUpdateCheckToFirstFrame && !_firstFrameSeen)
+        {
+            _updateCheckAfterFirstFrame = true;
+            return;
+        }
         if (_updates is null || !Settings.AutoCheckUpdates) return;
         if (Settings.LastUpdateCheck is { } last && Now() - last < AutomaticCheckInterval) return;
         Track(CheckForUpdatesAsync(manual: false));

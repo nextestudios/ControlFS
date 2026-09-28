@@ -139,6 +139,12 @@ jobs:
           if (Test-Path (Join-Path $out "report.txt")) { Get-Content (Join-Path $out "report.txt") }
           Get-ChildItem (Join-Path $dir "ControlFS_Data\logs") -Filter *.log -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName $out -Force }
           if ($p.ExitCode -ne 0) { Write-Host "::error::--render-screens exited with $($p.ExitCode)"; exit 1 }
+      # Desempenho (docs/performance.md): tempo até o primeiro quadro, memória, CPU e threads com a janela ativa e
+      # minimizada, portátil e instalado, e o tamanho dos pacotes. A tabela vai para o resumo do job e o artefato.
+      - name: Measure performance (startup, idle and minimized cost, package size)
+        if: always() && inputs.mode != 'screens'
+        shell: pwsh
+        run: .\build\Measure-Performance.ps1 -Portable dist\ControlFS-Portable-x64.exe -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-performance
       - name: Analyze crash dumps (if the app crashed in any step)
         if: always()
         shell: pwsh
@@ -158,3 +164,8 @@ jobs:
             smoke-portable
             smoke-installed
             smoke-uia
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.mode != 'screens'
+        with:
+          name: performance
+          path: smoke-performance

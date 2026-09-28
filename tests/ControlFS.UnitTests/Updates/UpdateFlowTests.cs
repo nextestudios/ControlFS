@@ -47,13 +47,29 @@ public class UpdateFlowTests : IDisposable
         public void Save(AppSettings settings) => Current = settings;
     }
 
-    private (AppController App, FakeUpdates Updates, MemorySettings Settings) Boot(AppSettings? settings = null, bool installed = true, bool available = true)
+    private (AppController App, FakeUpdates Updates, MemorySettings Settings) Boot(AppSettings? settings = null, bool installed = true, bool available = true, bool deferToFirstFrame = false)
     {
         var updates = new FakeUpdates(installed, available);
         var store = new MemorySettings(settings ?? new AppSettings());
-        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store, updates);
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store, updates) { DeferUpdateCheckToFirstFrame = deferToFirstFrame };
         return (app, updates, store);
     }
+
+    [Fact]
+    public void Automatic_check_waits_for_the_first_frame_when_deferred() => UiContext.Run(async () =>
+    {
+        var (app, updates, _) = Boot(available: false, deferToFirstFrame: true);
+        app.Start();
+        await app.WhenIdleAsync();
+        Assert.Equal(0, updates.Checks); // a abertura não disputa a thread de UI com a conexão HTTPS
+
+        app.OnFirstFrame();
+        await app.WhenIdleAsync();
+        Assert.Equal(1, updates.Checks);
+        app.OnFirstFrame();
+        await app.WhenIdleAsync();
+        Assert.Equal(1, updates.Checks); // uma vez só
+    });
 
     [Fact]
     public void Automatic_check_downloads_and_offers_install_and_restart() => UiContext.Run(async () =>

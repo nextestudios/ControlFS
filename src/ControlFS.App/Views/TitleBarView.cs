@@ -128,7 +128,9 @@ internal sealed class TitleBarView
         }
         window.AppWindow.Changed += (_, e) =>
         {
-            if (e.DidPresenterChange || e.DidSizeChange) Update();
+            // Minimizada não há o que medir: ler a barra de título do Windows nesse estado lançava E_INVALIDARG dentro
+            // deste evento, que o Windows trata como falha fatal (o app fechava ao minimizar; visto na medição do Smoke).
+            if ((e.DidPresenterChange || e.DidSizeChange) && !IsMinimized) Update();
         };
     }
 
@@ -148,11 +150,22 @@ internal sealed class TitleBarView
     /// <summary>Janela carregada, DPI, tamanho ou modo mudou: largura dos botões do sistema e as áreas de arrastar.</summary>
     public void Update()
     {
+        if (IsMinimized) return;
         _ready = _live && _header.XamlRoot is not null;
-        ApplyWindowMode();
-        UpdateCaptionSpace();
-        UpdateRegions();
+        try
+        {
+            ApplyWindowMode();
+            UpdateCaptionSpace();
+            UpdateRegions();
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or ArgumentException)
+        {
+            AppLog.Info($"Barra de título: {ex.Message}"); // chamado de eventos do Windows: nunca deixar a exceção escapar
+        }
     }
+
+    /// <summary>Janela minimizada (só no app de verdade): o layout e a barra de título esperam ela voltar.</summary>
+    public bool IsMinimized => _live && _window.AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized };
 
     /// <summary>Janela ativa ou não: o ícone esmaece como os botões do Windows.</summary>
     public void SetActive(bool active)

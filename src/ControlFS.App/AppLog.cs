@@ -16,6 +16,23 @@ internal static class AppLog
 
     public static void Info(string message) => Write("startup.log", "INFO", message);
 
+    /// <summary>
+    /// Milissegundos desde o início do processo (no portátil, inclui a extração do .exe único). Usado nas linhas de
+    /// inicialização que o build/Measure-Performance.ps1 lê (docs/performance.md).
+    /// </summary>
+    public static long SinceProcessStart()
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            return (long)(DateTime.Now - process.StartTime).TotalMilliseconds;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+        {
+            return -1;
+        }
+    }
+
     /// <summary>Erro tratado e mostrado ao usuário com uma mensagem simples: a exceção original, para diagnóstico.</summary>
     public static void Error(Exception exception, string context) =>
         Write("startup.log", "ERROR", $"{context}: {exception.GetType().FullName} (HRESULT 0x{exception.HResult:X8}): {exception.Message}");
