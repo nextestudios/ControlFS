@@ -225,7 +225,7 @@ public class UndoJourneyTests : IDisposable
         d.ChooseOption(await d.WaitDialog("Mover 1 item para a Lixeira?"), "Mover para a Lixeira");
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("a.txt")), "na Lixeira");
         await d.Idle();
-        await UiContext.WaitUntil(() => d.App.StatusMessage?.Contains("(Menu → Desfazer restaura)", StringComparison.Ordinal) == true, "dica de desfazer no rodapé");
+        await d.WaitStatus("1 item movido para a Lixeira · Menu → Desfazer"); // aviso com a dica de desfazer
 
         await Undo(d);
         // O arquivo volta à pasta antes de sair da lista da Lixeira: espera os dois.
