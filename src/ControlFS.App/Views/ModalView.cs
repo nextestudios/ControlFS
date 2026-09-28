@@ -75,6 +75,13 @@ public static partial class ModalView
             _retained = null;
             return null;
         }
+        if (modal is OnboardingModal onboarding)
+        {
+            // Boas-vindas (#231): tela cheia própria, sem painel fosco; refeita a cada mudança (poucos elementos).
+            _retained = null;
+            _shown = new WeakReference<Modal>(modal);
+            return BuildOnboarding(app, onboarding);
+        }
         var key = RetainKey(modal);
         if (key is not null && _retained is { } kept && ReferenceEquals(kept.Modal, modal) && kept.Key == key)
         {

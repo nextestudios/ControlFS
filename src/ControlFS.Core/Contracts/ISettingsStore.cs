@@ -107,6 +107,13 @@ public sealed record AppSettings
     public bool? IncludePrereleases { get; init; }
 
     public DateTimeOffset? LastUpdateCheck { get; init; }
+
+    /// <summary>
+    /// Boas-vindas (#231). False: instalação nova, as boas-vindas ainda não foram vistas (o armazenamento grava false ao criar
+    /// as preferências). True: vistas ou puladas. Null: preferências de antes das boas-vindas (quem já usa o app) — contam
+    /// como vistas. Campo opcional: versões anteriores ignoram a propriedade, então o esquema não muda.
+    /// </summary>
+    public bool? OnboardingCompleted { get; init; }
 }
 
 public sealed record SettingsLoadResult(AppSettings Settings, bool RecoveredFromCorruption, string? Notice);

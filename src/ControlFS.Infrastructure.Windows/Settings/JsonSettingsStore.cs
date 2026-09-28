@@ -26,7 +26,8 @@ public sealed class JsonSettingsStore(string directory) : ISettingsStore
 
     public SettingsLoadResult Load()
     {
-        if (!File.Exists(FilePath)) return new(new AppSettings(), false, null);
+        // Sem arquivo: primeira execução; as boas-vindas ficam pendentes até serem vistas ou puladas (#231).
+        if (!File.Exists(FilePath)) return new(new AppSettings { OnboardingCompleted = false }, false, null);
         try
         {
             var info = new FileInfo(FilePath);

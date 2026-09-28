@@ -66,7 +66,8 @@ Cancelar** (opção segura); F10 dentro dela não abre outro modal; → e ← mo
 pasta abre o teclado virtual com as teclas desenhadas e uma focada; ↓ move o foco; texto digitado aparece no campo; Esc
 fecha. Para rodar num Windows: `powershell -File build\Test-UiAutomation.ps1 -Exe <ControlFS.exe> -OutDir uia`
 (não mexa no mouse e no teclado enquanto roda; o script cria `ControlFS_Data` ao lado do .exe, sem verificar
-atualizações).
+atualizações). As preferências que ele grava já existem antes de abrir, então as boas-vindas da primeira execução (#231)
+não aparecem; para abrir o app sem elas numa pasta de dados vazia, use `--no-onboarding`.
 
 Não cobre: controle físico (SDL), Narrador de verdade, TV/DPI reais (ver as outras seções).
 
@@ -743,3 +744,19 @@ Chromium sem interface contra o servidor real durante o desenvolvimento (pareame
       smoke mostra só o Windows do runner.
 - [ ] 1280×720: o rodapé com "Ver em grade"/"Ver em lista" cabe sem cortar as outras legendas.
 - [ ] Duas abas "Fotos" em pastas diferentes: a faixa mostra "Fotos (Viagem)" e "Fotos (Casamento)" legíveis de longe.
+
+## Boas-vindas e tutorial guiado (#231) — não validado em hardware
+Automático: `OnboardingJourneyTests` (primeira execução só na janela real, passos pelo controle, ajuste com efeito
+imediato, conclusão salva, quem atualiza não vê, Start pula, Menu reabre) e `TutorialJourneyTests` (os 8 passos pelo
+`Driver`, cada um só com a ação pedida, Voltar passo, Pular, nenhum arquivo alterado, máquina de estados). Capturas
+`o1`–`o7` no Smoke (`-f screens=o`).
+- [ ] Portátil numa pasta nova (sem `ControlFS_Data`): as boas-vindas abrem em tela cheia; com um controle Xbox, depois
+      um DualSense e um Switch Pro, o passo "Como o controle funciona" mostra os botões de cada um (troca a quente).
+- [ ] "Confirmar com: botão direito" vale na hora (o próximo Confirmar é o botão direito); Tema, Exibição e Legendas
+      mudam a tela por trás na hora; Start pula sem perguntar; o Narrador lê o passo e a opção em foco.
+- [ ] Abrir de novo o portátil: as boas-vindas não voltam. Atualizar por cima de uma versão anterior: não aparecem.
+- [ ] Tutorial numa TV a ~3 m e num portátil 720p: o destaque (escurecido + anel) cai sobre a lista, a barra superior e
+      o rodapé certos; o balão não cobre o item em foco nem o menu aberto; os glifos são os do controle em uso.
+- [ ] Cada passo só avança fazendo o que ele pede; Marcar abre as opções (Voltar passo, Pular tutorial); com o mouse, os
+      botões do balão funcionam; no fim, o resumo e o início com o primeiro cartão em foco.
+- [ ] Nenhum arquivo muda durante o tutorial (buscar e abrir pastas só leem).

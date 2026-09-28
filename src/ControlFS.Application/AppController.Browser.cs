@@ -570,6 +570,7 @@ public sealed partial class AppController
             .. UndoMenuItems(),
             PhoneMenuItem(),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),
+            new("Ajuda e tutorial…", ShowHelpMenu, Detail: "Tutorial guiado, boas-vindas e Sobre.", Icon: ActionIcon.Help, Section: "ControlFS"),
             new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only", Icon: ActionIcon.About, Section: "ControlFS"),
             new("Sair", ShowExitDialog, Icon: ActionIcon.Exit, Section: "ControlFS"),
         ];
@@ -669,6 +670,7 @@ public sealed partial class AppController
                 Detail: "Mostra cada botão e a ação que ele produz; copia um relatório para a issue #78.", Icon: ActionIcon.ControllerTest, Section: controls),
             new("Controles sem perfil…", ShowControllersMenu, Detail: "Configurar joysticks que não são reconhecidos como gamepad.", Icon: ActionIcon.ControllerSetup, Section: controls),
             new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null, Icon: ActionIcon.Update, Section: app),
+            new("Rever boas-vindas", ShowOnboarding, Detail: "Controles, ajustes básicos, privacidade e o convite para o tutorial guiado.", Icon: ActionIcon.Help, Section: app),
         ];
     }
 

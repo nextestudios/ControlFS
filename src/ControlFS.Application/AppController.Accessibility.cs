@@ -45,6 +45,10 @@ public sealed partial class AppController
                     return new($"Teclado virtual: {kb.Title}", $"sugestão {suggestion}, {Position(kb.SuggestionIndex ?? 0, kb.Suggestions.Count)}");
                 var key = kb.FocusedKey;
                 return new($"Teclado virtual: {kb.Title}", "tecla " + key.Name + (kb.IsKeyEnabled(key) ? string.Empty : ", indisponível neste campo"));
+            case OnboardingModal onboarding:
+                var chosen = onboarding.FocusedOption;
+                return new(Sentence($"Boas-vindas, passo {onboarding.StepIndex + 1} de {onboarding.StepCount}: {onboarding.StepTitle}", onboarding.StepBody),
+                    chosen is null ? string.Empty : $"{chosen.Label}{(chosen.Detail is { Length: > 0 } more ? ", " + more : string.Empty)}, {Position(onboarding.FocusIndex, onboarding.Options.Count)}");
             case MappingWizardModal wizard:
                 return new(wizard.Title, wizard.Wizard.Phase == Core.Input.Mapping.MappingPhase.Review
                     ? MappingWizardModal.ReviewOptions[wizard.ReviewFocus]
@@ -130,9 +134,11 @@ public sealed partial class AppController
         var now = DescribeFocus();
         var previous = _lastAnnouncement;
         _lastAnnouncement = now;
-        if (previous == now) return null;
-        if (previous is null || previous.Context != now.Context) return Sentence(now.Context, now.Item);
-        return now.Item;
+        var tutorial = TakeTutorialAnnouncement(); // passo novo do tutorial (#231) vem antes do foco
+        string? focus = previous == now ? null
+            : previous is null || previous.Context != now.Context ? Sentence(now.Context, now.Item)
+            : now.Item;
+        return tutorial is null ? focus : focus is null ? tutorial : Sentence(tutorial, focus);
     }
 
     /// <summary>Junta duas frases sem pontuação dobrada ("Sair?" + "Cancelar" → "Sair? Cancelar").</summary>
