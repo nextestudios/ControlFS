@@ -180,11 +180,20 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.Back, "Voltar à lista"));
                 return hints;
             case DialogModal dialog:
-                // Confirmar executa a opção em foco; diálogo sem opções só fecha com Voltar.
-                if (dialog.Options.Count > 0) hints.Add(new(InputAction.Confirm, dialog.Options[dialog.FocusIndex].Label));
-                if (dialog.StartOption is { } start && dialog.Options.Count > 0 && start != dialog.Options[dialog.FocusIndex]) hints.Add(new(InputAction.OpenAppMenu, start.Label));
-                hints.Add(new(InputAction.Back, dialog.BackOption?.Label ?? "Fechar"));
+            {
+                // Confirmar executa a opção em foco; diálogo sem opções só fecha com Voltar. Com o foco na própria opção de
+                // Voltar ("Cancelar", "Fechar"), os dois botões diriam o mesmo: no lugar de Confirmar, a próxima opção.
+                var back = dialog.BackOption?.Label ?? "Fechar";
+                if (dialog.Options.Count > 0)
+                {
+                    var focused = dialog.Options[dialog.FocusIndex];
+                    if (focused != dialog.BackOption && focused.Label != back) hints.Add(new(InputAction.Confirm, focused.Label));
+                    else if (dialog.Options.Count > 1) hints.Add(new(InputAction.NavigateRight, dialog.Options[(dialog.FocusIndex + 1) % dialog.Options.Count].Label));
+                    if (dialog.StartOption is { } start && start != focused) hints.Add(new(InputAction.OpenAppMenu, start.Label));
+                }
+                hints.Add(new(InputAction.Back, back));
                 return hints;
+            }
         }
         return hints;
     }

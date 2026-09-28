@@ -81,7 +81,8 @@ public sealed record MenuGrid(int Start, int Count)
 /// Menu com blocos em grade e a lista das demais opções. Menu comum: grade de ações rápidas no topo (os blocos de
 /// <see cref="Items"/> vêm primeiro) e a lista embaixo. Com <c>sectionGrids</c> (Configurações, #227): a ordem de quem montou
 /// vale e cada sequência de blocos do mesmo grupo vira a grade desse grupo, entre as linhas da lista. O foco inicial é o
-/// primeiro item que ele passou (ou <see cref="FocusOn"/>), nunca uma ação perigosa (AppController.SafeInitialFocus).
+/// primeiro bloco disponível da grade do topo (ou <see cref="FocusOn"/>; nas Configurações, o primeiro item), nunca uma ação
+/// perigosa (AppController.SafeInitialFocus). <see cref="TitledSection"/>: grupo que sempre mostra o título, mesmo com a grade.
 /// </summary>
 public sealed class MenuModal : Modal
 {
@@ -95,7 +96,19 @@ public sealed class MenuModal : Modal
         Icon = ActionIcon.Menu;
         _sectionGrids = sectionGrids;
         Arrange(items);
-        FocusIndex = items.Count == 0 ? 0 : IndexOf(items[0]);
+        FocusIndex = items.Count == 0 ? 0 : InitialFocus(items[0]);
+    }
+
+    /// <summary>
+    /// Sem <see cref="FocusOn"/>: num menu comum com grade, o primeiro bloco que funciona e não apaga nada (a grade fica no
+    /// topo; abrir numa linha abaixo dela escondia as ações rápidas). Sem bloco assim, ou nas Configurações, o primeiro item.
+    /// </summary>
+    private int InitialFocus(MenuItem first)
+    {
+        if (!_sectionGrids)
+            for (var i = 0; i < QuickCount; i++)
+                if (Items[i].IsEnabled && !Items[i].IsDestructive) return i;
+        return IndexOf(first);
     }
 
     public IReadOnlyList<MenuItem> Items { get; private set; } = [];
@@ -135,6 +148,12 @@ public sealed class MenuModal : Modal
 
     /// <summary>Remonta as opções depois de uma opção <see cref="MenuItem.KeepOpen"/> (ex.: Configurações).</summary>
     internal Func<IReadOnlyList<MenuItem>>? Reload { get; init; }
+
+    /// <summary>
+    /// Grupo cujo título aparece mesmo num menu com grade (onde os grupos só têm o fio): "Nesta pasta (nome)" no menu de
+    /// um item, para as ações sobre a pasta atual não parecerem ações do item.
+    /// </summary>
+    public string? TitledSection { get; init; }
 
     /// <summary>Foco inicial numa opção específica (ex.: "Extrair para" num compactado).</summary>
     internal MenuItem? FocusOn

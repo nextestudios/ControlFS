@@ -151,7 +151,7 @@ public sealed partial class AppController
             }, icon: ActionIcon.Reveal));
         dialog.Options.Add(close);
         dialog.BackOption = close;
-        PushModal(dialog);
+        ShowOperationResult(dialog);
         if (Browser.Location is PhysicalLocation here && string.Equals(here.FullPath, plan.Folder, StringComparison.OrdinalIgnoreCase))
             Refresh(Browser, result.Destination is { } d ? Path.GetFileName(d) : null);
     }

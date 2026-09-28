@@ -588,6 +588,16 @@ public sealed partial class AppController
         }
     }
 
+    /// <summary>
+    /// Diálogo com o resultado de uma operação: o aviso "…iniciada" do rodapé sai junto, para o rodapé não contradizer o
+    /// título ("Extração concluída" com "Extração iniciada…" embaixo).
+    /// </summary>
+    private void ShowOperationResult(DialogModal dialog)
+    {
+        StatusMessage = null;
+        PushModal(dialog);
+    }
+
     internal DialogModal ShowMessage(string title, IReadOnlyList<(string, string)> lines, string? message = null, ActionIcon icon = ActionIcon.Info)
     {
         var dialog = new DialogModal(title, lines) { Message = message, Icon = icon };

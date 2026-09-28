@@ -494,7 +494,7 @@ public static partial class ModalView
             var heading = menu.HasSectionGrids || !hasGrid
                 ? (i == 0 ? item.Section is not null : item.Section != section)
                 : i != 0 && (i == menu.QuickCount || item.Section != section);
-            if (heading) stack.Children.Add(SectionHeading(titles ? item.Section : null, first: i == 0));
+            if (heading) stack.Children.Add(SectionHeading(titles || (item.Section is not null && item.Section == menu.TitledSection) ? item.Section : null, first: i == 0));
             section = item.Section;
             if (grid is null)
             {

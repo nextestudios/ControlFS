@@ -348,15 +348,13 @@ public sealed partial class AppController
         {
             // Compactados marcados: "extrair cada um" vem primeiro, então Norte e depois Sul extraem o lote (#69).
             var markedArchives = MarkedArchives(marked);
+            MenuItem? extractEach = markedArchives.Count == 0 ? null : new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
+                Detail: marked.Any(e => e.Kind != EntryKind.File || !ArchiveFormats.HasExtractableExtension(e.Name)) ? "Itens que não são compactados ficam de fora." : null, Icon: ActionIcon.Extract);
             var copy = new MenuItem($"Copiar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Copy), FileOpsUnavailable,
                 Icon: ActionIcon.Copy, Placement: MenuPlacement.Quick, ShortLabel: "Copiar");
             PushModal(new MenuModal($"{Plural.Of(marked.Count, "item", "itens")} {Plural.Word(marked.Count, "marcado", "marcados")}",
             [
-                .. markedArchives.Count == 0 ? Array.Empty<MenuItem>() :
-                [
-                    new MenuItem($"Extrair cada um para a própria pasta ({markedArchives.Count})", () => BeginBatchExtraction(pane, markedArchives),
-                        Detail: marked.Any(e => e.Kind != EntryKind.File || !ArchiveFormats.HasExtractableExtension(e.Name)) ? "Itens que não são compactados ficam de fora." : null, Icon: ActionIcon.Extract),
-                ],
+                .. extractEach is null ? Array.Empty<MenuItem>() : [extractEach],
                 new MenuItem($"Recortar {Plural.Of(marked.Count, "item", "itens")}", () => PutOnClipboard(pane, marked, FileOperationKind.Move), FileOpsUnavailable, Icon: ActionIcon.Cut, Placement: MenuPlacement.Quick, ShortLabel: "Recortar"),
                 copy,
                 new MenuItem("Renomear em lote…", () => BeginBatchRename(pane, marked), FileOpsUnavailable,
@@ -367,7 +365,7 @@ public sealed partial class AppController
                 new MenuItem($"Compactar {Plural.Of(marked.Count, "item", "itens")}…", () => BeginCompress(pane, marked), Icon: ActionIcon.Compress, Placement: MenuPlacement.Quick, ShortLabel: "Compactar"),
                 new MenuItem($"Excluir {Plural.Of(marked.Count, "item", "itens")}…", () => BeginDelete(pane, marked), FileOpsUnavailable, Icon: ActionIcon.Delete, Placement: MenuPlacement.Quick, ShortLabel: "Excluir"),
                 .. SelectionItems(pane),
-            ]) { Icon = ActionIcon.SelectAll, Subtitle = "Ações para todos os itens marcados", FocusOn = markedArchives.Count == 0 ? copy : null });
+            ]) { Icon = ActionIcon.SelectAll, Subtitle = "Ações para todos os itens marcados", FocusOn = extractEach ?? copy });
             return;
         }
         var entry = pane.List.Focused;
@@ -394,15 +392,19 @@ public sealed partial class AppController
             items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
         }
         if (entry is { IsContainer: true, FullPath: { } favoritePath }) items.Add(FavoriteToggleItem(favoritePath, section: "Favoritos"));
-        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
-        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
-        items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco.", Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
-        if (TerminalItem(pane) is { } terminal) items.Add(terminal);
+        var here = HereSection(pane);
+        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", here));
+        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: here, Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
+        items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), pane.Location is PhysicalLocation ? null : "Disponível apenas em pastas do disco.", Icon: ActionIcon.NewFolder, Section: here));
+        if (TerminalItem(pane, here) is { } terminal) items.Add(terminal);
+        if (entry is null && pane.Location is PhysicalLocation usageHere) items.Add(DiskUsageItem(usageHere.FullPath, here));
         items.AddRange(SelectionItems(pane));
         if (entry is { Kind: EntryKind.Directory or EntryKind.KnownFolder or EntryKind.Drive, FullPath: { } usagePath }) items.Add(DiskUsageItem(usagePath, "Informações"));
-        else if (entry is null && pane.Location is PhysicalLocation usageHere) items.Add(DiskUsageItem(usageHere.FullPath, "Esta pasta"));
         if (entry is not null) items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
-        PushModal(new MenuModal(entry?.Name ?? "Ações", items) { Icon = entry is null ? ActionIcon.Folder : EntryIcon(entry), Subtitle = entry is null ? pane.Location?.DisplayPath : TypeNameOf(entry) });
+        PushModal(new MenuModal(entry?.Name ?? "Ações", items)
+        {
+            Icon = entry is null ? ActionIcon.Folder : EntryIcon(entry), Subtitle = entry is null ? pane.Location?.DisplayPath : TypeNameOf(entry), TitledSection = here,
+        });
     }
 
     /// <summary>Meu computador: só o que vale para uma unidade (nada de marcar, colar ou criar pasta aqui).</summary>
@@ -483,15 +485,24 @@ public sealed partial class AppController
         items.AddRange(OtherPaneTransferItems(pane, [entry], "Organizar"));
         items.Add(new MenuItem("Compactar…", () => BeginCompress(pane, [entry]), Icon: ActionIcon.Compress, Section: "Organizar", Placement: MenuPlacement.Quick));
         items.Add(new MenuItem("Excluir…", () => BeginDelete(pane, [entry]), FileOpsUnavailable, Icon: ActionIcon.Delete, Section: "Organizar", Placement: MenuPlacement.Quick));
-        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", "Favoritos"));
-        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: "Esta pasta", Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
-        items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), Icon: ActionIcon.NewFolder, Section: "Esta pasta"));
-        if (TerminalItem(pane) is { } terminal) items.Add(terminal);
+        var here = HereSection(pane);
+        if (pane.Location is PhysicalLocation current) items.Add(FavoriteToggleItem(current.FullPath, "esta pasta", here));
+        if (Clipboard is not null) items.Add(new MenuItem(PasteLabel, () => Paste(pane), PasteUnavailable(pane), Icon: ActionIcon.Paste, Section: here, Placement: MenuPlacement.Quick, ShortLabel: "Colar"));
+        items.Add(new MenuItem("Nova pasta aqui", () => BeginCreateFolder(pane), Icon: ActionIcon.NewFolder, Section: here));
+        if (TerminalItem(pane, here) is { } terminal) items.Add(terminal);
         items.AddRange(SelectionItems(pane));
         items.Add(new MenuItem("Propriedades", () => ShowProperties(entry), Icon: ActionIcon.Properties, Section: "Informações", Placement: MenuPlacement.Quick));
-        // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>".
-        PushModal(new MenuModal(entry.Name, items) { Icon = EntryIcon(entry, format), Subtitle = TypeNameOf(entry), FocusOn = extract });
+        // Compactado: o rodapé anuncia "Extrair…" neste botão, então o menu abre em "Extrair para <nome>"; os demais, no
+        // primeiro bloco da grade.
+        PushModal(new MenuModal(entry.Name, items) { Icon = EntryIcon(entry, format), Subtitle = TypeNameOf(entry), FocusOn = extract, TitledSection = here });
     }
+
+    /// <summary>
+    /// Grupo das ações sobre a pasta aberta (não sobre o item em foco), sempre com título, mesmo sob a grade:
+    /// "Nesta pasta (Downloads)".
+    /// </summary>
+    private static string HereSection(PaneState pane) =>
+        pane.Location is PhysicalLocation here ? $"Nesta pasta ({FolderName(here.FullPath)})" : "Nesta pasta";
 
     private MenuItem TestIntegrityItem(string archivePath) => new("Testar integridade", () => BeginArchiveTest(archivePath),
         Detail: "Lê todas as entradas e confere o CRC sem extrair nada. Não é antivírus.", Icon: ActionIcon.Test, Section: "Compactado");
@@ -502,9 +513,10 @@ public sealed partial class AppController
         var folder = Path.GetDirectoryName(path)!;
         var stem = ArchiveFormats.StemOf(path);
         var selected = pane.List.SelectedIds.Select(ArchiveTree.PathFromId).Where(p => p.Length > 0).ToList();
+        var extractAll = new MenuItem($"Extrair tudo para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair");
         var items = new List<MenuItem>
         {
-            new($"Extrair tudo para \"{stem}\"", () => BeginExtraction(path, folder, dedicated: true, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
+            extractAll,
             new("Extrair tudo aqui (pasta do arquivo)", () => BeginExtraction(path, folder, dedicated: false, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
             new("Extrair tudo para…", () => PickDestinationThenExtract(path, folder, null, string.Empty), Icon: ActionIcon.Extract, Section: "Extrair"),
         };
@@ -517,7 +529,7 @@ public sealed partial class AppController
         items.Add(TestIntegrityItem(path));
         items.Add(new MenuItem("Informações do compactado", () => ShowArchiveInfo(pane), Icon: ActionIcon.Info, Section: "Compactado"));
         // Com entradas marcadas, o rodapé anuncia "Extrair seleção": o menu abre já nela (Norte e depois Sul extraem).
-        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items) { Icon = ActionIcon.Archive, FocusOn = selected.Count > 0 ? extractSelection : null });
+        PushModal(new MenuModal(Path.GetFileName(path) + " (somente leitura)", items) { Icon = ActionIcon.Archive, FocusOn = selected.Count > 0 ? extractSelection : extractAll });
     }
 
     /// <summary>

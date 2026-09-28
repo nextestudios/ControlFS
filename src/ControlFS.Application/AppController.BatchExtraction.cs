@@ -123,6 +123,6 @@ public sealed partial class AppController
             }, icon: ActionIcon.OpenFolder));
         dialog.Options.Add(close);
         dialog.BackOption = close;
-        PushModal(dialog);
+        ShowOperationResult(dialog);
     }
 }
