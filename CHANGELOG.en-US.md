@@ -3,10 +3,17 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.11.1-alpha.1]
 ### Performance
 - **Lower memory at rest:** two seconds after the first frame, with "Light in the background" on (the default), ControlFS returns what startup left over to Windows once (one compacting garbage collection and a working-set trim). In the CI measurement the working set at idle went from ~152 MB to ~18 MB and private bytes from ~60 MB to ~56 MB; pages the app uses come back on demand.
 - **Faster folder open:** sorting names no longer asks Windows to compare each letter (a 5,000-file folder sorted in ~35 ms, now ~15 ms in the CI measurement). The startup log also records where the time goes (controller start phases, memory after the first frame, and how long each folder takes to list, sort and draw).
-- **Faster startup:** the .NET runtime no longer starts a background garbage-collection thread and no longer instruments the first calls for profile-guided optimization. In the CI measurement, time to window dropped by about 250 ms (the runner varies by ±300 ms, so treat it as a trend).
+- **Less background work at startup:** the .NET runtime no longer starts a background garbage-collection thread and no longer instruments the first calls for profile-guided optimization (one thread and a little memory less). In side-by-side pairs measured at the same time, opening was up to 250–350 ms shorter, but the gain did not repeat in later measurements, so we don't promise it: nothing measured got worse.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Opening takes about 1 s (.NET and the Windows App SDK start before the app); see why in the README.
 
 ## [0.11.0-alpha.1]
 ### Improvements
