@@ -304,7 +304,7 @@ public sealed partial class AppController
                 [new(InputAction.NavigateRight, "Escolher"), new(InputAction.Confirm, "Abrir")], TutorialTarget.TopBar),
             TutorialStepKind.ChangeView => ("Lista ou grade", "Troque a exibição. Pressione de novo quando quiser voltar ao que era.",
                 [new(InputAction.ChangeView, "Lista/Grade")], TutorialTarget.Content),
-            TutorialStepKind.Search when first => ("Buscar", "Dentro de uma pasta do disco, pressione Buscar para procurar arquivos pelo nome.",
+            TutorialStepKind.Search when first => ("Buscar", "Pressione Buscar para procurar arquivos pelo nome: numa pasta, ou no início, nas pastas principais.",
                 [new(InputAction.Search, "Buscar")], TutorialTarget.Footer),
             TutorialStepKind.Search => ("Conclua ou cancele", "Digite parte de um nome e conclua, ou pressione Voltar para cancelar.",
                 [new(InputAction.OpenAppMenu, "Concluir"), new(InputAction.Back, "Cancelar")], TutorialTarget.Modal),
