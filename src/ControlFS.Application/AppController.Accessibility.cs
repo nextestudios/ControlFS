@@ -26,7 +26,7 @@ public sealed partial class AppController
                 var state = (item.IsDestructive ? ", ação perigosa" : string.Empty) + (item.IsEnabled ? string.Empty : ", indisponível" + (item.DisabledReason is { } why ? ": " + why : string.Empty));
                 var detail = item.Detail is { Length: > 0 } d ? ", " + d : string.Empty;
                 // Grade: "ação rápida 2 de 8" (Configurações: "bloco 2 de 8" do grupo); lista: a posição entre os itens da
-                // lista (os blocos contam à parte). O rótulo por extenso já diz o valor de um ajuste ("Itens ocultos: mostrar").
+                // lista (os blocos contam à parte). O rótulo por extenso já diz o valor de um ajuste ("Itens ocultos: escondidos").
                 var grid = menu.GridOf(menu.FocusIndex);
                 var listBefore = Enumerable.Range(0, menu.FocusIndex).Count(i => !menu.IsQuick(i));
                 var spot = grid is not null ? (menu.HasSectionGrids ? "bloco " : "ação rápida ") + Position(menu.FocusIndex - grid.Start, grid.Count)
@@ -83,7 +83,7 @@ public sealed partial class AppController
         if (pane.Region == PaneRegion.Tabs)
         {
             var tabs = Tabs;
-            return new("Abas", $"Aba {ActiveTab + 1} de {tabs.Count}: {TabTitle(Browser)}");
+            return new("Abas", $"Aba {ActiveTab + 1} de {tabs.Count}: {TabLabel(ActiveTab)}");
         }
 
         // Dois painéis: o contexto diz qual está ativo (trocar de painel com a mesma pasta nos dois também é anunciado).

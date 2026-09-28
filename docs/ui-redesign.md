@@ -28,10 +28,10 @@ hardware, visual or timing checks that CI can't prove.
 
 ```
 ┌ [ControlFS logo with text] [tabs, only with 2+]   [controller · operation] [⛶][_][□][X] ┐  (header = title bar, #230)
-├ [L1] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira [R1]
+├ [L1] [Locais|Meu computador] › segment › … › current │ Favoritos · Recentes · known folders · Meu computador · Lixeira [R1]
 ├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
 ├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List, each + details panel (C; grid #177)
-└ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Lista/Grade
+└ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Ver em grade
 ```
 
 - **Window chrome (#230)**: the header *is* the title bar, like the reference and Discord. `TitleBarView` sets
@@ -115,7 +115,11 @@ live. Contrast targets for every theme × accent: `ThemeContrastTests`.
 Icons: `ActionIcon` (Core) is the only map from meaning to symbol (`ActionIcons.Glyph`, Segoe Fluent Icons / MDL2);
 `ActionIcons.IsDestructive` (Delete, DeleteForever, Erase) drives the red style and the "never initial focus" rule
 (`AppController.SafeInitialFocus`). `MenuItem.Icon`/`Section`, `DialogOption.Icon`, `Modal.Icon`/`Subtitle` are set by
-`AppController`; views never pick icons. Menus (#193): `MenuItem.Placement = Quick` (set by `AppController`) puts an
+`AppController`; views never pick icons. Each meaning has its own glyph; the only repeats are the documented groups in
+`ActionIcons.SharedGlyphs` (trash, undo/restore, dismiss X, again, play, controller), guarded by
+`ActionIconTests::Each_meaning_has_its_own_glyph_except_the_documented_shared_ones` (UX audit: Copy/CopyTo/KeepBoth,
+Settings/ControllerSetup, Info/Properties/About, Replace/SortOrder, Archive/Compress, Operations vs Refresh, "Abas…"
+and "Reabrir aba fechada" now have distinct glyphs; the gallery is the smoke capture `icons/action-icons.png`). Menus (#193): `MenuItem.Placement = Quick` (set by `AppController`) puts an
 option in the quick-action grid (≤ 4 tiles per row, destructive tiles last, `ShortLabel` under the icon, full label for
 Narrator/UIA); the rest is a compact list (40 px rows, detail only on the focused row; with a grid, groups are separated by a divider
 only, without titles). Menu panel: a fixed width per menu (#227, `MenuModal.PanelWidth`: 540 px with a grid, 460 without; min = max, both capped by the window), so focus and the focused row's detail never resize it (long text wraps); `MenuPadding` 20, compact header. Configurações uses per-section grids (#227, `sectionGrids: true`): short independent settings are tiles in their group's grid showing icon, `ShortLabel` and `MenuItem.Value` (the current value); long-description settings and submenus stay list rows under the grid. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
@@ -131,7 +135,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 |---|---|---|---|
 | Semantic actions only (screens never see buttons) | all | `InputAction` → `AppController.Handle` | all journey tests (`Driver`) |
 | Default map by physical position; confirm/back convention swaps behavior and prompts | Menu → Configurações → "Confirmar com" | South/East | `InputRouterTests::East_confirms_convention_swaps_behavior_by_position`, `PromptJourneyTests` |
-| R3 (right stick click) → Lista/Grade | footer "R Lista/Grade" | R3, Ctrl+G, Menu → Configurações → Exibição | `PromptJourneyTests` (prompt + button), `GridViewJourneyTests`, `DensityJourneyTests` |
+| R3 (right stick click) → Lista/Grade | footer "R Ver em grade" / "R Ver em lista" (an action, not the current state) | R3, Ctrl+G, Menu → Configurações → Exibição | `PromptJourneyTests` (prompt + button), `GridViewJourneyTests`, `DensityJourneyTests` |
 | Confirm/menus never repeat; navigation repeats with acceleration | — | hold | `InputRouterTests::Confirm_fires_once_per_press_and_never_repeats`, `::Navigation_repeats_after_initial_delay_with_acceleration` |
 | Held button latched across context change | — | — | `InputRouterTests::Held_button_is_latched_on_context_change_until_released`, `::Latched_navigation_does_not_repeat_into_new_context`, `::Context_change_triggered_by_a_repeat_keeps_the_control_latched` |
 | Active device, hot swap, sensitive-context lock | footer header status | press on another controller | `InputRouterTests::Another_device_takes_over_only_with_a_new_press_while_the_active_one_is_idle`, `::Sensitive_context_blocks_automatic_device_takeover` |
@@ -168,8 +172,9 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Stale listing never overwrites a newer navigation | — | — | `JourneyTests::Late_listing_response_does_not_overwrite_newer_navigation` |
 | Focus by identity, survives resort/removal; focus ≠ selection | content | — | `StateTests` (5) |
 | Breadcrumb / path bar with archive boundary and collapse, root chip (Locais / Meu computador); the current folder is a label, never a target (#176) | top bar left segment (A2) | L1, L1/R1, Left/Right, South, North = full path | `BreadcrumbJourneyTests` (3), `TopBarJourneyTests` (2); Manual "Barra de caminho (#30)", "Barra superior com L1/R1 (#176)" |
-| Quick access: Favoritos, Arquivos recentes, known folders, Meu computador (B1: opens This PC), Lixeira; the active shortcut is skipped (#176) | top bar right segment (A2) | R1 (or L1 then Right), South | `TopBarJourneyTests` (2), `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
+| Quick access: Favoritos, Recentes (same name as on Home), known folders, Meu computador (B1: opens This PC), Lixeira; the active shortcut is skipped (#176) | top bar right segment (A2) | R1 (or L1 then Right), South | `TopBarJourneyTests` (2), `HomeGridJourneyTests`; Manual "Barra superior e cabeçalho (redesenho, fase A2)" |
 | Tabs (8 max), each with its own folder/history/marks/focus; strip only with 2+ tabs, no standalone prompt (#176) | header tab strip (A2) | Up from the top bar, L1/R1, North new/close/switch, Menu → Abas, "Abrir em nova aba" | `TabsJourneyTests`, `ModalSystemJourneyTests`; Screens `2g-folder-tabs`; Manual "Abas (#50)" |
+| Tabs with the same name show their parent folder, e.g. "Fotos (Viagem)" (strip, Menu → Abas, Narrator) | header tab strip, Menu → Abas | — | `TabsJourneyTests::Tabs_with_the_same_folder_name_…` |
 | Open tabs (2+) restored on launch, missing folder = "(indisponível)" tab showing Home with a notice, checked off the UI thread (#51) | settings `OpenTabs`/`ActiveOpenTab` | automatic; Menu → Configurações → "Restaurar abas ao abrir" turns it off | `TabsJourneyTests::Open_tabs_are_restored_on_the_next_launch_…` |
 | Reopen closed tab: last 10 closed tabs (location + history, no marks), back at their position | Menu → "Reabrir aba fechada", Menu → Abas, North on the strip (#52) | — | `TabsJourneyTests::A_closed_tab_reopens_at_its_place_…` |
 | Duplicate tab: same location, focus and a copy of the history, no marks (search/Lixeira → origin folder) | North on the strip, Menu → Abas (#53) | — | `TabsJourneyTests::A_duplicated_tab_copies_location_history_and_focus_…` |
@@ -185,7 +190,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more; counted from the width left by the details panel, #177: 2 at 1080p with it) | Menu → Configurações → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
 | Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Configurações → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |
 | Sort by name/type/size/date, ascending/descending, natural sort | Menu → Configurações → Ordenar por / Ordem; list column header shows the arrow and sorts on click (C1) | Start; mouse on a column title | `StateTests::Natural_sort_orders_numbers_numerically`, `::Focus_survives_resort_by_identity`, `ListModeJourneyTests::Column_header_follows_…`; Screens `2c` |
-| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List and grid (incl. Home/This PC cards), right side (C2, grid #177); automatic = shown where it fits (list: name stays legible; grid: ≥ 2 columns), hidden on handheld/narrow (`MainWindow.DetailsLayout`) | Menu → Configurações → Mostrar/Ocultar painel de detalhes (per view, `AppSettings.ListDetails`/`GridDetails`, null = automatic) | — | `DetailsPanelJourneyTests` (4); Screens `1-home`, `1c`, `2d`, `2e`, `2f`, `3c`, `3d`; Manual "Painel de detalhes (redesenho, fase C2)", "Painel de detalhes na grade (#177)" |
+| Details panel: folder (path, recursive count/size, 250 ms debounce, 20 s budget, cached 10 min, cancelled on focus change), file, image (header + thumbnail through `IImageDecoder` with `PreviewLimits`), archive (format by content; file count only for ZIP/7z, 3 s budget), drive (file system, capacity, free, used, usage bar), archive entries, Recycle Bin items, marked summary | List and grid (incl. Home/This PC cards), right side (C2, grid #177); automatic = shown where it fits (list: name stays legible; grid: ≥ 2 columns), hidden on handheld/narrow (`MainWindow.DetailsLayout`) | Menu → Configurações → Painel de detalhes: visível/oculto (per view, `AppSettings.ListDetails`/`GridDetails`, null = automatic) | — | `DetailsPanelJourneyTests` (4); Screens `1-home`, `1c`, `2d`, `2e`, `2f`, `3c`, `3d`; Manual "Painel de detalhes (redesenho, fase C2)", "Painel de detalhes na grade (#177)" |
 | List rows: mark box (focus ≠ marking), icon, name, type ("Pasta do sistema" for Windows folders), size (real sums on Home), friendly date, chevron; compact density with the same columns | content, List (C1) | X marks; mouse on the header box = Marcar todos / Limpar | `ListModeJourneyTests::Friendly_dates_…`, `::Column_header_…`; Screens `1-home`, `2-folder`, `3-folder-compact`; Manual "Lista em colunas (redesenho, fase C1)" |
 | Opening another location focuses its first item; back/up/refresh restore the item | content | South, Right, East, Left | `ListModeJourneyTests::Opening_another_location_…`, `JourneyTests::Back_semantics_…` |
 | Hidden items show/hide (persisted) | Menu → Configurações → Itens ocultos | Start | Manual "Lista: estados e densidade (#28)" |
@@ -235,17 +240,18 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 |---|---|
 | Colar, Nova pasta, Atualizar, Ir para pasta acima…, Ir para caminho… | `ClipboardJourneyTests`, `JourneyTests::Vertical_journey_…`, `GoToPathJourneyTests` |
 | Configurações (grouped: Exibição, Busca e privacidade, Controles, ControlFS; toggles keep it open) | `ModalSystemJourneyTests::Settings_live_in_Configuracoes_…`; Screens `4b-settings` |
+| Settings wording (UX audit): values are states ("ligado/desligado", "visíveis/escondidos", "incluídas/ignoradas"), one label per setting at every size ("Painel de detalhes: visível/oculto"); the caption under a focused tile explains it (`MenuModal.TileCaption`) instead of repeating the value | `ModalSystemJourneyTests::Settings_grids_per_section_…` |
 | → Configurações: Ordenar por, Ordem | `StateTests` (sorting), `ListModeJourneyTests`; Manual |
 | → Configurações: Busca em subpastas | `SearchJourneyTests` |
-| → Configurações: Recentes: lembrar/não lembrar | `RecentsJourneyTests` |
-| → Configurações: Itens ocultos | Manual "Lista: estados e densidade (#28)" |
+| → Configurações: Recentes: ligado/desligado | `RecentsJourneyTests` |
+| → Configurações: Itens ocultos: visíveis/escondidos | Manual "Lista: estados e densidade (#28)" |
 | → Configurações: Exibição: lista/grade | `GridViewJourneyTests` |
 | → Configurações: Densidade da lista | `DensityJourneyTests` |
 | Operações (N ativas) → operation → Pausar/Continuar/Cancelar operação/Tentar de novo; Limpar histórico… | `PauseJourneyTests`, `FileOperationJourneyTests::Retry_…` (2), `JourneyTests::Retry_failed_items_of_a_cancelled_extraction_…`, `HistoryJourneyTests` (2) |
 | Desfazer / Refazer | `UndoJourneyTests` (4) |
 | → Configurações: Confirmar com | `PromptJourneyTests`, `InputRouterTests` |
 | → Configurações: Legendas | `PromptJourneyTests`, `ControllerFamilyTests` |
-| → Configurações: Fluidez (máxima / economia de bateria) | Manual "Fluidez máxima (leitura por quadro)" |
+| → Configurações: Fluidez (máxima / economia) | Manual "Fluidez máxima (leitura por quadro)" |
 | → Configurações: Teste de controles…, Controle ativo, Controles sem perfil… | `ControllerTestJourneyTests`, `ActiveControllerJourneyTests`, `ControllerMappingJourneyTests` |
 | → Configurações: Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
 | Esvaziar área de transferência | `ClipboardJourneyTests` |
@@ -325,7 +331,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 
 - `AppController.IsGrid`, `SetGridLayout(columns, rows)` and `GridNavigation` already give 2D focus with the same columns
   the view shows. Cards must publish their real column count the same way (`UpdateGridMetrics`).
-- The footer label for ChangeView is computed from `IsGrid` (target view); don't hardcode it in views.
+- The footer label for ChangeView is computed from `IsGrid` (target view, as an action: "Ver em grade"/"Ver em lista"); don't hardcode it in views.
 - Keep `EntryRowTemplate.Fill` as the single place that turns a `FileEntry` into text; the details panel should reuse
   `EntryText` so list, grid, details and Narrator say the same thing.
 - Row/tile titles and the Narrator use `EntryText.DisplayName` (Steam games by title); the details panel title and

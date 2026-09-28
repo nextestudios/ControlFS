@@ -28,6 +28,31 @@ public sealed partial class AppController
         _ => "Nova aba",
     };
 
+    /// <summary>
+    /// Nome da aba <paramref name="index"/> na faixa e nas listas de abas: o <see cref="TabTitle"/> e, quando outra aba
+    /// aberta tem o mesmo nome (ex.: duas pastas "Downloads"), a pasta onde ela está, entre parênteses.
+    /// </summary>
+    public string TabLabel(int index)
+    {
+        var title = TabTitle(_tabs[index]);
+        if (!_tabs.Where((t, i) => i != index && TabTitle(t) == title).Any()) return title;
+        return TabParentName(_tabs[index]) is { Length: > 0 } parent ? $"{title} ({parent})" : title;
+    }
+
+    private static string? TabParentName(PaneState tab)
+    {
+        // Busca: a pasta onde se buscou; os demais: a pasta que contém o local.
+        if (tab.Location is SearchLocation search) return FolderLabel(search.RootPath);
+        var path = tab.Location switch
+        {
+            PhysicalLocation physical => physical.FullPath,
+            ArchiveLocation archive => archive.ArchivePath,
+            null => tab.RestoredPath,
+            _ => null,
+        };
+        return path is null || Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path)) is not { Length: > 0 } parent ? null : FolderLabel(parent);
+    }
+
     private static string FolderLabel(string path)
     {
         var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
@@ -90,7 +115,7 @@ public sealed partial class AppController
         if (_tabs.Count < 2 || FocusOnSecond || action is not (InputAction.PageUp or InputAction.PageDown)) return false; // no painel direito, os gatilhos paginam
         var step = action == InputAction.PageDown ? 1 : -1;
         SwitchTab((ActiveTab + step + _tabs.Count) % _tabs.Count, keepStripFocus: false);
-        StatusMessage = $"Aba {ActiveTab + 1} de {_tabs.Count}: {TabTitle(Browser)}.";
+        StatusMessage = $"Aba {ActiveTab + 1} de {_tabs.Count}: {TabLabel(ActiveTab)}.";
         return true;
     }
 
@@ -154,16 +179,16 @@ public sealed partial class AppController
             new("Duplicar aba", () => DuplicateTab(index), NewTabUnavailable, Detail: "Mesma pasta e histórico numa aba nova, sem as marcações.", Icon: ActionIcon.Copy),
             new("Fechar aba", () => CloseTab(index), _tabs.Count <= 1 ? "É a única aba aberta." : null, Icon: ActionIcon.CloseTab),
             new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable,
-                Detail: _closedTabs.Count > 0 ? $"\"{TabTitle(_closedTabs[^1].Tab)}\", com o histórico dela." : null, Icon: ActionIcon.Undo),
+                Detail: _closedTabs.Count > 0 ? $"“{TabTitle(_closedTabs[^1].Tab)}”, com o histórico dela." : null, Icon: ActionIcon.ReopenTab),
         };
         if (_tabs.Count > 1)
             for (var i = 0; i < _tabs.Count; i++)
             {
                 var target = i;
-                items.Add(new MenuItem($"Aba {i + 1}: {TabTitle(_tabs[i])}", () => SwitchTab(target, keepStripFocus: fromStrip),
+                items.Add(new MenuItem($"Aba {i + 1}: {TabLabel(i)}", () => SwitchTab(target, keepStripFocus: fromStrip),
                     i == index ? "É a aba atual." : null, Icon: ActionIcon.Folder, Section: "Ir para a aba"));
             }
-        PushModal(new MenuModal($"Aba {index + 1} de {_tabs.Count}", items) { Icon = ActionIcon.NewTab });
+        PushModal(new MenuModal($"Aba {index + 1} de {_tabs.Count}", items) { Icon = ActionIcon.Tabs });
     }
 
     /// <summary>Mouse/toque numa aba: ativa a aba e volta o foco para a lista.</summary>

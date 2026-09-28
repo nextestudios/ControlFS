@@ -50,9 +50,9 @@ public class FullScreenJourneyTests : IDisposable
         // Configurações desliga e o menu continua aberto com o texto novo.
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Configurações");
-        await d.ChooseMenu("Tela cheia: sim");
+        await d.ChooseMenu("Tela cheia: ligado");
         Assert.False(app.Settings.FullScreen);
-        Assert.Contains(Assert.IsType<MenuModal>(app.TopModal).Items, i => i.Label == "Tela cheia: não");
+        Assert.Contains(Assert.IsType<MenuModal>(app.TopModal).Items, i => i.Label == "Tela cheia: desligado");
         while (app.TopModal is not null) d.Press(InputAction.Back);
 
         // Vídeo: a janela entra em tela cheia enquanto ele está aberto; F11 durante o vídeo sai só para ele, sem mudar a escolha.

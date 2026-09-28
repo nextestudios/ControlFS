@@ -92,7 +92,7 @@ public class UndoJourneyTests : IDisposable
     private static async Task Undo(Driver d)
     {
         await ChooseAppMenu(d, "Desfazer: ");
-        var confirm = await d.WaitDialog("Desfazer \"");
+        var confirm = await d.WaitDialog("Desfazer “");
         Assert.Equal("Cancelar", confirm.Options[confirm.FocusIndex].Label); // começa na opção segura
         d.ChooseOption(confirm, "Desfazer");
     }
@@ -148,7 +148,7 @@ public class UndoJourneyTests : IDisposable
         d.ChooseOption(await d.WaitDialog("Mover 2 itens?"), "Mover");
         var done = await d.WaitDialog("Mover: concluído");
         d.ChooseOption(done, "Desfazer"); // ação no próprio resultado
-        d.ChooseOption(await d.WaitDialog("Desfazer \""), "Desfazer");
+        d.ChooseOption(await d.WaitDialog("Desfazer “"), "Desfazer");
         await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("a.txt")) && Directory.Exists(_tmp.Sub("Pasta")), "itens de volta");
         await d.Idle();
         Assert.Equal("d", File.ReadAllText(_tmp.Sub("Pasta", "dentro.txt")));

@@ -35,8 +35,8 @@ public sealed partial class AppController
         })];
     }
 
-    /// <summary>Lista/grade (R3, Ctrl+G): a legenda diz para onde vai, não onde está.</summary>
-    private Hint ChangeViewHint => new(InputAction.ChangeView, IsGrid ? "Lista" : "Grade");
+    /// <summary>Lista/grade (R3, Ctrl+G): a legenda é uma ação ("Ver em grade"), para não ser lida como o estado atual.</summary>
+    private Hint ChangeViewHint => new(InputAction.ChangeView, IsGrid ? "Ver em lista" : "Ver em grade");
 
     private List<Hint> BuildModalHints()
     {

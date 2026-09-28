@@ -147,11 +147,11 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 - Regiões (#30, #50, redesenho, #176): conteúdo, barra superior (caminho + acesso rápido) e abas
   (`AppController.FocusRegion`: `PaneState.Region` no navegador, estado próprio no início). A barra superior é uma
   região só, uma linha:
-  `[L1] [Locais|Meu computador] › segmentos › atual │ Favoritos · Arquivos recentes · pastas do Windows · Meu computador · Lixeira [R1]`.
+  `[L1] [Locais|Meu computador] › segmentos › atual │ Favoritos · Recentes · pastas do Windows · Meu computador · Lixeira [R1]`.
   - Alvos (`TopBarTargets`, na ordem da tela): segmentos e atalhos que levam a outro lugar. A pasta atual (último
     segmento) é o rótulo do local, não uma ação: é pulada por L1/R1/esquerda/direita, não tem legenda de Sul e o toque
     nela não faz nada; no início, "Locais › Início" já é aqui (só os atalhos são alvos); o atalho que aponta para o local
-    atual (`IsQuickAccessActive`) também é pulado. Favoritos e Arquivos recentes (menus) são sempre alvos.
+    atual (`IsQuickAccessActive`) também é pulado. Favoritos e Recentes (menus) são sempre alvos.
   - Entrar a partir do conteúdo: a pasta atual fica entre o caminho e o acesso rápido, então **L1** foca o alvo logo
     antes dela (a pasta de cima) e **R1** o logo depois (o primeiro atalho); sem alvo desse lado, o mais próximo do
     outro (no início, os dois vão para Favoritos).
@@ -159,7 +159,7 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     último segmento alvo passam ao primeiro atalho. LT/RT: primeiro/último alvo da parte atual (caminho ou atalhos).
   - Sul: segmento navega (com histórico) e foca o filho de onde viemos; a raiz "Locais" vai ao início e "Meu computador"
     abre as unidades na aba atual com histórico (fase B; no seletor de pasta, abre os outros locais); atalho de pasta/Lixeira abre na aba atual com
-    histórico (no início, abre o navegador); Favoritos e Arquivos recentes abrem um menu, e fechar o menu devolve o foco
+    histórico (no início, abre o navegador); Favoritos e Recentes abrem um menu, e fechar o menu devolve o foco
     ao atalho.
   - Norte num segmento: caminho completo em menu. Baixo e Leste voltam ao conteúdo com o foco da lista onde estava
     (depois de navegar, o foco vai para a lista: no filho de onde viemos ou no primeiro item); Start abre o menu.
@@ -175,7 +175,7 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
 - Foco lógico por identidade (`FileListState`); sobrevive a reordenação/atualização. Item focado removido (excluir,
   mover, mudança externa) → o **próximo item que sobreviveu** na ordem anterior; sem próximo, o anterior. Com itens na
   lista, o foco nunca fica vazio (`StateTests`).
-- Anel de foco único (`Theme.ApplyFocus`: borda de destaque de 3 px + fundo suave) na lista, nos menus e nos diálogos; o
+- Anel de foco único (`Theme.ApplyFocus`: borda de destaque de 2 px (`Theme.FocusRing`, escalada no 4K) + fundo suave) na lista, nos menus e nos diálogos; o
   teclado virtual usa os mesmos tokens. A seleção nativa do `ListView` fica desligada para não haver dois realces.
 - Ao trocar de pasta, a lista é medida e rola até o item focado antes do primeiro quadro; ao mover o foco, só as duas
   linhas afetadas são redesenhadas.
@@ -205,7 +205,9 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     - **Cima** na primeira linha de uma grade vai ao item anterior; **Cima** para dentro de uma grade (vindo de uma linha
       de lista ou de outra grade) cai na **última linha, na coluna de onde o foco saiu** da última grade (`GridColumn`).
     - No fim/começo do menu dá a volta (último item ↔ primeiro), como na lista.
-    - Narrador: "rótulo completo com o valor (ex.: Itens ocultos: mostrar), descrição, bloco N de M" (M = blocos do grupo).
+    - Narrador: "rótulo completo com o valor (ex.: Itens ocultos: escondidos), descrição, bloco N de M" (M = blocos do grupo).
+      Valores são estados, nunca verbos ("ligado/desligado", "visíveis/escondidos"); a linha sob a grade
+      (`MenuModal.TileCaption`) diz o que o ajuste faz, sem repetir o valor que o bloco já mostra.
   - Largura (#227): todo menu tem largura fixa (`MenuModal.PanelWidth`: 540 com grade, 460 sem; mínimo = máximo, os dois
     limitados pela janela). Mover o foco ou mostrar a descrição da linha focada nunca muda a largura; o texto quebra linha.
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas

@@ -62,7 +62,7 @@ public class BatchRenameJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Desfazer: ");
-        d.ChooseOption(await d.WaitDialog("Desfazer \""), "Desfazer");
+        d.ChooseOption(await d.WaitDialog("Desfazer “"), "Desfazer");
         await UiContext.WaitUntil(() => d.App.RedoTitle is not null, "nomes de volta");
         await d.Idle();
         Assert.Equal(["a.jpg", "b.png", "c.jpg"], Directory.GetFiles(_tmp.Path).Select(Path.GetFileName).Order(StringComparer.Ordinal));

@@ -148,11 +148,11 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real, Configurações d
 
 Não validado em hardware.
 
-- [ ] Início, com controle: LB (ou RB) leva o foco a Favoritos; direita percorre Arquivos recentes, as pastas do Windows (com os
+- [ ] Início, com controle: LB (ou RB) leva o foco a Favoritos; direita percorre Recentes, as pastas do Windows (com os
       ícones do Windows, sem emoji), Meu computador e Lixeira; Sul em Downloads abre a pasta; Leste/baixo voltam à lista.
 - [ ] Numa pasta funda: a barra mostra "Meu computador › C:\ › … › pasta" (caminho real, meio recolhido); LB foca a pasta
       de cima; direita pula a pasta atual e passa aos atalhos; Sul num atalho abre na mesma aba e Leste volta.
-- [ ] Favoritos e Arquivos recentes abrem uma lista; fechar a lista devolve o foco ao atalho. Sem favoritos, a lista
+- [ ] Favoritos e Recentes abrem uma lista; fechar a lista devolve o foco ao atalho. Sem favoritos, a lista
       explica como adicionar.
 - [ ] 1280×720 e 1280×800: os atalhos que não cabem mostram só o ícone (o focado e o da pasta atual mostram o nome);
       nada sai da tela; os glifos de LB e RB aparecem nas pontas da barra e não no rodapé.
@@ -255,7 +255,7 @@ Não validado em hardware (controle real, TV a ~3 m, DPI real).
 Não validado em hardware (controle real, TV a ~3 m, DPI real).
 - [ ] 1920×1080 e 4K (100/200%): grade com o painel à direita, cartões inteiros (sem cortar nome, tipo ou seta) nas
       colunas que sobram; capturas `1c-home-grid`, `3c-folder-grid` e `3d-folder-grid-details-toggled` conferem.
-- [ ] 1280×720/800: sem painel por padrão; Menu → Mostrar painel de detalhes abre o painel mais estreito e a grade fica
+- [ ] 1280×720/800: sem painel por padrão; Configurações → Painel de detalhes: oculto (alternar) abre o painel mais estreito e a grade fica
       com uma coluna inteira (captura `3d` em 1280x720); Ocultar devolve as colunas.
 - [ ] Controle real: segurar o direcional pela grade com o painel à mostra não trava; só a pasta em que o foco parar é
       somada; o foco nunca vai para o painel.
@@ -359,7 +359,7 @@ e um .lnk); `ShortcutIconIntegrationTests` extrai ícones reais de .ico/.dll e d
       rodapé continuam respondendo ao direcional e ao analógico durante a busca; Leste/B cancela na hora e mantém o parcial.
 - [ ] `C:\` com subpastas: pastas sem permissão aparecem no rodapé ("pastas … puladas") e em Norte → Pastas puladas.
 - [ ] Sul/A num resultado abre a pasta dele com o foco no item; Voltar volta aos resultados com o foco no mesmo item.
-- [ ] Menu → "Busca em subpastas: não incluir": a busca seguinte só lê a pasta atual.
+- [ ] Configurações → "Busca em subpastas: ignoradas": a busca seguinte só lê a pasta atual.
 - [ ] OneDrive com arquivos sob demanda: pastas marcadas como ponto de nova análise não são percorridas (limitação conhecida; anotar o que aparece).
 
 ## Navegador de compactados (#68)
@@ -735,3 +735,11 @@ Chromium sem interface contra o servidor real durante o desenvolvimento (pareame
       "O ControlFS foi fechado".
 - [ ] Controle e teclado físicos continuam funcionando normalmente com o celular conectado.
 
+
+## Rótulos e ícones da auditoria de UX — conferir na TV
+- [ ] Ícones novos (Copiar para, Manter ambos, Compactar, Propriedades, Sobre, Operações, Controles sem perfil, Abas…,
+      Reabrir aba fechada, Fechar aba, Subpastas, Mesclar, Esvaziar área de transferência, Ordem) aparecem no Windows 10
+      (Segoe MDL2 Assets) e no Windows 11 (Segoe Fluent Icons), sem quadrado vazio; a galeria `icons/action-icons.png` do
+      smoke mostra só o Windows do runner.
+- [ ] 1280×720: o rodapé com "Ver em grade"/"Ver em lista" cabe sem cortar as outras legendas.
+- [ ] Duas abas "Fotos" em pastas diferentes: a faixa mostra "Fotos (Viagem)" e "Fotos (Casamento)" legíveis de longe.

@@ -556,11 +556,11 @@ public sealed partial class AppController
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
                 Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Navegar"),
             new(_tabs.Count > 1 ? $"Abas ({ActiveTab + 1} de {_tabs.Count})…" : "Abas…", ShowTabMenu, inBrowser || _closedTabs.Count > 0 ? null : "Abra uma pasta primeiro.",
-                Detail: "Fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.NewTab, Section: "Navegar"),
+                Detail: "Fechar e trocar de aba. Com 2+ abas, também pela faixa acima da barra superior (Cima).", Icon: ActionIcon.Tabs, Section: "Navegar"),
             new(Settings.DualPane ? "Dois painéis: ligado" : "Dois painéis: desligado", ToggleDualPane,
                 Detail: DualPaneFits ? "Lado a lado; L3 (Tab) troca de painel e Ações copia ou move para o outro." : "Esta tela é estreita: com a opção ligada, os dois aparecem numa tela maior.",
                 Icon: ActionIcon.DualPane, Section: "Navegar"),
-            new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable, Detail: "A última aba fechada volta com o local e o histórico dela.", Icon: ActionIcon.Undo, Section: "Navegar"),
+            new("Reabrir aba fechada", ReopenClosedTab, ReopenClosedTabUnavailable, Detail: "A última aba fechada volta com o local e o histórico dela.", Icon: ActionIcon.ReopenTab, Section: "Navegar"),
             .. UndoMenuItems(),
             PhoneMenuItem(),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),
@@ -586,7 +586,13 @@ public sealed partial class AppController
         var sort = pane.List.Sort;
         const string view = "Exibição", privacy = "Busca e privacidade", controls = "Controles", app = "ControlFS";
         const MenuPlacement tile = MenuPlacement.Quick;
-        static string YesNo(bool on) => on ? "sim" : "não";
+        // Valores são estados, nunca verbos (#227): o mesmo texto no bloco, no rótulo por extenso e no Narrador.
+        static string OnOff(bool on) => on ? "ligado" : "desligado";
+        var details = DetailsPanelVisible ? "visível" : "oculto";
+        var hidden = Settings.ShowHidden ? "visíveis" : "escondidos";
+        var subfolders = SearchIncludesSubfolders ? "incluídas" : "ignoradas";
+        var smoothness = Settings.SyncInputToDisplay ? "máxima" : "economia";
+        var theme = Settings.Theme == Core.Appearance.ThemeMode.System ? "automático" : ThemeName(Settings.Theme);
         return
         [
             new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: view, KeepOpen: true,
@@ -594,44 +600,45 @@ public sealed partial class AppController
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
                 Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Densidade", Value: DensityName(Settings.Density)),
-            new(DetailsPanelMenuLabel, ToggleDetailsPanel,
+            new($"Painel de detalhes: {details}", ToggleDetailsPanel,
                 Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Detalhes", Value: DetailsPanelVisible ? "visível" : "oculto"),
-            new($"Tema: {ThemeName(Settings.Theme)}", CycleTheme,
+                Placement: tile, ShortLabel: "Detalhes", Value: details),
+            new($"Tema: {theme}", CycleTheme,
                 Detail: "Automático segue o modo de apps do Windows (Configurações → Personalização → Cores). Muda na hora.", Icon: ActionIcon.Theme, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Tema", Value: Settings.Theme == Core.Appearance.ThemeMode.System ? "automático" : ThemeName(Settings.Theme)),
+                Placement: tile, ShortLabel: "Tema", Value: theme),
             new($"Cor de destaque: {AccentName(Settings.Accent)}", CycleAccent,
                 Detail: "Cor do foco, do cursor e dos símbolos em destaque. Todas as opções mantêm o contraste nos dois temas.", Icon: ActionIcon.Accent, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Destaque", Value: AccentName(Settings.Accent)),
             new($"Ordenar por: {SortLabel(sort.Field)}", () => pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) }),
-                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true,
+                inBrowser ? null : "Abra uma pasta primeiro.", Detail: "Critério da lista e da grade desta pasta: nome, tipo, tamanho ou data. Pastas vêm sempre primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Ordenar", Value: SortLabel(sort.Field)),
             new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }),
-                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true,
+                inBrowser ? null : "Abra uma pasta primeiro.", Detail: "Crescente: A→Z, menor e mais antigo primeiro. Decrescente: o contrário.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Ordem", Value: sort.Descending ? "decrescente" : "crescente"),
-            new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
+            new($"Itens ocultos: {hidden}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
-            }, Icon: ActionIcon.Hidden, Section: view, KeepOpen: true, Placement: tile, ShortLabel: "Ocultos", Value: Settings.ShowHidden ? "mostrar" : "esconder"),
-            new($"Status do Git: {(Settings.ShowGitStatus ? "mostrar" : "não mostrar")}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
+            }, Detail: "Arquivos e pastas marcados como ocultos no Windows. A escolha fica salva e vale para todas as pastas.",
+                Icon: ActionIcon.Hidden, Section: view, KeepOpen: true, Placement: tile, ShortLabel: "Ocultos", Value: hidden),
+            new($"Status do Git: {OnOff(Settings.ShowGitStatus)}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
                 Detail: "Em pastas de repositórios Git: o ramo no topo e \"Git: modificado/novo\" nos itens. Somente leitura; não precisa do Git instalado.",
                 Icon: ActionIcon.Info, Section: view, KeepOpen: true),
-            new($"Tela cheia: {YesNo(Settings.FullScreen)}", ToggleFullScreen,
+            new($"Tela cheia: {OnOff(Settings.FullScreen)}", ToggleFullScreen,
                 Detail: "Ocupa a tela inteira, sem a barra do Windows; fica salva para a próxima vez. Também F11 ou o botão ao lado de minimizar.",
                 Icon: Settings.FullScreen ? ActionIcon.ExitFullScreen : ActionIcon.FullScreen, Section: view, KeepOpen: true),
-            new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
+            new($"Busca em subpastas: {subfolders}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true,
-                Placement: tile, ShortLabel: "Subpastas", Value: SearchIncludesSubfolders ? "incluir" : "não incluir"),
-            new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
+                Placement: tile, ShortLabel: "Subpastas", Value: subfolders),
+            new($"Recentes: {OnOff(Settings.RememberRecents)}", ToggleRememberRecents,
                 Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true,
-                Placement: tile, ShortLabel: "Recentes", Value: Settings.RememberRecents ? "lembrar" : "não lembrar"),
-            new($"Restaurar abas ao abrir: {YesNo(Settings.RestoreTabs)}", ToggleRestoreTabs,
-                Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.NewTab, Section: privacy, KeepOpen: true,
-                Placement: tile, ShortLabel: "Restaurar abas", Value: YesNo(Settings.RestoreTabs)),
-            new($"Sugestões do teclado: {YesNo(Settings.KeyboardSuggestions)}", ToggleKeyboardSuggestions,
+                Placement: tile, ShortLabel: "Recentes", Value: OnOff(Settings.RememberRecents)),
+            new($"Restaurar abas ao abrir: {OnOff(Settings.RestoreTabs)}", ToggleRestoreTabs,
+                Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.Tabs, Section: privacy, KeepOpen: true,
+                Placement: tile, ShortLabel: "Restaurar abas", Value: OnOff(Settings.RestoreTabs)),
+            new($"Sugestões do teclado: {OnOff(Settings.KeyboardSuggestions)}", ToggleKeyboardSuggestions,
                 Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true,
-                Placement: tile, ShortLabel: "Sugestões", Value: YesNo(Settings.KeyboardSuggestions)),
+                Placement: tile, ShortLabel: "Sugestões", Value: OnOff(Settings.KeyboardSuggestions)),
             new("Apagar onde os vídeos pararam", ForgetAllPositions, PlaybackPositions is null ? "Posições não são lembradas nesta compilação." : null,
                 Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
@@ -640,14 +647,14 @@ public sealed partial class AppController
                 Placement: tile, ShortLabel: "Confirmar", Value: Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito"),
             new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
-                Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? null
-                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true,
+                Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? "Símbolos dos botões nas legendas e dicas. Automáticas: seguem o controle em uso."
+                    : ActiveController is { } family ? $"Símbolos dos botões nas legendas: seguem o controle em uso (agora: {FamilyName(family)})." : "Símbolos dos botões nas legendas: seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true,
                 Placement: tile, ShortLabel: "Legendas", Value: LabelStyleName(Settings.LabelStyle)),
-            new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima" : "economia de bateria")}",
+            new($"Fluidez: {smoothness}",
                 () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
                 Detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis.",
-                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true, Placement: tile, ShortLabel: "Fluidez", Value: Settings.SyncInputToDisplay ? "máxima" : "economia"),
-            new($"Mira por giroscópio no teclado: {YesNo(Settings.GyroKeyboard)} (experimental)", ToggleGyroKeyboard,
+                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true, Placement: tile, ShortLabel: "Fluidez", Value: smoothness),
+            new($"Mira por giroscópio no teclado: {OnOff(Settings.GyroKeyboard)} (experimental)", ToggleGyroKeyboard,
                 Detail: "Controles com giroscópio (ex.: DualSense): no teclado virtual, gire ou incline o controle para apontar as teclas; R3 recentraliza. O direcional continua funcionando.",
                 Icon: ActionIcon.Keyboard, Section: controls, KeepOpen: true),
             new(ActiveControllerMenuLabel, ShowActiveControllerMenu, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,

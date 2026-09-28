@@ -247,9 +247,9 @@ public class ModalSystemJourneyTests : IDisposable
         var settings = await d.WaitMenu();
         Assert.Equal("Configurações", settings.Title);
         // Todo ajuste que saiu do Menu continua alcançável aqui.
-        foreach (var label in new[] { "Exibição:", "Densidade da lista:", "Ocultar painel de detalhes", "Ordenar por:", "Ordem:", "Itens ocultos:", "Busca em subpastas:",
+        foreach (var label in new[] { "Exibição:", "Densidade da lista:", "Painel de detalhes:", "Ordenar por:", "Ordem:", "Itens ocultos:", "Busca em subpastas:",
                      "Recentes:", "Sugestões do teclado:", "Confirmar com:", "Legendas:", "Fluidez:", "Controle ativo:", "Teste de controles…", "Controles sem perfil…", "Atualizações" })
-            Assert.True(settings.Items.Any(i => i.Label.StartsWith(label, StringComparison.Ordinal)) || label == "Ocultar painel de detalhes" && settings.Items.Any(i => i.Label == "Mostrar painel de detalhes"), label);
+            Assert.True(settings.Items.Any(i => i.Label.StartsWith(label, StringComparison.Ordinal)), label);
 
         d.FocusMenu(settings, settings.Items.ToList().FindIndex(i => i.Label == "Densidade da lista: confortável"));
         d.Press(InputAction.Confirm);
@@ -295,7 +295,7 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.StartsWith("Busca em subpastas:", Focused(), StringComparison.Ordinal);
         app.TakeAnnouncement();
         d.Press(InputAction.NavigateRight); // Recentes: rótulo por extenso (com o valor) e a posição no bloco
-        Assert.Matches(@"^Recentes: (lembrar|não lembrar), .*bloco 2 de 4$", app.TakeAnnouncement());
+        Assert.Matches(@"^Recentes: (ligado|desligado), .*bloco 2 de 4$", app.TakeAnnouncement());
         d.Press(InputAction.NavigateUp); // primeira linha: o item de lista acima
         Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateUp);
@@ -305,13 +305,15 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.NavigateRight);
         d.Press(InputAction.NavigateRight);
         var hidden = settings.FocusIndex;
-        Assert.Equal(("Ocultos", "esconder"), (settings.Items[hidden].TileLabel, settings.Items[hidden].Value));
+        Assert.Equal(("Ocultos", "escondidos"), (settings.Items[hidden].TileLabel, settings.Items[hidden].Value));
+        // A linha sob a grade explica o ajuste em vez de repetir o valor que o bloco já mostra (auditoria de UX, #227).
+        Assert.StartsWith("Arquivos e pastas marcados como ocultos", settings.TileCaption, StringComparison.Ordinal);
 
         d.Press(InputAction.Confirm); // alterna e continua no mesmo bloco, com o valor novo
         Assert.Same(settings, app.TopModal);
         Assert.True(app.Settings.ShowHidden);
         Assert.Equal(hidden, settings.FocusIndex);
-        Assert.Equal(("Itens ocultos: mostrar", "mostrar"), (Focused(), settings.Items[hidden].Value));
+        Assert.Equal(("Itens ocultos: visíveis", "visíveis"), (Focused(), settings.Items[hidden].Value));
 
         app.PointerChooseModalOption(1); // toque num bloco: o mesmo que Confirmar nele
         Assert.Same(settings, app.TopModal);

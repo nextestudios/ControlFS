@@ -617,7 +617,7 @@ public sealed class MainWindow : Window
 
     /// <summary>
     /// Painel de detalhes ao lado da lista e da grade (também no início e em Meu computador em cartões). Cada exibição
-    /// tem a sua escolha (Menu → Mostrar/Ocultar painel de detalhes); sem escolha, ele aparece onde cabe sem apertar o
+    /// tem a sua escolha (Configurações → Painel de detalhes); sem escolha, ele aparece onde cabe sem apertar o
     /// conteúdo (a lista com o nome legível, a grade com pelo menos duas colunas) e sai em portáteis e janelas estreitas.
     /// Mostrado pelo menu num espaço apertado, ele estreita e a grade recalcula as colunas com a largura que sobra. A
     /// visibilidade é publicada no AppController, que só mede/decodifica o item focado com o painel à mostra.
@@ -829,7 +829,7 @@ public sealed class MainWindow : Window
         for (var i = 0; i < tabs.Count; i++)
         {
             var active = i == _app.ActiveTab;
-            var title = AppController.TabTitle(tabs[i]);
+            var title = _app.TabLabel(i);
             var chip = new Border
             {
                 Child = new TextBlock

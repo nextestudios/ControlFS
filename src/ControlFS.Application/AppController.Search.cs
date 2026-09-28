@@ -36,7 +36,7 @@ public sealed partial class AppController
                 StatusMessage = "A busca funciona em pastas do disco.";
                 return;
         }
-        var title = $"Buscar em \"{FolderName(root)}\"" + (SearchIncludesSubfolders ? " e subpastas" : " (sem subpastas)");
+        var title = $"Buscar em “{FolderName(root)}”" + (SearchIncludesSubfolders ? " e subpastas" : " (sem subpastas)");
         var keyboard = new VirtualKeyboard(TextFieldKind.Generic, title, initial,
             validator: text => string.IsNullOrWhiteSpace(text) ? "Digite parte do nome." : null);
         KeyboardModal? modal = null;
