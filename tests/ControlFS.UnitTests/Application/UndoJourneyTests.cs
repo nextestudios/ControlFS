@@ -146,9 +146,9 @@ public class UndoJourneyTests : IDisposable
 
         d.App.ConfirmTransfer(FileOperationKind.Move, [_tmp.Sub("Pasta"), _tmp.Sub("a.txt")], _tmp.Sub("Destino"), _tmp.Path);
         d.ChooseOption(await d.WaitDialog("Mover 2 itens?"), "Mover");
-        var done = await d.WaitDialog("Mover: concluído");
-        d.ChooseOption(done, "Desfazer"); // ação no próprio resultado
-        d.ChooseOption(await d.WaitDialog("Desfazer “"), "Desfazer");
+        await d.WaitStatus("2 itens movidos · Menu → Desfazer"); // o aviso aponta o caminho
+        Assert.Null(d.App.TopModal); // sucesso limpo: sem diálogo de resultado
+        await Undo(d);
         await UiContext.WaitUntil(() => File.Exists(_tmp.Sub("a.txt")) && Directory.Exists(_tmp.Sub("Pasta")), "itens de volta");
         await d.Idle();
         Assert.Equal("d", File.ReadAllText(_tmp.Sub("Pasta", "dentro.txt")));
@@ -157,7 +157,7 @@ public class UndoJourneyTests : IDisposable
         // Move de novo; depois alguém cria outro a.txt na origem: desfazer é recusado e nada muda.
         d.App.ConfirmTransfer(FileOperationKind.Move, [_tmp.Sub("a.txt")], _tmp.Sub("Destino"), _tmp.Path);
         d.ChooseOption(await d.WaitDialog("Mover 1 item?"), "Mover");
-        d.ChooseOption(await d.WaitDialog("Mover: concluído"), "Fechar");
+        await d.WaitStatus("1 item movido");
         File.WriteAllText(_tmp.Sub("a.txt"), "novo");
         await Undo(d);
         var refused = await d.WaitDialog("Não foi possível desfazer");
@@ -179,7 +179,7 @@ public class UndoJourneyTests : IDisposable
         // Cópia editada depois: não é removida.
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("nota.txt")], _tmp.Sub("Destino"), _tmp.Path);
         d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
-        d.ChooseOption(await d.WaitDialog("Copiar: concluído"), "Fechar");
+        await d.WaitStatus("1 item copiado");
         File.AppendAllText(_tmp.Sub("Destino", "nota.txt"), " editada");
         await Undo(d);
         var refused = await d.WaitDialog("Não foi possível desfazer");
@@ -191,7 +191,7 @@ public class UndoJourneyTests : IDisposable
         d.App.ConfirmTransfer(FileOperationKind.Copy, [_tmp.Sub("nota.txt")], _tmp.Sub("Destino"), _tmp.Path);
         d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
         d.ChooseOption(await d.WaitDialog("Já existe"), "Manter ambos");
-        d.ChooseOption(await d.WaitDialog("Copiar: concluído"), "Fechar");
+        await d.WaitStatus("1 item copiado");
         Assert.True(File.Exists(_tmp.Sub("Destino", "nota (2).txt")));
         await Undo(d);
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("Destino", "nota (2).txt")), "cópia removida");
@@ -225,7 +225,7 @@ public class UndoJourneyTests : IDisposable
         d.ChooseOption(await d.WaitDialog("Mover 1 item para a Lixeira?"), "Mover para a Lixeira");
         await UiContext.WaitUntil(() => !File.Exists(_tmp.Sub("a.txt")), "na Lixeira");
         await d.Idle();
-        await UiContext.WaitUntil(() => d.App.StatusMessage?.Contains("(Menu → Desfazer restaura)", StringComparison.Ordinal) == true, "dica de desfazer no rodapé");
+        await d.WaitStatus("1 item movido para a Lixeira · Menu → Desfazer"); // aviso com a dica de desfazer
 
         await Undo(d);
         // O arquivo volta à pasta antes de sair da lista da Lixeira: espera os dois.

@@ -592,6 +592,16 @@ As capturas (`0-title-bar-dark`, `0b-title-bar-light`) mostram só o XAML, com b
 - [ ] Esc em tela cheia continua sendo Voltar (não sai da tela cheia).
 - [ ] Windows 10 (21H2/22H2): barra no tema ou, se o Windows não permitir, a barra do sistema com tudo funcionando.
 
+## Avisos e andamento (auditoria de UX, P2-1/P2-2/P2-3) — não validado em hardware
+
+- [ ] 1280×720 e 1920×1080: alternar Lista/Grade (R3) e Densidade mostra o aviso no canto inferior direito, em letra do corpo; o rodapé não muda de altura e a lista não encolhe.
+- [ ] O aviso some sozinho em ~3 s (esmaecendo rápido; sem animação com "Efeitos de animação" desligado) e não some antes ao mover o foco.
+- [ ] Com o foco numa linha no fundo da lista (atrás de onde o aviso fica), o aviso sobe para o canto de cima e não cobre o item.
+- [ ] Narrador: o aviso é lido uma vez, sem mover o foco; o resumo da busca na linha acima da lista também.
+- [ ] Copiar/mover/excluir sem problemas: nenhum diálogo; o aviso "N itens copiados · Menu → Desfazer" aparece e Menu → Desfazer funciona. Com um arquivo travado (avisos) ou cancelando: o diálogo de resultado continua.
+- [ ] Cópia grande: a barra fina sob a faixa do título avança; a faixa mostra o percentual; Menu → Operações mostra **Em andamento** com ícone e percentual que se atualizam com o menu aberto, e a operação passa para **Histórico** ao terminar.
+- [ ] Tema claro: o aviso e a barra têm contraste suficiente.
+
 ## Vídeo (#61, #170) — não validado em hardware
 
 - [ ] Sul num MP4 (H.264/AAC) pela lista e pela grade: a janela entra em tela cheia e o vídeo toca; a sobreposição some em

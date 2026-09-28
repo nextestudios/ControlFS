@@ -48,6 +48,10 @@ public class PauseJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
+        // Menu → Operações em dois grupos; a ativa com o ícone do estado. A barra fina sob o título aparece.
+        var running = Assert.Single((await d.WaitMenu()).Items, i => i.Label.StartsWith("Copiar 1 item", StringComparison.Ordinal));
+        Assert.Equal("Em andamento", running.Section);
+        Assert.NotNull(app.Operations.Progress);
         await d.ChooseMenu("Copiar 1 item — em andamento");
         d.ChooseOption(await d.WaitDialog("Copiar 1 item"), "Pausar");
         Assert.Equal(OperationState.Paused, op.State);
@@ -63,10 +67,14 @@ public class PauseJourneyTests : IDisposable
         var details = await d.WaitDialog("Copiar 1 item");
         Assert.DoesNotContain(details.Options, o => o.Label == "Pausar");
         d.ChooseOption(details, "Continuar");
-        await d.WaitDialog("Copiar: concluído");
+        await d.WaitStatus("1 item copiado");
         Assert.Equal("conteúdo", File.ReadAllText(_tmp.Sub("Destino", "nota.txt")));
         Assert.False(op.CanPause);
-        d.ChooseOption((ControlFS.Application.State.DialogModal)app.TopModal!, "Fechar");
+        Assert.Null(app.Operations.Progress);
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Operações");
+        Assert.Equal("Histórico", Assert.Single((await d.WaitMenu()).Items, i => i.Label.StartsWith("Copiar 1 item", StringComparison.Ordinal)).Section);
+        d.Press(InputAction.Back);
 
         // Operação sem motor pausável (ex.: extração): a pausa não é oferecida nem simulada.
         var extraction = app.Operations.Enqueue("Extrair teste", OperationKind.Extract, async (_, ct) =>

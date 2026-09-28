@@ -62,7 +62,7 @@ public class ClipboardJourneyTests : IDisposable
         d.Press(InputAction.OpenContextMenu);
         await d.ChooseMenu("Colar 1 item");
         d.ChooseOption(await d.WaitDialog("Copiar 1 item?"), "Copiar");
-        await d.WaitDialog("Copiar: concluído");
+        await d.WaitStatus("1 item copiado");
 
         Assert.Equal("img", File.ReadAllText(_tmp.Sub("Álbum", "foto.jpg")));
         Assert.True(File.Exists(_tmp.Sub("foto.jpg")));

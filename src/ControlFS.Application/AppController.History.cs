@@ -78,25 +78,59 @@ public sealed partial class AppController
     // ---------- Menu → Operações ----------
 
     /// <summary>
-    /// Operações desta sessão (em andamento e concluídas, com tentar de novo) e, abaixo, as de sessões anteriores
-    /// guardadas no histórico.
+    /// Menu → Operações em dois grupos: "Em andamento" (ícone do estado, percentual e itens, atualizado enquanto o menu
+    /// está aberto) e "Histórico" (concluídas desta sessão, com tentar de novo, e as de sessões anteriores).
     /// </summary>
     private void ShowOperations()
     {
-        var items = Operations.Items.Reverse().Select(op => new MenuItem(
+        var menu = new MenuModal("Operações", OperationMenuItems()) { Icon = ActionIcon.Operations, Reload = OperationMenuItems };
+        PushModal(menu);
+    }
+
+    private const string RunningSection = "Em andamento";
+    private const string HistorySection = "Histórico";
+
+    private List<MenuItem> OperationMenuItems()
+    {
+        var items = Operations.Items.Reverse().Where(op => op.IsActive).Select(op => new MenuItem(
             $"{op.Title} — {StateLabel(op.State)}",
             () => ShowOperationDetails(op),
-            Detail: op.Progress is { } p && op.IsActive ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"} itens · {FormatBytes(p.BytesProcessed)}"
-                : History.Find(op.HistoryEntryId) is { } done ? When(done) : null, Icon: ActionIcon.Operations)).ToList();
+            Detail: ProgressDetail(op), Icon: ActiveIcon(op.State), Section: RunningSection)).ToList();
+        items.AddRange(Operations.Items.Reverse().Where(op => !op.IsActive).Select(op => new MenuItem(
+            $"{op.Title} — {StateLabel(op.State)}",
+            () => ShowOperationDetails(op),
+            Detail: History.Find(op.HistoryEntryId) is { } done ? When(done) : null, Icon: ResultIcon(op.State), Section: HistorySection)));
         var session = Operations.Items.Select(o => o.HistoryEntryId).OfType<string>().ToHashSet(StringComparer.Ordinal);
         items.AddRange(History.Entries.Reverse().Where(e => !session.Contains(e.Id)).Select(entry => new MenuItem(
             $"{entry.Title} — {StateLabel(entry.FinalState)}",
             () => ShowHistoryEntry(entry),
-            Detail: When(entry), Icon: ActionIcon.Recent)));
+            Detail: When(entry), Icon: ResultIcon(entry.FinalState), Section: HistorySection)));
         if (History.Entries.Count > 0)
             items.Add(new MenuItem("Limpar histórico…", ConfirmClearHistory,
-                Detail: "Apaga o histórico salvo. As operações desta sessão continuam listadas até fechar o app.", Icon: ActionIcon.Erase));
-        PushModal(new MenuModal("Operações", items) { Icon = ActionIcon.Operations });
+                Detail: "Apaga o histórico salvo. As operações desta sessão continuam listadas até fechar o app.", Icon: ActionIcon.Erase, Section: HistorySection));
+        return items;
+    }
+
+    /// <summary>"45% · 3/10 itens · 12 MB": o andamento de uma operação ativa (sem total, só o que já foi feito).</summary>
+    private static string? ProgressDetail(OperationItem op)
+    {
+        if (op.Progress is not { } p) return null;
+        var percent = op.Fraction is { } fraction ? $"{Math.Floor(fraction * 100).ToString(CultureInfo.InvariantCulture)}% · " : string.Empty;
+        return $"{percent}{p.ItemsProcessed}/{p.ItemsTotal?.ToString(CultureInfo.InvariantCulture) ?? "?"} itens · {FormatBytes(p.BytesProcessed)}";
+    }
+
+    /// <summary>Estado de uma operação ativa pelo ícone (nunca só pela cor): pausada, esperando uma decisão ou em andamento.</summary>
+    private static ActionIcon ActiveIcon(OperationState state) => state switch
+    {
+        OperationState.Paused => ActionIcon.Pause,
+        OperationState.WaitingForUser => ActionIcon.Warning,
+        _ => ActionIcon.Operations,
+    };
+
+    /// <summary>Menu → Operações aberto: as linhas acompanham o andamento (mantido no lugar; o foco fica na mesma linha).</summary>
+    private void RefreshOperationsMenu()
+    {
+        if (TopModal is MenuModal { Title: "Operações" } menu) menu.Refresh();
     }
 
     private static string When(OperationHistoryEntry entry) => entry.FinishedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);

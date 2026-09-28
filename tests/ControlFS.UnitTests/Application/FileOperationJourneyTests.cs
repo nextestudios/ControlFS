@@ -47,7 +47,8 @@ public class FileOperationJourneyTests : IDisposable
         var conflict = await d.WaitDialog("Já existe");
         Assert.Equal(0, conflict.FocusIndex); // começa em Pular (preserva o existente)
         d.ChooseOption(conflict, "Manter ambos");
-        await d.WaitDialog("Copiar: concluído");
+        await d.WaitStatus("1 item copiado"); // sucesso limpo: aviso, sem diálogo
+        Assert.Null(d.App.TopModal);
 
         Assert.Equal("antiga", File.ReadAllText(_tmp.Sub("Backup", "nota.txt")));
         Assert.Equal("nova", File.ReadAllText(_tmp.Sub("Backup", "nota (2).txt")));
@@ -103,14 +104,13 @@ public class FileOperationJourneyTests : IDisposable
         await d.ChooseMenu("Operações");
         await d.ChooseMenu("Copiar 1 item");
         d.ChooseOption(await d.WaitDialog("Copiar 1 item"), "Tentar de novo");
-        await d.WaitDialog("Copiar: concluído");
+        await d.WaitStatus("1 item copiado");
         Assert.Equal("conteúdo", File.ReadAllText(_tmp.Sub("Destino", "travado.txt")));
 
         // Concluída sem avisos: não há o que tentar de novo.
         var retried = d.App.Operations.Items[^1];
         Assert.Equal(OperationState.Completed, retried.State);
         Assert.False(retried.CanRetry);
-        d.ChooseOption((DialogModal)d.App.TopModal!, "Fechar");
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Operações");
         await d.ChooseMenu("Copiar 1 item — concluída");
@@ -136,7 +136,7 @@ public class FileOperationJourneyTests : IDisposable
 
         // Um conflito com livre.txt travaria o teste em "Já existe": só o item com falha é refeito.
         d.ChooseOption(partial, "Tentar de novo só as falhas (1)");
-        await d.WaitDialog("Copiar: concluído");
+        await d.WaitStatus("1 item copiado");
 
         var retried = d.App.Operations.Items[^1].Result!;
         Assert.Equal("travado.txt", Assert.Single(retried.Items).Name);

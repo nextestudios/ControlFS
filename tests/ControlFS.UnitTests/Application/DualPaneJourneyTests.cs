@@ -68,8 +68,7 @@ public class DualPaneJourneyTests : IDisposable
         Assert.Contains(("De", source), copy.Lines);
         Assert.Contains(("Para", target), copy.Lines);
         d.ChooseOption(copy, "Copiar");
-        await d.WaitDialog("Copiar: concluído");
-        d.Press(InputAction.Back); // fecha o resultado
+        await d.WaitStatus("1 item copiado");
         await UiContext.WaitUntil(() => app.SecondPane.List.Items.Any(e => e.Name == "a.txt"), "o outro painel mostra a cópia");
         Assert.True(File.Exists(Path.Join(source, "a.txt")));
         if (app.Browser.List.SelectionCount > 0) d.Press(InputAction.Back); // limpa a marcação
@@ -81,8 +80,7 @@ public class DualPaneJourneyTests : IDisposable
         var move = await d.WaitDialog("Mover 1 item?");
         Assert.Contains(("Para", target), move.Lines);
         d.ChooseOption(move, "Mover");
-        await d.WaitDialog("Mover: concluído");
-        d.Press(InputAction.Back);
+        await d.WaitStatus("1 item movido");
         Assert.True(File.Exists(Path.Join(target, "b.txt")) && !File.Exists(Path.Join(source, "b.txt")));
         await d.Idle();
 

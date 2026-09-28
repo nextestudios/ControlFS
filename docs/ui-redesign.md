@@ -29,9 +29,10 @@ hardware, visual or timing checks that CI can't prove.
 ```
 ┌ [ControlFS logo with text] [tabs, only with 2+]   [controller · operation] [⛶][_][□][X] ┐  (header = title bar, #230)
 ├ [L1] [Locais|Meu computador] › segment › … › current │ Favoritos · Recentes · known folders · Meu computador · Lixeira [R1]
-├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
+├ badge line (archive summary, git, picker title, search summary, items without permission) — only when there is something to say
 ├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List, each + details panel (C; grid #177)
-└ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Ver em grade
+│                                                         [toast: notice, fades after 3 s] ┘ (over the content)
+└ prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Ver em grade   (constant height)
 ```
 
 - **Window chrome (#230)**: the header *is* the title bar, like the reference and Discord. `TitleBarView` sets
@@ -53,7 +54,17 @@ hardware, visual or timing checks that CI can't prove.
   C: > …` on disk and archive paths; `Locais > Lixeira` / `Locais > Busca: …` elsewhere); right segment = quick access.
   Icons come from `IIconProvider` (Windows shell icons for known folders, This PC and the Recycle Bin; Segoe Fluent
   Icons glyphs for Favorites/Recent, never emoji).
-- **Footer**: prompts from `AppController.Prompts` (`ControllerPromptProvider`), status line above them.
+- **Footer**: prompts from `AppController.Prompts` (`ControllerPromptProvider`) only. Its height never depends on a
+  message (it used to grow 59 → 124 px with a status line and shrink the list).
+- **Status toast** (`StatusToastView`): `AppController.StatusMessage` shows as a pop-up in the bottom-right corner of the
+  content at `FontBody` (icon + up to 3 lines, max ~45% of the width), never focusable or clickable, a polite live region
+  for Narrator. `StatusSerial` restarts it even for the same text; it stays 3 s (the next input doesn't clear it early),
+  then fades (≤ 200 ms `OpacityTransition`, none with reduced motion) and a timer collapses it — nothing depends on the
+  animation. When the focused list/grid row would be under it, it moves to the top-right corner. With a modal open the
+  message is in the modal's own footer and the toast hides. Captures (pinned layout) mirror `StatusMessage` with no timer.
+- **Operation progress**: while `OperationQueue.Progress` is non-null (any active operation; mean of each one's
+  `Fraction`, by bytes or items, unknown = 0) a 4 px accent bar runs along the bottom edge of the header (no height
+  change); the header's operation text shows the percentage.
 
 ### Controller model of the shell
 
@@ -274,7 +285,8 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Create folder (accented, invalid name keeps keyboard with the reason) | `JourneyTests::Vertical_journey_…`, `::Invalid_folder_name_keeps_keyboard_open_with_reason` |
 | Clipboard copy/cut/paste across folders and tabs | `ClipboardJourneyTests` (2) |
 | Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67) | `ShellAndCompressJourneyTests::Compress_…` (2), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
-| Operations center: progress, cancel, results, errors, retry, history persisted without passwords | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text (Manual) |
+| Operations center: progress, cancel, results, errors, retry, history persisted without passwords; Menu → Operações grouped **Em andamento** (state icon, %, items; refreshed in place while open) / **Histórico** | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text and progress bar (Manual "Avisos e andamento") |
+| Clean success of copy/move/delete = toast ("N itens copiados · Menu → Desfazer"), no dialog; warnings/failures/cancel keep the result dialog | `FileOperationJourneyTests::Copy_to_a_folder_…`, `UndoJourneyTests`, `PauseJourneyTests`, `DualPaneJourneyTests`, `ClipboardJourneyTests` (`Driver.WaitStatus`); Screens `3-folder-compact`, `3b-folder-grid-compact` (toast) |
 | Undo/redo with checks | `UndoJourneyTests` (4) |
 | Leftover cleanup after a crash | `LeftoverCleanupTests` (2); Manual "Limpeza após queda" |
 | Open with Windows, executables ask first starting on Cancel, leaving-app warning | `ShellAndCompressJourneyTests`, `ShellIntegrationTests` (3) |
