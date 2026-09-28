@@ -107,6 +107,9 @@ public sealed partial class AppController
     public PaneState ActivePane => Screen == Screen.FolderPicker ? Picker : Browser;
 
     public event Action? Changed;
+    /// <summary>Linhas de diagnóstico de desempenho (tempo de listar/ordenar/desenhar uma pasta); nulo nas capturas e nos testes.</summary>
+    public Action<string>? Trace { get; set; }
+
     /// <summary>Pilha de modais mudou: a camada de entrada deve travar botões mantidos até serem soltos.</summary>
     public event Action? ModalContextChanged;
     public event Action? ExitRequested;

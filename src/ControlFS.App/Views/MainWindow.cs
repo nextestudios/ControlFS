@@ -146,6 +146,7 @@ public sealed class MainWindow : Window
             PlaybackPositions = new JsonPlaybackPositionStore(data),
             // Boas-vindas (#231) só na primeira execução do app de verdade: nunca nas capturas nem com --no-onboarding.
             DeferUpdateCheckToFirstFrame = dataDirectory is null,
+            Trace = dataDirectory is null ? AppLog.Info : null,
             OfferOnboarding = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
             // "Mais da equipe": uma vez, depois das boas-vindas; mesma regra (nunca nas capturas nem com --no-onboarding).
             OfferPromo = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
