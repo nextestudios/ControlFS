@@ -13,6 +13,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Configurações em grades** (#227): em cada grupo, os ajustes curtos (exibição, densidade, painel de detalhes, tema, cor de destaque, ordenação, itens ocultos, busca em subpastas, recentes, restaurar abas, sugestões, confirmar com, legendas, Fluidez) viram blocos com ícone, nome e valor atual; os de descrição longa e os que abrem outra tela continuam em lista. O controle anda em 2D entre as grades e as listas.
 
 ### Correções
+- Os textos das boas-vindas e do tutorial citam os botões do controle em uso (LB/RB no Xbox, L1/R1 no PlayStation, L/R no Nintendo), como os ícones.
 - Menus de item abrem no primeiro bloco disponível da grade, e não numa linha da lista abaixo dela (compactados continuam abrindo em **Extrair para**). As ações sobre a pasta aberta (favoritos, Colar, Nova pasta aqui, Abrir terminal aqui) ficam no grupo **Nesta pasta (nome)**, com título, para não parecerem ações do arquivo.
 - Diálogos não mostram mais o mesmo texto em dois botões ("A Cancelar · B Cancelar"): com o foco na opção de voltar, o rodapé mostra a próxima opção.
 - O rodapé não diz mais "Extração iniciada…" sob o diálogo "Extração concluída": o resultado de uma operação substitui o aviso de início.

@@ -170,7 +170,7 @@ public sealed partial class AppController
                     {
                         ToggleView();
                         Reload();
-                    }, ActionIcon.View, ViewName(Settings.View), "Lista de linhas ou grade de ícones grandes (R3 troca a qualquer momento)."),
+                    }, ActionIcon.View, ViewName(Settings.View), $"Lista de linhas ou grade de ícones grandes ({ButtonName(InputAction.ChangeView)} troca a qualquer momento)."),
                     new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima" : "economia de bateria")}", () =>
                     {
                         UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay });
@@ -298,7 +298,7 @@ public sealed partial class AppController
                 [new(InputAction.OpenContextMenu, "Ações")], TutorialTarget.Content),
             TutorialStepKind.OpenActions => ("Feche as Ações", "Nada será feito agora: pressione Voltar para fechar.",
                 [new(InputAction.Back, "Fechar")], TutorialTarget.Modal),
-            TutorialStepKind.TopBar when first => ("Barra superior", "L1 entra no caminho (as pastas de cima) e R1 nos atalhos das suas pastas. Para o início: L1, L2 e Abrir.",
+            TutorialStepKind.TopBar when first => ("Barra superior", $"{ButtonName(InputAction.PreviousRegion)} entra no caminho (as pastas de cima) e {ButtonName(InputAction.NextRegion)} nos atalhos das suas pastas. Para o início: {ButtonName(InputAction.PreviousRegion)}, {ButtonName(InputAction.PageUp)} e Abrir.",
                 [new(InputAction.PreviousRegion, "Caminho"), new(InputAction.NextRegion, "Atalhos")], TutorialTarget.TopBar),
             TutorialStepKind.TopBar => ("Abra um atalho", "Escolha um atalho (por exemplo, Downloads) com o direcional e pressione Abrir.",
                 [new(InputAction.NavigateRight, "Escolher"), new(InputAction.Confirm, "Abrir")], TutorialTarget.TopBar),
@@ -314,6 +314,18 @@ public sealed partial class AppController
                 [new(InputAction.Confirm, "Escolher")], TutorialTarget.Modal),
         };
         return new(Math.Min(tutorial.Index, tutorial.Count - 1) + 1, tutorial.Count, title, text, actions, target);
+    }
+
+    /// <summary>
+    /// Nome do botão no texto corrido, do controle em uso (LB no Xbox, L1 no PlayStation, L no Nintendo; a tecla sem
+    /// controle). Símbolos que só fazem sentido como glifo (☰, ⧉) viram o nome falado ("Menu", "Exibir").
+    /// </summary>
+    private string ButtonName(InputAction action)
+    {
+        var prompt = PromptProvider.For(action, string.Empty);
+        return prompt is { Button: { } button, Family: { } family } && prompt.Key is "☰" or "⧉"
+            ? ControllerButtons.SpokenName(button, family)
+            : prompt.Key;
     }
 
     private TutorialObservation ObserveForTutorial()
@@ -348,9 +360,9 @@ public sealed partial class AppController
             [
                 ("Abrir e voltar", "Confirmar e Voltar"),
                 ("O que fazer com um item", "Ações"),
-                ("Barra superior", "L1 e R1"),
-                ("Lista ou grade", "R3"),
-                ("Buscar e Menu", "Select e Start"),
+                ("Barra superior", $"{ButtonName(InputAction.PreviousRegion)} e {ButtonName(InputAction.NextRegion)}"),
+                ("Lista ou grade", ButtonName(InputAction.ChangeView)),
+                ("Buscar e Menu", $"{ButtonName(InputAction.Search)} e {ButtonName(InputAction.OpenAppMenu)}"),
             ], "O rodapé sempre mostra os botões que funcionam na tela. Para refazer: Menu → Ajuda → Tutorial guiado.", ActionIcon.Success);
         }
         finally
