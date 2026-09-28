@@ -43,7 +43,7 @@ public sealed partial class AppController
         var result = new OperationResult(OperationState.Completed,
             [new ItemResult(Path.GetFileName(oldPath), ItemOutcome.Succeeded, FinalPath: renamed.FullPath) { SourcePath = oldPath }]);
         var now = DateTimeOffset.Now;
-        RecordHistory(OperationHistoryEntry.From(OperationKind.Rename, $"Renomear \"{Path.GetFileName(oldPath)}\" para \"{renamed.Name}\"", now, now,
+        RecordHistory(OperationHistoryEntry.From(OperationKind.Rename, $"Renomear “{Path.GetFileName(oldPath)}” para “{renamed.Name}”", now, now,
             result, oldPath, renamed.FullPath));
     }
 

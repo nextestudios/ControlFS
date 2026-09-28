@@ -87,7 +87,7 @@ public class RecentsJourneyTests : IDisposable
 
         // Desligado: navegar não grava nada
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Recentes: lembrar");
+        await d.ChooseMenu("Recentes: ligado");
         Assert.False(store.Load().Settings.RememberRecents);
         d.App.OpenPhysical(roms);
         await d.Idle();

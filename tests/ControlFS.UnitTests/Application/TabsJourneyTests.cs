@@ -20,6 +20,26 @@ public class TabsJourneyTests : IDisposable
     }
 
     [Fact]
+    public void Tabs_with_the_same_folder_name_show_the_parent_folder_to_tell_them_apart() => UiContext.Run(async () =>
+    {
+        // Auditoria de UX: duas abas "Fotos" eram idênticas na faixa e no menu de abas.
+        var first = _tmp.MakeDir("Viagem", "Fotos");
+        var second = _tmp.MakeDir("Casamento", "Fotos");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        app.OpenPhysical(first);
+        await d.Idle();
+        app.OpenInNewTab(second);
+        await d.Idle();
+        Assert.Equal(["Fotos (Viagem)", "Fotos (Casamento)"], Enumerable.Range(0, app.Tabs.Count).Select(app.TabLabel));
+
+        app.OpenPhysical(_tmp.Path); // nomes diferentes: só o nome
+        await d.Idle();
+        Assert.Equal("Fotos", app.TabLabel(0));
+    });
+
+    [Fact]
     public void Each_tab_keeps_its_own_location_focus_and_selection_and_the_strip_is_reached_above_the_top_bar() => UiContext.Run(async () =>
     {
         var music = _tmp.MakeDir("Músicas");
@@ -180,7 +200,7 @@ public class TabsJourneyTests : IDisposable
 
         // Desligado: a próxima abertura começa no início com uma aba só.
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Restaurar abas ao abrir: sim");
+        await d.ChooseMenu("Restaurar abas ao abrir: ligado");
         Assert.Empty(store.Load().Settings.OpenTabs);
         d = Boot();
         await d.Idle();

@@ -90,7 +90,7 @@ public sealed partial class AppController
     private void AskCompressName(CompressPlan plan, Action<string> apply)
     {
         var extension = CompressionRequest.Extension(plan.Format);
-        var keyboard = new VirtualKeyboard(TextFieldKind.FileName, $"Nome do compactado (sem \"{extension}\")", plan.BaseName,
+        var keyboard = new VirtualKeyboard(TextFieldKind.FileName, $"Nome do compactado (sem “{extension}”)", plan.BaseName,
             validator: text => WindowsNameRules.ValidateComponent(text + extension) is { IsValid: false } v ? v.Message : null);
         KeyboardModal? modal = null;
         modal = new KeyboardModal(keyboard, k =>

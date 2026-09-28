@@ -24,7 +24,7 @@ public class TopBarJourneyTests : IDisposable
 
         // Início: "Locais › Início"; LB vai para o primeiro atalho e as setas andam pela barra.
         Assert.Equal(["Locais", "Início"], app.Breadcrumbs.Select(c => c.Label));
-        Assert.Equal(["Favoritos", "Arquivos recentes", "Pasta de teste", "Meu computador"], app.QuickAccess.Select(q => q.Label));
+        Assert.Equal(["Favoritos", "Recentes", "Pasta de teste", "Meu computador"], app.QuickAccess.Select(q => q.Label));
         d.Press(InputAction.PreviousRegion);
         Assert.Equal(PaneRegion.QuickAccess, app.FocusRegion);
         Assert.Equal("Acesso rápido", app.DescribeFocus().Context);

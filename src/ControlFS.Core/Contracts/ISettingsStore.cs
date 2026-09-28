@@ -38,7 +38,7 @@ public sealed record AppSettings
     public Appearance.AccentColor Accent { get; init; } = Appearance.AccentColor.Cyan;
 
     /// <summary>
-    /// Painel de detalhes na lista e na grade, cada exibição com a sua escolha (Menu → Mostrar/Ocultar painel de
+    /// Painel de detalhes na lista e na grade, cada exibição com a sua escolha (Configurações → Painel de
     /// detalhes). Null = automático: à mostra onde cabe sem apertar o conteúdo, escondido em portáteis e janelas estreitas.
     /// </summary>
     public bool? ListDetails { get; init; }

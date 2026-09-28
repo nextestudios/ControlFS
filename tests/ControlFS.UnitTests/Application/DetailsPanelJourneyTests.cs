@@ -247,16 +247,16 @@ public class DetailsPanelJourneyTests : IDisposable
         for (var i = 0; i < 5 && app.FocusRegion != PaneRegion.List; i++) d.Press(InputAction.Back);
         Assert.Equal(PaneRegion.List, app.FocusRegion);
 
-        // Menu: o rótulo segue o estado; esconder guarda a escolha da grade sem mexer no foco nem nas marcas.
+        // Configurações: o valor segue o estado; esconder guarda a escolha da grade sem mexer no foco nem nas marcas.
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Ocultar painel de detalhes");
+        await d.ChooseMenu("Painel de detalhes: visível");
         Assert.False(app.DetailsPanelVisible);
         Assert.Equal(("Jogos", 2), (app.Browser.List.Focused!.Name, app.Browser.List.SelectionCount));
         Assert.Equal((false, (bool?)null), (store.Load().Settings.GridDetails, store.Load().Settings.ListDetails));
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Configurações"); // o ajuste mora em Menu → Configurações (#193)
-        Assert.Contains((await d.WaitMenu()).Items, i => i.Label == "Mostrar painel de detalhes");
-        await d.ChooseMenu("Mostrar painel de detalhes"); // de volta ao que cabe: automático
+        Assert.Contains((await d.WaitMenu()).Items, i => i.Label == "Painel de detalhes: oculto");
+        await d.ChooseMenu("Painel de detalhes: oculto"); // de volta ao que cabe: automático
         d.Press(InputAction.Back); // Configurações continua aberto depois de alternar
         Assert.True(app.DetailsPanelVisible);
         Assert.Null(store.Load().Settings.GridDetails);
@@ -264,7 +264,7 @@ public class DetailsPanelJourneyTests : IDisposable
         // Portátil/janela estreita (sem espaço: escondido por padrão): mostrar pelo menu fica salvo e vale ao reabrir.
         app.SetDetailsPanelVisible(false, fits: false);
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Mostrar painel de detalhes");
+        await d.ChooseMenu("Painel de detalhes: oculto");
         Assert.True(app.DetailsPanelVisible);
         Assert.Equal("Jogos", app.Browser.List.Focused!.Name);
         var reopened = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store);

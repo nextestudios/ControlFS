@@ -88,10 +88,8 @@ public sealed partial class AppController
     /// </summary>
     public bool? DetailsPanelPreference => IsGrid ? Settings.GridDetails : Settings.ListDetails;
 
-    private string DetailsPanelMenuLabel => DetailsPanelVisible ? "Ocultar painel de detalhes" : "Mostrar painel de detalhes";
-
     /// <summary>
-    /// Menu → Mostrar/Ocultar painel de detalhes: inverte o que está na tela e guarda a escolha da exibição atual (voltar
+    /// Configurações → Painel de detalhes (visível/oculto): inverte o que está na tela e guarda a escolha da exibição atual (voltar
     /// ao que o modo automático mostraria volta ao automático). Foco, marcação e rolagem ficam como estão (só a largura do
     /// conteúdo muda).
     /// </summary>

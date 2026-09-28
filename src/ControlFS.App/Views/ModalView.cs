@@ -533,7 +533,7 @@ public static partial class ModalView
             // Menu comum: a linha sob a grade guarda o lugar (nada pula). Configurações: só a grade em foco mostra a sua.
             foreach (var (grid, (_, caption)) in grids)
             {
-                caption.Text = grid.Contains(menu.FocusIndex) ? TileCaption(menu) : string.Empty;
+                caption.Text = grid.Contains(menu.FocusIndex) ? menu.TileCaption : string.Empty;
                 if (menu.HasSectionGrids) caption.Visibility = caption.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
         }
@@ -558,17 +558,6 @@ public static partial class ModalView
             if (footer is not null) footer.Child = Footer(app);
         };
         return card;
-    }
-
-    /// <summary>Linha sob a grade: o nome completo do bloco focado e o que ele faz (ou o motivo de estar indisponível).</summary>
-    private static string TileCaption(MenuModal menu)
-    {
-        if (!menu.IsQuick(menu.FocusIndex)) return string.Empty;
-        var item = menu.Items[menu.FocusIndex];
-        var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
-        // O nome só se o bloco mostra outro mais curto (ex.: "Colar 2 itens (mover)"); nada a dizer: linha vazia.
-        var name = item.Label.TrimEnd('…') == item.TileLabel ? null : item.Label;
-        return string.Join(" · ", new[] { name, about }.Where(t => t is { Length: > 0 }));
     }
 
     /// <summary>

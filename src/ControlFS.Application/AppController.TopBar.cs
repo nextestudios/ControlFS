@@ -34,7 +34,7 @@ public sealed partial class AppController
     public int QuickAccessFocus { get; private set; }
 
     /// <summary>
-    /// Favoritos, Arquivos recentes, as pastas do Windows que existem (as mesmas do início), Meu computador e a Lixeira.
+    /// Favoritos, Recentes, as pastas do Windows que existem (as mesmas do início), Meu computador e a Lixeira.
     /// Vazio no seletor de pasta (lá, a raiz do caminho leva aos outros locais).
     /// </summary>
     public IReadOnlyList<QuickAccessItem> QuickAccess
@@ -53,7 +53,7 @@ public sealed partial class AppController
 
     private List<QuickAccessItem> BuildQuickAccess()
     {
-        var items = new List<QuickAccessItem> { new("Favoritos", QuickAccessKind.Favorites), new("Arquivos recentes", QuickAccessKind.Recents) };
+        var items = new List<QuickAccessItem> { new("Favoritos", QuickAccessKind.Favorites), new("Recentes", QuickAccessKind.Recents) };
         foreach (var place in Places)
         {
             if (place is not { Kind: EntryKind.KnownFolder, FullPath: { } path } || IsFavoriteEntry(place) || IsRecentPlace(place) || place.Id == RecycleBinLocation.PlaceId) continue;
@@ -235,9 +235,9 @@ public sealed partial class AppController
             case QuickAccessKind.Recents:
                 if (Settings.RememberRecents) ShowRecents();
                 else
-                    PushModal(new MenuModal("Arquivos recentes",
+                    PushModal(new MenuModal("Recentes",
                     [
-                        new MenuItem("Lembrar pastas e arquivos abertos", ToggleRememberRecents, Detail: "Só neste computador. Também em Menu → Recentes.", Icon: ActionIcon.Recent),
+                        new MenuItem("Lembrar pastas e arquivos abertos", ToggleRememberRecents, Detail: "Só neste computador. Também em Menu → Configurações → Recentes.", Icon: ActionIcon.Recent),
                     ]) { Icon = ActionIcon.Recent });
                 break;
             case QuickAccessKind.Folder when item.Path is { } path:
@@ -302,7 +302,7 @@ public sealed partial class AppController
         if (target.Region == PaneRegion.QuickAccess)
         {
             var item = QuickAccess[target.Index];
-            hints.Add(new(InputAction.Confirm, item.Kind is QuickAccessKind.Favorites or QuickAccessKind.Recents ? "Mostrar" : "Abrir"));
+            hints.Add(new(InputAction.Confirm, "Abrir"));
         }
         else
         {

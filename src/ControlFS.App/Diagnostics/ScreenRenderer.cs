@@ -226,11 +226,11 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "3c-folder-grid", window);
                 // Painel de detalhes na grade (#177): 3c mostra o automático (ao lado onde cabe, fora nos portáteis); 3d,
                 // o contrário pelo menu (portátil: a grade perde colunas). Depois volta ao automático.
-                ChooseAppMenu(app, app.DetailsPanelVisible ? "Ocultar painel" : "Mostrar painel");
+                ChooseAppMenu(app, "Painel de detalhes");
                 await SettleAsync(stage);
                 await app.WhenIdleAsync();
                 await CaptureAsync(stage, target, dir, "3d-folder-grid-details-toggled", window);
-                ChooseAppMenu(app, app.DetailsPanelVisible ? "Ocultar painel" : "Mostrar painel");
+                ChooseAppMenu(app, "Painel de detalhes");
                 app.Handle(InputAction.NavigateUp);
                 app.Handle(InputAction.ChangeView);
 
@@ -260,6 +260,46 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.ChangeView);
                 await CaptureAsync(stage, target, dir, "6b-shortcuts-grid", window);
                 app.Handle(InputAction.ChangeView);
+
+                // Telas que a auditoria de UX pediu (8*): resultados de busca, pasta vazia, dentro de um compactado,
+                // visualização de imagem e a Lixeira (a do runner, real).
+                if (WantedGroup("8"))
+                {
+                    app.OpenPhysical(sample);
+                    await app.WhenIdleAsync();
+                    app.Handle(InputAction.Search);
+                    app.TypeText("foto");
+                    app.Handle(InputAction.OpenAppMenu); // Concluir
+                    await WaitForAsync(() => app.TopModal is null && app.Browser.Location is Core.Models.SearchLocation);
+                    await app.WhenIdleAsync();
+                    await CaptureAsync(stage, target, dir, "8a-search-results", window);
+                    app.OpenPhysical(Path.Join(sample, "Rascunhos"));
+                    await app.WhenIdleAsync();
+                    await CaptureAsync(stage, target, dir, "8b-empty-folder", window);
+                    app.OpenPhysical(sample);
+                    await app.WhenIdleAsync();
+                    await FocusAsync(app, stage, "backup-2026-09.zip");
+                    app.Handle(InputAction.Confirm);
+                    await WaitForAsync(() => app.Browser.Location is Core.Models.ArchiveLocation);
+                    await app.WhenIdleAsync();
+                    await CaptureAsync(stage, target, dir, "8c-inside-archive", window);
+                    app.OpenPhysical(sample);
+                    await app.WhenIdleAsync();
+                    await FocusAsync(app, stage, "logo.png");
+                    app.Handle(InputAction.Confirm);
+                    if (await WaitForAsync(() => app.TopModal is Application.State.ImagePreviewModal { IsLoading: false }))
+                        await CaptureAsync(stage, target, dir, "8d-image-preview", window);
+                    CloseModals(app);
+                    // Numa pasta, L1 vai ao caminho: R1 leva ao primeiro atalho e a direita até a Lixeira.
+                    app.Handle(InputAction.NextRegion);
+                    var bin = app.QuickAccess.ToList().FindIndex(q => q.Label == "Lixeira");
+                    for (var i = 0; i < 20 && app.QuickAccessFocus < bin; i++) app.Handle(InputAction.NavigateRight);
+                    app.Handle(InputAction.Confirm);
+                    await WaitForAsync(() => app.Browser.Location is Core.Models.RecycleBinLocation);
+                    await app.WhenIdleAsync();
+                    await CaptureAsync(stage, target, dir, "8e-recycle-bin", window);
+                    app.GoHome();
+                }
 
                 // Tema claro e cor de destaque (#37): pasta, menu e teclado no claro; pasta com outro destaque; volta ao escuro.
                 if (WantedGroup("7"))

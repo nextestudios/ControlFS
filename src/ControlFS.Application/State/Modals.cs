@@ -138,6 +138,23 @@ public sealed class MenuModal : Modal
     public bool IsQuick(int index) => GridOf(index) is not null;
 
     /// <summary>
+    /// Linha sob a grade do bloco focado (vazia fora das grades): o que ele faz ou por que está indisponível, nunca a
+    /// repetição do que o bloco já mostra (#227). Um ajuste já mostra nome curto e valor: a linha só explica. Uma ação com
+    /// rótulo curto ganha o nome completo antes (ex.: "Colar 2 itens (mover)").
+    /// </summary>
+    public string TileCaption
+    {
+        get
+        {
+            if (!IsQuick(FocusIndex)) return string.Empty;
+            var item = Items[FocusIndex];
+            var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
+            var name = item.Value is not null || item.Label.TrimEnd('…') == item.TileLabel ? null : item.Label;
+            return string.Join(" · ", new[] { name, about }.Where(t => t is { Length: > 0 }));
+        }
+    }
+
+    /// <summary>
     /// Largura do painel (px lógicos): fixa para o menu inteiro, nunca pelo item em foco (#227). O texto longo quebra
     /// dentro dela; a tela ainda limita ao tamanho da janela.
     /// </summary>

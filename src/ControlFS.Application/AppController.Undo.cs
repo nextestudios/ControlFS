@@ -52,7 +52,7 @@ public sealed partial class AppController
     private void RegisterRenameUndo(string oldPath, string newPath, bool redo)
     {
         var now = DateTimeOffset.Now;
-        PushUndo(new UndoRecord($"Renomear \"{Path.GetFileName(oldPath)}\" para \"{Path.GetFileName(newPath)}\"", OperationKind.Rename,
+        PushUndo(new UndoRecord($"Renomear “{Path.GetFileName(oldPath)}” para “{Path.GetFileName(newPath)}”", OperationKind.Rename,
             [new UndoStep(UndoStepKind.RenameBack, oldPath, newPath)], now, now, () => RedoRename(oldPath, newPath)), redo);
     }
 
@@ -117,7 +117,7 @@ public sealed partial class AppController
             SetStatus("Essa operação já não está na lista de desfazer.");
             return;
         }
-        var dialog = new DialogModal($"Desfazer \"{record.Title}\"?", [("O que acontece", Describe(record))], sensitive: true)
+        var dialog = new DialogModal($"Desfazer “{record.Title}”?", [("O que acontece", Describe(record))], sensitive: true)
         {
             Message = "Antes de mudar qualquer coisa, o ControlFS confere se os itens continuam como a operação deixou; se não, nada é feito.",
             Icon = ActionIcon.Undo,

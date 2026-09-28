@@ -33,11 +33,11 @@ public class PromptJourneyTests : IDisposable
         Assert.Equal((ControllerButton.FaceSouth, ControllerFamily.Xbox), (Prompt(app, InputAction.Confirm).Button, Prompt(app, InputAction.Confirm).Family));
         Assert.Equal("Botão Menu: Menu", Prompt(app, InputAction.OpenAppMenu).AccessibilityText);
 
-        // R3 troca lista ↔ grade; a legenda diz para onde vai (na lista, "Grade"; na grade, "Lista"). Teclado: Ctrl+G.
-        Assert.Equal((ControllerButton.RightStickClick, "Grade"), (Prompt(app, InputAction.ChangeView).Button, Prompt(app, InputAction.ChangeView).Label));
+        // R3 troca lista ↔ grade; a legenda é a ação (na lista, "Ver em grade"; na grade, "Ver em lista"). Teclado: Ctrl+G.
+        Assert.Equal((ControllerButton.RightStickClick, "Ver em grade"), (Prompt(app, InputAction.ChangeView).Button, Prompt(app, InputAction.ChangeView).Label));
         d.Press(InputAction.ChangeView);
         Assert.True(app.IsGrid);
-        Assert.Equal("Pressionar analógico direito: Lista", Prompt(app, InputAction.ChangeView).AccessibilityText);
+        Assert.Equal("Pressionar analógico direito: Ver em lista", Prompt(app, InputAction.ChangeView).AccessibilityText);
         d.Press(InputAction.ChangeView);
         Assert.Equal(new[] { InputAction.Confirm, InputAction.Back, InputAction.OpenContextMenu, InputAction.OpenAppMenu, InputAction.ChangeView },
             app.Prompts.Select(p => p.Action)); // ordem do rodapé: Abrir, Voltar, Ações, Menu, Lista/Grade
@@ -59,6 +59,6 @@ public class PromptJourneyTests : IDisposable
 
         app.SetActiveController(null); // voltou ao teclado
         Assert.True(Prompt(app, InputAction.Confirm).IsKeyboard);
-        Assert.Equal("Ctrl+G: Grade", Prompt(app, InputAction.ChangeView).AccessibilityText);
+        Assert.Equal("Ctrl+G: Ver em grade", Prompt(app, InputAction.ChangeView).AccessibilityText);
     });
 }
