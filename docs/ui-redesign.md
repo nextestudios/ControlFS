@@ -266,6 +266,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | → Configurações: Confirmar com | `PromptJourneyTests`, `InputRouterTests` |
 | → Configurações: Legendas | `PromptJourneyTests`, `ControllerFamilyTests` |
 | → Configurações: Fluidez (máxima / economia) | Manual "Fluidez máxima (leitura por quadro)" |
+| → Configurações: Leve em segundo plano (tile "Segundo plano", group Controles, on by default): minimized/inactive window → BelowNormal + EcoQoS, controllers only watched for connections (1 s, SDL input events off), drive polling paused, memory trimmed once after 5 s; activation restores; media playing keeps normal priority. No controller connected → 250 ms poll (no 8 ms ticker) | `BackgroundModePolicyTests` (2), `InputCadenceTests` (2); Smoke "Measure performance" (`docs/performance.md`); Manual "Leve em segundo plano" |
 | → Configurações: Teste de controles…, Controle ativo, Controles sem perfil… | `ControllerTestJourneyTests`, `ActiveControllerJourneyTests`, `ControllerMappingJourneyTests` |
 | → Configurações: Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
 | Esvaziar área de transferência | `ClipboardJourneyTests` |

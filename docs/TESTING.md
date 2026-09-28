@@ -667,6 +667,15 @@ As capturas (`0-title-bar-dark`, `0b-title-bar-light`) mostram só o XAML, com b
 - [ ] Tela de 120/144 Hz: segurar o direcional numa lista longa e nos menus; o foco anda liso. Comparar com Menu → Configurações → Fluidez: economia.
 - [ ] Portátil na bateria: uso de CPU/GPU com a janela parada em "máxima" vs "economia"; em segundo plano a leitura cai para o temporizador lento.
 
+## Leve em segundo plano e repouso — não validado em hardware
+Automático: `BackgroundModePolicyTests`, `InputCadenceTests` e a etapa "Measure performance" do Smoke (modo full), que
+minimiza a janela e mede CPU, memória e threads (`docs/performance.md`). O que só um PC de verdade mostra:
+- [ ] Abrir um jogo com o ControlFS aberto atrás, usando o mesmo controle: no Gerenciador de Tarefas o ControlFS aparece com a folha (modo de eficiência) e ~0% de CPU; o jogo não perde quadros; nada acontece no ControlFS ao apertar botões durante o jogo.
+- [ ] Voltar ao ControlFS (Alt+Tab ou clique): responde ao controle na hora, sem ação fantasma do botão/analógico que estava pressionado ao voltar; o primeiro movimento pode demorar um instante (memória trazida de volta).
+- [ ] Conectar e desconectar um controle com o ControlFS minimizado: ao voltar, ele aparece em Controle ativo; sem controle, conectar um com a janela à frente passa a responder em menos de meio segundo.
+- [ ] Extração longa com a janela minimizada: continua e termina (mais devagar); tocar uma música e minimizar: a música não falha.
+- [ ] Menu → Configurações → Leve em segundo plano: desligado → minimizado mantém prioridade normal (Gerenciador de Tarefas → Detalhes → Prioridade).
+
 ## Menus com ações rápidas e Configurações (#193)
 Automático: `ModalSystemJourneyTests::Quick_action_grid_moves_in_two_dimensions_and_activates_a_tile` (grade 3×2 de um
 arquivo, navegação 2D, bordas, entrada e saída da lista, Narrador "ação rápida N de M", escolher um bloco),
