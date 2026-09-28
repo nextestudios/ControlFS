@@ -14,6 +14,7 @@ using ControlFS.Infrastructure.Windows.FileSystem;
 using ControlFS.Infrastructure.Windows.Shell;
 using ControlFS.Infrastructure.Windows.Settings;
 using ControlFS.Core.Text;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -123,6 +124,7 @@ public sealed class MainWindow : Window
         var icon = Path.Join(AppContext.BaseDirectory, "controlfs.ico");
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
         _captures = dataDirectory is not null;
+        var startup = System.Diagnostics.Stopwatch.StartNew();
         var data = dataDirectory ?? AppPaths.DataDirectory;
         var settingsStore = new JsonSettingsStore(data);
         _updates = dataDirectory is null ? GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(data, "updates")) : null;
@@ -146,7 +148,9 @@ public sealed class MainWindow : Window
             _phone = new Infrastructure.Remote.PhoneLinkServer();
             _app.AttachPhoneLink(_phone);
         }
+        var inputStarted = startup.ElapsedMilliseconds;
         _input = new InputHost(_app, DispatcherQueue);
+        AppLog.Info($"MainWindow: serviços em {inputStarted} ms; entrada (SDL) em {startup.ElapsedMilliseconds - inputStarted} ms");
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
         _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize);
@@ -189,7 +193,7 @@ public sealed class MainWindow : Window
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
         _root.Content = _layout = BuildLayout();
-        AppLog.Info("MainWindow: layout montado");
+        AppLog.Info($"MainWindow: layout montado ({startup.ElapsedMilliseconds} ms)");
         _root.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Windows.System.VirtualKey.F11) { _app.ToggleFullScreen(); e.Handled = true; return; }
@@ -207,6 +211,9 @@ public sealed class MainWindow : Window
                 _titleBar.Update();
             };
             _titleBar.Update();
+            // Prioridade baixa: roda depois do layout e do desenho do primeiro quadro (sem CompositionTarget.Rendering,
+            // que derrubava o app no WARP). Trabalho adiável da inicialização começa aqui.
+            if (!_captures) DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, OnFirstFrame);
         };
         // Tamanho do texto do Windows (Acessibilidade): o WinUI aumenta cada texto; o layout decide o que cabe.
         _uiSettings.TextScaleFactorChanged += (_, _) => DispatcherQueue.TryEnqueue(UpdateLayoutProfile);
@@ -267,7 +274,12 @@ public sealed class MainWindow : Window
         _drives.Changed += () => DispatcherQueue.TryEnqueue(_app.RefreshDrives);
         ApplyLayout();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
-        AppLog.Info($"MainWindow: controlador iniciado; entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
+        AppLog.Info($"MainWindow: controlador iniciado ({startup.ElapsedMilliseconds} ms); entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
+    }
+
+    private void OnFirstFrame()
+    {
+        AppLog.Info($"Primeiro quadro ({AppLog.SinceProcessStart()} ms desde o início do processo)");
     }
 
     private Grid BuildLayout()
