@@ -130,10 +130,22 @@ internal sealed class TutorialOverlayView
             BorderThickness = Theme.FocusRing,
             CornerRadius = new CornerRadius(Theme.Scaled(18)),
             Padding = new Thickness(Theme.Space(20), Theme.SpaceM, Theme.Space(20), Theme.SpaceM),
-            Width = Math.Min(Theme.Scaled(compact ? 400 : 460), Theme.Viewport.Width - (2 * Theme.SpaceM)),
+            Width = CardWidth(compact),
         };
         AutomationProperties.SetName(border, $"Tutorial, passo {card.Number} de {card.Count}: {card.Title}. {card.Instruction}");
         return border;
+    }
+
+    /// <summary>
+    /// Largura do balão. Com um modal aberto ele vai para o canto esquerdo: cabe na faixa ao lado do painel centralizado
+    /// (menus têm até 540 px), para não cobrir as opções; numa janela estreita demais, usa a largura normal.
+    /// </summary>
+    private double CardWidth(bool compact)
+    {
+        var normal = Math.Min(Theme.Scaled(compact ? 400 : 460), Theme.Viewport.Width - (2 * Theme.SpaceM));
+        if (_target != TutorialTarget.Modal) return normal;
+        var beside = ((Theme.Viewport.Width - Theme.Scaled(560)) / 2) - (2 * Theme.SpaceM);
+        return beside >= Theme.Scaled(280) ? Math.Min(normal, beside) : normal;
     }
 
     private static Border LinkButton(string text, Action onTap)

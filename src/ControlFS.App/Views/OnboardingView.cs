@@ -94,10 +94,12 @@ public static partial class ModalView
 
         // Centro: texto do passo e o conteúdo, lado a lado (empilhados numa janela estreita).
         var narrow = Theme.Viewport.Width < 1000;
+        // Largura fixa (a janela menos as margens, até 1240): as colunas em estrela precisam de uma largura definida, e o
+        // conteúdo nunca passa da borda nem se desloca de um passo para o outro.
         var body = new Grid
         {
-            MaxWidth = Theme.Scaled(1240),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Width = Math.Min(Theme.Scaled(1240), Theme.Viewport.Width - (2 * margin)),
+            HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             ColumnSpacing = Theme.Space(56),
             RowSpacing = Theme.SpaceL,
@@ -123,6 +125,8 @@ public static partial class ModalView
             Content = body,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            HorizontalScrollMode = ScrollMode.Disabled,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
         Grid.SetRow(scroll, 1);
@@ -223,7 +227,9 @@ public static partial class ModalView
             content.Children.Add(Feature(ActionIcon.Extract, "Extrator embutido", "ZIP, 7z, RAR e mais; nada é gravado fora da pasta de destino.", compact));
             content.Children.Add(Feature(ActionIcon.Password, "Tudo local", "Sem conta e sem telemetria.", compact));
         }
-        var options = new StackPanel { Spacing = compact ? 0 : Theme.Space(2) };
+        // Folga dos lados: a opção em foco cresce um pouco (a mesma escala dos modais) e não pode encostar na borda.
+        var inset = Theme.Scaled(10);
+        var options = new StackPanel { Spacing = compact ? 0 : Theme.Space(2), Padding = new Thickness(inset, 0, inset, 0) };
         for (var i = 0; i < modal.Options.Count; i++)
         {
             var option = modal.Options[i];
