@@ -71,6 +71,9 @@ public static class EntryRowTemplate
         public string Key => $"{Compact}|{Mark}|{Type}|{Theme.Layout}|{Theme.SimulatedTextScale}";
     }
 
+    /// <summary>Faixa dos portáteis (720p/800p, janelas pequenas): linhas mais baixas na densidade confortável.</summary>
+    private static bool Handheld => Theme.Layout.Tier == Core.Layout.LayoutTier.Compact;
+
     /// <summary>Medidas das colunas para a largura da lista.</summary>
     public static ListColumns Columns(ListDensity density, double listWidth, bool mark)
     {
@@ -78,8 +81,8 @@ public static class EntryRowTemplate
         var columns = compact
             ? new ListColumns(true, mark, true, Theme.Scaled(32), Theme.Scaled(28), Theme.Scaled(170), Theme.Scaled(110), Theme.Scaled(180), Theme.Scaled(22),
                 Theme.Space(12), new Thickness(Theme.Space(14), Theme.Space(2), Theme.Space(14), Theme.Space(2)), Theme.Scaled(44))
-            : new ListColumns(false, mark, true, Theme.Scaled(44), Theme.Scaled(60), Theme.Scaled(200), Theme.Scaled(140), Theme.Scaled(220), Theme.Scaled(28),
-                Theme.Space(18), new Thickness(Theme.Space(18), Theme.Space(6), Theme.Space(22), Theme.Space(6)), Theme.Scaled(88));
+            : new ListColumns(false, mark, true, Theme.Scaled(44), Theme.Scaled(Handheld ? 48 : 60), Theme.Scaled(200), Theme.Scaled(140), Theme.Scaled(220), Theme.Scaled(28),
+                Theme.Space(18), new Thickness(Theme.Space(18), Theme.Space(Handheld ? 2 : 6), Theme.Space(22), Theme.Space(Handheld ? 2 : 6)), Theme.Scaled(Handheld ? 64 : 88));
         // O nome precisa de espaço para ser lido: sem ele, o tipo sai da linha.
         return listWidth > 0 && listWidth - columns.FixedWidth < Theme.Scaled(compact ? 260 : 320) ? columns with { Type = false } : columns;
     }
@@ -111,15 +114,19 @@ public static class EntryRowTemplate
     private static string ListXaml(ListColumns c)
     {
         var (mark, icon, name, type, size, date, chevron, definitions) = ColumnLayout(c);
-        var titleSize = c.Compact ? 17 : 22;
-        var columnSize = c.Compact ? 15 : 19;
-        var iconSize = c.Compact ? 24 : 52;
+        // Portáteis (auditoria de UX, P2-7): a confortável fica com ~64 px por linha (antes 88: só ~5 linhas em 720p) e
+        // nenhum texto informativo abaixo de 16 px.
+        var handheld = Handheld;
+        var titleSize = c.Compact ? 17 : handheld ? 20 : 22;
+        var columnSize = c.Compact ? (handheld ? 16 : 15) : 19;
+        var stateSize = handheld ? 16 : c.Compact ? 13 : 15;
+        var iconSize = c.Compact ? 24 : handheld ? 40 : 52;
         string Cell(int column, string xname, string extra = "") =>
             $"<TextBlock x:Name=\"{xname}\" Grid.Column=\"{column}\" FontSize=\"{F(columnSize)}\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"{extra}/>";
         var states =
             $"<StackPanel x:Name=\"StateLine\" Orientation=\"Horizontal\" Spacing=\"{S(6)}\" VerticalAlignment=\"Center\"{(c.Compact ? " Grid.Column=\"1\" Margin=\"" + S(10) + ",0,0,0\"" : string.Empty)}>" +
-            $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(c.Compact ? 13 : 15)}\" VerticalAlignment=\"Center\"/>" +
-            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(c.Compact ? 13 : 15)}\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
+            $"<TextBlock x:Name=\"StateGlyph\" {IconFont} FontSize=\"{F(stateSize)}\" VerticalAlignment=\"Center\"/>" +
+            $"<TextBlock x:Name=\"StateText\" FontSize=\"{F(stateSize)}\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\"/>" +
             "</StackPanel>";
         var title = $"<TextBlock x:Name=\"Title\" FontSize=\"{F(titleSize)}\"{(c.Compact ? string.Empty : " FontWeight=\"Medium\"")} TextTrimming=\"CharacterEllipsis\" MaxLines=\"1\" VerticalAlignment=\"Center\"/>";
         var nameCell = c.Compact

@@ -602,6 +602,16 @@ As capturas (`0-title-bar-dark`, `0b-title-bar-light`) mostram só o XAML, com b
 - [ ] Cópia grande: a barra fina sob a faixa do título avança; a faixa mostra o percentual; Menu → Operações mostra **Em andamento** com ícone e percentual que se atualizam com o menu aberto, e a operação passa para **Histórico** ao terminar.
 - [ ] Tema claro: o aviso e a barra têm contraste suficiente.
 
+## Legibilidade e densidade nos portáteis (auditoria de UX, P1-7/P2-6/P2-7/P2-11/P2-12) — não validado em hardware
+
+- [ ] Steam Deck / ROG Ally (1280×800) na primeira abertura (sem `settings.json`): a lista começa compacta; trocar para confortável e reabrir mantém a confortável. Num PC 1080p a primeira abertura continua confortável.
+- [ ] 1280×720 confortável: linhas de ~64 px (cerca de 7–8 linhas visíveis), nada cortado no nome nem na segunda linha.
+- [ ] 1280×800 com texto do Windows em 150%: o rodapé fica numa linha (Abrir, Voltar, Ações e Menu sempre) e o chip "Meu computador" continua visível numa pasta funda.
+- [ ] De longe (sofá): linha acima da lista, "PAINEL ESQUERDO · ATIVO" e o título do seletor de pasta legíveis.
+- [ ] Painel de detalhes com um caminho longo: aparece `C:\…\pasta\final`, nunca cortado no fim.
+- [ ] Teclado virtual: abre no "q"; só a tecla focada tem contorno; Concluir não parece focado; em 720p as legendas cabem numa linha.
+- [ ] Tema claro: o logo com o nome escuro fica nítido no cabeçalho (sem bloco escuro) e as teclas se distinguem do painel num monitor comum e numa TV.
+
 ## Vídeo (#61, #170) — não validado em hardware
 
 - [ ] Sul num MP4 (H.264/AAC) pela lista e pela grade: a janela entra em tela cheia e o vídeo toca; a sobreposição some em

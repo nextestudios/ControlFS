@@ -55,9 +55,6 @@ public static class Theme
     public static readonly SolidColorBrush Scrim = new(ToColor(Palette.Scrim));
     public static readonly SolidColorBrush Transparent = new(Colors.Transparent);
 
-    /// <summary>Placa atrás do logo (o nome no logo é claro): transparente no escuro, azul-marinho no claro.</summary>
-    public static readonly SolidColorBrush LogoPlate = new(ToColor(Palette.LogoPlate));
-
     /// <summary>Brilho no alto do painel de detalhes (degradê).</summary>
     public static Color DetailsGlowColor => ToColor(Palette.DetailsGlow);
 
@@ -92,11 +89,12 @@ public static class Theme
         Set(ModalEdge, palette.ModalEdge);
         Set(ModalDivider, palette.ModalDivider);
         Set(ModalInset, palette.ModalInset);
+        Set(KeyFill, palette.KeyFill);
+        Set(KeyFunctionFill, palette.KeyFunctionFill);
         Set(FocusText, palette.FocusText);
         Set(DangerFill, palette.DangerFill);
         Set(DisabledFill, palette.DisabledFill);
         Set(Success, palette.Success);
-        Set(LogoPlate, palette.LogoPlate);
         return true;
     }
 
@@ -146,7 +144,8 @@ public static class Theme
     public static double SpaceL => Space(24);
     public static double SpaceXl => Space(40);
 
-    public static double FontCaption => Font(14);
+    /// <summary>Legendas e textos de apoio: 14 px, e nunca menos de 16 px nos portáteis (tela pequena, lida de longe).</summary>
+    public static double FontCaption => Font(Layout.Tier == Core.Layout.LayoutTier.Compact ? 16 : 14);
     public static double FontBody => Font(18);
     public static double FontItem => Font(20);
     public static double FontTitle => Font(26);
@@ -255,6 +254,10 @@ public static class Theme
     /// <summary>Linhas divisórias e o fundo discreto das informações dentro do painel.</summary>
     public static readonly SolidColorBrush ModalDivider = new(ToColor(Palette.ModalDivider));
     public static readonly SolidColorBrush ModalInset = new(ToColor(Palette.ModalInset));
+
+    /// <summary>Teclas do teclado virtual: de caractere (mais marcadas) e de função, sempre distintas do painel.</summary>
+    public static readonly SolidColorBrush KeyFill = new(ToColor(Palette.KeyFill));
+    public static readonly SolidColorBrush KeyFunctionFill = new(ToColor(Palette.KeyFunctionFill));
 
     /// <summary>
     /// Opção focada: preenchida com o destaque, negrito e um pouco maior; o texto por cima é escuro no tema escuro e

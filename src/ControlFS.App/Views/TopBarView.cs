@@ -40,8 +40,10 @@ internal sealed class TopBarView
     private readonly List<Border> _crumbRings = [];
     private readonly List<Border> _crumbGlows = [];
     private readonly List<TextBlock> _crumbSeparators = [];
+    private readonly List<TextBlock> _crumbLabels = [];
     private readonly TextBlock _overflow = new() { Text = "…", VerticalAlignment = VerticalAlignment.Center };
     private double[] _crumbWidths = [];
+    private double[] _labelWidths = [];
     private double _pathMax = double.PositiveInfinity;
     private readonly List<Border> _quickRings = [];
     private readonly List<TextBlock> _quickLabels = [];
@@ -157,6 +159,7 @@ internal sealed class TopBarView
         var path = _crumbs.DesiredSize.Width;
         _crumbWidths = [.. _crumbGlows.Select((g, i) => g.DesiredSize.Width + _crumbs.Spacing
             + (i > 0 ? _crumbSeparators[i - 1].DesiredSize.Width + _crumbSeparators[i - 1].Margin.Left + _crumbSeparators[i - 1].Margin.Right + _crumbs.Spacing : 0))];
+        _labelWidths = [.. _crumbLabels.Select(l => l.DesiredSize.Width)];
         var labeled = _quick.DesiredSize.Width;
         _iconsOnly = _quickLabels.Count > 0 && path + labeled > bar;
         var widestLabel = 0.0;
@@ -171,7 +174,10 @@ internal sealed class TopBarView
         }
         // O focado mostra o nome; o glifo do R1 usa essa mesma folga (sem ela, o caminho perderia um segmento).
         var quickWidth = _quickLabels.Count == 0 ? 0 : _quick.DesiredSize.Width + widestLabel;
-        var max = Math.Max(Theme.Scaled(240), bar - quickWidth);
+        // A raiz, o "…" e um pedaço da pasta atual sempre cabem (auditoria de UX, P2-7): com pouco espaço, quem cede são
+        // os atalhos (que rolam até o focado), nunca a raiz do caminho.
+        var rootAndCurrent = _crumbWidths.Length > 1 ? _crumbWidths[0] + (Theme.FontBody * 1.2) + _crumbs.Spacing + Theme.Scaled(150) : 0;
+        var max = Math.Max(Math.Max(Theme.Scaled(240), rootAndCurrent), bar - quickWidth);
         _pathMax = double.IsFinite(max) ? max : double.PositiveInfinity; // antes da primeira faixa de layout há medidas NaN
         _crumbScroll.MaxWidth = _pathMax;
     }
@@ -203,6 +209,16 @@ internal sealed class TopBarView
             }
         }
         _overflow.Visibility = start > 1 ? Visibility.Visible : Visibility.Collapsed;
+        // A raiz nunca sai de vista (auditoria de UX, P2-7): se nem raiz + "…" + a pasta mostrada cabem (portátil com
+        // texto grande), o nome dessa pasta é cortado no fim em vez de a barra rolar e esconder a raiz.
+        if (_crumbLabels.Count == count && _labelWidths.Length == count)
+        {
+            foreach (var label in _crumbLabels) label.MaxWidth = CrumbLabelMax;
+            var shown = _crumbWidths[0] + (start > 1 ? (Theme.FontBody * 1.2) + _crumbs.Spacing : 0);
+            for (var i = start; i <= end; i++) shown += _crumbWidths[i];
+            if (count > 1 && shown > _pathMax && double.IsFinite(_pathMax))
+                _crumbLabels[end].MaxWidth = Math.Max(Theme.Scaled(60), _labelWidths[end] - (shown - _pathMax));
+        }
         for (var i = 1; i < count; i++)
         {
             var visible = i >= start && i <= end ? Visibility.Visible : Visibility.Collapsed;
@@ -212,6 +228,9 @@ internal sealed class TopBarView
     }
 
     private static double FontSize => Theme.FontCaption + 1;
+
+    /// <summary>Largura máxima do nome de um segmento do caminho.</summary>
+    private static double CrumbLabelMax => Theme.Scaled(220);
 
     /// <summary>Glifo do ombro (LB/RB, L1/R1, L/R) da família em uso; sem controle, a tecla (Ctrl+←/Ctrl+→).</summary>
     private static UIElement Shoulder(Application.Prompts.ControllerPrompt prompt) => prompt is { Button: { } button, Family: { } family }
@@ -239,6 +258,7 @@ internal sealed class TopBarView
         _crumbRings.Clear();
         _crumbGlows.Clear();
         _crumbSeparators.Clear();
+        _crumbLabels.Clear();
         _overflow.FontSize = Theme.FontBody;
         _overflow.Foreground = Theme.TextMuted;
         _overflow.Margin = new Thickness(Theme.SpaceXs, 0, 0, 0);
@@ -267,16 +287,18 @@ internal sealed class TopBarView
                     crumb.Label == "Meu computador" ? "\uE977" : "\uE80F", Theme.Accent));
             else if (crumb.Kind == BreadcrumbKind.Archive)
                 content.Children.Add(new TextBlock { Text = "\uE7B8", FontFamily = new FontFamily(IconFont), FontSize = Theme.FontBody, Foreground = Theme.Accent, VerticalAlignment = VerticalAlignment.Center });
-            content.Children.Add(new TextBlock
+            var label = new TextBlock
             {
                 Text = crumb.Label,
                 FontSize = Theme.FontBody,
                 FontWeight = crumb.IsCurrent || crumb.Kind == BreadcrumbKind.Root ? FontWeights.SemiBold : FontWeights.Normal,
                 Foreground = crumb.IsCurrent || crumb.Kind == BreadcrumbKind.Root ? Theme.Text : crumb.Kind is BreadcrumbKind.Archive or BreadcrumbKind.ArchiveFolder ? Theme.Accent : Theme.TextMuted,
                 TextTrimming = TextTrimming.CharacterEllipsis,
-                MaxWidth = Theme.Scaled(220),
+                MaxWidth = CrumbLabelMax,
                 VerticalAlignment = VerticalAlignment.Center,
-            });
+            };
+            _crumbLabels.Add(label);
+            content.Children.Add(label);
             var ring = Ring(content);
             var index = i;
             var glow = Theme.WithGlow(ring);

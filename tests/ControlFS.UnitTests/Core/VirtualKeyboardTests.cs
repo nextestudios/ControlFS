@@ -184,6 +184,8 @@ public class VirtualKeyboardTests
     public void Vertical_navigation_keeps_column_across_wide_keys()
     {
         var kb = new VirtualKeyboard(TextFieldKind.Generic, "t");
+        Assert.Equal("q", kb.FocusedKey.Text); // começa na primeira letra, não no "1" (P2-11)
+        kb.Handle(InputAction.NavigateUp); // linha dos números
         // Coluna 7 ("8") desce pelas letras até a barra de espaço (colunas 6-8) e segue para Concluir (colunas 6-10).
         for (var i = 0; i < 7; i++) kb.Handle(InputAction.NavigateRight);
         for (var i = 0; i < 4; i++) kb.Handle(InputAction.NavigateDown);

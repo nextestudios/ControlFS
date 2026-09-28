@@ -62,6 +62,18 @@ public sealed class VirtualKeyboard
         Caret = Math.Clamp(initialCaret ?? _length, 0, _length);
         if (initialSelection is { } selection) Select(selection.Start, selection.Length);
         Rebuild();
+        Row = FirstLetterRow();
+    }
+
+    /// <summary>
+    /// Foco inicial: a primeira tecla de letra (o "q"), não a linha de números — quem abre o teclado quase sempre começa
+    /// por uma letra (auditoria de UX, P2-11).
+    /// </summary>
+    private int FirstLetterRow()
+    {
+        for (var r = 0; r < Rows.Count; r++)
+            if (Rows[r] is [{ Kind: KeyKind.Character, Text: [var c] }, ..] && char.IsLetter(c)) return r;
+        return 0;
     }
 
     public TextFieldKind Kind { get; }

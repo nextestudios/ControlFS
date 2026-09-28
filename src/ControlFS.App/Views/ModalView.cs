@@ -308,11 +308,20 @@ public static partial class ModalView
             line.Children.Add(new TextBlock { Text = status, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
             footer.Children.Add(line);
         }
-        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody);
+        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody, KeyboardSecondaryPrompt(app));
         if (fadedHints) FadeHints(bar);
         footer.Children.Add(bar);
         return footer;
     }
+
+    /// <summary>
+    /// Teclado virtual nos portáteis: as legendas ficam nas essenciais (Selecionar, Apagar, Maiúsculas, Símbolos, Concluir,
+    /// Cancelar); mover o cursor e ir ao início/fim continuam funcionando, só não ocupam uma segunda linha.
+    /// </summary>
+    private static Func<ControllerPrompt, bool>? KeyboardSecondaryPrompt(AppController app) =>
+        app.TopModal is KeyboardModal && Theme.Layout.Tier == Core.Layout.LayoutTier.Compact
+            ? p => p.Action is InputAction.PreviousRegion or InputAction.NextRegion or InputAction.PageUp or InputAction.PageDown
+            : null;
 
     /// <summary>Se as legendas já estavam recolhidas no quadro anterior (o modal da imagem é refeito a cada quadro).</summary>
     private static bool _hintsFaded;
@@ -779,7 +788,7 @@ public static partial class ModalView
     private static Border BuildAbout(AppController app, AboutModal about)
     {
         var stack = new StackPanel { Spacing = Theme.SpaceM };
-        if (Branding.Logo is { } logo)
+        if (Branding.LogoFor(Theme.IsDark) is { } logo)
         {
             var image = new Image { Source = logo, Height = Theme.Scaled(64), HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform };
             AutomationProperties.SetName(image, "ControlFS");
@@ -988,8 +997,9 @@ public static partial class ModalView
         // Tecla focada: preenchida (como a opção focada dos menus), em negrito e um pouco maior.
         var cell = new Border
         {
-            Background = focused ? (enabled ? Theme.FocusFill : Theme.DisabledFill) : key.IsFunction ? Theme.ModalInset : Theme.ModalDivider,
-            BorderBrush = focused ? Theme.Text : isDone ? Theme.Accent : Theme.Transparent,
+            Background = focused ? (enabled ? Theme.FocusFill : Theme.DisabledFill) : key.IsFunction ? Theme.KeyFunctionFill : Theme.KeyFill,
+            // Só a tecla focada tem contorno: Concluir se distingue pelo texto em destaque, nunca por algo parecido com o foco.
+            BorderBrush = focused ? Theme.Text : Theme.Transparent,
             BorderThickness = Theme.Hairline,
             CornerRadius = new CornerRadius(Theme.Scaled(10)),
             Child = new TextBlock

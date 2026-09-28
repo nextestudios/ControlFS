@@ -54,6 +54,8 @@
     <Content Include="..\..\assets\controlfs.ico" Link="controlfs.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Logo com texto (cabeçalho da tela inicial e "Sobre"). -->
     <Content Include="..\..\assets\controlfs-logo-text-900.png" Link="controlfs-logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Variante do tema claro: as mesmas formas, com o nome escuro (sem placa atrás do logo). -->
+    <Content Include="..\..\assets\controlfs-logo-text-light-900.png" Link="controlfs-logo-light.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <!-- Componentes, não o metapacote Microsoft.WindowsAppSDK (#85): sem IA/ML, Widgets, Search e DWriteCore. -->

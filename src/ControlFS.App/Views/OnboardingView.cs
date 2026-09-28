@@ -52,18 +52,12 @@ public static partial class ModalView
         var top = new Grid { Margin = new Thickness(0, 0, CaptionReserve, 0) };
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        if (Branding.Logo is { } logo)
+        if (Branding.LogoFor(Theme.IsDark) is { } logo)
         {
+            // Tema claro: a variante com o nome escuro, sem placa atrás (a mesma do cabeçalho).
             var image = new Image { Source = logo, Height = Theme.Layout.LogoHeight, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform };
             AutomationProperties.SetName(image, "ControlFS");
-            top.Children.Add(new Border
-            {
-                Child = image,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Background = Theme.LogoPlate,
-                CornerRadius = new CornerRadius(Theme.Scaled(12)),
-                Padding = Theme.IsDark ? new Thickness(0) : new Thickness(Theme.SpaceS, Theme.SpaceXs, Theme.SpaceM, Theme.SpaceXs),
-            });
+            top.Children.Add(image);
         }
         var progress = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS, VerticalAlignment = VerticalAlignment.Center };
         progress.Children.Add(new TextBlock

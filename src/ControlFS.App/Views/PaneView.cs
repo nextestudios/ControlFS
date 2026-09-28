@@ -87,8 +87,8 @@ internal sealed class PaneView
         _root.Padding = new Thickness(0, Theme.Space(10), 0, Theme.Space(10));
         _title.Margin = _path.Margin = new Thickness(Theme.Space(18), 0, Theme.Space(18), 0);
         _path.Margin = new Thickness(Theme.Space(18), 0, Theme.Space(18), Theme.Space(8));
-        _title.FontSize = Theme.FontCaption;
-        _path.FontSize = Theme.FontCaption;
+        _title.FontSize = Theme.FontBody; // "PAINEL DIREITO · L3 ou Tab para ativar": lido de longe (auditoria de UX, P1-7)
+        _path.FontSize = Theme.FontBody;
         _empty.FontSize = Theme.FontBody;
         _title.Foreground = _path.Foreground = _empty.Foreground = Theme.TextMuted;
         _list.Padding = new Thickness(Theme.Space(10), 0, Theme.Space(10), 0);
