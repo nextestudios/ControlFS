@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 460" width="760" height="460" role="img" aria-labelledby="t d">
+<title id="t">ControlFS vs File Explorer vs Files, 5,000-file folder</title>
+<desc id="d">Bar chart of measured median values on a GitHub Windows runner: working set, private bytes and time to window.</desc>
+<style>text{font-family:Segoe UI,Helvetica,Arial,sans-serif;fill:#1f2328}.h{font-size:15px;font-weight:600}.l{font-size:13px}.v{font-size:13px;font-weight:600}.n{font-size:11px;fill:#57606a}@media (prefers-color-scheme:dark){text{fill:#e6edf3}.n{fill:#9198a1}}</style>
+<text class="h" x="20" y="30">RAM: working set (MB), lower is better</text>
+<text class="l" x="20" y="60">ControlFS</text>
+<rect x="150" y="44" width="259.6" height="22" rx="3" fill="#00a6d6"/>
+<text class="v" x="417.6" y="60">161.3 MB</text>
+<text class="l" x="20" y="92">File Explorer</text>
+<rect x="150" y="76" width="236.1" height="22" rx="3" fill="#8b949e"/>
+<text class="v" x="394.1" y="92">146.7 MB</text>
+<text class="l" x="20" y="124">Files</text>
+<rect x="150" y="108" width="430.0" height="22" rx="3" fill="#e8833a"/>
+<text class="v" x="588.0" y="124">267.2 MB</text>
+<text class="h" x="20" y="170">RAM: private bytes (MB), lower is better</text>
+<text class="l" x="20" y="200">ControlFS</text>
+<rect x="150" y="184" width="256.9" height="22" rx="3" fill="#00a6d6"/>
+<text class="v" x="414.9" y="200">65.9 MB</text>
+<text class="l" x="20" y="232">File Explorer</text>
+<rect x="150" y="216" width="224.9" height="22" rx="3" fill="#8b949e"/>
+<text class="v" x="382.9" y="232">57.7 MB</text>
+<text class="l" x="20" y="264">Files</text>
+<rect x="150" y="248" width="430.0" height="22" rx="3" fill="#e8833a"/>
+<text class="v" x="588.0" y="264">110.3 MB</text>
+<text class="h" x="20" y="310">Time until the window appears (ms), lower is better</text>
+<text class="l" x="20" y="340">ControlFS</text>
+<rect x="150" y="324" width="430.0" height="22" rx="3" fill="#00a6d6"/>
+<text class="v" x="588.0" y="340">754 ms</text>
+<text class="l" x="20" y="372">File Explorer</text>
+<rect x="150" y="356" width="347.9" height="22" rx="3" fill="#8b949e"/>
+<text class="v" x="505.9" y="372">610 ms</text>
+<text class="l" x="20" y="404">Files</text>
+<rect x="150" y="388" width="280.0" height="22" rx="3" fill="#e8833a"/>
+<text class="v" x="438.0" y="404">491 ms</text>
+<text class="n" x="20" y="444">Median of 3 runs, 5,000-file folder, GitHub Windows runner (no GPU). Details: docs/performance.md</text>
+</svg>
