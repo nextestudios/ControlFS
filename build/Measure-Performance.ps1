@@ -78,8 +78,15 @@ function Measure-Run([string] $Exe, [string] $LogDir, [string] $Package, [string
     $c = Get-Sample $p
     Start-Sleep -Seconds $IdleSeconds
     $d = Get-Sample $p
+    $exited = $p.HasExited
     Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
     $p.WaitForExit(10000) | Out-Null
+    Get-ChildItem -LiteralPath $LogDir -Filter *.log -ErrorAction SilentlyContinue |
+        ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $OutDir "$($_.BaseName)-$Package-$Run.log") }
+    if ($exited) {
+        Write-Host "::error::$Package/$Run fechou durante a medição (código 0x$('{0:X8}' -f $p.ExitCode))"
+        return [pscustomobject]@{ Package = $Package; Run = $Run; Error = "exited during the idle measurement (0x$('{0:X8}' -f $p.ExitCode))" }
+    }
     $row = [pscustomobject]@{
         Package = $Package; Run = $Run
         WindowMs = $window; FirstFrameMs = $frame
@@ -87,7 +94,6 @@ function Measure-Run([string] $Exe, [string] $LogDir, [string] $Package, [string
         BgCpuPct = Get-CpuPercent $c $d; BgWsMB = [math]::Round($d.Ws / 1MB, 1); BgPrivateMB = [math]::Round($d.Private / 1MB, 1); BgThreads = $d.Threads
         Foreground = $foreground; Minimized = $minimized
     }
-    Copy-Item -LiteralPath $log -Destination (Join-Path $OutDir "startup-$Package-$Run.log") -ErrorAction SilentlyContinue
     $row
 }
 
@@ -169,3 +175,5 @@ Write-Host $text
 if ($env:GITHUB_STEP_SUMMARY) { Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value $text }
 $rows | Where-Object { -not ($_.PSObject.Properties["Error"] -and $_.Error) -and (-not $_.Foreground -or -not $_.Minimized) } |
     ForEach-Object { Write-Host "::warning::$($_.Package)/$($_.Run): foreground=$($_.Foreground) minimized=$($_.Minimized) (measurement conditions not met)" }
+$failed = @($rows | Where-Object { $_.PSObject.Properties["Error"] -and $_.Error })
+if ($failed.Count -gt 0) { Write-Host "::error::$($failed.Count) execução(ões) sem medição completa (ver a tabela)"; exit 1 }
