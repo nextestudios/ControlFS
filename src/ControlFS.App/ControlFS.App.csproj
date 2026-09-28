@@ -72,5 +72,6 @@
     <ProjectReference Include="..\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
     <ProjectReference Include="..\ControlFS.Infrastructure.Git\ControlFS.Infrastructure.Git.csproj" />
     <ProjectReference Include="..\ControlFS.Infrastructure.Updates\ControlFS.Infrastructure.Updates.csproj" />
+    <ProjectReference Include="..\ControlFS.Infrastructure.Remote\ControlFS.Infrastructure.Remote.csproj" />
   </ItemGroup>
 </Project>

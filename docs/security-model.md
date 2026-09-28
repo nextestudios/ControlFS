@@ -133,3 +133,35 @@ download maior que o declarado, offline) e `UpdateFlowTests`. Riscos e limites: 
 ## Relato de vulnerabilidades
 
 Ver `SECURITY.md`.
+
+## Celular como controle (#223)
+
+O ControlFS abre um canal de rede que **controla o PC**, então ele só existe quando o usuário pede (Menu → Conectar
+celular) e é fechado em toda saída. Código: `src/ControlFS.Infrastructure.Remote` (servidor, HTTP, quadros),
+`src/ControlFS.Core/Remote` (sessão, mensagens, QR Code) e `AppController.Phone.cs` (permissão e entrada).
+
+| Defesa | Implementação | Teste |
+|---|---|---|
+| Nada escuta fora de uma sessão. O `TcpListener` nasce em Conectar celular, só no endereço IPv4 **privado** escolhido (10/8, 172.16/12, 192.168/16; nunca `0.0.0.0`, loopback, link-local ou IP público), numa porta alta aleatória com uso exclusivo. Para de escutar assim que um celular se autentica, e tudo fecha em Cancelar, Recusar, Desconectar (PC ou celular), 2 min sem uso, 2 min sem permissão, queda da conexão (keep-alive de 5 s, 15 s sem resposta) e ao fechar o app. | `PhoneLinkServer`, `LanAddresses`, `PhoneSession` | `PhoneLinkIntegrationTests` (porta fechada depois de Desconectar e depois de autenticar), `PhoneChannelTests.Session_*` |
+| Só aparelhos da rede local conectam (endereço de origem privado); no máximo 4 conexões TCP ao mesmo tempo durante o pareamento. | `PhoneLinkServer.IsAllowedPeer` | — |
+| HTTP mínimo: duas rotas (`GET /<sessão>` a página; `GET /<sessão>/ws` o WebSocket), só GET/HTTP/1.1, sem corpo, só ASCII e CRLF, cabeçalho ≤ 4 KB e ≤ 32 campos, 5 s para chegar, campo repetido recusado. `Host` tem de ser exatamente `IP:porta` (contra DNS rebinding) e `Origin` do WebSocket, `http://IP:porta`. A sessão é um id aleatório de 128 bits no caminho. | `HttpRequestParser` | `PhoneChannelTests.Http_parser_*`, `WebSocket_accept_*`, Origin estranha recusada em `PhoneLinkIntegrationTests` |
+| A página é um HTML único servido pelo app (sem CDN, fonte ou imagem de fora), com `Content-Security-Policy` que só permite o script com o hash SHA-256 embutido e conexões `ws://IP:porta`; `no-store`, `no-referrer`, `nosniff`, sem frames. | `CompanionPage`, `Companion/phone.html` | `PhoneLinkIntegrationTests` (cabeçalho CSP) |
+| Chave de 32 bytes aleatória **por pareamento**, só no **fragmento** do QR Code (`#k=…`: o navegador nunca o envia pela rede; a página o tira da barra de endereço). HKDF-SHA256(chave, sal = id da sessão) gera uma chave por sentido. Cada mensagem WebSocket é **AES-256-GCM** com nonce = contador de 64 bits que precisa ser exatamente o próximo; repetida, fora de ordem, adulterada ou do outro sentido **derruba a conexão** na primeira falha. As chaves são apagadas da memória ao encerrar. | `PhoneCrypto`, `FrameSealer`, `FrameOpener`; página: @noble/ciphers + @noble/hashes | `PhoneChannelTests.Keys_code_and_frames_match_the_phone_page_libraries` (vetores gerados pela biblioteca da página), `Frames_reject_*`, `PhoneLinkIntegrationTests.Tampered_frame_ends_the_session` |
+| Uso único: a primeira conexão que prova ter a chave fica com a sessão; outra é recusada (a porta já não escuta). Até 2 aberturas simultâneas e 8 falhas de autenticação antes de encerrar. Sem reconexão automática: cair a conexão mata a chave, e voltar exige um QR Code novo. | `PhoneSession` | `PhoneChannelTests.Session_*`, segundo celular recusado em `PhoneLinkIntegrationTests` |
+| **Permissão no PC**: o celular autenticado aparece com o IP e um código de 6 dígitos (HKDF da chave com um número aleatório que o próprio celular mandou), que a página também mostra. O diálogo é sensível, começa em Recusar e nada do celular vira entrada antes de Permitir. | `AppController.AskToAllowPhone`, `PhoneSession.TryAcceptInput` | `PhoneJourneyTests`, `PhoneLinkIntegrationTests` |
+| O celular só manda **ações semânticas** (as mesmas de um botão: direções, página, rolagem, abrir, voltar, marcar, ações, menu, buscar, lista/grade, regiões) e **texto** (≤ 256 caracteres, sem caracteres de controle) para o campo do teclado na tela; nunca caminhos, comandos ou dados arbitrários. JSON com campo desconhecido ou repetido é descartado; mensagens acima de 1 KB fecham a conexão; mais de 30/s (rajada de 60) são descartadas. | `PhoneProtocol`, `PhoneSession` | `PhoneChannelTests.Phone_messages_*`, `Session_limits_*` |
+| Com uma confirmação sensível aberta (excluir, excluir permanentemente, substituir, desfazer, mapear controle), o celular **só consegue Voltar** (a opção segura); texto também é ignorado. Mensagens são pressões avulsas: perder a conexão não deixa botão preso nem repetição no PC. | `AppController.HandlePhone` | `PhoneJourneyTests` |
+
+**Risco residual, dito às claras:** a página em si é servida por **HTTP simples** na rede local (navegadores de celular
+bloqueiam `crypto.subtle` em `http://` e um HTTPS autoassinado mostra alertas), então um atacante **ativo** na mesma rede
+(ARP spoofing, Wi-Fi comprometido) que intercepte o pedido da página pode trocá-la por outra e, com isso, ler a chave do
+fragmento e comandar o ControlFS pelo celular da vítima ou conectar primeiro. O que reduz esse risco: a sessão dura 2
+minutos e serve uma conexão só; o PC mostra o **IP** de quem conectou e pede **Permitir** (um IP inesperado é o sinal);
+o que o celular consegue fazer é limitado a ações de navegação e texto, e confirmações importantes continuam só no PC.
+Um atacante **passivo** (que só escuta a rede) vê o id da sessão mas não a chave, então não lê nem forja mensagens.
+Não use em redes em que você não confia (Wi-Fi público).
+
+**Criptografia escolhida:** AES-256-GCM, e não ChaCha20-Poly1305, porque o `ChaCha20Poly1305` do .NET só existe no
+Windows 10 build 20142+ / Windows 11, e o ControlFS roda no Windows 10 2004 (19041); o `AesGcm` usa o CNG em todas as
+versões suportadas. O formato do quadro (nonce de 96 bits com contador, etiqueta de 128 bits, chaves separadas por
+sentido) é o mesmo.

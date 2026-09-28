@@ -41,6 +41,21 @@ libgit2 (git2-5853918.dll, do pacote LibGit2Sharp.NativeBinaries 2.0.324)
   terceiros com licenças próprias (zlib, PCRE, http-parser, ntlmclient e outros), listadas em libgit2/libgit2.license.txt
   no pacote. O ControlFS não modifica a libgit2.
 
+@noble/ciphers 2.4.0 e @noble/hashes 2.4.0 (página do celular, #223)
+  Origem: https://github.com/paulmillr/noble-ciphers e https://github.com/paulmillr/noble-hashes (npm)
+  Licença: MIT — Copyright (c) 2022 Paul Miller (https://paulmillr.com); noble-ciphers também
+  Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>.
+  Só AES-GCM, HKDF e SHA-256, empacotados e minificados com esbuild em
+  src/ControlFS.Infrastructure.Remote/Companion/noble-ciphers.min.js, com o texto das duas licenças no topo do arquivo.
+  O arquivo vai embutido no ControlFS e é servido ao celular dentro da página; nada é baixado de fora. Para refazer:
+  `npm install @noble/ciphers@2.4.0 @noble/hashes@2.4.0 esbuild`, um entry que exporta { gcm } de
+  @noble/ciphers/aes.js, { hkdf } de @noble/hashes/hkdf.js e { sha256 } de @noble/hashes/sha2.js em
+  self.nobleControlFS, e `esbuild entry.js --bundle --minify --format=iife --target=safari15,chrome100 --legal-comments=none`.
+
+Codificador de QR Code (src/ControlFS.Core/Remote/QrCode.cs, #223)
+  Código próprio do ControlFS, escrito seguindo a estrutura do gerador de referência "QR Code generator library" de
+  Project Nayuki (https://www.nayuki.io/page/qr-code-generator-library, licença MIT — Copyright (c) Project Nayuki).
+
 .NET Runtime 10 (quando publicado como self-contained)
   Origem: https://github.com/dotnet/runtime
   Licença: MIT — Copyright (c) .NET Foundation and Contributors

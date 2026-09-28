@@ -76,7 +76,7 @@ Free code signing provided by [SignPath.io](https://about.signpath.io), certific
 - **Committers and reviewers:** [@nextestudios](https://github.com/nextestudios) (maintainer; every change goes through a pull request and CI)
 - **Approvers:** [@nextestudios](https://github.com/nextestudios) (each release is approved manually before signing)
 - **Build:** releases are built only by the public [release workflow](.github/workflows/release.yml) on GitHub Actions from a tag on `main`; the certificate never leaves the signing service.
-- **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The only network access is the optional update check against GitHub ([privacy policy](docs/PRIVACY.md)).
+- **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. The only internet access is the optional update check against GitHub; connecting a phone as a controller (Menu → Conectar celular) uses only your local network, and only while you use it ([privacy policy](docs/PRIVACY.md)).
 
 Details: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
 

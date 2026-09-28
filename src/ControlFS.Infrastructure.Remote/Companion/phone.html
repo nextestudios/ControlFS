@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>ControlFS · controle</title>
+<style>
+:root{--bg:#06101A;--surface:#0A1623;--card:#0F1D2A;--border:#17364D;--accent:#11C7FF;--text:#F5F8FC;--muted:#A4B4C8;--ok:#4CD98A;--warn:#F2C14E;--danger:#FF7A6E;--a:#2EB34A;--b:#E5393F;--x:#2C7FE8;--y:#F4C42F}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));max-width:560px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+.pill{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.pill.ok{color:#03101A;background:var(--ok);border-color:var(--ok)}
+.pill.warn{color:#03101A;background:var(--warn);border-color:var(--warn)}
+.pill.bad{color:#03101A;background:var(--danger);border-color:var(--danger)}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px}
+.muted{color:var(--muted);font-size:14px}
+.code{font:700 34px/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:3px;color:var(--accent);margin:6px 0}
+.banner{background:rgba(242,193,78,.14);border:1px solid var(--warn);color:var(--text);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:14px;min-height:52px;padding:6px 8px;touch-action:none;cursor:pointer}
+button:active,button.down{background:#123B5A;border-color:var(--accent)}
+button:disabled{opacity:.35}
+.pad{touch-action:none;height:120px;border-radius:16px;border:1px dashed var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;margin-bottom:12px;text-align:center;padding:8px}
+.dpad{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,64px);gap:8px;max-width:300px;margin:0 auto 12px}
+.dpad button{font-size:24px}
+.dpad .open{background:var(--a);border-color:var(--a);color:#03101A;font-size:17px;font-weight:700}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.row.three{grid-template-columns:repeat(3,1fr)}
+.face{font-weight:650;font-size:15px}
+.face i{display:block;font-style:normal;font-size:12px;opacity:.85}
+.fb{border-color:var(--b)} .fx{border-color:var(--x)} .fy{border-color:var(--y)}
+.small{font-size:14px}
+.text{display:flex;gap:8px;margin-top:8px}
+input{flex:1;min-width:0;font:inherit;font-size:17px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;-webkit-user-select:text;user-select:text}
+input:focus{outline:2px solid var(--accent);outline-offset:1px}
+input:disabled{opacity:.5}
+.text button{min-width:64px}
+.bye{width:100%;margin-top:4px;color:var(--danger);border-color:var(--danger)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>ControlFS</h1><span id="status" class="pill">Conectando…</span></header>
+
+<section id="pairing" class="panel">
+  <div id="pairingText" class="muted">Conectando ao PC…</div>
+  <div id="code" class="code" hidden></div>
+  <div id="codeHint" class="muted" hidden>Confira se o PC mostra o mesmo código e escolha <b>Permitir</b> lá.</div>
+</section>
+
+<main id="controls" hidden>
+  <div id="lock" class="banner" hidden>Há uma confirmação importante aberta: responda no PC. Daqui só funciona <b>Voltar</b>.</div>
+  <div id="pad" class="pad">Deslize aqui para rolar</div>
+  <div class="dpad">
+    <span></span><button data-a="up" data-repeat aria-label="Cima">▲</button><span></span>
+    <button data-a="left" data-repeat aria-label="Esquerda">◀</button>
+    <button data-a="confirm" class="open">Abrir</button>
+    <button data-a="right" data-repeat aria-label="Direita">▶</button>
+    <span></span><button data-a="down" data-repeat aria-label="Baixo">▼</button><span></span>
+  </div>
+  <div class="row">
+    <button data-a="back" data-safe class="face fb">Voltar</button>
+    <button data-a="mark" class="face fx">Marcar</button>
+    <button data-a="actions" class="face fy">Ações</button>
+    <button data-a="menu" class="face">Menu</button>
+  </div>
+  <div class="row">
+    <button data-a="search" class="small">Buscar</button>
+    <button data-a="view" class="small">Lista/Grade</button>
+    <button data-a="prev" class="small" aria-label="Região anterior">◀ Região</button>
+    <button data-a="next" class="small" aria-label="Próxima região">Região ▶</button>
+  </div>
+  <div class="row three">
+    <button data-a="pageUp" data-repeat class="small">Página ▲</button>
+    <button data-a="pageDown" data-repeat class="small">Página ▼</button>
+    <button id="erase" class="small">⌫ Apagar</button>
+  </div>
+  <section class="panel">
+    <div id="textHint" class="muted">Para digitar, abra um campo de texto no ControlFS (ex.: Buscar).</div>
+    <form id="form" class="text" autocomplete="off">
+      <input id="text" type="text" inputmode="text" enterkeyhint="done" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Texto para o ControlFS" disabled>
+      <button id="enter" type="submit" disabled>OK</button>
+    </form>
+  </section>
+</main>
+
+<button id="bye" class="bye" hidden>Desconectar</button>
+
+<script>/*@NOBLE@*/
+(() => {
+  'use strict';
+  const N = self.nobleControlFS;
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const $ = id => document.getElementById(id);
+  const AAD = enc.encode('ControlFS/1');
+  const b64u = {
+    dec(s) { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); },
+    enc(a) { return btoa(String.fromCharCode(...a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  };
+
+  function setStatus(text, tone) { const s = $('status'); s.textContent = text; s.className = 'pill' + (tone ? ' ' + tone : ''); }
+
+  // A chave vem no fragmento (#k=…), que o navegador nunca envia pela rede; sai da barra de endereço na hora.
+  const match = /(?:^#|&)k=([A-Za-z0-9_-]{43})(?:&|$)/.exec(location.hash);
+  history.replaceState(null, '', location.pathname);
+  if (!match) { setStatus('Sem chave', 'bad'); $('pairingText').textContent = 'Endereço incompleto. Escaneie o QR Code do ControlFS de novo.'; return; }
+  const key = b64u.dec(match[1]);
+  const sid = b64u.dec(location.pathname.slice(1));
+  const hk = (salt, info, len) => N.hkdf(N.sha256, key, salt, enc.encode(info), len);
+  const kOut = hk(sid, 'ControlFS phone v1 phone-to-pc', 32);
+  const kIn = hk(sid, 'ControlFS phone v1 pc-to-phone', 32);
+  let sendCounter = 0, recvCounter = 0, ended = false, ready = false, locked = false, keyboard = false;
+
+  function nonce(counter) { const n = new Uint8Array(12), v = new DataView(n.buffer); v.setUint32(4, Math.floor(counter / 4294967296)); v.setUint32(8, counter >>> 0); return n; }
+  function seal(obj) {
+    const counter = sendCounter++;
+    const ct = N.gcm(kOut, nonce(counter), AAD).encrypt(enc.encode(JSON.stringify(obj)));
+    const frame = new Uint8Array(8 + ct.length), v = new DataView(frame.buffer);
+    v.setUint32(0, Math.floor(counter / 4294967296)); v.setUint32(4, counter >>> 0); frame.set(ct, 8);
+    return frame;
+  }
+  function open(data) {
+    const f = new Uint8Array(data);
+    if (f.length < 24) throw new Error('short');
+    const v = new DataView(f.buffer, f.byteOffset), counter = v.getUint32(0) * 4294967296 + v.getUint32(4);
+    if (counter !== recvCounter) throw new Error('order');
+    const pt = N.gcm(kIn, nonce(counter), AAD).decrypt(f.subarray(8));
+    recvCounter++;
+    return JSON.parse(dec.decode(pt));
+  }
+
+  const ws = new WebSocket('ws://' + location.host + location.pathname + '/ws');
+  ws.binaryType = 'arraybuffer';
+
+  // Ritmo de envio abaixo do limite do PC (30/s): rajadas (apagar muito texto) esperam na fila em vez de se perder.
+  const queue = []; let tokens = 40, last = performance.now(), timer = 0;
+  function pump() {
+    timer = 0;
+    const now = performance.now(); tokens = Math.min(40, tokens + (now - last) * 0.025); last = now;
+    while (queue.length && tokens >= 1 && ws.readyState === 1) { ws.send(seal(queue.shift())); tokens--; }
+    if (queue.length) timer = setTimeout(pump, 45);
+  }
+  function send(obj) { if (ended || !ready) return; if (queue.length < 400) queue.push(obj); if (!timer) pump(); }
+  const act = a => { if (!locked || a === 'back') send({ t: 'a', a }); };
+
+  let code = '';
+  ws.onopen = () => {
+    const n = crypto.getRandomValues(new Uint8Array(16));
+    ws.send(seal({ t: 'hello', n: b64u.enc(n) }));
+    const c = hk(n, 'ControlFS phone v1 code', 4);
+    code = String(new DataView(c.buffer, c.byteOffset).getUint32(0) % 1000000).padStart(6, '0');
+    code = code.slice(0, 3) + ' ' + code.slice(3);
+    setStatus('Aguardando o PC', 'warn');
+  };
+  ws.onmessage = e => {
+    let msg;
+    try { msg = open(e.data); } catch (_) { finish('Mensagem inválida do PC. A conexão foi encerrada.'); return; }
+    if (msg.t === 'state' && msg.s === 'confirm') {
+      $('pairingText').textContent = 'Código de verificação:';
+      $('code').textContent = code; $('code').hidden = false; $('codeHint').hidden = false; $('bye').hidden = false;
+    } else if (msg.t === 'state' && msg.s === 'ready') {
+      ready = true; $('pairing').hidden = true; $('controls').hidden = false; $('bye').hidden = false;
+      setStatus('Conectado', 'ok');
+    } else if (msg.t === 'ui') {
+      locked = !!msg.lock; keyboard = !!msg.kb; applyUi();
+    } else if (msg.t === 'end') {
+      finish(reasons[msg.r] || 'Desconectado.');
+    }
+  };
+  ws.onclose = () => finish(ready ? 'A conexão com o PC caiu.' : 'Não foi possível conectar. O QR Code pode ter expirado ou já ter sido usado; gere outro no ControlFS.');
+  ws.onerror = () => {};
+
+  const reasons = {
+    Disconnected: 'O PC desconectou este celular.', Rejected: 'O PC recusou este celular.', Expired: 'O QR Code expirou.',
+    ConfirmationTimedOut: 'Ninguém permitiu no PC a tempo.', AppClosing: 'O ControlFS foi fechado.', PhoneLeft: 'Desconectado.',
+    AuthenticationFailed: 'Mensagem inválida. A conexão foi encerrada.', TooManyAttempts: 'Tentativas demais. Gere outro QR Code.',
+  };
+
+  function finish(text) {
+    if (ended) return;
+    ended = true; ready = false; queue.length = 0;
+    key.fill(0); kOut.fill(0); kIn.fill(0);
+    try { ws.close(); } catch (_) {}
+    $('controls').hidden = true; $('bye').hidden = true; $('pairing').hidden = false;
+    $('code').hidden = true; $('codeHint').hidden = true;
+    $('pairingText').textContent = text + ' Para conectar de novo, use Menu → Conectar celular no ControlFS e escaneie o novo QR Code.';
+    setStatus('Desconectado', 'bad');
+  }
+
+  function applyUi() {
+    $('lock').hidden = !locked;
+    document.querySelectorAll('button[data-a]').forEach(b => { b.disabled = locked && !b.hasAttribute('data-safe'); });
+    $('erase').disabled = locked || !keyboard;
+    const field = $('text');
+    field.disabled = $('enter').disabled = locked || !keyboard;
+    if (!keyboard) { field.value = ''; typed = []; }
+    $('textHint').textContent = keyboard ? 'Digite aqui: o texto vai para o campo aberto no ControlFS. OK conclui.' : 'Para digitar, abra um campo de texto no ControlFS (ex.: Buscar).';
+  }
+
+  // Botões: direções e páginas repetem enquanto seguradas; soltar, sair do botão ou esconder a página param na hora.
+  let repeat = 0, held = null;
+  function stopRepeat() { clearTimeout(repeat); clearInterval(repeat); repeat = 0; if (held) held.classList.remove('down'); held = null; }
+  document.querySelectorAll('button[data-a]').forEach(b => {
+    const a = b.dataset.a;
+    if (b.hasAttribute('data-repeat')) {
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault(); if (b.disabled) return;
+        stopRepeat(); held = b; b.classList.add('down'); act(a);
+        repeat = setTimeout(() => { repeat = setInterval(() => act(a), 110); }, 380);
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => b.addEventListener(t, stopRepeat));
+    } else {
+      b.addEventListener('click', () => act(a));
+    }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopRepeat(); });
+  window.addEventListener('blur', stopRepeat);
+
+  // Área de deslizar: cada 28 px viram um passo de rolagem (dedo para cima rola para baixo, como no celular).
+  const pad = $('pad'); let from = null;
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); from = { x: e.clientX, y: e.clientY }; pad.setPointerCapture(e.pointerId); });
+  pad.addEventListener('pointermove', e => {
+    if (!from || locked) return;
+    const dx = e.clientX - from.x, dy = e.clientY - from.y, step = 28;
+    if (Math.abs(dy) >= step && Math.abs(dy) >= Math.abs(dx)) { act(dy < 0 ? 'scrollDown' : 'scrollUp'); from.y += Math.sign(dy) * step; from.x = e.clientX; }
+    else if (Math.abs(dx) >= step) { act(dx < 0 ? 'scrollRight' : 'scrollLeft'); from.x += Math.sign(dx) * step; from.y = e.clientY; }
+  });
+  ['pointerup', 'pointercancel'].forEach(t => pad.addEventListener(t, () => { from = null; }));
+
+  // Texto: o campo do celular espelha o que foi digitado aqui; cada mudança vira apagar + inserir no campo do ControlFS.
+  const field = $('text'); let typed = [];
+  field.addEventListener('input', () => {
+    const now = Array.from(field.value);
+    let same = 0; while (same < typed.length && same < now.length && typed[same] === now[same]) same++;
+    for (let i = typed.length; i > same; i--) send({ t: 'key', k: 'backspace' });
+    const added = now.slice(same);
+    for (let i = 0; i < added.length; i += 100) {
+      const chunk = added.slice(i, i + 100).join('').replace(/[\u0000-\u001f\u007f-\u009f]/g, '');
+      if (chunk) send({ t: 'text', v: chunk });
+    }
+    typed = now;
+  });
+  $('form').addEventListener('submit', e => { e.preventDefault(); send({ t: 'key', k: 'enter' }); field.value = ''; typed = []; });
+  $('erase').addEventListener('click', () => { send({ t: 'key', k: 'backspace' }); if (typed.length) { typed.pop(); field.value = typed.join(''); } });
+  $('bye').addEventListener('click', () => { if (ws.readyState === 1) ws.send(seal({ t: 'bye' })); finish('Desconectado.'); });
+})();
+</script>
+</body>
+</html>

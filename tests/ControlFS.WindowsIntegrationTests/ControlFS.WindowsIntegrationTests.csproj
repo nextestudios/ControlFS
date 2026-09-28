@@ -8,6 +8,10 @@
     <NoWarn>$(NoWarn);CA1515;CA1707;CA2000;CA1001;CA1063;CA1816;xUnit1051;CA1849</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Fila de "UI" de thread única dos testes de jornada (celular como controle, #223). -->
+    <Compile Include="..\ControlFS.UnitTests\Support\UiContext.cs" Link="Support\UiContext.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -17,5 +21,7 @@
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Archives\ControlFS.Infrastructure.Archives.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Media\ControlFS.Infrastructure.Media.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Application\ControlFS.Application.csproj" />
+    <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Remote\ControlFS.Infrastructure.Remote.csproj" />
   </ItemGroup>
 </Project>

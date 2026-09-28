@@ -7,6 +7,7 @@
     <Project Path="src/ControlFS.Infrastructure.Git/ControlFS.Infrastructure.Git.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Input.Sdl3/ControlFS.Infrastructure.Input.Sdl3.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Media/ControlFS.Infrastructure.Media.csproj" />
+    <Project Path="src/ControlFS.Infrastructure.Remote/ControlFS.Infrastructure.Remote.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Updates/ControlFS.Infrastructure.Updates.csproj" />
     <Project Path="src/ControlFS.Infrastructure.Windows/ControlFS.Infrastructure.Windows.csproj" />
   </Folder>

@@ -285,6 +285,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Modal system (#172): every menu option and dialog button has an icon; destructive ones flagged, red + warning symbol, never the initial focus; input never reaches the screen under a modal (buttons, list clicks, tabs); nested modals close one at a time and focus returns; prompts and status inside the panel; solid panel with transparency off/high contrast | every modal | `ModalSystemJourneyTests` (4), UIA; Screens `m1`–`m9`, `icons/action-icons`; Manual "Modais (#172)" |
 | Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Configurações → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
 | About (version, license, source) | Menu → Sobre | `AboutJourneyTests` |
+| Phone as a controller (#223): Menu → Conectar celular… shows a QR code (URL, PC network, "Usar outra rede do PC" with 2+ networks, Cancelar); the phone's IP + 6-digit code ask Permitir/Recusar on the PC (sensitive, starts on Recusar); the phone page sends semantic actions and text to the on-screen keyboard; only Back during sensitive confirmations; Menu → Desconectar celular; header shows "Celular conectado (IP)" | Menu (list, section ControlFS); dialog modal with the QR code; header status | `PhoneJourneyTests` (2), `PhoneChannelTests` (7), `PhoneLinkIntegrationTests` (2, real listener); Screens `m10-phone-pairing`, `m10b-phone-allow`; Manual "Celular como controle (#223)" |
 
 ### Accessibility, layout and window
 

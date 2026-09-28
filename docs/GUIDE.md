@@ -67,6 +67,17 @@ Some generic USB pads, arcade sticks and adapters aren't recognized as gamepads.
 
 Keyboard: Esc cancels without saving, ← redoes the previous step, Enter skips an optional step. With no input for 20 seconds the wizard cancels itself. If the joystick already has a profile, saving asks before replacing it (starting on "Cancel"); cancelling at any point leaves the saved profile untouched. The profile applies again whenever that joystick is connected, including after restarting ControlFS. Menu → Configurações → Controllers without a profile also exports a profile to a folder and imports one (`.json`, up to 64 KB, validated; anything unexpected is refused).
 
+### Phone as a controller
+
+No controller or keyboard at hand? Use your phone (Android or iPhone, current Chrome or Safari), with no app to install and no account:
+
+1. Menu → **Conectar celular…** (connect phone). A QR code appears with the address under it. The phone must be on the same Wi-Fi or wired network as the PC.
+2. Point the phone's camera at the code and open the link. The first time, **Windows Firewall** may ask about ControlFS: allow it on **private networks** (if you deny it, the page won't open; allow it later in Windows Security → Firewall → Allow an app).
+3. The PC shows the phone's IP address and a 6-digit code; check that the phone shows the same code and choose **Permitir** (allow). Choose **Recusar** (refuse) if you don't recognize it.
+4. The page has a D-pad, a swipe area that scrolls, **Abrir** (open), **Voltar** (back), **Marcar** (mark), **Ações** (actions), **Menu**, **Buscar** (search), **Lista/Grade** (list/grid), region and page buttons. When a text field is open in ControlFS (search, rename, go to path…), type in the phone's field with its own keyboard; **OK** finishes, like OK on the on-screen keyboard.
+
+Important confirmations (delete, replace, undo) are answered on the PC: from the phone only **Voltar** works there. Menu → **Desconectar celular** (disconnect phone) or **Desconectar** on the phone ends the session; locking the phone, closing the page, losing the network or closing ControlFS does too. Each QR code works for 2 minutes and for one connection, so connecting again means Menu → Conectar celular again. If the PC has several networks (e.g. Wi-Fi and cable, or virtual adapters), **Usar outra rede do PC** switches the address. The link is direct and encrypted; don't use it on networks you don't trust (public Wi-Fi). Details: [security model](security-model.md#celular-como-controle-223) and [privacy](PRIVACY.md).
+
 ## Top bar: path and quick access
 
 The top bar is the same on every screen. On the left is the path: a root button (**Locais** on the home screen, the Recycle Bin and search results; **Meu computador**, "This PC", on folders and archives) followed by the real segments of where you are, for example `Meu computador › C:\ › Users › ana › Downloads`, or `Locais › Início` on the home screen. On the right is quick access: **Favoritos** (favorites), **Arquivos recentes** (recent), the Windows folders that exist on this PC (Downloads, Documents, Desktop, Pictures, Videos, Music), **Meu computador** and **Lixeira** (Recycle Bin), with the Windows icons. The bar is one region with a single focus, and its shoulder glyphs (LB/RB, L1/R1 or L/R, following the controller in use) sit at both ends. From the list, **LB** focuses the folder above and **RB** the first shortcut (on the home screen both go to Favoritos). In the bar, **LB/RB** and **Left/Right** move to the previous/next target, **LT/RT** jump to the first/last item of the part you are in, and **South** opens: a folder shortcut opens in the current tab (Back returns), Favoritos and Arquivos recentes open a list to choose from, **Meu computador** shows the drives in the current tab (Back returns), the **Meu computador** root does the same and the **Locais** root goes home. The last segment is the current folder: it is only the location label, so focus skips it (and it never reloads); the shortcut matching the current folder is highlighted and skipped as well. **Down** or **East** go back to the list, with the focus where it was.
@@ -254,7 +265,7 @@ With Narrator (or another UI Automation screen reader) on, the app announces whe
 
 ## Privacy
 
-Everything stays on your PC. Settings and logs live in `%LOCALAPPDATA%\ControlFS` (installed) or in `ControlFS_Data` next to `ControlFS-Portable-x64.exe` (portable). Passwords are never saved or logged. Core features never use the network. The only network access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off.
+Everything stays on your PC. Settings and logs live in `%LOCALAPPDATA%\ControlFS` (installed) or in `ControlFS_Data` next to `ControlFS-Portable-x64.exe` (portable). Passwords are never saved or logged. Core features never use the network. The only internet access is the update check, which sends nothing but a `ControlFS/<version>` User-Agent to GitHub and can be turned off. Connecting a phone (above) listens on your local network only while you use it.
 
 ## Troubleshooting
 

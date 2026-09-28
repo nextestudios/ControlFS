@@ -8,6 +8,7 @@ SDL3 (gamepad por posição física) ─► StickNormalizer (analógico) ─► 
      ─► InputAction ─► AppController (modal do topo ▸ tela) ─► comando
 Teclado físico ─► InputHost.OnKeyDown ─► InputAction (mesmo AppController)
 Mouse/toque ─► Pointer* (posiciona o foco) ─► Confirm (mesmo AppController)
+Celular (#223) ─► PhoneLinkServer (quadro autenticado) ─► PhoneProtocol ─► AppController.HandlePhone ─► InputAction / TypeText
 ```
 
 ## Mapeamento padrão (posições físicas)
@@ -52,6 +53,23 @@ perfil não têm R3 no assistente: usam Ctrl+G ou o Menu.
   confirmar/voltar (`ActionMap.ControlFor`), então trocar a convenção troca comportamento e legenda. Sem controle ativo,
   ou depois de uma tecla do teclado físico, mostra teclas; a próxima pressão do controle volta aos glifos. A UI nunca
   testa nomes de dispositivo.
+
+## Celular como controle (#223)
+
+- Um toque na página do celular vira **uma** `InputAction` (direções, `PageUp/PageDown`, `Scroll*` pela área de deslizar,
+  `Confirm`, `Back`, `ToggleSelection`, `OpenContextMenu`, `OpenAppMenu`, `Search`, `ChangeView`,
+  `PreviousRegion/NextRegion`), entregue direto ao `AppController.Handle`, como o teclado físico: não passa pelo
+  `InputRouter`, não muda o controle ativo nem as legendas e não tem estado mantido. Segurar uma seta na página repete
+  **no celular** (380 ms, depois a cada 110 ms) mandando pressões avulsas; soltar, sair do botão, esconder a página ou
+  perder a conexão param na hora e nada fica preso no PC.
+- Texto do teclado do celular vai para o campo do teclado na tela aberto (`TypeText`, `TypeBackspace`); Enter do
+  celular é o OK do teclado na tela (`OpenAppMenu` nele). Sem teclado na tela aberto, texto é ignorado e a página
+  desativa o campo.
+- Confirmação sensível aberta (`Modal.IsSensitive`: excluir, substituir, desfazer, mapear controle): do celular só passa
+  `Back` (a opção segura); o resto é descartado com um aviso no rodapé e a página mostra "responda no PC". É o mesmo
+  princípio do `InputRouter.AllowAutomaticActivation` (outro dispositivo não assume uma confirmação sensível).
+- Nada do celular chega antes de o usuário escolher Permitir no PC. Testes: `PhoneJourneyTests`,
+  `PhoneLinkIntegrationTests`; manual: `docs/TESTING.md` → Celular como controle.
 
 ## Joysticks sem perfil (#79)
 

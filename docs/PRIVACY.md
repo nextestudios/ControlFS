@@ -11,7 +11,13 @@ the user or the person installing or operating it.
   User-Agent; GitHub sees the IP address like for any web request ([GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)).
   Turn it off in Menu → Atualizações → "Verificar automaticamente"; a manual "Verificar agora" still works on request.
 - **Network locations:** ControlFS lists the mapped drives and network locations Windows already knows (read locally) and
-  only contacts a server when you open that place. It has no network stack of its own and never stores network credentials.
+  only contacts a server when you open that place. It never stores network credentials.
+- **Phone as a controller (optional, #223):** only when you choose Menu → Conectar celular, ControlFS listens on one
+  private address of your local network (never the internet) for up to 2 minutes, for one phone. The phone and the PC
+  talk directly over your Wi-Fi/wired network, encrypted with a key that is created for that pairing and never leaves the
+  QR code; no cloud service, account or relay is involved and nothing is stored. The phone only sends navigation
+  actions and the text you type; the PC only sends back whether a text field is open. It stops listening when you
+  disconnect, when the phone disconnects or when ControlFS closes. Windows Firewall may ask for permission the first time.
 - **Opening files with Windows** ("Abrir com…", default programs, File Explorer) hands the file to programs the user
   chooses; what they do is governed by their own policies.
 
@@ -26,6 +32,12 @@ especificamente pelo usuário ou por quem o instala ou opera.
   no máximo uma vez por dia, e só baixa das releases do projeto no GitHub. O pedido leva apenas o User-Agent
   `ControlFS/<versão>`; o GitHub vê o endereço IP como em qualquer acesso à web. Desligue em Menu → Atualizações → "Verificar automaticamente"; "Verificar agora" continua funcionando quando pedido.
 - **Locais de rede:** o ControlFS lista as unidades mapeadas e os locais de rede que o Windows já conhece (lidos
-  localmente) e só contata um servidor quando você abre aquele local. Não tem pilha de rede própria nem guarda credenciais de rede.
+  localmente) e só contata um servidor quando você abre aquele local. Não guarda credenciais de rede.
+- **Celular como controle (opcional, #223):** só quando você escolhe Menu → Conectar celular, o ControlFS escuta num
+  endereço privado da sua rede local (nunca a internet) por até 2 minutos, para um celular. Celular e PC conversam direto
+  pela sua rede Wi-Fi/cabo, cifrados com uma chave criada para aquele pareamento que só existe no QR Code; não há serviço
+  na nuvem, conta nem retransmissor, e nada fica guardado. O celular só manda ações de navegação e o texto que você digita;
+  o PC só responde se há um campo de texto aberto. Para de escutar ao desconectar, quando o celular desconecta ou ao
+  fechar o ControlFS. Na primeira vez o Firewall do Windows pode pedir permissão.
 - **Abrir arquivos com o Windows** ("Abrir com…", programa padrão, Explorador de Arquivos) entrega o arquivo a programas
   escolhidos pelo usuário, que seguem as próprias políticas.

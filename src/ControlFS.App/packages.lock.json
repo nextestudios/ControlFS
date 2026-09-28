@@ -101,6 +101,12 @@
           "ControlFS.Core": "[0.1.0, )"
         }
       },
+      "controlfs.infrastructure.remote": {
+        "type": "Project",
+        "dependencies": {
+          "ControlFS.Core": "[0.1.0, )"
+        }
+      },
       "controlfs.infrastructure.updates": {
         "type": "Project",
         "dependencies": {

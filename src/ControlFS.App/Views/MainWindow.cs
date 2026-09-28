@@ -30,12 +30,15 @@ namespace ControlFS.App.Views;
 /// Janela única: cabeçalho (local + estado), lista virtualizada, rodapé de comandos contextuais
 /// e camada modal. Toda interação vira InputAction no AppController.
 /// </summary>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost, o serviço de atualização, os ícones e o monitor de unidades são descartados no evento Closed da janela.")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost, o serviço de atualização, o canal do celular, os ícones e o monitor de unidades são descartados no evento Closed da janela.")]
 public sealed class MainWindow : Window
 {
     private readonly AppController _app;
     private readonly InputHost _input;
     private readonly GitHubReleaseUpdateService? _updates;
+
+    /// <summary>Celular como controle (#223). Só escuta na rede durante uma sessão que o usuário abriu; null nas capturas.</summary>
+    private readonly Infrastructure.Remote.PhoneLinkServer? _phone;
     private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
     private readonly Windows.UI.ViewManagement.AccessibilitySettings _accessibility = new();
     private bool _layoutPinned;
@@ -127,6 +130,11 @@ public sealed class MainWindow : Window
             PlaybackPositions = new JsonPlaybackPositionStore(data),
         };
         if (dataDirectory is null) _video.ActiveChanged += OnVideoActive; // nas capturas a janela não muda de modo
+        if (dataDirectory is null)
+        {
+            _phone = new Infrastructure.Remote.PhoneLinkServer();
+            _app.AttachPhoneLink(_phone);
+        }
         _input = new InputHost(_app, DispatcherQueue);
         _icons = new IconLoader(_iconProvider);
         _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
@@ -199,6 +207,7 @@ public sealed class MainWindow : Window
             _app.ReleaseMediaForShutdown();
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
+            _phone?.Dispose(); // para de escutar e avisa o celular
             _updates?.Dispose();
             _iconProvider.Dispose();
             _drives.Dispose();
@@ -481,6 +490,7 @@ public sealed class MainWindow : Window
             : device is not null
                 ? device.Name + (_input.Devices.Count > 1 ? $" (+{_input.Devices.Count - 1})" : string.Empty)
                 : _input.Devices.Count > 0 ? $"{Plural.Of(_input.Devices.Count, "controle", "controles")} — pressione um botão para ativar" : "Nenhum controle — teclado disponível";
+        if (_app.PhoneStatusText is { } phone) _device.Text += " · " + phone;
         var op = _app.Operations.Current;
         _operation.Text = op is null
             ? _app.UpdateState switch

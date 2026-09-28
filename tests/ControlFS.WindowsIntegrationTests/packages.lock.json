@@ -157,6 +157,12 @@
           "xunit.v3.runner.common": "[3.2.2]"
         }
       },
+      "controlfs.application": {
+        "type": "Project",
+        "dependencies": {
+          "ControlFS.Core": "[0.1.0, )"
+        }
+      },
       "controlfs.core": {
         "type": "Project"
       },
@@ -169,6 +175,12 @@
         }
       },
       "controlfs.infrastructure.media": {
+        "type": "Project",
+        "dependencies": {
+          "ControlFS.Core": "[0.1.0, )"
+        }
+      },
+      "controlfs.infrastructure.remote": {
         "type": "Project",
         "dependencies": {
           "ControlFS.Core": "[0.1.0, )"
