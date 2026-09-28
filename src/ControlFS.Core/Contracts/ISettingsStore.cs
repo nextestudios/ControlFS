@@ -83,6 +83,14 @@ public sealed record AppSettings
     public bool SyncInputToDisplay { get; init; } = true;
 
     /// <summary>
+    /// Leve em segundo plano (docs/performance.md): com a janela inativa ou minimizada (o usuário foi jogar), o ControlFS
+    /// cede CPU (prioridade abaixo do normal e modo de eficiência do Windows), lê os controles só para notar conexões, para
+    /// de consultar unidades e devolve a memória livre depois de alguns segundos. Cópias e extrações continuam, mais
+    /// devagar enquanto a janela estiver em segundo plano. Mídia tocando mantém a prioridade normal.
+    /// </summary>
+    public bool LightInBackground { get; init; } = true;
+
+    /// <summary>
     /// Experimental (#77): no teclado virtual, girar/inclinar um controle com giroscópio (DualSense e outros que o SDL expõe)
     /// aponta as teclas. Desligado por padrão; o sensor só é ligado com isto ativo. O direcional continua funcionando.
     /// </summary>

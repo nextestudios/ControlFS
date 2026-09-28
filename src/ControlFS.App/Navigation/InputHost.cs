@@ -16,15 +16,14 @@ namespace ControlFS.App.Navigation;
 
 /// <summary>
 /// Liga as fontes físicas (SDL3 e teclado) ao AppController por meio de ações semânticas.
-/// O SDL é inicializado e bombeado na thread de UI por um DispatcherQueueTimer curto; em
-/// segundo plano a cadência cai e o roteamento para a UI é suspenso (sem capturar comandos globais).
+/// O SDL é inicializado e bombeado na thread de UI (cadência em <see cref="InputCadence"/>): rápida só com a janela ativa
+/// e um controle conectado; em segundo plano o SDL fica em silêncio (só conexões) e o roteamento para a UI é suspenso
+/// (sem capturar comandos globais).
 /// Joysticks sem perfil de gamepad: eventos crus vão ao assistente (AppController) ou, com perfil salvo, viram
 /// controles físicos pelo <see cref="ControllerProfileTranslator"/> e seguem o mesmo caminho dos gamepads.
 /// </summary>
 public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDiagnostics, IDisposable
 {
-    private static readonly TimeSpan ActiveInterval = TimeSpan.FromMilliseconds(8);
-    private static readonly TimeSpan BackgroundInterval = TimeSpan.FromMilliseconds(120);
     private readonly AppController _app;
     private readonly Sdl3InputBackend _backend = new(InputSettings.Default);
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -78,24 +77,26 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         BackendError = error;
         _backend.SetGyroEnabled(app.Settings.GyroKeyboard);
         _timer = queue.CreateTimer();
-        _timer.Interval = ActiveInterval;
+        _timer.Interval = InputCadence.Active;
         _timer.IsRepeating = true;
         _timer.Tick += (_, _) => Pump();
         UpdateCadence();
     }
 
     /// <summary>
-    /// Cadência da leitura. Com a janela ativa e "Fluidez máxima", uma thread leve acorda a cada 8 ms (~125 leituras por
-    /// segundo, o bastante para telas de 120 Hz) com o relógio do Windows em 1 ms e pede à thread de UI um Pump — nunca
-    /// mais de um pendente. Não usa CompositionTarget.Rendering: ele obriga o compositor a desenhar quadros sem parar,
-    /// gasta bateria e derrubava o app no renderizador de software do Windows (WARP: VMs, área de trabalho remota, CI).
-    /// Sem "Fluidez máxima" ou em segundo plano: o temporizador da UI (8 ms ativo, na prática ~15,6 ms; 120 ms em
-    /// segundo plano, só para notar conexões).
+    /// Cadência da leitura (<see cref="InputCadence"/>). Com a janela ativa, um controle conectado e "Fluidez máxima", uma
+    /// thread leve acorda a cada 8 ms (~125 leituras por segundo, o bastante para telas de 120 Hz) com o relógio do
+    /// Windows em 1 ms e pede à thread de UI um Pump — nunca mais de um pendente. Não usa CompositionTarget.Rendering: ele
+    /// obriga o compositor a desenhar quadros sem parar, gasta bateria e derrubava o app no renderizador de software do
+    /// Windows (WARP: VMs, área de trabalho remota, CI). Nos outros casos, o temporizador da UI: 8 ms (na prática ~15,6 ms)
+    /// sem "Fluidez máxima"; 250 ms sem controle (teclado e mouse chegam por eventos; só falta notar a conexão de um); em
+    /// segundo plano, 1 s com "Leve em segundo plano" (120 ms sem ela), só para notar conexões.
     /// </summary>
     private void UpdateCadence()
     {
-        var fast = _active && _app.Settings.SyncInputToDisplay;
-        if (fast)
+        var poll = InputCadence.Decide(_active, _devices.Count > 0, _app.Settings.SyncInputToDisplay, _app.Settings.LightInBackground);
+        _backend.SetQuiet(poll.QuietDevices);
+        if (poll.UseTicker)
         {
             _timer.Stop();
             StartTicker();
@@ -103,7 +104,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         else
         {
             StopTicker();
-            _timer.Interval = _active ? ActiveInterval : BackgroundInterval;
+            _timer.Interval = poll.Interval;
             if (!_timer.IsRunning) _timer.Start();
         }
     }
@@ -132,7 +133,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         var next = clock.Elapsed;
         while (_tickerRunning)
         {
-            next += ActiveInterval;
+            next += InputCadence.Active;
             if (Interlocked.Exchange(ref _pumpQueued, 1) == 0 && !_queue.TryEnqueue(RunQueuedPump)) _pumpQueued = 0;
             var wait = next - clock.Elapsed;
             if (wait > TimeSpan.Zero) Thread.Sleep(wait);
@@ -235,6 +236,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     {
         _devices[device.SessionKey] = device;
         if (!device.IsGamepad) ApplyProfile(device);
+        UpdateCadence(); // primeiro controle: leitura rápida
         PublishGyro();
         _app.OnControllersChanged();
         StatusChanged?.Invoke();
@@ -293,6 +295,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
         _gyros.Remove(deviceKey);
         _app.OnRawDeviceRemoved(deviceKey);
         Router.OnDeviceRemoved(deviceKey); // operações em andamento NÃO são afetadas
+        UpdateCadence(); // sem controle: leitura lenta
         _app.OnControllersChanged();
         StatusChanged?.Invoke();
     }

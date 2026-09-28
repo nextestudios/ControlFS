@@ -21,7 +21,8 @@ public static class Branding
     {
         var path = Path.Join(AppContext.BaseDirectory, file);
         if (!File.Exists(path)) return null;
-        var image = new BitmapImage();
+        // Decodificada na altura em que aparece (até 128 px lógicos: 64 no "Sobre" na escala máxima de layout), não nos 900 px do arquivo.
+        var image = new BitmapImage { DecodePixelType = DecodePixelType.Logical, DecodePixelHeight = 128 };
         var stream = File.OpenRead(path);
         _ = LoadAsync(image, stream);
         return image;

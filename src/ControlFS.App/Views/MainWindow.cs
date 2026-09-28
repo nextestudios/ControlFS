@@ -48,6 +48,8 @@ public sealed class MainWindow : Window
     private readonly bool _captures;
     private readonly ShellIconProvider _iconProvider = new();
     private readonly DriveWatcher _drives = new();
+    /// <summary>"Leve em segundo plano" (docs/performance.md); null nas capturas.</summary>
+    private readonly BackgroundMode? _background;
     private readonly IconLoader _icons;
     private readonly IconLoader _tileIcons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
@@ -141,6 +143,7 @@ public sealed class MainWindow : Window
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
             PlaybackPositions = new JsonPlaybackPositionStore(data),
             // Boas-vindas (#231) só na primeira execução do app de verdade: nunca nas capturas nem com --no-onboarding.
+            DeferUpdateCheckToFirstFrame = dataDirectory is null,
             OfferOnboarding = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
         };
         if (dataDirectory is null)
@@ -150,15 +153,17 @@ public sealed class MainWindow : Window
         }
         var inputStarted = startup.ElapsedMilliseconds;
         _input = new InputHost(_app, DispatcherQueue);
+        if (dataDirectory is null) _background = new BackgroundMode(_app, DispatcherQueue, _drives);
         AppLog.Info($"MainWindow: serviços em {inputStarted} ms; entrada (SDL) em {startup.ElapsedMilliseconds - inputStarted} ms");
         _icons = new IconLoader(_iconProvider);
-        _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize);
-        _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize);
+        // Caches por tamanho: ícones grandes custam mais por entrada (144 px no dobro da escala ≈ 330 KB), então guardam menos.
+        _tileIcons = new IconLoader(_iconProvider, IconLoader.TileIconSize, capacity: 256);
+        _navIcons = new IconLoader(_iconProvider, TopBarView.IconSize, capacity: 128);
         _topBar = new TopBarView(_app, _navIcons);
-        _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize);
+        _cardIcons = new IconLoader(_iconProvider, HomeView.IconSize, capacity: 128);
         _home = new HomeView(_app, _cardIcons);
         _listHeader = new ListHeaderView(_app);
-        _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
+        _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize, capacity: 32);
         _details = new DetailsPanelView(_detailIcons);
         _paneView = new PaneView(_app, _icons);
         _toast = new StatusToastView(DispatcherQueue);
@@ -207,6 +212,7 @@ public sealed class MainWindow : Window
             UpdateLayoutProfile();
             _root.XamlRoot.Changed += (_, _) =>
             {
+                if (_titleBar.IsMinimized) return; // minimizar não refaz o layout (nem o desfaz ao voltar)
                 UpdateLayoutProfile(); // tamanho, monitor ou DPI
                 _titleBar.Update();
             };
@@ -233,6 +239,7 @@ public sealed class MainWindow : Window
         {
             var active = e.WindowActivationState != WindowActivationState.Deactivated;
             _input.OnWindowActivated(active);
+            _background?.OnWindowActivated(active);
             _titleBar.SetActive(active);
             if (active) _root.Focus(FocusState.Programmatic);
         };
@@ -280,6 +287,7 @@ public sealed class MainWindow : Window
     private void OnFirstFrame()
     {
         AppLog.Info($"Primeiro quadro ({AppLog.SinceProcessStart()} ms desde o início do processo)");
+        _app.OnFirstFrame(); // verificação automática de atualizações, se for a hora
     }
 
     private Grid BuildLayout()

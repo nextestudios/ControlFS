@@ -24,6 +24,18 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
     private IInputSink? _sink;
     private bool _initialized;
     private bool _gyroWanted;
+    private bool _quiet;
+    private SDL_EventType[]? _quietedTypes;
+
+    /// <summary>Entradas que o modo silencioso desliga no SDL; conexões e desconexões continuam chegando.</summary>
+    private static readonly SDL_EventType[] InputEventTypes =
+    [
+        SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EventType.SDL_EVENT_JOYSTICK_BALL_MOTION, SDL_EventType.SDL_EVENT_JOYSTICK_HAT_MOTION,
+        SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN, SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP, SDL_EventType.SDL_EVENT_JOYSTICK_UPDATE_COMPLETE,
+        SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION, SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN, SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP,
+        SDL_EventType.SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN, SDL_EventType.SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION, SDL_EventType.SDL_EVENT_GAMEPAD_TOUCHPAD_UP,
+        SDL_EventType.SDL_EVENT_GAMEPAD_SENSOR_UPDATE, SDL_EventType.SDL_EVENT_GAMEPAD_UPDATE_COMPLETE,
+    ];
     private int? _threadId;
 
     public IReadOnlyList<InputDeviceInfo> Devices => _devices.Values.Select(d => d.Info).ToList();
@@ -135,14 +147,52 @@ public sealed unsafe class Sdl3InputBackend(InputSettings settings) : IInputBack
         foreach (var device in _devices.Values) ApplyGyro(device);
     }
 
+    /// <summary>
+    /// Modo silencioso (janela em segundo plano, docs/performance.md): o SDL deixa de enfileirar botões, eixos e sensores
+    /// — um jogo usando o mesmo controle não enche a fila de um app que não vai usá-los — e o giroscópio desliga. Ao
+    /// sair, o estado dos analógicos e gatilhos é relido sem gerar ações: segurar algo ao voltar não dispara nada, como
+    /// antes (o roteador também esquece o que estava mantido).
+    /// </summary>
+    public void SetQuiet(bool quiet)
+    {
+        if (quiet == _quiet) return;
+        _quiet = quiet;
+        if (!_initialized) return;
+        if (quiet)
+        {
+            _quietedTypes ??= [.. InputEventTypes.Where(type => SDL_EventEnabled((uint)type))]; // os desligados por padrão ficam como estão
+            foreach (var type in _quietedTypes) SDL_SetEventEnabled((uint)type, false);
+        }
+        else
+        {
+            foreach (var type in _quietedTypes ?? []) SDL_SetEventEnabled((uint)type, true);
+            foreach (var device in _devices.Values) ResyncAxes(device);
+        }
+        foreach (var device in _devices.Values) ApplyGyro(device);
+    }
+
+    private void ResyncAxes(SdlDevice device)
+    {
+        if (device.Gamepad == null) return;
+        double Axis(SDL_GamepadAxis axis) => SDL_GetGamepadAxis(device.Gamepad, axis) / 32767.0;
+        device.StickX = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTX);
+        device.StickY = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY);
+        device.Stick.Update(device.StickX, device.StickY);
+        device.RightX = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX);
+        device.RightY = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY);
+        device.LeftTriggerDown = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > settings.TriggerThreshold;
+        device.RightTriggerDown = Axis(SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) > settings.TriggerThreshold;
+    }
+
     /// <summary>O gamepad tem giroscópio e ele está ligado.</summary>
     public bool HasGyro(string deviceKey) => _devices.Values.Any(d => d.GyroOn && d.Info.SessionKey == deviceKey);
 
     private void ApplyGyro(SdlDevice device)
     {
         if (device.Gamepad == null || !SDL_GamepadHasSensor(device.Gamepad, SDL_SensorType.SDL_SENSOR_GYRO)) return;
-        if (device.GyroOn == _gyroWanted) return;
-        device.GyroOn = SDL_SetGamepadSensorEnabled(device.Gamepad, SDL_SensorType.SDL_SENSOR_GYRO, _gyroWanted) && _gyroWanted;
+        var wanted = _gyroWanted && !_quiet;
+        if (device.GyroOn == wanted) return;
+        device.GyroOn = SDL_SetGamepadSensorEnabled(device.Gamepad, SDL_SensorType.SDL_SENSOR_GYRO, wanted) && wanted;
     }
 
     private void OnAxis(SdlDevice device, SDL_GamepadAxis axis, double value, TimeSpan now)
