@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Fixes
+- The welcome screens now show once for people who reinstall or update too (the data folder survives a reinstall, and old preferences were treated as "already seen"). To see them again anytime: Menu → Ajuda e tutorial → Rever boas-vindas.
 
 ## [0.10.0-alpha.1]
 ### Performance

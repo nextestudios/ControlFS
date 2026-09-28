@@ -75,12 +75,19 @@ public class OnboardingJourneyTests : IDisposable
     });
 
     [Fact]
-    public void Existing_users_tests_and_the_harness_never_see_it_unless_asked_and_menu_reopens_it_with_start_skipping() => UiContext.Run(async () =>
+    public void Reinstalls_see_it_once_the_harness_never_unless_asked_and_menu_reopens_it_with_start_skipping() => UiContext.Run(async () =>
     {
-        // Preferências de antes das boas-vindas (quem atualiza o app, e o script de UI Automation): não aparecem.
+        // Preferências de antes das boas-vindas (quem reinstala ou atualiza): ainda não viram, então aparecem uma vez...
         var upgraded = _data.MakeDir("upgraded");
         await File.WriteAllTextAsync(Path.Join(upgraded, "settings.json"), "{ \"AutoCheckUpdates\": false }");
-        Assert.Null(Launch(upgraded).TopModal);
+        var reinstalled = Launch(upgraded);
+        Assert.IsType<OnboardingModal>(reinstalled.TopModal);
+        reinstalled.SkipOnboarding();
+        Assert.Null(Launch(upgraded).TopModal); // ...e, vistas ou puladas, nunca mais sozinhas
+        // Quem já as viu (o script de UI Automation grava isso) não as vê.
+        var seen = _data.MakeDir("seen");
+        await File.WriteAllTextAsync(Path.Join(seen, "settings.json"), "{ \"OnboardingCompleted\": true }");
+        Assert.Null(Launch(seen).TopModal);
         // Primeira execução sem a janela real (testes, gerador de capturas, --no-onboarding): não aparecem.
         var app = Launch(_data.MakeDir("fresh"), offer: false);
         Assert.Null(app.TopModal);

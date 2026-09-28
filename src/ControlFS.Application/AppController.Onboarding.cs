@@ -29,7 +29,9 @@ public sealed partial class AppController
     /// <summary>Tutorial guiado em andamento (null: nenhum).</summary>
     public GuidedTutorial? Tutorial { get; private set; }
 
-    private bool OnboardingPending => OfferOnboarding && Settings.OnboardingCompleted == false;
+    // Mostra uma vez a quem ainda não viu: instalação nova (false) e também preferências de antes das boas-vindas (null),
+    // por exemplo quem reinstala ou atualiza — a pasta de dados sobrevive à reinstalação.
+    private bool OnboardingPending => OfferOnboarding && Settings.OnboardingCompleted != true;
 
     // ---------- Boas-vindas ----------
 
