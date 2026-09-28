@@ -12,12 +12,6 @@ namespace ControlFS.Infrastructure.Windows.Settings;
 public sealed class JsonSettingsStore(string directory) : ISettingsStore
 {
     private const long MaxSettingsBytes = 1024 * 1024;
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     public string FilePath => Path.Join(directory, "settings.json");
 
     /// <summary>Pasta padrão do modo instalado: %LOCALAPPDATA%\ControlFS.</summary>
@@ -33,7 +27,7 @@ public sealed class JsonSettingsStore(string directory) : ISettingsStore
         {
             var info = new FileInfo(FilePath);
             if (info.Length > MaxSettingsBytes) throw new InvalidDataException("Arquivo de configuração grande demais.");
-            var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), Options) ?? throw new InvalidDataException("Vazio.");
+            var settings = JsonSerializer.Deserialize(File.ReadAllText(FilePath), SettingsJsonContext.Default.AppSettings) ?? throw new InvalidDataException("Vazio.");
             if (settings.SchemaVersion > AppSettings.CurrentSchemaVersion)
                 return new(new AppSettings(), false, "Configuração criada por versão mais nova; usando padrões sem sobrescrever o arquivo.");
             return new(Migrate(settings), false, null);
@@ -60,9 +54,17 @@ public sealed class JsonSettingsStore(string directory) : ISettingsStore
         var temp = FilePath + ".tmp";
         using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            JsonSerializer.Serialize(stream, settings, Options);
+            JsonSerializer.Serialize(stream, settings, SettingsJsonContext.Default.AppSettings);
             stream.Flush(flushToDisk: true);
         }
         File.Move(temp, FilePath, overwrite: true);
     }
 }
+
+/// <summary>
+/// Serialização gerada em compilação: a primeira leitura das preferências, no caminho da abertura, não monta conversores
+/// por reflexão (docs/performance.md). Mesmo formato do arquivo: nomes como estão, enums por nome, recuado.
+/// </summary>
+[JsonSourceGenerationOptions(WriteIndented = true, UseStringEnumConverter = true)]
+[JsonSerializable(typeof(AppSettings))]
+internal sealed partial class SettingsJsonContext : JsonSerializerContext;

@@ -4,6 +4,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 ### Desempenho
+- **Abertura mais rápida (preferências):** o arquivo de preferências é lido com código JSON gerado na compilação, em vez de reflexão, tirando a primeira leitura do caminho da abertura.
 - **Abrir pasta mais rápido:** a ordenação por nome não pede mais ao Windows para comparar cada letra (uma pasta de 5.000 arquivos ordenava em ~35 ms, agora ~15 ms na medição do CI). O log de inicialização também registra onde o tempo vai (fases do início do controlador, memória depois do primeiro quadro e quanto cada pasta leva para listar, ordenar e desenhar).
 
 ## [0.11.0-alpha.1]

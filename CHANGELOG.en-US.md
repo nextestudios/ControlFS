@@ -4,6 +4,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 ### Performance
+- **Faster start-up (preferences):** the preferences file is read with compile-time generated JSON code instead of reflection, taking the first read off the startup path.
 - **Faster folder open:** sorting names no longer asks Windows to compare each letter (a 5,000-file folder sorted in ~35 ms, now ~15 ms in the CI measurement). The startup log also records where the time goes (controller start phases, memory after the first frame, and how long each folder takes to list, sort and draw).
 
 ## [0.11.0-alpha.1]
