@@ -1,15 +1,23 @@
 """Gera assets/controlfs.ico e assets/controlfs-icon-512.png a partir de logos/controlfs-icon.png.
 
-Mantém a transparência (sem fundo preto) e o brilho neon da arte: recorta pelo alfa, centraliza num quadrado com
-uma pequena margem e reduz com Lanczos para cada tamanho que o Windows usa (16–256 px).
+Ícone limpo (#187): fundo transparente, sem brilho neon nem névoa em volta. A arte original tem o corpo um pouco
+translúcido e um halo fraco com pontinhos soltos; aqui o corpo fica opaco, só a região do logo (mais uma borda de 2 px
+para a suavização) é mantida e o resto vira transparente. Depois recorta, centraliza num quadrado com uma pequena
+margem e reduz com Lanczos para cada tamanho que o Windows usa (16–256 px).
 Uso: python3 build/make-icons.py  (requer Pillow)
 """
-from PIL import Image
+from PIL import Image, ImageFilter
 
 SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256]
 
 src = Image.open("logos/controlfs-icon.png").convert("RGBA")
-box = src.split()[3].point(lambda v: 255 if v > 8 else 0).getbbox()  # ignora ruído quase invisível na borda
+alpha = src.split()[3]
+body = alpha.point(lambda v: 255 if v >= 100 else 0)  # o logo em si (o halo e os pontinhos têm alfa baixo)
+near_body = body.filter(ImageFilter.MaxFilter(5))  # o logo + 2 px: só aí fica a borda suavizada
+clean = alpha.point(lambda v: 0 if v < 60 else 255 if v >= 200 else round((v - 60) * 255 / 140))  # corpo opaco
+clean = Image.composite(clean, Image.new("L", src.size, 0), near_body)
+src.putalpha(clean)
+box = clean.getbbox()
 art = src.crop(box)
 w, h = art.size
 side = int(max(w, h) * 1.06)
