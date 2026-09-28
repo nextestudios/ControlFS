@@ -16,6 +16,10 @@ internal static class AppLog
 
     public static void Info(string message) => Write("startup.log", "INFO", message);
 
+    /// <summary>Erro tratado e mostrado ao usuário com uma mensagem simples: a exceção original, para diagnóstico.</summary>
+    public static void Error(Exception exception, string context) =>
+        Write("startup.log", "ERROR", $"{context}: {exception.GetType().FullName} (HRESULT 0x{exception.HResult:X8}): {exception.Message}");
+
     public static void Crash(Exception exception, string context)
     {
         var detail = $"{context}\n{exception.GetType().FullName} (HRESULT 0x{exception.HResult:X8}): {exception.Message}\n{exception}";

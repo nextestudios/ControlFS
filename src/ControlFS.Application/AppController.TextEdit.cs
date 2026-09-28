@@ -52,7 +52,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            StatusMessage = "Não foi possível abrir para editar: " + ex.Message;
+            StatusMessage = "Não foi possível abrir para editar: " + ErrorText(ex, "Editar texto");
         }
         modal.IsOpeningEditor = false;
         RaiseChanged();
@@ -211,7 +211,7 @@ public sealed partial class AppController
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // O original está intacto e as alterações continuam na edição.
-            ShowMessage("Não foi possível salvar", [("Arquivo", modal.Entry.Name), ("Motivo", ex.Message), ("Suas alterações", "continuam na edição")], icon: ActionIcon.Error);
+            ShowError("Não foi possível salvar", [("Arquivo", modal.Entry.Name), ("Suas alterações", "continuam na edição")], ex, "Salvar texto");
             return;
         }
         if (outcome == SaveOutcome.ChangedOnDisk)

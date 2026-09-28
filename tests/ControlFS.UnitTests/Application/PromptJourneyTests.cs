@@ -39,8 +39,8 @@ public class PromptJourneyTests : IDisposable
         Assert.True(app.IsGrid);
         Assert.Equal("Pressionar analógico direito: Ver em lista", Prompt(app, InputAction.ChangeView).AccessibilityText);
         d.Press(InputAction.ChangeView);
-        Assert.Equal(new[] { InputAction.Confirm, InputAction.Back, InputAction.OpenContextMenu, InputAction.OpenAppMenu, InputAction.ChangeView },
-            app.Prompts.Select(p => p.Action)); // ordem do rodapé: Abrir, Voltar, Ações, Menu, Lista/Grade
+        Assert.Equal(new[] { InputAction.Confirm, InputAction.Back, InputAction.OpenContextMenu, InputAction.OpenAppMenu, InputAction.Search, InputAction.ChangeView },
+            app.Prompts.Select(p => p.Action)); // ordem do rodapé: Abrir, Voltar, Ações, Menu, Buscar (pastas principais), Lista/Grade
 
         app.SetActiveController(ControllerFamily.PlayStation); // troca a quente
         Assert.Equal("Botão cruz: Abrir", Prompt(app, InputAction.Confirm).AccessibilityText);

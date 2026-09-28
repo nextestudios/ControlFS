@@ -38,6 +38,34 @@ public class SearchJourneyTests : IDisposable
     }
 
     [Fact]
+    public void Search_from_home_looks_in_the_main_folders_and_back_returns_home() => UiContext.Run(async () =>
+    {
+        _tmp.MakeDir("Fotos");
+        File.WriteAllText(_tmp.Sub("Fotos", "praia.jpg"), "x");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        Assert.Equal(Screen.Home, app.Screen);
+        Assert.Equal("Buscar", Label(app, InputAction.Search)); // antes, a busca era recusada no início
+
+        await Search(d, "praia");
+        await d.Idle();
+        Assert.Equal(Screen.Browser, app.Screen);
+        Assert.Equal(AppController.HomeSearchScope, app.Browser.ActiveSearch!.Location.ScopeName);
+        Assert.Equal(["praia.jpg"], app.Browser.List.Items.Select(i => i.Name));
+
+        // Sem resultados: a lista vazia aponta os filtros e uma nova busca, que continua nas pastas principais.
+        await Search(d, "nada assim");
+        await d.Idle();
+        Assert.StartsWith("Nenhum resultado —", app.EmptyMessage(app.Browser), StringComparison.Ordinal);
+        Assert.Equal(AppController.HomeSearchScope, app.Browser.ActiveSearch!.Location.ScopeName);
+
+        d.Press(InputAction.Back);
+        await d.Idle();
+        Assert.Equal(Screen.Home, app.Screen);
+    });
+
+    [Fact]
     public void Search_streams_results_in_subfolders_and_opening_one_focuses_it_in_its_folder() => UiContext.Run(async () =>
     {
         File.WriteAllText(_tmp.Sub("relatorio.md"), "raiz");

@@ -213,6 +213,7 @@ public sealed partial class AppController
                 hints.Add(new(InputAction.Confirm, "Abrir"));
                 hints.Add(new(InputAction.OpenContextMenu, "Ações"));
             }
+            if (HomeSearchRoots().Count > 0) hints.Add(new(InputAction.Search, "Buscar"));
             AddTabTriggerHints(hints);
             hints.Add(new(InputAction.OpenAppMenu, "Menu"));
             if (Places.Count > 0) hints.Add(ChangeViewHint);
@@ -291,7 +292,7 @@ public sealed partial class AppController
         if (focused is not null && !focused.IsBlocked && focused.Kind is not (EntryKind.Drive or EntryKind.KnownFolder))
             hints.Add(new(InputAction.ToggleSelection, pane.List.IsSelected(focused) ? "Desmarcar" : "Marcar"));
         hints.Add(new(InputAction.OpenContextMenu, ActionsLabel(pane, selection, archiveOnDisk)));
-        if (pane.Location is PhysicalLocation) hints.Add(new(InputAction.Search, "Buscar"));
+        if (pane.Location is PhysicalLocation || (pane.Location is ThisPcLocation && focused is { Kind: EntryKind.Drive, IsBlocked: false })) hints.Add(new(InputAction.Search, "Buscar"));
         AddTabTriggerHints(hints);
         hints.Add(new(InputAction.OpenAppMenu, "Menu"));
         hints.Add(ChangeViewHint);

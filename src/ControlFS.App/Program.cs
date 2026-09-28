@@ -9,6 +9,8 @@ public static class Program
     public static void Main()
     {
         AppLog.Session();
+        // Erros mostrados ao usuário em linguagem simples: a exceção original fica no log local.
+        Core.Policies.UserErrors.Log = AppLog.Error;
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             if (e.ExceptionObject is Exception ex) AppLog.Crash(ex, "AppDomain.UnhandledException");

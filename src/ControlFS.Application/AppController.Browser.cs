@@ -234,6 +234,12 @@ public sealed partial class AppController
             ShowMessage("Não foi possível abrir a pasta", [("Pasta", target.DisplayPath), ("Motivo", ex.Message)], icon: ActionIcon.Error);
             if (pane.Location is null) FallbackAfterFailedOpen(pane);
         }
+        catch (Exception ex) when (generation == pane.Generation && ex is IOException or UnauthorizedAccessException)
+        {
+            // Ex.: unidade de DVD sem disco, pendrive removido: categoria legível, texto do sistema só nos detalhes.
+            ShowError("Não foi possível abrir a pasta", [("Pasta", target.DisplayPath)], ex, "Abrir pasta");
+            if (pane.Location is null) FallbackAfterFailedOpen(pane);
+        }
         catch (OperationCanceledException)
         {
         }

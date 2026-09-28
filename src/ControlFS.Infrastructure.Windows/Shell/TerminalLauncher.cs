@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Policies;
 
 namespace ControlFS.Infrastructure.Windows.Shell;
 
@@ -38,7 +39,7 @@ public sealed class TerminalLauncher : ITerminalLauncher
         }
         catch (Win32Exception ex)
         {
-            throw new ShellException($"O Windows não conseguiu abrir o terminal ({ex.Message}).", ex);
+            throw new ShellException($"O Windows não conseguiu abrir o terminal. {UserErrors.Describe(ex, "Abrir terminal").Text}", ex);
         }
     }
 
@@ -52,7 +53,7 @@ public sealed class TerminalLauncher : ITerminalLauncher
         }
         catch (Win32Exception ex)
         {
-            throw new ShellException($"O Windows não conseguiu abrir o teclado virtual ({ex.Message}).", ex);
+            throw new ShellException($"O Windows não conseguiu abrir o teclado virtual. {UserErrors.Describe(ex, "Teclado virtual do Windows").Text}", ex);
         }
     }
 

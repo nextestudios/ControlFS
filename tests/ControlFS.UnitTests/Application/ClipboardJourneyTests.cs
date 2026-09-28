@@ -27,6 +27,26 @@ public class ClipboardJourneyTests : IDisposable
     }
 
     [Fact]
+    public void Empty_folder_names_the_next_step_and_offers_paste_only_with_something_copied() => UiContext.Run(async () =>
+    {
+        File.WriteAllText(_tmp.Sub("foto.jpg"), "img");
+        _tmp.MakeDir("Vazia");
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await GoInto(d, "Vazia");
+        Assert.EndsWith("Ações: Nova pasta", d.App.EmptyMessage(d.App.Browser), StringComparison.Ordinal);
+        Assert.StartsWith("Pasta vazia —", d.App.EmptyMessage(d.App.Browser), StringComparison.Ordinal);
+
+        d.Press(InputAction.Back);
+        await d.Idle();
+        await d.FocusItem("foto.jpg");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Copiar");
+        await GoInto(d, "Vazia");
+        Assert.EndsWith("Ações: Colar / Nova pasta", d.App.EmptyMessage(d.App.Browser), StringComparison.Ordinal);
+    });
+
+    [Fact]
     public void Copy_then_paste_in_another_folder_keeps_the_original_and_the_clipboard() => UiContext.Run(async () =>
     {
         File.WriteAllText(_tmp.Sub("foto.jpg"), "img");

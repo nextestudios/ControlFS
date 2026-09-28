@@ -120,7 +120,7 @@ internal sealed class PaneView
             _list.ItemsSource = items.ToList();
             if (pane.List.FocusIndex is var focus and >= 0 && focus < items.Count) _list.ScrollIntoView(items[focus]);
         }
-        _empty.Text = pane.IsLoading ? "Carregando…" : pane.Location is null ? "Sem pasta: ative este painel para escolher um local" : items.Count == 0 ? "Pasta vazia" : string.Empty;
+        _empty.Text = _app.EmptyMessage(pane);
     }
 
     public void Hide()

@@ -16,34 +16,95 @@ public sealed partial class AppController
     /// <summary>Escopo da próxima busca: alternado explicitamente no menu; vale para a sessão.</summary>
     public bool SearchIncludesSubfolders { get; private set; } = true;
 
-    /// <summary>Busca (Select/View, Ctrl+F): abre o teclado virtual; Concluir inicia a busca na pasta atual.</summary>
+    /// <summary>Nome do escopo da busca nas pastas principais (Início).</summary>
+    internal const string HomeSearchScope = "pastas principais";
+
+    /// <summary>
+    /// Busca (Select/View, Ctrl+F): abre o teclado virtual; Concluir inicia a busca na pasta atual. Em Meu computador,
+    /// busca na unidade em foco; nos resultados, uma nova busca usa o mesmo escopo.
+    /// </summary>
     internal void BeginSearch(PaneState pane)
     {
         if (pane.Mode != PaneMode.Browse || pane.IsLoading) return;
-        string root;
+        SearchLocation scope;
         string initial;
         switch (pane.Location)
         {
             case PhysicalLocation physical:
-                root = physical.FullPath;
+                scope = new SearchLocation(physical.FullPath, string.Empty, SearchIncludesSubfolders);
                 initial = pane.Search?.Location.Query ?? string.Empty;
                 break;
             case SearchLocation search:
-                root = search.RootPath;
+                scope = search;
                 initial = search.Query;
                 break;
+            case ThisPcLocation when pane.List.Focused is { Kind: EntryKind.Drive, FullPath: { } drive, IsBlocked: false }:
+                scope = new SearchLocation(drive, string.Empty, SearchIncludesSubfolders);
+                initial = string.Empty;
+                break;
+            case ThisPcLocation:
+                StatusMessage = "Escolha uma unidade e aperte Buscar para procurar nela.";
+                return;
             default:
-                StatusMessage = "A busca funciona em pastas do disco.";
+                StatusMessage = "A busca funciona em pastas do disco, na tela inicial e numa unidade de Meu computador.";
                 return;
         }
-        var title = $"Buscar em “{FolderName(root)}”" + (SearchIncludesSubfolders ? " e subpastas" : " (sem subpastas)");
+        OpenSearchKeyboard(scope, initial, location => StartSearch(pane, location));
+    }
+
+    /// <summary>
+    /// Busca no início: nas pastas principais (Downloads, Documentos, Área de trabalho, Imagens, Vídeos, Músicas),
+    /// com o mesmo motor da busca numa pasta. Os resultados abrem no navegador; Voltar retorna ao início.
+    /// </summary>
+    internal void BeginHomeSearch()
+    {
+        var roots = HomeSearchRoots();
+        if (roots.Count == 0)
+        {
+            StatusMessage = "Nenhuma pasta principal disponível para buscar.";
+            return;
+        }
+        var scope = new SearchLocation(roots[0], string.Empty, SearchIncludesSubfolders) { Roots = roots, ScopeName = HomeSearchScope };
+        OpenSearchKeyboard(scope, string.Empty, location =>
+        {
+            var pane = Browser;
+            pane.Back.Clear();
+            pane.Forward.Clear();
+            pane.Location = null; // Voltar nos resultados volta ao início
+            Screen = Screen.Browser;
+            StartSearch(pane, location);
+        });
+    }
+
+    /// <summary>Pastas principais do início que existem, sem repetir nem uma dentro da outra (a busca não passa duas vezes).</summary>
+    private List<string> HomeSearchRoots()
+    {
+        var roots = new List<string>();
+        foreach (var place in Places)
+        {
+            if (place is not { Kind: EntryKind.KnownFolder, IsBlocked: false, FullPath: { } path } || !place.Id.StartsWith("place:", StringComparison.Ordinal)) continue;
+            var full = Path.TrimEndingDirectorySeparator(path);
+            if (roots.Any(r => IsSameOrInside(full, r) || IsSameOrInside(r, full))) continue;
+            roots.Add(full);
+        }
+        return roots;
+    }
+
+    private static bool IsSameOrInside(string path, string root) =>
+        string.Equals(path, root, StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    private void OpenSearchKeyboard(SearchLocation scope, string initial, Action<SearchLocation> start)
+    {
+        var where = scope.ScopeName is { } name ? $"nas {name}" : $"em “{FolderName(scope.RootPath)}”";
+        var title = $"Buscar {where}" + (SearchIncludesSubfolders ? " e subpastas" : " (sem subpastas)");
         var keyboard = new VirtualKeyboard(TextFieldKind.Generic, title, initial,
             validator: text => string.IsNullOrWhiteSpace(text) ? "Digite parte do nome." : null);
         KeyboardModal? modal = null;
         modal = new KeyboardModal(keyboard, k =>
         {
             CloseModal(modal!);
-            StartSearch(pane, new SearchLocation(root, k.Text.Trim(), SearchIncludesSubfolders));
+            start(scope with { Query = k.Text.Trim(), IncludeSubfolders = SearchIncludesSubfolders });
             return Task.CompletedTask;
         });
         PushModal(modal);
@@ -69,10 +130,11 @@ public sealed partial class AppController
         pane.InaccessibleCount = 0;
         pane.List.SetItems([]);
         RaiseChanged();
-        Track(RunSearchAsync(pane, search, new SearchRequest(location.RootPath, location.Query, location.IncludeSubfolders, Settings.ShowHidden), cts.Token));
+        var requests = location.AllRoots.Select(root => new SearchRequest(root, location.Query, location.IncludeSubfolders, Settings.ShowHidden)).ToList();
+        Track(RunSearchAsync(pane, search, requests, cts.Token));
     }
 
-    private async Task RunSearchAsync(PaneState pane, SearchState search, SearchRequest request, CancellationToken token)
+    private async Task RunSearchAsync(PaneState pane, SearchState search, List<SearchRequest> requests, CancellationToken token)
     {
         var batcher = new SearchBatcher(this, pane, search);
         SearchStatus status;
@@ -80,10 +142,20 @@ public sealed partial class AppController
         {
             status = await Task.Run(() =>
             {
-                foreach (var result in _fs.Search(request, token))
+                foreach (var request in requests)
                 {
-                    if (result.InaccessibleFolder is { } folder) batcher.AddSkipped(folder);
-                    else if (result.Match is { } match && batcher.Add(match) >= SearchResultLimit) return SearchStatus.LimitReached;
+                    try
+                    {
+                        foreach (var result in _fs.Search(request, token))
+                        {
+                            if (result.InaccessibleFolder is { } folder) batcher.AddSkipped(folder);
+                            else if (result.Match is { } match && batcher.Add(match) >= SearchResultLimit) return SearchStatus.LimitReached;
+                        }
+                    }
+                    catch (Exception ex) when (requests.Count > 1 && ex is IOException or UnauthorizedAccessException)
+                    {
+                        batcher.AddSkipped(request.RootPath); // várias pastas: uma ilegível não derruba as outras
+                    }
                 }
                 return SearchStatus.Completed;
             }, token);
