@@ -235,8 +235,8 @@ form the group "Nesta pasta (<nome>)", whose heading shows even under the grid (
 
 Every entry stays reachable from the Menu (Start/F10); nothing moves out without a replacement in the same PR. Since
 #193 the Menu has a quick grid (Colar, Nova pasta, Nova aba, Atualizar, Ir para caminho, Operações, Configurações, Ir
-para o início) and a short list (Ir para pasta acima, Abas, Desfazer/Refazer, Esvaziar área de transferência, Sobre,
-Sair); every setting moved to **Menu → Configurações** (rows marked "→ Configurações"). `ModalSystemJourneyTests::
+para o início) and a short list (Ir para pasta acima, Abas, Desfazer/Refazer, Esvaziar área de transferência, Ajuda e
+tutorial…, Sobre, Sair); every setting moved to **Menu → Configurações** (rows marked "→ Configurações"). `ModalSystemJourneyTests::
 Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.ChooseMenu` looks inside Configurações for them.
 
 | Entry | Test |
@@ -259,6 +259,8 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | → Configurações: Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
 | Esvaziar área de transferência | `ClipboardJourneyTests` |
 | Sobre o ControlFS | `AboutJourneyTests` |
+| Ajuda e tutorial… (#231) → Tutorial guiado, Rever boas-vindas, Sobre o ControlFS | `TutorialJourneyTests::Tutorial_from_the_help_menu_…`, `OnboardingJourneyTests::Existing_users_…` |
+| → Configurações: Rever boas-vindas (#231, group ControlFS) | `OnboardingJourneyTests` |
 | Ir para o início (grid tile "Início"), Sair (last list row) | `JourneyTests::Back_semantics_…`, UIA |
 
 ### File operations and Central de Operações
@@ -309,6 +311,8 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Modal system (#172): every menu option and dialog button has an icon; destructive ones flagged, red + warning symbol, never the initial focus; input never reaches the screen under a modal (buttons, list clicks, tabs); nested modals close one at a time and focus returns; prompts and status inside the panel; solid panel with transparency off/high contrast | every modal | `ModalSystemJourneyTests` (4), UIA; Screens `m1`–`m9`, `icons/action-icons`; Manual "Modais (#172)" |
 | Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Configurações → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
 | About (version, license, source) | Menu → Sobre | `AboutJourneyTests` |
+| Welcome / onboarding (#231): first launch only (fresh settings in the real window; never in tests, `--render-screens`, `--no-onboarding` or for settings from older versions), 5 full-screen steps (welcome, controller prompts of the active family, basics applied at once — Confirmar com, Legendas, Tema, Exibição, Fluidez —, privacy with the optional update check, tutorial invitation); D-pad moves, South chooses/changes, East or L1 previous step, R1 next, Start skips without confirmation; prompts tappable; Narrator reads step + focused option; completion saved (`OnboardingCompleted`); the automatic update check waits until it ends; drawing failure skips it; ends on Home with the first card focused | full-screen layer in the modal slot (`OnboardingView`); Menu → Ajuda e tutorial → Rever boas-vindas; Configurações → Rever boas-vindas | `OnboardingJourneyTests` (2); Screens `o1`–`o4`; Manual "Boas-vindas e tutorial guiado (#231)" |
+| Guided tutorial (#231): 8 steps on the real screen (move focus, open a folder, go back, open/close Ações, top bar L1/R1 + a shortcut, R3 list/grid, search, Menu → Configurações), each advancing only on the semantic event (`GuidedTutorial` state machine in Application); spotlight (dim + accent ring) on content / top bar / footer, callout with the exact prompt glyph, corner callout while a modal is open; West/Marcar opens Continuar / Voltar passo / Pular tutorial (never marks during the tutorial); mouse buttons on the callout; never changes files; Narrator reads each new step; ends with a summary on Home | overlay above the modal layer (`TutorialOverlayView`), only the callout is hit-testable; Menu → Ajuda e tutorial → Tutorial guiado; last onboarding step | `TutorialJourneyTests` (3); Screens `o5`–`o7`; Manual "Boas-vindas e tutorial guiado (#231)" |
 | Phone as a controller (#223): Menu → Conectar celular… shows a QR code (URL, PC network, "Usar outra rede do PC" with 2+ networks, Cancelar); the phone's IP + 6-digit code ask Permitir/Recusar on the PC (sensitive, starts on Recusar); the phone page sends semantic actions and text to the on-screen keyboard; only Back during sensitive confirmations; Menu → Desconectar celular; header shows "Celular conectado (IP)" | Menu (list, section ControlFS); dialog modal with the QR code; header status | `PhoneJourneyTests` (2), `PhoneChannelTests` (7), `PhoneLinkIntegrationTests` (2, real listener); Screens `m10-phone-pairing`, `m10b-phone-allow`; Manual "Celular como controle (#223)" |
 
 ### Accessibility, layout and window

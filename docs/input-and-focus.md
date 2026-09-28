@@ -120,6 +120,8 @@ B vermelho, X azul, Y amarelo); as outras famílias mantêm seus desenhos.
 | Resultados da busca | Mostrar na pasta · Ações · Nova busca · Menu · Cancelar busca (buscando) / Voltar |
 | Teclado virtual | Selecionar (só com controle) · Apagar · Maiúsculas · Cursor · Símbolos · Concluir (Start/Options) · Cancelar |
 | Menu | Escolher (oculto em item indisponível: o motivo aparece no item) · Fechar |
+| Boas-vindas (#231) | Escolher/Trocar · Passo anterior (a partir do 2º) · Próximo passo (R1, até o penúltimo) · Pular (Start) |
+| Tutorial guiado em andamento (#231) | as de sempre, com Marcar trocado por "Tutorial" (também nos menus) |
 | Diálogo | nome da opção em foco · opção segura de Voltar |
 
 **Decisão (extrair direto, #35):** Oeste continua sendo Marcar também em compactados, para que possam entrar em
@@ -212,6 +214,24 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     limitados pela janela). Mover o foco ou mostrar a descrição da linha focada nunca muda a largura; o texto quebra linha.
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas
   `Gamepad*` do WinUI são descartadas para evitar entrada dupla com o SDL.
+
+## Boas-vindas e tutorial guiado (#231)
+
+- **Boas-vindas** são um modal (`OnboardingModal`) em tela cheia: prendem a entrada como qualquer modal. Direcional (e
+  analógico) move o foco entre as opções do passo dando a volta; Sul escolhe ou troca o ajuste em foco (o foco fica
+  nele); Leste e L1 voltam um passo (no primeiro, nada); R1 avança; Start/Menu pula tudo sem confirmação. Trocar
+  "Confirmar com" vale na hora: o próximo Confirmar já é o outro botão. Mouse: clique numa opção (`PointerChooseModalOption`)
+  ou numa legenda (a mesma ação). Narrador: "Boas-vindas, passo N de 5: título. texto" e a opção em foco com a descrição.
+- Só aparecem na primeira execução da janela real (`AppController.OfferOnboarding` e `AppSettings.OnboardingCompleted`
+  false, gravado pelo `JsonSettingsStore` ao criar as preferências). Preferências de versões anteriores (sem o campo) contam
+  como vistas; testes, `--render-screens` e `--no-onboarding` nunca as mostram sem pedir.
+- **Tutorial guiado** não é modal: o usuário usa a tela de verdade. `GuidedTutorial` (Application) recebe, a cada
+  `RaiseChanged`, um retrato semântico (`TutorialObservation`: última ação, início ou local, carregando, item em foco,
+  região, tipo do modal no topo, exibição) e avança quando o passo pedido aconteceu — nunca pelo botão físico. Passos de
+  ir e voltar contam só a ação pedida a partir de onde o usuário está (andar por outro caminho muda o ponto de partida).
+- Durante o tutorial, **Marcar (Oeste, Espaço)** fora do teclado virtual abre "Tutorial guiado" (Continuar, Voltar passo,
+  Pular tutorial) em vez de marcar; nenhum passo marca, renomeia ou apaga. Os fins (concluir, e as boas-vindas) voltam ao
+  início com o primeiro cartão em foco.
 
 ## Pendente
 

@@ -106,7 +106,16 @@ public sealed partial class AppController
         if (Settings.DualPane) OpenSecondPaneBeside();
         SettingsChanged?.Invoke(Settings);
         RaiseChanged();
-        StartAutomaticUpdateCheck();
+        // Primeira execução (#231): boas-vindas; a verificação automática de atualizações espera o passo de privacidade.
+        if (OnboardingPending)
+        {
+            _deferredUpdateCheck = true;
+            ShowOnboarding(replay: false);
+        }
+        else
+        {
+            StartAutomaticUpdateCheck();
+        }
         if (_temporaries is not null) Track(CleanUpLeftoversAsync(_temporaries));
     }
 
@@ -154,11 +163,15 @@ public sealed partial class AppController
             return;
         }
         StatusMessage = null;
+        _lastAction = action;
         MappingWizard?.Wizard.Touch(Clock()); // quem está agindo não perde a configuração por inatividade
-        if (TopModal is { } modal) HandleModal(modal, action);
-        else if (action == InputAction.SwitchPane) SwitchPane();
-        else if (Screen == Screen.Home) HandleHome(action);
-        else HandlePane(ActivePane, action);
+        if (!HandleTutorialOptions(action)) // tutorial (#231): Marcar abre as opções dele
+        {
+            if (TopModal is { } modal) HandleModal(modal, action);
+            else if (action == InputAction.SwitchPane) SwitchPane();
+            else if (Screen == Screen.Home) HandleHome(action);
+            else HandlePane(ActivePane, action);
+        }
         RaiseChanged();
     }
 
@@ -233,6 +246,9 @@ public sealed partial class AppController
                 break;
             case DialogModal dialog when index >= 0 && index < dialog.Options.Count:
                 dialog.FocusIndex = index;
+                break;
+            case OnboardingModal onboarding when index >= 0 && index < onboarding.Options.Count:
+                onboarding.FocusIndex = index;
                 break;
             case MappingWizardModal { Wizard.Phase: Core.Input.Mapping.MappingPhase.Review } wizard when index >= 0 && index < MappingWizardModal.ReviewOptions.Count:
                 wizard.ReviewFocus = index;
@@ -378,6 +394,7 @@ public sealed partial class AppController
             case KeyboardModal keyboard: HandleKeyboard(keyboard, action); break;
             case DialogModal dialog: HandleDialog(dialog, action); break;
             case AboutModal about: HandleAbout(about, action); break;
+            case OnboardingModal onboarding: HandleOnboarding(onboarding, action); break;
             case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
             case ControllerTestModal test: HandleControllerTest(test, action); break;
             case ImagePreviewModal preview: HandleImagePreview(preview, action); break;
@@ -655,6 +672,7 @@ public sealed partial class AppController
         UpdateHomeStats();
         UpdateDetailsWork();
         PublishPhoneUi();
+        ObserveTutorial();
         Changed?.Invoke();
     }
 

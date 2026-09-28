@@ -11,7 +11,17 @@ public sealed partial class AppController
     /// Fonte única do rodapé: somente ações que funcionam no contexto atual, com o rótulo do que farão.
     /// Ações indisponíveis não aparecem (o motivo, quando existe, é mostrado no próprio item).
     /// </summary>
-    private List<Hint> BuildHints() => TopModal is null ? ScreenOrder(BuildScreenHints()) : BuildModalHints();
+    private List<Hint> BuildHints() => WithTutorial(TopModal is null ? ScreenOrder(BuildScreenHints()) : BuildModalHints());
+
+    /// <summary>Tutorial em andamento (#231): Marcar abre as opções dele (continuar, voltar passo, pular) em vez de marcar.</summary>
+    private List<Hint> WithTutorial(List<Hint> hints)
+    {
+        if (Tutorial is null || TopModal is not (null or MenuModal)) return hints;
+        var index = hints.FindIndex(h => h.Action == InputAction.ToggleSelection);
+        if (index >= 0) hints[index] = new(InputAction.ToggleSelection, "Tutorial");
+        else hints.Add(new(InputAction.ToggleSelection, "Tutorial"));
+        return hints;
+    }
 
     /// <summary>
     /// Ordem do rodapé nas telas (não nos modais, onde a ordem acompanha o conteúdo): Confirmar, Voltar, Marcar, Ações,
@@ -86,6 +96,12 @@ public sealed partial class AppController
                 return hints;
             case AboutModal:
                 hints.Add(new(InputAction.Back, "Fechar"));
+                return hints;
+            case OnboardingModal onboarding:
+                if (onboarding.Options.Count > 0) hints.Add(new(InputAction.Confirm, onboarding.FocusedOption!.IsSetting ? "Trocar" : "Escolher"));
+                if (onboarding.StepIndex > 0) hints.Add(new(InputAction.Back, "Passo anterior"));
+                if (!onboarding.IsLastStep) hints.Add(new(InputAction.NextRegion, "Próximo passo"));
+                hints.Add(new(InputAction.OpenAppMenu, "Pular"));
                 return hints;
             case TextPreviewModal { Editor: { } editor }:
                 hints.Add(new(InputAction.Confirm, "Editar linha"));

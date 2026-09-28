@@ -90,6 +90,7 @@ public sealed class MainWindow : Window
     private readonly TextBlock _status = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
     private readonly Grid _overlay = new();
     private readonly VideoPlayerView _video = new();
+    private readonly TutorialOverlayView _tutorial;
 
     private IReadOnlyList<FileEntry>? _shownItems;
     private HashSet<string> _shownSelection = [];
@@ -128,6 +129,8 @@ public sealed class MainWindow : Window
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
             PlaybackPositions = new JsonPlaybackPositionStore(data),
+            // Boas-vindas (#231) só na primeira execução do app de verdade: nunca nas capturas nem com --no-onboarding.
+            OfferOnboarding = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
         };
         if (dataDirectory is null)
         {
@@ -147,6 +150,13 @@ public sealed class MainWindow : Window
         _paneView = new PaneView(_app, _icons);
         // Nas capturas (--render-screens) a janela não muda de modo nem de barra de título: só o espaço dos botões é reservado.
         _titleBar = new TitleBarView(this, _header, _tabs, _app, live: dataDirectory is null);
+        _tutorial = new TutorialOverlayView(_app, target => target switch
+        {
+            TutorialTarget.TopBar => _topBar.Root,
+            TutorialTarget.Footer => _footerBar,
+            TutorialTarget.Content => _content,
+            _ => null,
+        });
         _detailIcons.Invalidated += () =>
         {
             _details.ApplyLayout(); // refaz o ícone grande no novo tamanho
@@ -339,6 +349,9 @@ public sealed class MainWindow : Window
         layout.Children.Add(_video.Root);
         Grid.SetRowSpan(_overlay, 5);
         layout.Children.Add(_overlay);
+        // Tutorial guiado (#231): acima de tudo, mas só o balão recebe toques.
+        Grid.SetRowSpan(_tutorial.Root, 5);
+        layout.Children.Add(_tutorial.Root);
         return layout;
     }
 
@@ -758,6 +771,7 @@ public sealed class MainWindow : Window
 
         // Camada modal
         // O mesmo painel mantido (só o foco mudou) fica na árvore: tirar e recolocar refaria a rolagem e o painel fosco.
+        ModalView.CaptionReserve = _titleBar.ReservedWidth; // boas-vindas em tela cheia: o topo direito é dos botões da janela
         var modal = ModalView.Build(_app);
         if (modal is null) _overlay.Children.Clear();
         else if (_overlay.Children.Count != 1 || !ReferenceEquals(_overlay.Children[0], modal))
@@ -765,6 +779,7 @@ public sealed class MainWindow : Window
             _overlay.Children.Clear();
             _overlay.Children.Add(modal);
         }
+        _tutorial.Render();
         RestoreKeyboardFocus();
         Announce();
     }

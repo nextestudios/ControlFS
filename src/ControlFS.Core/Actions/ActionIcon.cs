@@ -125,6 +125,12 @@ public enum ActionIcon
     Keyboard,
     Password,
     About,
+
+    /// <summary>Ajuda e boas-vindas (#231).</summary>
+    Help,
+
+    /// <summary>Tutorial guiado (#231).</summary>
+    Tutorial,
     Exit,
     Menu,
 
@@ -262,6 +268,8 @@ public static class ActionIcons
         ActionIcon.Keyboard => "\uE765",
         ActionIcon.Password => "\uE72E",
         ActionIcon.About => "\uE897",
+        ActionIcon.Help => "\uE82F", // Lightbulb (o "?" é do Sobre)
+        ActionIcon.Tutorial => "\uE7BE", // Education
         ActionIcon.Exit => "\uE7E8",
         ActionIcon.Menu => "\uE700",
         ActionIcon.Warning => "\uE7BA",

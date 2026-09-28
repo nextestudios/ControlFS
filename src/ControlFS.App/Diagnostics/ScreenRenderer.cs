@@ -325,6 +325,7 @@ internal static class ScreenRenderer
                     app.Handle(InputAction.ToggleSelection);
                 }
 
+                if (WantedGroup("o")) await CaptureOnboardingAsync(app, window, stage, target, dir, sample);
                 if (target.Modals && WantedGroup("m")) await CaptureModalsAsync(app, window, stage, target, dir, modals);
             }
 
@@ -507,6 +508,44 @@ internal static class ScreenRenderer
             CloseModals(app);
         }
         app.GoHome();
+    }
+
+    /// <summary>
+    /// Boas-vindas e tutorial guiado (#231), só com ações semânticas: boas-vindas, controles, ajustes básicos e o convite; o
+    /// tutorial começa numa pasta de exemplo, anda de verdade pelos passos (foco, abrir, voltar, Ações) e é pulado no fim.
+    /// </summary>
+    private static async Task CaptureOnboardingAsync(AppController app, MainWindow window, FrameworkElement stage, Target target, string dir, string folder)
+    {
+        CloseModals(app);
+        app.OpenPhysical(folder);
+        await app.WhenIdleAsync();
+        app.ShowOnboarding();
+        await CaptureAsync(stage, target, dir, "o1-onboarding-welcome", window);
+        app.Handle(InputAction.NextRegion);
+        await CaptureAsync(stage, target, dir, "o2-onboarding-controls", window);
+        app.Handle(InputAction.NextRegion);
+        app.Handle(InputAction.NavigateDown); // foco em "Legendas", com a descrição
+        await CaptureAsync(stage, target, dir, "o3-onboarding-basics", window);
+        app.Handle(InputAction.NextRegion);
+        app.Handle(InputAction.NextRegion);
+        await CaptureAsync(stage, target, dir, "o4-onboarding-tutorial", window);
+        app.Handle(InputAction.Confirm); // Começar tutorial (no início)
+        app.OpenPhysical(folder); // a pasta de exemplo, para as capturas não mostrarem pastas do runner
+        await app.WhenIdleAsync();
+        await CaptureAsync(stage, target, dir, "o5-tutorial-move", window);
+        app.Handle(InputAction.NavigateDown); // 1: mover o foco
+        await FocusAsync(app, stage, "Fotos da viagem");
+        app.Handle(InputAction.Confirm); // 2: abrir uma pasta
+        await app.WhenIdleAsync();
+        app.Handle(InputAction.Back); // 3: voltar
+        await app.WhenIdleAsync();
+        app.Handle(InputAction.OpenContextMenu); // 4: Ações…
+        await app.WhenIdleAsync();
+        await CaptureAsync(stage, target, dir, "o6-tutorial-actions-open", window);
+        app.Handle(InputAction.Back); // …e fechar
+        await CaptureAsync(stage, target, dir, "o7-tutorial-top-bar", window);
+        app.SkipTutorial();
+        CloseModals(app);
     }
 
     /// <summary>Move o foco do menu aberto até o item que começa com <paramref name="prefix"/> (só setas).</summary>
