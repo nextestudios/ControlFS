@@ -200,11 +200,13 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.Equal(["Abrir", "Recortar", "Copiar", "Renomear", "Compactar", "Propriedades", "Excluir"], menu.Items.Take(menu.QuickCount).Select(i => i.TileLabel));
         Assert.Equal((4, 2), (menu.QuickColumns, menu.QuickRows));
         string Focused() => menu.Items[menu.FocusIndex].Label;
-        Assert.Equal("Abrir com o aplicativo padrão", Focused());
+        Assert.False(menu.Items[0].IsEnabled); // Abrir: sem o shell do Windows neste teste
+        Assert.Equal("Recortar", Focused()); // o primeiro bloco que funciona
         // As ações sobre a pasta aberta têm um grupo com o nome dela, separado das ações do arquivo.
         Assert.Equal($"Nesta pasta ({Path.GetFileName(_tmp.Path)})", menu.TitledSection);
         Assert.Equal(menu.TitledSection, menu.Items.Single(i => i.Label == "Nova pasta aqui").Section);
 
+        d.Press(InputAction.NavigateLeft);
         d.Press(InputAction.NavigateDown); // primeira linha da grade para a segunda (coluna 1)
         Assert.Equal("Compactar…", Focused());
         d.Press(InputAction.NavigateRight);
