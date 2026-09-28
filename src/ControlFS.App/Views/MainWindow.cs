@@ -202,6 +202,13 @@ public sealed class MainWindow : Window
             _updates?.Dispose();
             _iconProvider.Dispose();
             _drives.Dispose();
+            // #224: com mídia usada, sai sem descarregar as DLLs (tudo já foi salvo: preferências e abas gravam a cada
+            // mudança). O encerramento normal derrubava o processo no renderizador de software do Windows (WARP).
+            if (Infrastructure.Media.Playback.WindowsMediaPlayerFactory.PlaybackUsed)
+            {
+                AppLog.Info("Saída direta: mídia do Windows usada nesta sessão");
+                Infrastructure.Windows.Diagnostics.ProcessTermination.TerminateCurrent(0);
+            }
         };
 
         _app.Changed += Render;

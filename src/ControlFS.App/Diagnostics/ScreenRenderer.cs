@@ -288,6 +288,9 @@ internal static class ScreenRenderer
         {
             window?.Controller.ReleaseMediaForShutdown();
             try { Directory.Delete(work, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            // Mesma saída do app com mídia usada (#224): sem descarregar as DLLs, com o código já definido.
+            if (Infrastructure.Media.Playback.WindowsMediaPlayerFactory.PlaybackUsed)
+                Infrastructure.Windows.Diagnostics.ProcessTermination.TerminateCurrent((uint)Environment.ExitCode);
             Microsoft.UI.Xaml.Application.Current.Exit();
         }
     }

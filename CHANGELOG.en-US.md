@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Fixes
+- Closing ControlFS after playing audio or video no longer crashes the process on PCs without a GPU (virtual machines, Remote Desktop). (#224)
 
 ## [0.9.0-alpha.1]
 ### Improvements

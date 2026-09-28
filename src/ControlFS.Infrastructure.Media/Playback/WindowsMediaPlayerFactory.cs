@@ -16,7 +16,19 @@ namespace ControlFS.Infrastructure.Media.Playback;
 /// </summary>
 public sealed class WindowsMediaPlayerFactory : IMediaPlayerFactory
 {
-    public IMediaSession Open(string path, MediaKind kind, string? subtitlePath = null) => new Session(path, kind, subtitlePath);
+    private static int _used;
+
+    /// <summary>
+    /// Algum áudio/vídeo foi aberto nesta sessão. A Media Foundation deixa threads de trabalho até o fim do processo;
+    /// o app então termina sem descarregar as DLLs (ver ProcessTermination, #224).
+    /// </summary>
+    public static bool PlaybackUsed => Volatile.Read(ref _used) != 0;
+
+    public IMediaSession Open(string path, MediaKind kind, string? subtitlePath = null)
+    {
+        Volatile.Write(ref _used, 1);
+        return new Session(path, kind, subtitlePath);
+    }
 
     private sealed class Session : IMediaSession
     {
