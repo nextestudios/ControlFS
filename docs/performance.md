@@ -54,6 +54,60 @@ Fases da abertura quente (log de uma abertura típica): runtime e WinUI até o `
 SDL 16–32 ms; layout montado ~120 ms; controlador iniciado (preferências, locais, primeiro `Render`) ~290 ms; primeiro
 quadro ~130 ms depois de ativar a janela.
 
+## Comparativo com o Explorador de Arquivos e o Files
+
+Medido pelo passo **Compare with File Explorer and Files** do Smoke (modo `full`), que roda `build/Compare-Performance.ps1` e
+publica `performance-comparison.md/.json` no artefato `performance-comparison`. Para reproduzir: `gh workflow run smoke.yml
+-f mode=full` e baixe o artefato (ou rode o script num Windows com o exe portátil: `pwsh build/Compare-Performance.ps1
+-Portable <ControlFS-Portable-x64.exe> -OutDir out`).
+
+**Aviso importante.** O runner `windows-latest` (Windows 10.0.26100, 4 vCPUs) **não tem GPU (renderização por software,
+WARP) nem controle**: o custo de desenho difere de um PC real, e os números variam com o hardware. Cada valor é a mediana
+de 3 execuções depois de uma abertura de aquecimento descartada; o script não estima nada.
+
+**Método (igual para os três).** Cada app abre a mesma pasta. "Até a janela" = do comando de abertura até existir uma
+janela visível e sem dono com tamanho de janela de verdade (o mesmo detector para todos; não é "conteúdo pronto": o
+primeiro quadro do ControlFS veio ~240 ms depois da janela). Depois de 3 s de espera, mede-se 10 s: CPU (tempo de processador
+÷ tempo de relógio, % de **um** núcleo), conjunto de trabalho, bytes privados (`PrivateMemorySize64`, memória comprometida) e
+threads, **somando todos os processos do app**:
+
+- **ControlFS** (exe portátil da build do commit): o processo e seus descendentes. Ele não tem argumento de pasta, então
+  abre pela pasta de dados (`settings.json` com duas abas restauradas: a ativa é a pasta do cenário, a outra é a pasta
+  pequena), sem verificar atualizações e sem boas-vindas.
+- **Files** (4.2.9.0, instalado com `winget install --id FilesCommunity.Files -e`): todo processo cujo executável está na
+  pasta do pacote (ou de nome `Files*.exe`) e seus descendentes; aberto com o alias `files.exe "<pasta>"`. Ele mostrou 1 processo.
+- **Explorador de Arquivos:** aberto com `explorer.exe "<pasta>"`. Nesse runner cada abertura cria um processo
+  `explorer.exe` **próprio** (não há um shell de área de trabalho hospedando a janela), que continua vivo depois de
+  fechar a janela; o que se soma é a **diferença** do conjunto de processos `explorer.exe` entre antes (linha de base medida
+  na hora, 10 s) e depois de abrir a janela, e o CPU é a taxa com a janela menos a taxa da linha de base (por isso pode
+  dar levemente negativo: é ruído). Depois de cada execução os processos novos são encerrados. Num PC de verdade a janela
+  vive dentro do shell em execução, então o custo real de uma janela do Explorador difere deste.
+
+Cenários: (a) pasta com 40 arquivos (20 mais uma subpasta com 20); (b) pasta com 5.000 arquivos de 1 KB (mais uma subpasta).
+O cenário (c), "entrar numa subpasta e voltar", **não foi medido**: não dá para automatizar a navegação da mesma forma nos
+três apps, e não estimamos nada.
+
+Commit `e584b39` + o script (run 36477018137, nextestudios/ControlFS, 28/09/2026); medianas de 3:
+
+| Cenário | App | Processos | Até a janela (ms) | Conjunto de trabalho (MB) | Bytes privados (MB) | CPU (% de 1 núcleo) | Threads |
+|---|---|---|---|---|---|---|---|
+| a: 40 arquivos | ControlFS | 1 | 741 | 157,8 | 62,1 | 0,47 | 34 |
+| a: 40 arquivos | Explorador (janela) | 1 | 563 | 145,3 | 56,6 | -0,15 | 58 |
+| a: 40 arquivos | Files | 1 | 530 | 266,9 | 110,4 | 0,78 | 53 |
+| b: 5.000 arquivos | ControlFS | 1 | 754 | 161,3 | 65,9 | 0,47 | 35 |
+| b: 5.000 arquivos | Explorador (janela) | 1 | 610 | 146,7 | 57,7 | 0 | 55 |
+| b: 5.000 arquivos | Files | 1 | 491 | 267,2 | 110,3 | 0,31 | 55 |
+
+O que os números dizem: o ControlFS usa **~40% menos memória que o Files** (conjunto de trabalho e bytes privados) nos dois
+cenários, e as três CPUs em repouso ficam abaixo de 1% de um núcleo (as diferenças estão dentro do ruído: no cenário b o
+Explorador chegou a 1,87% numa das três execuções). Mas o ControlFS **não** é o mais leve em tudo: a janela do Explorador
+custou ~15 MB a menos de conjunto de trabalho e ~8 MB a menos de bytes privados, e o Explorador e o Files mostraram a
+janela ~150 a ~260 ms antes. Para o ControlFS, o primeiro quadro (mediana) foi 995 ms no cenário b. O "conjunto de trabalho"
+conta páginas compartilhadas de novo em cada processo; os bytes privados são a leitura mais fiel. O ControlFS minimizado
+(modo Leve em segundo plano, medida do passo anterior no mesmo run) ficou em ~18 MB de conjunto de trabalho; os outros dois
+não foram medidos minimizados. Pasta de 5.000 arquivos não mudou o custo de nenhum dos três de forma relevante (as listas
+são virtualizadas ou carregadas sob demanda).
+
 ## Decisões (com as medições que as sustentam)
 
 ### Leitura dos controles (`InputCadence`)

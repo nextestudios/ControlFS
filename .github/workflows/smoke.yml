@@ -145,6 +145,13 @@ jobs:
         if: always() && inputs.mode != 'screens'
         shell: pwsh
         run: .\build\Measure-Performance.ps1 -Portable dist\ControlFS-Portable-x64.exe -Setup dist\ControlFS-Setup-x64.exe -OutDir smoke-performance
+      # Comparativo (docs/performance.md): ControlFS x Explorador de Arquivos x Files, mesma pasta, mesmo runner.
+      # Tabela no resumo do job e no artefato performance-comparison. Files que não instala vira "não medido".
+      - name: Compare with File Explorer and Files (RAM, CPU, threads, startup)
+        if: always() && inputs.mode != 'screens'
+        shell: pwsh
+        timeout-minutes: 25
+        run: .\build\Compare-Performance.ps1 -Portable dist\ControlFS-Portable-x64.exe -OutDir smoke-performance-comparison
       - name: Analyze crash dumps (if the app crashed in any step)
         if: always()
         shell: pwsh
@@ -169,3 +176,8 @@ jobs:
         with:
           name: performance
           path: smoke-performance
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.mode != 'screens'
+        with:
+          name: performance-comparison
+          path: smoke-performance-comparison
