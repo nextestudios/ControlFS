@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.10.0-alpha.1]
 ### Desempenho
 - **Leve em segundo plano (para jogar com o ControlFS aberto):** com a janela minimizada ou atrás de um jogo, o ControlFS passa para prioridade abaixo do normal e o modo de eficiência do Windows 11, lê os controles só para notar conexões (1 vez por segundo, sem enfileirar os botões e analógicos que o jogo está usando), para de consultar as unidades e, depois de 5 segundos, devolve ao Windows a memória que não está usando (no Smoke: de ~153 MB para ~18 MB no conjunto de trabalho). CPU minimizado: de ~1,4–2% para ~0,5% de um núcleo. Voltar à janela restaura tudo na hora; cópias e extrações continuam (mais devagar) e áudio ou vídeo tocando mantém a prioridade normal. Menu → Configurações → **Leve em segundo plano** (ligado por padrão).
 - **Repouso mais leve:** sem controle conectado, o ControlFS não lê mais o SDL a cada 8 ms com o relógio do Windows em 1 ms — teclado e mouse chegam por eventos e a leitura cai para 4 vezes por segundo, só para notar um controle chegando (a leitura rápida volta assim que ele conecta). CPU em repouso com a janela à frente: de ~1,5% para ~0,5% de um núcleo.
@@ -20,7 +22,6 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - **Configurações em grades** (#227): em cada grupo, os ajustes curtos (exibição, densidade, painel de detalhes, tema, cor de destaque, ordenação, itens ocultos, busca em subpastas, recentes, restaurar abas, sugestões, confirmar com, legendas, Fluidez) viram blocos com ícone, nome e valor atual; os de descrição longa e os que abrem outra tela continuam em lista. O controle anda em 2D entre as grades e as listas.
 
 ### Correções
-- Minimizar a janela fechava o ControlFS (falha fatal do Windows ao ler a barra de título minimizada, encontrada pela medição de desempenho). Minimizar também não refaz mais o layout.
 - Painel de detalhes: "Este item não está marcado" mostrava o símbolo âmbar de marcado; agora mostra uma caixa vazia.
 - Os textos das boas-vindas e do tutorial citam os botões do controle em uso (LB/RB no Xbox, L1/R1 no PlayStation, L/R no Nintendo), como os ícones.
 - Menus de item abrem no primeiro bloco disponível da grade, e não numa linha da lista abaixo dela (compactados continuam abrindo em **Extrair para**). As ações sobre a pasta aberta (favoritos, Colar, Nova pasta aqui, Abrir terminal aqui) ficam no grupo **Nesta pasta (nome)**, com título, para não parecerem ações do arquivo.
@@ -32,6 +33,11 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 - Rótulos iguais em todo lugar: o atalho da barra superior se chama **Recentes**, como no início (antes "Arquivos recentes"), e o Sul nele diz **Abrir**; a legenda do R3 diz a ação (**Ver em grade** / **Ver em lista**), não parece mais o estado atual; duas abas com o mesmo nome mostram a pasta onde estão, ex.: "Fotos (Viagem)"; títulos usam aspas curvas (Buscar em “x”, Renomear “x”, Desfazer “x”?).
 - Ícones distintos para significados diferentes: Copiar para, Manter ambos, Compactar, Propriedades, Sobre, Operações (não parece mais Atualizar), Controles sem perfil, Ordem, Fechar aba, Subpastas, Mesclar, Esvaziar área de transferência, Abas… e Reabrir aba fechada ganharam símbolos próprios. Um teste garante que só os pares documentados repetem símbolo.
 - Fechar o ControlFS depois de ouvir um áudio ou ver um vídeo não derruba mais o processo em PCs sem placa de vídeo (máquinas virtuais, área de trabalho remota). (#224)
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…).
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
+- Celular como controle, barra de título, modo leve em segundo plano e mídia foram verificados só no que o CI do Windows consegue; o restante está em `docs/TESTING.md`.
 
 ## [0.9.0-alpha.1]
 ### Melhorias
