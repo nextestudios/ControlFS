@@ -290,7 +290,12 @@ internal static class ScreenRenderer
                     if (await WaitForAsync(() => app.TopModal is Application.State.ImagePreviewModal { IsLoading: false }))
                         await CaptureAsync(stage, target, dir, "8d-image-preview", window);
                     CloseModals(app);
-                    ChooseQuickAccess(app, "Lixeira");
+                    // Numa pasta, L1 vai ao caminho: R1 leva ao primeiro atalho e a direita até a Lixeira.
+                    app.Handle(InputAction.NextRegion);
+                    var bin = app.QuickAccess.ToList().FindIndex(q => q.Label == "Lixeira");
+                    for (var i = 0; i < 20 && app.QuickAccessFocus < bin; i++) app.Handle(InputAction.NavigateRight);
+                    app.Handle(InputAction.Confirm);
+                    await WaitForAsync(() => app.Browser.Location is Core.Models.RecycleBinLocation);
                     await app.WhenIdleAsync();
                     await CaptureAsync(stage, target, dir, "8e-recycle-bin", window);
                     app.GoHome();

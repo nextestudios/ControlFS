@@ -175,7 +175,7 @@ public static class ActionIcons
         ActionIcon.OpenWith => "\uE7AC",
         ActionIcon.Reveal => "\uED25",
         ActionIcon.NewTab => "\uE8A7",
-        ActionIcon.Tabs => "\uE7C4", // TaskView
+        ActionIcon.Tabs => "\uE8F9", // SwitchApps
         ActionIcon.CloseTab => "\uE89F",
         ActionIcon.ReopenTab => "\uE944", // ReturnToWindow
         ActionIcon.Home => "\uE80F",
@@ -222,7 +222,7 @@ public static class ActionIcons
         ActionIcon.MoveDown => "\uE70D",
         ActionIcon.Search => "\uE721",
         ActionIcon.Filter => "\uE71C",
-        ActionIcon.ClearFilter => "\uE894",
+        ActionIcon.ClearFilter => "\uECC9",
         ActionIcon.Sort => "\uE8CB",
         ActionIcon.SortOrder => "\uEC8F",
         ActionIcon.Hidden => "\uE890",
@@ -234,7 +234,7 @@ public static class ActionIcons
         ActionIcon.ExitFullScreen => "\uE73F", // BackToWindow
         ActionIcon.DetailsPane => "\uE90D",
         ActionIcon.DualPane => "\uE90C",
-        ActionIcon.Subfolders => "\uED41",
+        ActionIcon.Subfolders => "\uE8D5",
         ActionIcon.Operations => "\uE9D5",
         ActionIcon.Undo => "\uE7A7",
         ActionIcon.Redo => "\uE7A6",

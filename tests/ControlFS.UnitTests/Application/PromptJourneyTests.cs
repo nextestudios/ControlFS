@@ -59,6 +59,6 @@ public class PromptJourneyTests : IDisposable
 
         app.SetActiveController(null); // voltou ao teclado
         Assert.True(Prompt(app, InputAction.Confirm).IsKeyboard);
-        Assert.Equal("Ctrl+G: Grade", Prompt(app, InputAction.ChangeView).AccessibilityText);
+        Assert.Equal("Ctrl+G: Ver em grade", Prompt(app, InputAction.ChangeView).AccessibilityText);
     });
 }
