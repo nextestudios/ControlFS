@@ -197,8 +197,12 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 
 Since #193 the frequent actions are quick-grid tiles (folder: Abrir, Recortar, Copiar, Renomear, Compactar, Colar,
 Propriedades, Excluir; file: Abrir/Executar/Jogar, the same file ops; marked items: Recortar, Copiar, Compactar, Excluir; drive: Abrir,
-Nova aba, Propriedades, Atualizar); everything else stays in the list below. Initial focus is unchanged (first item passed
-by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTests::Quick_action_grid_…`.
+Nova aba, Propriedades, Atualizar); everything else stays in the list below. Initial focus: the first enabled,
+non-destructive tile of the grid (it used to open on a list row below the grid); an explicit `FocusOn` still wins ("Extrair
+para" on archives and marked archives, "Extrair tudo para" inside an archive, "Extrair seleção" with marked entries).
+Actions about the open folder (add it to favorites, Colar, Nova pasta aqui, Abrir terminal aqui, Analisar uso do disco)
+form the group "Nesta pasta (<nome>)", whose heading shows even under the grid (`MenuModal.TitledSection`).
+2D grid, initial focus and the folder group: `ModalSystemJourneyTests::Quick_action_grid_…`.
 
 | Feature | Where | Test |
 |---|---|---|
@@ -212,7 +216,7 @@ by `AppController`, "Extrair para" on archives). 2D grid: `ModalSystemJourneyTes
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
 | Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
 | Git status (#75): Configurações → Status do Git (off by default); badge line "GIT · ramo …", row state "Git: modificado/novo…", read after the list | `GitStatusJourneyTests` |
-| Open terminal here (#76): Y Ações → "Esta pasta" → Abrir terminal aqui…; notice starts on Cancelar; optional Windows on-screen keyboard | `TerminalJourneyTests` (2) |
+| Open terminal here (#76): Y Ações → "Nesta pasta (<nome>)" → Abrir terminal aqui…; notice starts on Cancelar; optional Windows on-screen keyboard | `TerminalJourneyTests` (2) |
 | Two panes (#56): left = active tab, right = own `PaneState`; active pane outlined in cyan with "ATIVO" title, the other dimmed with its path; L3/Tab or click switches without touching marks; tabs stay on the left; single pane on handhelds/narrow windows (setting kept); details panel hidden | Menu → "Dois painéis"; L3/Tab | `DualPaneJourneyTests` (2); Screens `2h-dual-pane`, `2i-dual-pane-right`; Manual "Dois painéis (#56)" |
 | Copiar/Mover para o outro painel (quick tiles), Extrair para o outro painel (archives), with source/destination summary; unavailable with a reason when both panes show the same folder (#56) | Y Ações (two panes) | `DualPaneJourneyTests` |
 | Tab strip: Nova aba, Duplicar aba, Fechar aba, Reabrir aba fechada, Ir para a aba (2+) | North on the strip; Menu → Abas | `TabsJourneyTests` |
@@ -291,7 +295,8 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Text preview (encodings, limits, binary refused) | modal | `TextPreviewJourneyTests`, `TextPreviewTests` (2); Manual "(#58)" |
 | PDF preview (#59): South on .pdf / North → Visualizar PDF; LB/RB and Left/Right pages, RT/LT zoom, pan while zoomed, South fits, East closes; password on the masked keyboard with retry; content check, 200 MB / 5,000 pages / 3072 px / 20 s limits | modal over the shell | `PdfPreviewJourneyTests` (3), `PdfRendererIntegrationTests` (Windows.Data.Pdf, page 1 of a generated PDF); Screen `mp-pdf-preview`; Manual "Visualização de PDF (#59)" |
 | On-screen keyboard: PT-BR/EN, shift/caps, numbers, symbols, accents, space, backspace (repeat), clear, caret, selection, OK/cancel, name/path/password fields, masking/reveal, controller navigation | modal; footer shows Selecionar/Apagar/…/Concluir/Cancelar | `VirtualKeyboardTests` (13), `HintJourneyTests::On_screen_keyboard_…`, UIA |
-| Dialogs name the focused choice; destructive dialogs start on the safe option | modal | `HintJourneyTests::Dialogs_and_menus_…`, UIA |
+| Dialogs name the focused choice; destructive dialogs start on the safe option; with the focus on the Back option itself (Cancelar/Fechar), the footer shows the next option on Right instead of repeating it on Confirm | modal | `HintJourneyTests::Dialogs_and_menus_…`, UIA |
+| Operation result dialogs replace the "…iniciada" status line (the footer never contradicts "Extração concluída"); a recycled delete's status names Menu → Desfazer | result dialog; status line | `UndoJourneyTests::Undo_of_a_recycle_…` |
 | Modal system (#172): every menu option and dialog button has an icon; destructive ones flagged, red + warning symbol, never the initial focus; input never reaches the screen under a modal (buttons, list clicks, tabs); nested modals close one at a time and focus returns; prompts and status inside the panel; solid panel with transparency off/high contrast | every modal | `ModalSystemJourneyTests` (4), UIA; Screens `m1`–`m9`, `icons/action-icons`; Manual "Modais (#172)" |
 | Updates (installed/portable, signature, SHA, relaunch, notifications) | Menu → Configurações → Atualizações; header status | `UpdateServiceTests` (12), `UpdateFlowTests` (6), `ReleaseVersionTests` |
 | About (version, license, source) | Menu → Sobre | `AboutJourneyTests` |

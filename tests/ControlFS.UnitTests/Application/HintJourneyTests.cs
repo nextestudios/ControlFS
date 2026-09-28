@@ -108,8 +108,12 @@ public class HintJourneyTests : IDisposable
 
         d.Press(InputAction.Back); // confirmação de saída
         var exit = await d.WaitDialog("Sair do ControlFS?");
-        Assert.Equal("Cancelar", Label(app, InputAction.Confirm));
+        // Foco na opção de Voltar: "A Cancelar · B Cancelar" repetia o mesmo; no lugar de Confirmar, a próxima opção.
+        Assert.Null(Label(app, InputAction.Confirm));
+        Assert.Equal("Sair", Label(app, InputAction.NavigateRight));
+        Assert.Equal("Cancelar", Label(app, InputAction.Back));
         d.Press(InputAction.NavigateRight);
+        Assert.Null(Label(app, InputAction.NavigateRight));
         Assert.Equal("Sair", Label(app, InputAction.Confirm));
         Assert.Equal("Cancelar", Label(app, InputAction.Back));
         Assert.Same(exit, app.TopModal);

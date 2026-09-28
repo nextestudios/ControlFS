@@ -14,9 +14,9 @@ public sealed partial class AppController
 {
     public ITerminalLauncher? Terminal { get; init; }
 
-    private MenuItem? TerminalItem(PaneState pane) => Terminal is null || pane.Location is not PhysicalLocation here ? null
+    private MenuItem? TerminalItem(PaneState pane, string section) => Terminal is null || pane.Location is not PhysicalLocation here ? null
         : new MenuItem("Abrir terminal aqui…", () => ConfirmTerminal(here.FullPath),
-            Detail: "Windows Terminal (ou PowerShell) nesta pasta. Fica fora do ControlFS e não funciona com o controle.", Icon: ActionIcon.OpenExternal, Section: "Esta pasta");
+            Detail: "Windows Terminal (ou PowerShell) nesta pasta. Fica fora do ControlFS e não funciona com o controle.", Icon: ActionIcon.OpenExternal, Section: section);
 
     private void ConfirmTerminal(string folder)
     {

@@ -281,6 +281,6 @@ public sealed partial class AppController
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(close);
         dialog.BackOption = close;
-        PushModal(dialog);
+        ShowOperationResult(dialog);
     }
 }

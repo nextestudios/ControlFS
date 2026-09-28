@@ -9,6 +9,9 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Settings in grids** (#227): in each group of Configurações, short settings (view, density, details panel, theme, accent color, sort, hidden items, search in subfolders, recents, restore tabs, suggestions, confirm button, button labels, Fluidez) are now tiles with an icon, a name and the current value; settings with long descriptions or that open another screen stay in a list. The controller moves in 2D between the grids and the lists.
 
 ### Fixes
+- Item menus open on the first available tile of the grid instead of a list row below it (archives still open on **Extrair para**). Actions about the open folder (favorites, Colar, Nova pasta aqui, Abrir terminal aqui) sit in a titled **Nesta pasta (name)** group so they don't read as actions on the file.
+- Dialogs no longer show the same text on two buttons ("A Cancelar · B Cancelar"): with the focus on the back option, the footer shows the next option.
+- The footer no longer says "Extração iniciada…" (extraction started) under the "Extração concluída" (extraction finished) dialog: an operation's result replaces the start notice.
 - Clean ControlFS icon: transparent background, no neon glow or haze around it, with a solid logo at every size (shortcut, taskbar, title bar, Start menu, installer). If Windows shows the old icon, that's its icon cache. (#187)
 - Menus (Configurações, Menu, actions) keep a fixed width: moving focus or showing the focused option's description no longer widens or narrows the panel; long text wraps. (#227)
 - Closing ControlFS after playing audio or video no longer crashes the process on PCs without a GPU (virtual machines, Remote Desktop). (#224)

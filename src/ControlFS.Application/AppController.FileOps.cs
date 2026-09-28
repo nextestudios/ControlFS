@@ -222,17 +222,19 @@ public sealed partial class AppController
         foreach (var skipped in result.Items.Where(i => i.Outcome == ItemOutcome.Skipped && i.Error == OperationErrorKind.LinkOrSpecialBlocked).Take(3))
             lines.Add(("• " + skipped.Name, skipped.Message ?? "Ignorado."));
 
+        // O desfazer é registrado antes de montar o diálogo: o título (e o aviso no rodapé) já sai com a dica de restaurar.
+        var undo = RegisterFileUndo(item, plan, result);
+        if (undo is not null && plan.Kind == FileOperationKind.Delete) title += " (Menu → Desfazer restaura)";
         var dialog = new DialogModal(title, lines) { Message = result.Message, Icon = ResultIcon(result.FinalState) };
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         AddRetryFailedOption(dialog, item);
-        if (RegisterFileUndo(item, plan, result) is { } undo)
+        if (undo is not null)
         {
             dialog.Options.Add(new DialogOption("Desfazer", DialogOptionKind.Primary, () =>
             {
                 CloseModal(dialog);
                 ConfirmUndo(undo);
             }, icon: ActionIcon.Undo));
-            if (plan.Kind == FileOperationKind.Delete) title += " (Menu → Desfazer restaura)";
         }
         if (plan.Destination is { } dest && Directory.Exists(dest) && plan.Kind != FileOperationKind.Delete &&
             !(Browser.Location is PhysicalLocation current && string.Equals(current.FullPath, dest, StringComparison.OrdinalIgnoreCase)))
@@ -249,7 +251,7 @@ public sealed partial class AppController
         OnFileOperationFinished(plan, result);
         // Operações totalmente bem-sucedidas não interrompem com diálogo: um aviso no rodapé basta.
         if (result.FinalState == OperationState.Completed && plan.Kind == FileOperationKind.Delete) StatusMessage = title;
-        else PushModal(dialog);
+        else ShowOperationResult(dialog);
         // Todas as abas que mostram a origem ou o destino são atualizadas, não só a ativa.
         var affected = new[] { plan.Destination, plan.SourceFolder }.Where(p => p is not null).ToList();
         foreach (var tab in BrowsePanes.Where(t => t.Location is PhysicalLocation here && affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())

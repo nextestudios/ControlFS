@@ -254,7 +254,7 @@ public sealed partial class AppController
             }, icon: ActionIcon.Password));
         dialog.Options.Add(close);
         dialog.BackOption = close;
-        PushModal(dialog);
+        ShowOperationResult(dialog);
     }
 
     /// <summary>Diálogo de conflito. Inicia em "Pular" (preserva o existente); substituir exige confirmação.</summary>
