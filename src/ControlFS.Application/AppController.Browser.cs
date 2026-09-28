@@ -197,6 +197,8 @@ public sealed partial class AppController
     internal async Task NavigateAsync(PaneState pane, Location target, bool pushHistory, string? focusId = null)
     {
         var generation = ++pane.Generation;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        long listed = 0, sorted = 0;
         pane.LoadCts?.Cancel();
         var cts = pane.LoadCts = new CancellationTokenSource();
         pane.IsLoading = true;
@@ -213,6 +215,7 @@ public sealed partial class AppController
                     entries = pane.Mode == PaneMode.PickFolder ? listing.Entries.Where(e => e.IsContainer).ToList() : listing.Entries;
                     inaccessible = listing.InaccessibleCount;
                     target = new PhysicalLocation(listing.Path);
+                    listed = clock.ElapsedMilliseconds;
                     break;
                 case ArchiveLocation archive when pane.Archive is { } current && current.Info.ArchivePath == archive.ArchivePath && current.DirectoryExists(archive.InnerPath):
                     tree = current;
@@ -238,7 +241,9 @@ public sealed partial class AppController
             if (tree is null) pane.ArchivePassword = null;
             pane.Location = target;
             pane.InaccessibleCount = inaccessible;
+            var beforeSort = clock.ElapsedMilliseconds;
             pane.List.SetItems(entries, focusId, newLocation: newLocation);
+            sorted = clock.ElapsedMilliseconds - beforeSort;
             RequestGitStatus(pane);
             if (target is PhysicalLocation p)
             {
@@ -264,7 +269,10 @@ public sealed partial class AppController
         finally
         {
             if (generation == pane.Generation) pane.IsLoading = false;
+            var beforeRender = clock.ElapsedMilliseconds;
             RaiseChanged();
+            if (generation == pane.Generation && Trace is { } trace && target is PhysicalLocation)
+                trace($"Pasta aberta: {pane.List.Items.Count} itens; listagem {listed} ms, ordenação {sorted} ms, desenho {clock.ElapsedMilliseconds - beforeRender} ms, total {clock.ElapsedMilliseconds} ms");
         }
     }
 

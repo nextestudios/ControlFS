@@ -57,6 +57,19 @@ public static partial class ProcessEfficiency
         _ = SetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
     }
 
+    /// <summary>
+    /// Uma linha para o log de inicialização com onde a memória está: heap gerenciado (vivo / reservado), bytes privados,
+    /// conjunto de trabalho, threads e DLLs mapeadas. Só leitura de contadores (docs/performance.md).
+    /// </summary>
+    public static string DescribeMemory()
+    {
+        using var process = System.Diagnostics.Process.GetCurrentProcess();
+        var info = GC.GetGCMemoryInfo();
+        const double Mb = 1024.0 * 1024.0;
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture,
+            $"heap vivo {GC.GetTotalMemory(false) / Mb:F1} MB, heap comprometido {info.TotalCommittedBytes / Mb:F1} MB, privados {process.PrivateMemorySize64 / Mb:F1} MB, conjunto de trabalho {process.WorkingSet64 / Mb:F1} MB, threads {process.Threads.Count}, módulos {process.Modules.Count}, GCs {GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}");
+    }
+
     [LibraryImport("kernel32.dll")]
     private static partial nint GetCurrentProcess();
 

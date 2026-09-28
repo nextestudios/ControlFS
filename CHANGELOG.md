@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Desempenho
+- **Abrir pasta mais rápido:** a ordenação por nome não pede mais ao Windows para comparar cada letra (uma pasta de 5.000 arquivos ordenava em ~35 ms, agora ~15 ms na medição do CI). O log de inicialização também registra onde o tempo vai (fases do início do controlador, memória depois do primeiro quadro e quanto cada pasta leva para listar, ordenar e desenhar).
 
 ## [0.11.0-alpha.1]
 ### Melhorias

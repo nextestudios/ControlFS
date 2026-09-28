@@ -47,6 +47,8 @@ public sealed class NaturalNameComparer : IComparer<string>
 {
     public static NaturalNameComparer Instance { get; } = new();
 
+    private static readonly bool AsciiFast = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName is not ("tr" or "az");
+
     public int Compare(string? x, string? y)
     {
         if (x is null || y is null) return string.CompareOrdinal(x, y);
@@ -65,7 +67,14 @@ public sealed class NaturalNameComparer : IComparer<string>
                 if (cmp != 0) return cmp;
                 continue;
             }
-            var c = string.Compare(x, i, y, j, 1, StringComparison.CurrentCultureIgnoreCase);
+            var cx = x[i];
+            var cy = y[j];
+            // Letra ASCII contra letra ASCII: mesma ordem da comparação de cultura (alfabética, sem caixa), sem chamar o
+            // sistema por caractere (uma pasta de 5.000 arquivos faz centenas de milhares de comparações).
+            // Turco e azeri têm regras próprias para "i": ficam no caminho de cultura.
+            var c = AsciiFast && char.IsAsciiLetter(cx) && char.IsAsciiLetter(cy)
+                ? (cx | 0x20).CompareTo(cy | 0x20)
+                : string.Compare(x, i, y, j, 1, StringComparison.CurrentCultureIgnoreCase);
             if (c != 0) return c;
             i++;
             j++;
