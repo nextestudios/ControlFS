@@ -4,6 +4,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 
 ## [Unreleased]
 ### Desempenho
+- **Menos memória em repouso:** dois segundos depois do primeiro quadro, com "Leve em segundo plano" ligado (o padrão), o ControlFS devolve ao Windows uma vez o que a abertura deixou de sobra (uma coleta de lixo compactadora e a limpeza do conjunto de trabalho). Na medição do CI, o conjunto de trabalho em repouso passou de ~152 MB para ~18 MB e os bytes privados de ~60 MB para ~56 MB; as páginas que o app usa voltam sob demanda.
 - **Abrir pasta mais rápido:** a ordenação por nome não pede mais ao Windows para comparar cada letra (uma pasta de 5.000 arquivos ordenava em ~35 ms, agora ~15 ms na medição do CI). O log de inicialização também registra onde o tempo vai (fases do início do controlador, memória depois do primeiro quadro e quanto cada pasta leva para listar, ordenar e desenhar).
 
 ## [0.11.0-alpha.1]
