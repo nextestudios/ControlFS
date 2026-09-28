@@ -153,7 +153,7 @@ Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue
 $env:DOTNET_BUNDLE_EXTRACT_BASE_DIR = $extract
 
 # ---- Files: instalação (winget; senão o App Installer do CDN oficial); qualquer falha vira "não medido" ------------
-function Get-FilesPackage { Get-AppxPackage | Where-Object { $_.Name -match 'FilesUWP|FilesCommunity' } | Select-Object -First 1 }
+function Get-FilesPackage { Get-AppxPackage | Where-Object { $_.Name -eq 'Files' -or $_.Name -match 'FilesUWP|FilesCommunity' } | Select-Object -First 1 }
 $filesNote = $null
 $filesPkg = $null
 try {
@@ -201,12 +201,15 @@ $apps["ControlFS"] = @{
     Cleanup = { param($pids) Stop-Pids $pids }
 }
 
+# No runner, cada `explorer.exe <pasta>` cria um processo explorer.exe próprio (não há um shell de área de trabalho para
+# hospedar a janela) e ele continua vivo depois de fechar a janela: a medição é desse(s) processo(s) novo(s); o Cleanup
+# encerra os que nasceram na execução para que a próxima comece da mesma linha de base.
 $apps["Explorer"] = @{
-    Prepare = { param($folder) }
+    Prepare = { param($folder) $script:ctx.ShellBefore = @(Get-Process -Name explorer -ErrorAction SilentlyContinue | ForEach-Object { $_.Id }) }
     Launch = { param($folder) $script:ctx.Leaf = Split-Path -Leaf $folder; Start-Process -FilePath "explorer.exe" -ArgumentList "`"$folder`"" }
     Group = { @(Get-Process -Name explorer -ErrorAction SilentlyContinue | ForEach-Object { $_.Id }) }
     Window = { param($folder, $pids) [CmpWin32]::FindExplorerWindow((Split-Path -Leaf $folder)) }
-    Cleanup = { param($pids) }
+    Cleanup = { param($pids) $mine = @($pids | Where-Object { $script:ctx.ShellBefore -notcontains $_ }); if ($mine.Count -gt 0) { Stop-Pids $mine } }
 }
 
 if ($filesPkg) {
@@ -358,6 +361,7 @@ foreach ($r in $summary) {
 foreach ($r in ($summary | Where-Object { $_.App -eq "Explorer" })) {
     [void]$md.AppendLine("Explorer $($r.Scenario): absolute shell with the window open = $(Fmt $r.AbsWsMB) MB working set, $(Fmt $r.AbsPrivateMB) MB private, $(Fmt $r.AbsCpuPct)% CPU; delta after closing the window = $(Fmt $r.AfterCloseWsMB) MB working set, $(Fmt $r.AfterClosePrivateMB) MB private.")
 }
+if ($filesPkg) { [void]$md.AppendLine("Files package: $($filesPkg.PackageFullName)") }
 if (-not $apps.Contains("Files")) { [void]$md.AppendLine("Files: **não medido** ($filesNote).") }
 [void]$md.AppendLine("Scenario c (navigate into a subfolder and back): not measured (not scriptable the same way in all three apps).")
 $text = $md.ToString()
