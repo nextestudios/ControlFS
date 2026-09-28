@@ -225,10 +225,15 @@ internal static class ScreenRenderer
 
                 app.Handle(InputAction.OpenAppMenu);
                 await CaptureAsync(stage, target, dir, "4-menu", window);
+                // #227: a mesma largura com o foco numa linha de descrição longa (4a) e num bloco (4).
+                FocusMenuItem(app, "Dois painéis");
+                await CaptureAsync(stage, target, dir, "4a-menu-long-row", window);
                 FocusMenuItem(app, "Configurações");
                 app.Handle(InputAction.Confirm);
                 FocusMenuItem(app, "Ordem");
                 await CaptureAsync(stage, target, dir, "4b-settings", window);
+                FocusMenuItem(app, "Mira por giroscópio");
+                await CaptureAsync(stage, target, dir, "4c-settings-long-row", window);
                 CloseModals(app);
 
                 app.Handle(InputAction.Search);
@@ -462,19 +467,21 @@ internal static class ScreenRenderer
     }
 
     /// <summary>
-    /// Só setas, como no controle: um bloco da grade de ações rápidas pelo topo (PageUp, Baixo por linha, Direita por
-    /// coluna); um item da lista descendo (a lista dá a volta e passa pela grade).
+    /// Só setas, como no controle: um bloco de uma grade descendo até ela e depois por linha e coluna; um item da lista
+    /// descendo (a lista dá a volta e passa pelas grades).
     /// </summary>
     private static void StepTo(AppController app, Application.State.MenuModal menu, int index)
     {
-        if (menu.IsQuick(index))
+        if (menu.GridOf(index) is { } grid)
         {
-            app.Handle(InputAction.PageUp);
-            for (var r = 0; r < index / menu.QuickColumns; r++) app.Handle(InputAction.NavigateDown);
-            while (menu.FocusIndex != index) app.Handle(InputAction.NavigateRight);
+            for (var guard = 0; !grid.Contains(menu.FocusIndex) && guard < 500; guard++) app.Handle(InputAction.NavigateDown);
+            while (grid.Contains(menu.FocusIndex) && grid.Row(menu.FocusIndex) > grid.Row(index)) app.Handle(InputAction.NavigateUp);
+            while (grid.Contains(menu.FocusIndex) && grid.Row(menu.FocusIndex) < grid.Row(index)) app.Handle(InputAction.NavigateDown);
+            for (var guard = 0; menu.FocusIndex != index && guard < 8; guard++)
+                app.Handle(menu.FocusIndex > index ? InputAction.NavigateLeft : InputAction.NavigateRight);
             return;
         }
-        while (menu.FocusIndex != index) app.Handle(InputAction.NavigateDown);
+        for (var guard = 0; menu.FocusIndex != index && guard < 500; guard++) app.Handle(InputAction.NavigateDown);
     }
 
     private static async Task<bool> WaitForAsync(Func<bool> condition)

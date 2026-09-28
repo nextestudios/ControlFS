@@ -108,6 +108,14 @@ as capturas `m1-menu-actions`, `m1b-menu-destructive-focus`, `m2-confirm-delete`
 `m7-operation-details`, `m8-picker-menu`, `m9-about`, `4-menu` e `5-keyboard` em 1280×720, 1280×800, 1920×1080 e
 3840×2160 (100% e 200%), mais `icons/action-icons.png` (todos os ícones com o nome) no artefato `smoke-screens`.
 
+Largura estável e grades em Configurações (#227): as capturas `4-menu`/`4a-menu-long-row` e `4b-settings`/`4c-settings-long-row`
+(foco num bloco e numa linha de descrição longa) têm a mesma largura de modal no relatório (`modal LxA`) em cada tamanho.
+
+- [ ] Largura estável e grades em Configurações (#227): no controle, percorrer todas as opções de Configurações (e do Menu)
+      em 1920×1080, 1280×720/800 e numa TV 4K a ~3 m: o painel não fica mais largo nem mais estreito; descrições longas
+      quebram linha; os blocos mostram rótulo e valor legíveis; Baixo/Cima entre grade e lista seguem
+      `docs/input-and-focus.md`; alternar um bloco mantém o foco nele; o Narrador lê o rótulo com o valor.
+
 Não validado em hardware (controle real, TV a ~3 m, DPI real, Configurações do Windows reais):
 - [ ] TV 1080p e 4K a ~3 m: dá para dizer qual opção está focada sem depender da cor (preenchimento, negrito, tamanho);
       os ícones são reconhecíveis e combinam com o texto; títulos de grupo legíveis.

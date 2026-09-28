@@ -134,7 +134,7 @@ public static partial class ModalView
         var screen = $"{Theme.Viewport.Width:0}x{Theme.Viewport.Height:0}|{Theme.Layout.Tier}|{Theme.SolidSurfaces}|{Theme.Revision}|{modal.Title}|{modal.Subtitle}|{modal.Icon}";
         return modal switch
         {
-            MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}|{i.Placement}|{i.TileLabel}")),
+            MenuModal menu => screen + "|m|" + string.Join("\u0001", menu.Items.Select(i => $"{i.Label}|{i.IsEnabled}|{i.DisabledReason}|{i.Detail}|{i.Section}|{i.Icon}|{i.IsDestructive}|{i.Placement}|{i.TileLabel}|{i.Value}")),
             DialogModal dialog => dialog.Progress is not null ? null : screen + "|d|" + dialog.Message + "|"
                 + string.Join("\u0001", dialog.Lines.Select(l => l.Label + "=" + l.Value)) + "|"
                 + string.Join("\u0001", dialog.Options.Select(o => $"{o.Label}|{o.Kind}|{o.IsChecked}|{o.Icon}|{o.IsDestructive}")),
@@ -470,60 +470,79 @@ public static partial class ModalView
 
     /// <summary>
     /// Menu (#193): grade de ações rápidas no topo (blocos com ícone e rótulo curto, 2D) e, abaixo, a lista compacta das
-    /// demais opções, em grupos. Sob a grade, uma linha diz o nome completo do bloco focado, o que ele faz ou por que está
-    /// indisponível. Mantido na tela: mudar o foco troca só o bloco/linha que perde e o que ganha o foco (e essa linha).
+    /// demais opções, em grupos. Configurações (#227): cada grupo tem título, a grade dos ajustes curtos (com o valor atual)
+    /// e a lista dos demais. Sob cada grade, uma linha diz o nome completo do bloco focado, o que ele faz ou por que está
+    /// indisponível. A largura do painel é fixa para o menu (<see cref="MenuModal.PanelWidth"/>): o foco e a descrição da
+    /// linha focada nunca a mudam; o texto quebra dentro dela. Mantido na tela: mudar o foco troca só o bloco/linha que
+    /// perde e o que ganha o foco (e as linhas sob as grades).
     /// </summary>
     private static Border BuildMenu(AppController app, MenuModal menu, out Action update)
     {
         var stack = new StackPanel();
-        var quick = menu.QuickCount;
-        var tiles = new Grid { ColumnSpacing = Theme.SpaceS, RowSpacing = Theme.SpaceS };
-        TextBlock? caption = null;
-        if (quick > 0)
+        var hasGrid = menu.Grids.Count > 0;
+        // Títulos de grupo: em menus só de lista e nas Configurações; com a grade de ações rápidas no topo, só o fio (como o
+        // menu de contexto do Windows 11).
+        var titles = !hasGrid || menu.HasSectionGrids;
+        var grids = new Dictionary<MenuGrid, (Grid Tiles, TextBlock Caption)>();
+        var positions = new int[menu.Items.Count];
+        string? section = null;
+        for (var i = 0; i < menu.Items.Count;)
         {
-            for (var c = 0; c < menu.QuickColumns; c++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            for (var r = 0; r < menu.QuickRows; r++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            for (var i = 0; i < quick; i++) tiles.Children.Add(MenuTile(app, menu, i));
+            var item = menu.Items[i];
+            var grid = menu.GridOf(i);
+            // Grupo novo: título (ou só o fio). Menu comum: logo abaixo da grade do topo sempre há o fio separando as duas partes.
+            var heading = menu.HasSectionGrids || !hasGrid
+                ? (i == 0 ? item.Section is not null : item.Section != section)
+                : i != 0 && (i == menu.QuickCount || item.Section != section);
+            if (heading) stack.Children.Add(SectionHeading(titles ? item.Section : null, first: i == 0));
+            section = item.Section;
+            if (grid is null)
+            {
+                positions[i] = stack.Children.Count;
+                stack.Children.Add(MenuRow(app, menu, i));
+                i++;
+                continue;
+            }
+            var tiles = new Grid { ColumnSpacing = Theme.SpaceS, RowSpacing = Theme.SpaceS, Margin = new Thickness(0, menu.HasSectionGrids ? Theme.Space(4) : 0, 0, menu.HasSectionGrids ? Theme.Space(4) : 0) };
+            for (var c = 0; c < grid.Columns; c++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (var r = 0; r < grid.Rows; r++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var t = grid.Start; t < grid.End; t++) tiles.Children.Add(MenuTile(app, menu, t));
             stack.Children.Add(tiles);
-            caption = new TextBlock
+            var caption = new TextBlock
             {
                 FontSize = Theme.FontCaption,
                 Foreground = Theme.TextMuted,
                 TextWrapping = TextWrapping.Wrap,
-                MaxLines = 2,
+                MaxLines = menu.HasSectionGrids ? 0 : 2,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 MinHeight = Math.Ceiling(Theme.FontCaption * 1.4),
-                Margin = new Thickness(Theme.Space(4), Theme.SpaceS, Theme.Space(4), 0),
+                Margin = new Thickness(Theme.Space(4), Theme.SpaceS, Theme.Space(4), menu.HasSectionGrids ? Theme.Space(4) : 0),
             };
             AutomationProperties.SetAccessibilityView(caption, AccessibilityView.Raw); // o Narrador já ouve o anúncio do foco
             stack.Children.Add(caption);
-        }
-        var positions = new int[menu.Items.Count];
-        string? section = null;
-        for (var i = quick; i < menu.Items.Count; i++)
-        {
-            var item = menu.Items[i];
-            // Grupo novo: título e fio. Logo abaixo da grade sempre há o fio separando as duas partes; no topo de um menu
-            // sem grade, só o título (se houver).
-            var heading = i == quick ? quick > 0 || item.Section is not null : item.Section != section;
-            // Com grade, só o fio (como o menu de contexto do Windows 11): os títulos de grupo ficam para menus só de lista
-            // (ex.: Configurações), onde ajudam a achar o ajuste.
-            if (heading) stack.Children.Add(SectionHeading(quick > 0 ? null : item.Section, first: i == 0));
-            section = item.Section;
-            positions[i] = stack.Children.Count;
-            stack.Children.Add(MenuRow(app, menu, i));
+            grids[grid] = (tiles, caption);
+            i = grid.End;
         }
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
         Border? footer = null;
-        var width = quick > 0 ? 540 : 460;
-        var card = Panel(app, Header(menu, compact: true), stack, width, minWidth: quick > 0 ? width : Math.Min(width, 400), footerSink: f => footer = f, compact: true);
-        if (caption is not null) caption.Text = TileCaption(menu);
+        // Largura fixa (#227): mínimo = máximo, os dois limitados pela janela (720p, portátil, 4K).
+        var card = Panel(app, Header(menu, compact: true), stack, menu.PanelWidth, minWidth: menu.PanelWidth, footerSink: f => footer = f, compact: true);
+        void Captions()
+        {
+            // Menu comum: a linha sob a grade guarda o lugar (nada pula). Configurações: só a grade em foco mostra a sua.
+            foreach (var (grid, (_, caption)) in grids)
+            {
+                caption.Text = grid.Contains(menu.FocusIndex) ? TileCaption(menu) : string.Empty;
+                if (menu.HasSectionGrids) caption.Visibility = caption.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+        Captions();
         var shown = menu.FocusIndex;
         void Replace(int index)
         {
             if (index < 0 || index >= positions.Length) return;
-            if (menu.IsQuick(index)) tiles.Children[index] = MenuTile(app, menu, index);
+            if (menu.GridOf(index) is { } grid) grids[grid].Tiles.Children[index - grid.Start] = MenuTile(app, menu, index);
             else stack.Children[positions[index]] = MenuRow(app, menu, index);
         }
         update = () =>
@@ -534,7 +553,7 @@ public static partial class ModalView
                 Replace(shown);
                 Replace(now);
                 shown = now;
-                if (caption is not null) caption.Text = TileCaption(menu);
+                Captions();
             }
             if (footer is not null) footer.Child = Footer(app);
         };
@@ -553,13 +572,15 @@ public static partial class ModalView
     }
 
     /// <summary>
-    /// Bloco da grade: ícone grande e o rótulo curto visível embaixo (legível de longe; nada só em dica de mouse). Focado:
-    /// preenchido (ciano; vermelho se perigoso; cinza se indisponível), texto escuro em negrito e um pouco maior. Perigoso:
-    /// ícone e texto vermelhos. Indisponível: esmaecido.
+    /// Bloco da grade: ícone grande e o rótulo curto visível embaixo (legível de longe; nada só em dica de mouse) e, num
+    /// ajuste, o valor atual. Focado: preenchido (ciano; vermelho se perigoso; cinza se indisponível), texto escuro em negrito
+    /// e um pouco maior. Perigoso: ícone e texto vermelhos. Indisponível: esmaecido. O Narrador ouve o rótulo por extenso,
+    /// que já diz o valor.
     /// </summary>
     private static Border MenuTile(AppController app, MenuModal menu, int index)
     {
         var item = menu.Items[index];
+        var grid = menu.GridOf(index)!;
         var focused = index == menu.FocusIndex;
         var enabled = item.IsEnabled;
         var destructive = item.IsDestructive;
@@ -587,6 +608,22 @@ public static partial class ModalView
             AutomationProperties.SetName(text, item.Label);
         }
         content.Children.Add(text);
+        if (item.Value is { Length: > 0 } value)
+        {
+            content.Spacing = Theme.Space(4);
+            content.Children.Add(new TextBlock
+            {
+                Text = value,
+                FontSize = Theme.FontCaption,
+                Foreground = focused && enabled ? Theme.FocusText : enabled ? Theme.Accent : ink,
+                Opacity = focused && enabled ? 0.85 : 1,
+                TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextWrapping = TextWrapping.WrapWholeWords,
+                MaxLines = 2,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            });
+        }
 
         var tile = new Border
         {
@@ -599,8 +636,8 @@ public static partial class ModalView
             BorderBrush = focused && !enabled ? Theme.Accent : null,
             BorderThickness = focused && !enabled ? Theme.FocusRing : default,
         };
-        Grid.SetRow(tile, index / menu.QuickColumns);
-        Grid.SetColumn(tile, index % menu.QuickColumns);
+        Grid.SetRow(tile, grid.Row(index));
+        Grid.SetColumn(tile, grid.Column(index));
         if (focused)
         {
             tile.RenderTransformOrigin = new Point(0.5, 0.5);

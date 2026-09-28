@@ -255,6 +255,61 @@ public class ModalSystemJourneyTests : IDisposable
     });
 
     [Fact]
+    public void Settings_grids_per_section_navigate_in_two_dimensions_with_the_lists_between_them() => UiContext.Run(async () =>
+    {
+        // #227: ajustes curtos são blocos na grade do seu grupo (com o valor); os longos e os que abrem telas ficam na lista.
+        var d = Boot();
+        var app = d.App;
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        app.ShowSettings();
+        var settings = await d.WaitMenu();
+        var view = settings.Grids[0];
+        Assert.Equal(["Exibição", "Densidade", "Detalhes", "Tema", "Destaque", "Ordenar", "Ordem", "Ocultos"],
+            settings.Items.Skip(view.Start).Take(view.Count).Select(i => i.TileLabel));
+        Assert.Equal((4, 2), (view.Columns, view.Rows));
+        Assert.Equal(3, settings.Grids.Count);
+        Assert.All(settings.Items.Where(i => i.IsQuick), i => Assert.False(string.IsNullOrEmpty(i.Value)));
+        Assert.False(settings.IsQuick(settings.Items.ToList().FindIndex(i => i.Label.StartsWith("Controle ativo", StringComparison.Ordinal))));
+        string Focused() => settings.Items[settings.FocusIndex].Label;
+        Assert.Equal(0, settings.FocusIndex);
+
+        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateRight); // Detalhes (coluna 2)
+        d.Press(InputAction.NavigateDown);
+        Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateDown); // última linha da grade: a lista do mesmo grupo
+        Assert.StartsWith("Status do Git:", Focused(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
+        Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateDown);
+        d.Press(InputAction.NavigateDown); // da lista para a grade do grupo seguinte: primeiro bloco
+        Assert.StartsWith("Busca em subpastas:", Focused(), StringComparison.Ordinal);
+        app.TakeAnnouncement();
+        d.Press(InputAction.NavigateRight); // Recentes: rótulo por extenso (com o valor) e a posição no bloco
+        Assert.Matches(@"^Recentes: (lembrar|não lembrar), .*bloco 2 de 4$", app.TakeAnnouncement());
+        d.Press(InputAction.NavigateUp); // primeira linha: o item de lista acima
+        Assert.StartsWith("Status do Git:", Focused(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateUp); // grade de cima, última linha, coluna 1
+        Assert.StartsWith("Ordenar por:", Focused(), StringComparison.Ordinal);
+        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateRight);
+        var hidden = settings.FocusIndex;
+        Assert.Equal(("Ocultos", "esconder"), (settings.Items[hidden].TileLabel, settings.Items[hidden].Value));
+
+        d.Press(InputAction.Confirm); // alterna e continua no mesmo bloco, com o valor novo
+        Assert.Same(settings, app.TopModal);
+        Assert.True(app.Settings.ShowHidden);
+        Assert.Equal(hidden, settings.FocusIndex);
+        Assert.Equal(("Itens ocultos: mostrar", "mostrar"), (Focused(), settings.Items[hidden].Value));
+
+        app.PointerChooseModalOption(1); // toque num bloco: o mesmo que Confirmar nele
+        Assert.Same(settings, app.TopModal);
+        Assert.Equal(ListDensity.Compact, app.Settings.Density);
+        Assert.Equal(("Densidade", "compacta"), (settings.Items[1].TileLabel, settings.Items[1].Value));
+    });
+
+    [Fact]
     public void Menus_never_open_focused_on_an_unavailable_option() => UiContext.Run(async () =>
     {
         var d = Boot();

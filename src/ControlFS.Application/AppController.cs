@@ -397,16 +397,18 @@ public sealed partial class AppController
             return;
         }
         menu.FocusIndex = Math.Clamp(menu.FocusIndex, 0, count - 1);
-        if (menu.IsQuick(menu.FocusIndex) && MoveInQuickGrid(menu, action)) return;
+        if (menu.GridOf(menu.FocusIndex) is { } grid && MoveInGrid(menu, grid, action)) return;
         switch (action)
         {
             case InputAction.NavigateUp:
-                // Topo da lista: sobe para a última linha da grade, na coluna de onde o foco saiu.
-                if (menu.FocusIndex == menu.QuickCount && menu.QuickCount > 0)
-                    menu.FocusIndex = Math.Min(menu.QuickCount - 1, (menu.QuickRows - 1) * menu.QuickColumns + menu.GridColumn);
-                else menu.FocusIndex = (menu.FocusIndex - 1 + count) % count;
+                // Sobe para a linha anterior; se for de uma grade, entra na última linha dela, na coluna de onde o foco saiu.
+                menu.FocusIndex = EnterFromBelow(menu, (menu.FocusIndex - 1 + count) % count);
                 break;
-            case InputAction.NavigateDown: menu.FocusIndex = (menu.FocusIndex + 1) % count; break;
+            case InputAction.NavigateDown:
+                // Desce para a próxima linha; uma grade logo abaixo começa pelo primeiro bloco (ordem de leitura).
+                var next = (menu.FocusIndex + 1) % count;
+                menu.FocusIndex = menu.GridOf(next) is { } below ? below.Start : next;
+                break;
             case InputAction.PageUp: menu.FocusIndex = 0; break;
             case InputAction.PageDown: menu.FocusIndex = count - 1; break;
             case InputAction.Confirm:
@@ -422,37 +424,42 @@ public sealed partial class AppController
         }
     }
 
+    /// <summary>Item de destino vindo de baixo: numa grade, o bloco da última linha na coluna guardada.</summary>
+    private static int EnterFromBelow(MenuModal menu, int index) =>
+        menu.GridOf(index) is { } grid ? grid.At(grid.Rows - 1, menu.GridColumn) : index;
+
     /// <summary>
-    /// Grade de ações rápidas (2D): Esquerda/Direita andam entre os blocos da linha e param nas bordas (nunca fecham nem
-    /// escolhem); Baixo desce uma linha e, da última, entra na lista (sem lista: volta à primeira linha); Cima sobe uma
-    /// linha e, da primeira, vai ao último item da lista (sem lista: à última linha). Devolve false para as demais ações.
+    /// Grade de blocos (2D, #193/#227): Esquerda/Direita andam entre os blocos da linha e param nas bordas (nunca fecham nem
+    /// escolhem); Baixo desce uma linha e, da última, vai ao item seguinte (outra grade: mesma coluna; fim do menu: dá a volta);
+    /// Cima sobe uma linha e, da primeira, vai ao item anterior (outra grade: a última linha dela, na mesma coluna). Com uma
+    /// grade só e nenhuma lista, Baixo/Cima dão a volta na própria grade. Devolve false para as demais ações.
     /// </summary>
-    private static bool MoveInQuickGrid(MenuModal menu, InputAction action)
+    private static bool MoveInGrid(MenuModal menu, MenuGrid grid, InputAction action)
     {
         var index = menu.FocusIndex;
-        var columns = menu.QuickColumns;
-        var (row, column) = (index / columns, index % columns);
-        var lastRow = menu.QuickRows - 1;
-        var hasList = menu.Items.Count > menu.QuickCount;
+        var count = menu.Items.Count;
+        var (row, column) = (grid.Row(index), grid.Column(index));
         switch (action)
         {
             case InputAction.NavigateLeft:
                 if (column > 0) menu.FocusIndex = index - 1;
                 return true;
             case InputAction.NavigateRight:
-                if (column < columns - 1 && index + 1 < menu.QuickCount) menu.FocusIndex = index + 1;
+                if (column < grid.Columns - 1 && index + 1 < grid.End) menu.FocusIndex = index + 1;
                 return true;
             case InputAction.NavigateDown:
                 menu.GridColumn = column;
-                menu.FocusIndex = row < lastRow ? Math.Min(menu.QuickCount - 1, index + columns)
-                    : hasList ? menu.QuickCount
-                    : column;
+                if (row < grid.Rows - 1)
+                {
+                    menu.FocusIndex = grid.At(row + 1, column);
+                    return true;
+                }
+                var next = grid.End % count;
+                menu.FocusIndex = menu.GridOf(next) is { } below ? below.At(0, column) : next;
                 return true;
             case InputAction.NavigateUp:
                 menu.GridColumn = column;
-                menu.FocusIndex = row > 0 ? index - columns
-                    : hasList ? menu.Items.Count - 1
-                    : Math.Min(menu.QuickCount - 1, lastRow * columns + column);
+                menu.FocusIndex = row > 0 ? grid.At(row - 1, column) : EnterFromBelow(menu, (grid.Start - 1 + count) % count);
                 return true;
             default:
                 return false;
