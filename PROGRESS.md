@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Otimização de memória e READMEs (0.11.1-alpha.1)
+
+- Ordenação de nomes de 35 para 15 ms em 5.000 itens (#247), GC não concorrente e TieredPGO desligado (#248), devolução da
+  memória de partida ao Windows depois do primeiro quadro (#251): 18 MB de conjunto de trabalho parado; bytes privados 59 MB
+  contra 56,5 MB do Explorador e 109 MB do Files. Abertura ainda mais lenta que a do Explorador (motivo no README).
+- GIF de apresentação (#252), explicação da abertura (#254) e comparativo enxuto em RAM e CPU (#255).
+
 ## Mais da equipe, README e ícone (0.11.0-alpha.1)
 
 - Tela única "Mais da equipe" com NextBoost PRO e Console Mode (#243); boas-vindas também para quem reinstala (#242);
