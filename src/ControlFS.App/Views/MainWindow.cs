@@ -42,6 +42,9 @@ public sealed class MainWindow : Window
     private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
     private readonly Windows.UI.ViewManagement.AccessibilitySettings _accessibility = new();
     private bool _layoutPinned;
+
+    /// <summary>Modo de capturas (--render-screens): nenhum padrão depende do tamanho da tela do runner.</summary>
+    private readonly bool _captures;
     private readonly ShellIconProvider _iconProvider = new();
     private readonly DriveWatcher _drives = new();
     private readonly IconLoader _icons;
@@ -54,8 +57,8 @@ public sealed class MainWindow : Window
     private readonly StackPanel _tabStrip = new() { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceXs, VerticalAlignment = VerticalAlignment.Center };
     private readonly StackPanel _tabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _badge = new() { FontSize = Theme.FontCaption, Foreground = Theme.Accent, TextTrimming = TextTrimming.CharacterEllipsis };
-    /// <summary>Placa atrás do logo: transparente no tema escuro; escura no claro (o nome no logo é claro, #37).</summary>
-    private readonly Border _logoPlate = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Background = Theme.LogoPlate };
+    /// <summary>Área do logo (sem placa: no tema claro vale a variante com o nome escuro, P2-12 da auditoria de UX).</summary>
+    private readonly Border _logoPlate = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
     private readonly Image _logo = new() { Height = 44, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Stretch = Stretch.Uniform };
     private readonly IconLoader _navIcons;
     private readonly IconLoader _cardIcons;
@@ -119,6 +122,7 @@ public sealed class MainWindow : Window
         Title = "ControlFS";
         var icon = Path.Join(AppContext.BaseDirectory, "controlfs.ico");
         if (File.Exists(icon)) AppWindow.SetIcon(icon);
+        _captures = dataDirectory is not null;
         var data = dataDirectory ?? AppPaths.DataDirectory;
         var settingsStore = new JsonSettingsStore(data);
         _updates = dataDirectory is null ? GitHubReleaseUpdateService.CreateDefault(AppPaths.IsInstalled, Path.Join(data, "updates")) : null;
@@ -509,7 +513,7 @@ public sealed class MainWindow : Window
         var pane = _app.ActivePane;
         var badge = _app.Screen switch
         {
-            Screen.FolderPicker => "ESCOLHER PASTA · " + _app.PickerTitle,
+            Screen.FolderPicker => _app.PickerTitle + " · escolha a pasta",
             Screen.Browser when pane.Location is ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
             Screen.Browser when _app.GitSummary is { } git => git,
             _ => string.Empty,
@@ -520,6 +524,11 @@ public sealed class MainWindow : Window
             : pane.InaccessibleCount > 0 ? $"{Plural.Of(pane.InaccessibleCount, "item", "itens")} sem permissão de leitura {Plural.Word(pane.InaccessibleCount, "foi omitido", "foram omitidos")}."
             : null;
         if (!string.IsNullOrEmpty(context)) badge = badge.Length > 0 ? badge + " · " + context : context;
+        // Seletor de pasta: a linha vira o título da tela ("Copiar para…"), grande como um título, não uma legenda.
+        var picker = _app.Screen == Screen.FolderPicker;
+        _badge.FontSize = picker ? Theme.FontTitle : Theme.FontBody;
+        _badge.FontWeight = picker ? FontWeights.SemiBold : FontWeights.Normal;
+        _badge.Foreground = picker ? Theme.Text : Theme.Accent;
         if (badge != _badge.Text)
         {
             _badge.Text = badge;
@@ -779,8 +788,11 @@ public sealed class MainWindow : Window
         foreach (var prompt in _app.Prompts)
         {
             if (regionsShownAbove && prompt.Action is InputAction.PreviousRegion or InputAction.NextRegion) continue;
-            _hints.Children.Add(ModalView.PromptChip(prompt, glyphHeight, FooterLabelSize));
+            var chip = ModalView.PromptChip(prompt, glyphHeight, FooterLabelSize);
+            chip.Tag = prompt.Action;
+            _hints.Children.Add(chip);
         }
+        FitFooter();
         // Com um modal aberto, as legendas ficam no próprio painel: as do rodapé somem sem mudar a altura dele.
         _hints.Opacity = _app.TopModal is null ? 1 : 0;
 
@@ -800,6 +812,28 @@ public sealed class MainWindow : Window
         RestoreKeyboardFocus();
         Announce();
     }
+
+    /// <summary>
+    /// O rodapé nunca quebra linha (auditoria de UX, P2-7): se as legendas não cabem numa linha, as menos essenciais saem
+    /// do fim para o começo; Abrir, Voltar, Ações e Menu ficam sempre. Tudo continua funcionando e está nos menus.
+    /// </summary>
+    private void FitFooter()
+    {
+        var available = Theme.Viewport.Width - _footer.Padding.Left - _footer.Padding.Right - 1;
+        var infinite = new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity);
+        var chips = _hints.Children.OfType<FrameworkElement>().ToList();
+        var widths = chips.Select(c =>
+        {
+            c.Measure(infinite);
+            return c.DesiredSize.Width;
+        }).ToArray();
+        double Row() => chips.Select((c, i) => c.Visibility == Visibility.Visible ? widths[i] + _hints.HorizontalSpacing : 0).Sum() - _hints.HorizontalSpacing;
+        for (var i = chips.Count - 1; i >= 0 && Row() > available; i--)
+            if (chips[i].Tag is InputAction action && !IsEssentialPrompt(action)) chips[i].Visibility = Visibility.Collapsed;
+    }
+
+    private static bool IsEssentialPrompt(InputAction action) =>
+        action is InputAction.Confirm or InputAction.Back or InputAction.OpenContextMenu or InputAction.OpenAppMenu;
 
     /// <summary>Glifos do rodapé grandes o bastante para ler a distância (a referência usa botões redondos de ~2,5× o texto).</summary>
     private static double FooterGlyphHeight => Math.Round(Theme.FontBody * (Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? 1.9 : 2.3));
@@ -934,6 +968,8 @@ public sealed class MainWindow : Window
         var size = xamlRoot.Size;
         var profile = LayoutBreakpoints.Select(size.Width, size.Height, xamlRoot.RasterizationScale, _uiSettings.TextScaleFactor);
         var previous = Theme.Viewport;
+        // Primeira abertura num portátil: a lista começa compacta (só uma vez; nunca sobre uma escolha salva).
+        if (!_captures) _app.ApplyFirstRunDensity(profile.Tier == Core.Layout.LayoutTier.Compact);
         if (Theme.SetLayout(profile, size))
         {
             ApplyLayout();
@@ -1052,14 +1088,14 @@ public sealed class MainWindow : Window
         _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
         _logo.Height = Theme.Layout.LogoHeight;
         _logoPlate.CornerRadius = new CornerRadius(Theme.Scaled(12));
-        _logoPlate.Padding = Theme.IsDark ? new Thickness(0) : new Thickness(Theme.SpaceS, Theme.SpaceXs, Theme.SpaceM, Theme.SpaceXs);
+        _logo.Source = Branding.LogoFor(Theme.IsDark);
         _tabStrip.Spacing = Theme.SpaceXs;
         _tabs.Spacing = Theme.SpaceS;
         _badge.Margin = new Thickness(Theme.SpaceL + Theme.SpaceS, 0, Theme.SpaceL, Theme.SpaceS);
         _topBar.ApplyLayout();
         _home.ApplyLayout();
         _home.SetTrailingGutter(_detailsShown ? DetailsGap : null);
-        _badge.FontSize = Theme.FontCaption;
+        _badge.FontSize = Theme.FontBody; // contexto do local (compactado, Git, busca): lido de longe, não uma legenda
         _toast.ApplyLayout();
         _progress.Height = Theme.Space(4);
         _progress.Background = Theme.Border;
@@ -1074,7 +1110,7 @@ public sealed class MainWindow : Window
         _details.Root.Margin = new Thickness(0, Theme.Space(20), Theme.SpaceL, Theme.Space(24));
         _details.ApplyLayout();
         _paneView.ApplyLayout();
-        _paneCaption.FontSize = Theme.FontCaption;
+        _paneCaption.FontSize = Theme.FontBody;
         _paneCaption.Foreground = Theme.Accent;
         _paneCaption.Margin = new Thickness(Theme.Space(18), Theme.Space(4), Theme.Space(18), Theme.Space(6));
         // Dois painéis só onde cabem com o nome legível: portáteis e janelas estreitas ficam com um (a escolha continua salva).

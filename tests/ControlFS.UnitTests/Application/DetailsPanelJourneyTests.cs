@@ -236,7 +236,9 @@ public class DetailsPanelJourneyTests : IDisposable
         var marked = app.Details!.Lines.Single(l => l.Icon == DetailsIcon.Marked);
         Assert.Equal(("c.bin", "Este item está marcado", "2 itens marcados · 3 KB"), (app.Details!.Title, marked.Label, marked.Value));
         await d.FocusItem("Jogos");
-        Assert.Equal("Este item não está marcado", app.Details!.Lines.Single(l => l.Icon == DetailsIcon.Marked).Label);
+        // Caixa vazia, não o símbolo de marcado (auditoria de UX, P3).
+        Assert.Equal("Este item não está marcado", app.Details!.Lines.Single(l => l.Icon == DetailsIcon.Unmarked).Label);
+        Assert.DoesNotContain(app.Details!.Lines, l => l.Icon == DetailsIcon.Marked);
 
         // Foco fora da grade (barra superior): só o resumo dos marcados, sem apontar nenhum item como focado.
         d.Press(InputAction.PreviousRegion);

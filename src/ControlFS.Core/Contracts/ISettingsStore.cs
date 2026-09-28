@@ -116,7 +116,8 @@ public sealed record AppSettings
     public bool? OnboardingCompleted { get; init; }
 }
 
-public sealed record SettingsLoadResult(AppSettings Settings, bool RecoveredFromCorruption, string? Notice);
+/// <param name="FirstRun">Nenhuma preferência salva ainda (primeira abertura): padrões que dependem do aparelho podem valer.</param>
+public sealed record SettingsLoadResult(AppSettings Settings, bool RecoveredFromCorruption, string? Notice, bool FirstRun = false);
 
 public interface ISettingsStore
 {

@@ -119,6 +119,7 @@ public sealed partial class AppController
             var loaded = _settingsStore.Load();
             Settings = loaded.Settings;
             StatusMessage = loaded.Notice;
+            _firstRunDensity = loaded.FirstRun;
         }
         LoadControllerProfiles();
         LoadHistory();

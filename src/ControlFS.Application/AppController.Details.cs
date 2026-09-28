@@ -36,6 +36,9 @@ public enum DetailsIcon
     Compression,
     Lock,
     Marked,
+
+    /// <summary>Há itens marcados, mas não o item em foco: caixa vazia (nunca o símbolo de marcado).</summary>
+    Unmarked,
     Info,
     Warning,
 }
@@ -303,7 +306,7 @@ public sealed partial class AppController
         var text = marked.Count == 1 ? "1 item marcado" : string.Create(EntryText.Culture, $"{marked.Count:N0} itens marcados");
         if (bytes > 0) text += " · " + EntryText.Size(bytes) + (marked.Any(e => e.IsContainer) ? " em arquivos" : string.Empty);
         var focusedMarked = marked.Any(e => e.Id == focused.Id);
-        lines.Add(new DetailsLine(DetailsIcon.Marked, focusedMarked ? "Este item está marcado" : "Este item não está marcado", text));
+        lines.Add(new DetailsLine(focusedMarked ? DetailsIcon.Marked : DetailsIcon.Unmarked, focusedMarked ? "Este item está marcado" : "Este item não está marcado", text));
     }
 
     /// <summary>Arquivos, pastas e bytes declarados sob uma pasta do compactado (a árvore já está na memória).</summary>

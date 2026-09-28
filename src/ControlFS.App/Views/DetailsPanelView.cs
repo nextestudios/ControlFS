@@ -5,6 +5,7 @@ using ControlFS.App.Resources;
 using ControlFS.Application;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -70,7 +71,7 @@ internal sealed class DetailsPanelView
 
     public void Render(ItemDetails? details, IReadOnlySet<string> specialFolders)
     {
-        var key = Key(details);
+        var key = Key(details) + "\u001F" + _card.Width.ToString(System.Globalization.CultureInfo.InvariantCulture);
         if (key == _shownKey) return;
         _shownKey = key;
         if (_iconImage is not null) _icons.Cancel(_iconImage);
@@ -99,13 +100,25 @@ internal sealed class DetailsPanelView
         _stack.Children.Add(new TextBlock { Text = details.Subtitle, FontSize = Theme.Font(20), Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
 
         var lines = new StackPanel { Spacing = Theme.Space(18), Margin = new Thickness(0, Theme.Space(24), 0, 0) };
-        foreach (var line in details.Lines) lines.Children.Add(Line(line));
+        var pathChars = PathBudget();
+        foreach (var line in details.Lines) lines.Children.Add(Line(line.Icon == DetailsIcon.Location ? line with { Value = PathEllipsis.Middle(line.Value, pathChars) } : line));
         if (details.Volume is { TotalBytes: > 0 } volume) lines.Children.Insert(Math.Min(1, lines.Children.Count), UsageBar(volume.UsedFraction));
         _stack.Children.Add(lines);
         if (details.Note is { Length: > 0 } note)
             _stack.Children.Add(new TextBlock { Text = note, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, Theme.Space(16), 0, 0) });
         AutomationProperties.SetName(_card, "Detalhes: " + string.Join(", ", new[] { details.Title, details.Subtitle }
             .Concat(details.Lines.Select(l => l.Label is null ? l.Value : $"{l.Label} {l.Value}"))));
+    }
+
+    /// <summary>
+    /// Quantos caracteres do caminho cabem em duas linhas do valor (estimativa pela largura do painel e pelo tamanho da
+    /// letra): o caminho perde o meio, nunca a unidade nem a pasta final.
+    /// </summary>
+    private int PathBudget()
+    {
+        var width = double.IsFinite(_card.Width) ? _card.Width : Theme.Scaled(400);
+        var text = width - _stack.Padding.Left - _stack.Padding.Right - Theme.Scaled(30) - Theme.Space(18);
+        return Math.Max(24, (int)(2 * text / (Theme.Font(19) * 0.56)));
     }
 
     /// <summary>Muda quando qualquer texto, a miniatura ou o uso mudam (nada é refeito à toa a cada Render).</summary>
@@ -216,6 +229,7 @@ internal sealed class DetailsPanelView
         DetailsIcon.Compression => "",
         DetailsIcon.Lock => "",
         DetailsIcon.Marked => "",
+        DetailsIcon.Unmarked => "", // caixa vazia
         DetailsIcon.Warning => "",
         _ => "",
     };

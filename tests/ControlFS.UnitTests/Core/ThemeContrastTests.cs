@@ -37,6 +37,15 @@ public class ThemeContrastTests
         Text(p.FocusText, p.DangerFill, "opção perigosa focada");
         Text(p.TextMuted, p.DisabledFill, "opção indisponível focada");
         Text(p.Text, ThemeContrast.Over(p.ModalInset, p.ModalSolid), "informação no painel");
+
+        // Teclado virtual (auditoria de UX, P2-12): as teclas se destacam do painel e o texto delas continua legível.
+        var key = ThemeContrast.Over(p.KeyFill, p.ModalSolid);
+        var function = ThemeContrast.Over(p.KeyFunctionFill, p.ModalSolid);
+        Assert.True(ThemeContrast.Ratio(key, p.ModalSolid) >= 1.5, $"tecla/painel: {ThemeContrast.Ratio(key, p.ModalSolid):0.00}");
+        Assert.True(ThemeContrast.Ratio(function, p.ModalSolid) >= 1.15, $"tecla de função/painel: {ThemeContrast.Ratio(function, p.ModalSolid):0.00}");
+        Text(p.Text, key, "letra na tecla");
+        Text(p.Text, function, "texto na tecla de função");
+        Text(p.Accent, function, "Concluir e página atual (destaque na tecla de função)");
         Assert.Equal(dark, p.IsDark);
     }
 

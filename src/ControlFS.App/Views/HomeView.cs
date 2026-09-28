@@ -4,6 +4,7 @@ using ControlFS.Application;
 using ControlFS.Application.State;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -235,7 +236,11 @@ internal sealed class HomeView
         text.Children.Add(Line(place.Name, Theme.Font(24), place.IsBlocked ? Theme.Danger : Theme.Text));
         TextBlock? stats = null;
         if (drive && place.Volume is { TotalBytes: > 0 } volume) text.Children.Add(UsageBar(volume.UsedFraction));
-        text.Children.Add(Line(primary, Theme.Font(19), place.IsBlocked ? Theme.Danger : Theme.TextMuted));
+        // Pastas principais: o caminho completo é ruído (todo mundo sabe onde fica "Documentos"); na TV grande ele sai e o
+        // cartão fica com nome e conteúdo; nos demais, perde o meio e mantém a unidade e a pasta (auditoria de UX, P2-6).
+        var knownPath = place.Kind == EntryKind.KnownFolder && place.FullPath is { } full && primary == full;
+        if (!(knownPath && secondary is not null && Theme.Layout.Tier == Core.Layout.LayoutTier.Large))
+            text.Children.Add(Line(knownPath ? PathEllipsis.Middle(primary, 36) : primary, Theme.Font(19), place.IsBlocked ? Theme.Danger : Theme.TextMuted));
         if (secondary is not null)
         {
             var line = Line(secondary, Theme.Font(19), Theme.TextMuted);

@@ -81,8 +81,26 @@ public sealed partial class AppController
     private static string ViewName(ViewMode view) => view == ViewMode.Grid ? "grade" : "lista";
 
     /// <summary>Alterna a densidade da lista (preferência salva): confortável para TV, compacta para ver mais itens.</summary>
+    /// <summary>Primeira abertura: a densidade ainda pode seguir o aparelho (só até a primeira decisão).</summary>
+    private bool _firstRunDensity;
+
+    /// <summary>
+    /// Portáteis (auditoria de UX, P2-7): na primeira abertura num aparelho da faixa compacta (720p/800p), a lista começa
+    /// compacta, que mostra o dobro de linhas. Só vale uma vez e nunca sobrepõe uma escolha salva ou feita nesta sessão; a
+    /// janela chama quando conhece a faixa de layout.
+    /// </summary>
+    public void ApplyFirstRunDensity(bool handheld)
+    {
+        if (!_firstRunDensity) return;
+        _firstRunDensity = false;
+        if (!handheld || Settings.Density == ListDensity.Compact) return;
+        UpdateSettings(s => s with { Density = ListDensity.Compact });
+        RaiseChanged();
+    }
+
     internal void ToggleDensity()
     {
+        _firstRunDensity = false;
         UpdateSettings(s => s with { Density = s.Density == ListDensity.Compact ? ListDensity.Comfortable : ListDensity.Compact });
         StatusMessage = $"Lista {DensityName(Settings.Density)}.";
     }
