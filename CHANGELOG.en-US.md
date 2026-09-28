@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Performance
+- **Faster folder open:** sorting names no longer asks Windows to compare each letter (a 5,000-file folder sorted in ~35 ms, now ~15 ms in the CI measurement). The startup log also records where the time goes (controller start phases, memory after the first frame, and how long each folder takes to list, sort and draw).
 
 ## [0.11.0-alpha.1]
 ### Improvements
