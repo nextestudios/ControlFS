@@ -5,6 +5,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 ## [Unreleased]
 ### Performance
 - **Faster folder open:** sorting names no longer asks Windows to compare each letter (a 5,000-file folder sorted in ~35 ms, now ~15 ms in the CI measurement). The startup log also records where the time goes (controller start phases, memory after the first frame, and how long each folder takes to list, sort and draw).
+- **Faster startup:** the .NET runtime no longer starts a background garbage-collection thread and no longer instruments the first calls for profile-guided optimization. In the CI measurement, time to window dropped by about 250 ms (the runner varies by ±300 ms, so treat it as a trend).
 
 ## [0.11.0-alpha.1]
 ### Improvements
