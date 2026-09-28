@@ -794,3 +794,6 @@ imediato, conclusão salva, quem reinstala vê uma vez, Start pula, Menu reabre)
 - [ ] Instalação nova (ou apagar `%LOCALAPPDATA%\ControlFS\settings.json`): boas-vindas → (tutorial, se aceitar) → a tela "Mais da equipe" aparece **uma vez**; ao reabrir o app ela não volta.
 - [ ] Sul no cartão abre o navegador padrão no NextBoost PRO e no Console Mode; nada abre sozinho; Voltar fecha; com o tutorial em andamento a tela espera terminar.
 - [ ] Legível a 3 m e em 1280×720; os logos nítidos; Narrador lê o nome, o que faz e "abre no navegador".
+## Ícone do atalho (#187) — não validado em hardware
+- [ ] Reinstalar sobre uma instalação antiga: o atalho da Área de Trabalho e do menu Iniciar mostram o ícone limpo (pasta azul com o controle, sem fundo preto nem neon).
+- [ ] Se ainda aparecer o ícone antigo (cache do Windows), limpar o cache de ícones: no Prompt de Comando, `taskkill /f /im explorer.exe`, depois `del /a /q "%localappdata%\Microsoft\Windows\Explorer\iconcache*"` e `start explorer.exe`.

@@ -6,6 +6,7 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 ### Melhorias
 - **Mais da equipe:** uma única tela, logo depois das boas-vindas e do tutorial (ou ao abrir, para quem já os viu), apresenta os outros aplicativos da equipe: o **NextBoost PRO** (otimizador de Windows para jogos) e o **Console Mode** (transforma o PC num console). Cada um mostra o logo, o que faz e um botão que abre o site no navegador. Aparece só uma vez e não volta sozinha; para rever: Menu → Ajuda e tutorial → Mais da equipe. Os logos vêm no pacote: o ControlFS não acessa a internet por causa dela, e os endereços só abrem quando você escolhe.
 ### Correções
+- O atalho da Área de Trabalho e do menu Iniciar usam o ícone novo mesmo depois de reinstalar: o instalador aponta o atalho para o `controlfs.ico` e avisa o Windows, que guardava o ícone antigo em cache pelo caminho do executável. Se ainda aparecer o antigo, feche o Explorer e apague o cache de ícones (passo a passo em docs/TESTING.md). (#187)
 - As boas-vindas agora aparecem uma vez também para quem reinstala ou atualiza (a pasta de dados sobrevive à reinstalação, e as preferências antigas eram tratadas como "já vistas"). Para rever quando quiser: Menu → Ajuda e tutorial → Rever boas-vindas.
 
 ## [0.10.0-alpha.1]
