@@ -3,6 +3,9 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Celular como controle** (#223): Menu → **Conectar celular…** mostra um QR Code. Aponte a câmera do celular (Android ou iPhone, na mesma rede Wi-Fi/cabo do PC) e uma página abre no navegador, sem instalar app e sem nuvem: direcional, área de deslizar para rolar, **Abrir**, **Voltar**, **Marcar**, **Ações**, **Menu**, **Buscar**, **Lista/Grade**, regiões e páginas, e um campo que usa o teclado do celular para digitar no campo aberto no ControlFS. O PC mostra o IP do celular e um código de 6 dígitos que o celular também mostra; só depois de **Permitir** no PC o celular comanda. O código do QR vale 2 minutos e para uma conexão; a conexão é local e cifrada (AES-256-GCM, chave nova a cada pareamento, que nunca trafega pela rede). Confirmações importantes (excluir, substituir, desfazer) continuam só no PC — do celular, só Voltar. Menu → **Desconectar celular** (ou Desconectar no celular) encerra; fechar a página, perder a rede ou fechar o ControlFS também, e reconectar pede um QR Code novo. Na primeira vez o Firewall do Windows pode perguntar: permita em redes privadas. Ainda não validado com celulares reais (ver `docs/TESTING.md`).
+
 ### Correções
 - Fechar o ControlFS depois de ouvir um áudio ou ver um vídeo não derruba mais o processo em PCs sem placa de vídeo (máquinas virtuais, área de trabalho remota). (#224)
 

@@ -381,6 +381,19 @@ internal static class ScreenRenderer
         await CaptureAsync(stage, target, dir, "m9-about", window);
         CloseModals(app);
 
+        // Celular como controle (#223): QR Code e a permissão no PC, sem rede (canal falso só para as capturas).
+        if (Wanted("m10"))
+        {
+            var phone = new ScreenPhoneLink();
+            app.AttachPhoneLink(phone);
+            app.BeginPhonePairing();
+            await CaptureAsync(stage, target, dir, "m10-phone-pairing", window);
+            phone.Raise(new Core.Contracts.PhoneAwaitingConfirmation(phone.Session, "192.168.0.23", "482 913"));
+            if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal { IsSensitive: true }))
+                await CaptureAsync(stage, target, dir, "m10b-phone-allow", window);
+            CloseModals(app);
+        }
+
         // PDF de verdade desenhado pelo Windows.Data.Pdf (#59): página 2 de 2.
         if (Wanted("mp"))
         {
@@ -901,5 +914,22 @@ internal static class ScreenRenderer
         Grid.SetRow(element, row);
         Grid.SetColumn(element, column);
         grid.Children.Add(element);
+    }
+
+    /// <summary>Canal de celular das capturas: devolve um pareamento fixo e nunca abre porta.</summary>
+    private sealed class ScreenPhoneLink : Core.Contracts.IPhoneLink
+    {
+        public int Session { get; private set; }
+
+        public Core.Contracts.PhonePairing Start(int addressIndex = 0) =>
+            new(++Session, "http://192.168.0.10:53187/q2VvJb7t0nP5RzLx3Ya1Hg#k=Z3JhbmRlLWV4ZW1wbG8tZGUtY2hhdmUtcGFyYS1jYXB0dXJh", "192.168.0.10", 0, 2,
+                Core.Remote.PhoneSession.PairingLifetime);
+
+        public bool Confirm(int session) => false;
+        public void Stop(int session, Core.Remote.PhoneEndReason reason) { }
+        public void PublishUi(bool keyboard, bool locked) { }
+        public void Raise(Core.Contracts.PhoneLinkEvent e) => Event?.Invoke(e);
+        public event Action<Core.Contracts.PhoneLinkEvent>? Event;
+        public void Dispose() { }
     }
 }

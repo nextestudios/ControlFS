@@ -636,6 +636,7 @@ public sealed partial class AppController
         SaveOpenTabs();
         UpdateHomeStats();
         UpdateDetailsWork();
+        PublishPhoneUi();
         Changed?.Invoke();
     }
 

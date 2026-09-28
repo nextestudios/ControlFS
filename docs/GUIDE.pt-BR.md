@@ -67,6 +67,17 @@ Alguns controles USB genéricos, arcades e adaptadores não são reconhecidos co
 
 Teclado: Esc cancela sem salvar, ← refaz o passo anterior, Enter pula um passo opcional. Sem nenhuma entrada por 20 segundos o assistente se cancela. Se o joystick já tem perfil, salvar pergunta antes de substituir (começando em "Cancelar"); cancelar em qualquer momento mantém o perfil salvo. O perfil volta a valer sempre que esse joystick é conectado, inclusive ao reabrir o ControlFS. Menu → Configurações → Controles sem perfil também exporta um perfil para uma pasta e importa um (`.json`, até 64 KB, validado; qualquer coisa inesperada é recusada).
 
+### Celular como controle
+
+Sem controle ou teclado à mão? Use o celular (Android ou iPhone, Chrome ou Safari atuais), sem instalar app e sem conta:
+
+1. Menu → **Conectar celular…**. Aparece um QR Code com o endereço embaixo. O celular precisa estar na mesma rede Wi-Fi ou cabo do PC.
+2. Aponte a câmera do celular para o código e abra o link. Na primeira vez o **Firewall do Windows** pode perguntar sobre o ControlFS: permita em **redes privadas** (se negar, a página não abre; permita depois em Segurança do Windows → Firewall → Permitir um aplicativo).
+3. O PC mostra o IP do celular e um código de 6 dígitos; confira se o celular mostra o mesmo código e escolha **Permitir**. Escolha **Recusar** se não reconhecer.
+4. A página tem direcional, uma área de deslizar que rola, **Abrir**, **Voltar**, **Marcar**, **Ações**, **Menu**, **Buscar**, **Lista/Grade** e botões de região e página. Com um campo de texto aberto no ControlFS (busca, renomear, ir para caminho…), digite no campo do celular com o teclado dele; **OK** conclui, como o OK do teclado na tela.
+
+Confirmações importantes (excluir, substituir, desfazer) são respondidas no PC: do celular, ali só **Voltar** funciona. Menu → **Desconectar celular** ou **Desconectar** no celular encerra; bloquear o celular, fechar a página, perder a rede ou fechar o ControlFS também. Cada QR Code vale 2 minutos e para uma conexão, então conectar de novo é Menu → Conectar celular outra vez. Se o PC tem várias redes (ex.: Wi-Fi e cabo, ou adaptadores virtuais), **Usar outra rede do PC** troca o endereço. A ligação é direta e cifrada; não use em redes em que você não confia (Wi-Fi público). Detalhes: [modelo de segurança](security-model.md#celular-como-controle-223) e [privacidade](PRIVACY.md).
+
 ## Barra superior: caminho e acesso rápido
 
 A barra superior é a mesma em todas as telas. À esquerda fica o caminho: um botão raiz (**Locais** no início, na Lixeira e na busca; **Meu computador** em pastas e compactados) seguido dos segmentos reais de onde você está, por exemplo `Meu computador › C:\ › Users › ana › Downloads`, ou `Locais › Início` na tela inicial. À direita fica o acesso rápido: **Favoritos**, **Arquivos recentes**, as pastas do Windows que existem neste PC (Downloads, Documentos, Área de trabalho, Imagens, Vídeos, Músicas), **Meu computador** e **Lixeira**, com os ícones do Windows. A barra é uma região só, com um foco, e os glifos dos ombros (LB/RB, L1/R1 ou L/R, conforme o controle em uso) ficam nas pontas. Na lista, **LB** foca a pasta de cima e **RB** o primeiro atalho (no início, os dois vão para Favoritos). Na barra, **LB/RB** e **esquerda/direita** vão ao alvo anterior/seguinte, **LT/RT** vão ao primeiro/último item da parte em que você está e **Sul** abre: um atalho de pasta abre na aba atual (Voltar retorna), Favoritos e Arquivos recentes abrem uma lista para escolher, **Meu computador** mostra as unidades na aba atual (Voltar retorna), a raiz **Meu computador** faz o mesmo e a raiz **Locais** vai ao início. O último segmento é a pasta atual: é só o rótulo do local, então o foco o pula (e ele nunca recarrega); o atalho da pasta atual fica destacado e também é pulado. **Baixo** ou **Leste** voltam para a lista, com o foco onde estava.
@@ -254,7 +265,7 @@ Com o Narrador (ou outro leitor de tela com UI Automation) ligado, o app anuncia
 
 ## Privacidade
 
-Tudo fica no seu PC. Preferências e logs ficam em `%LOCALAPPDATA%\ControlFS` (instalado) ou em `ControlFS_Data` ao lado do `ControlFS-Portable-x64.exe` (portátil). Senhas nunca são gravadas nem registradas. As funções centrais nunca usam a rede. O único acesso à rede é a verificação de atualizações, que envia ao GitHub apenas o User-Agent `ControlFS/<versão>` e pode ser desligada.
+Tudo fica no seu PC. Preferências e logs ficam em `%LOCALAPPDATA%\ControlFS` (instalado) ou em `ControlFS_Data` ao lado do `ControlFS-Portable-x64.exe` (portátil). Senhas nunca são gravadas nem registradas. As funções centrais nunca usam a rede. O único acesso à internet é a verificação de atualizações, que envia ao GitHub apenas o User-Agent `ControlFS/<versão>` e pode ser desligada. Conectar um celular (acima) escuta na sua rede local só enquanto você usa.
 
 ## Solução de problemas
 

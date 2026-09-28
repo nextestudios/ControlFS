@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Celular como controle (#223): TcpListener só na rede local privada, HTTP mínimo, WebSocket do .NET e quadros
+       ChaCha20-Poly1305. Sem pacotes novos; a página do celular e a biblioteca @noble (MIT) vão embutidas. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControlFS.Infrastructure.Remote</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Companion\phone.html" LogicalName="ControlFS.Companion.phone.html" />
+    <EmbeddedResource Include="Companion\noble-ciphers.min.js" LogicalName="ControlFS.Companion.noble.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ControlFS.UnitTests" />
+    <InternalsVisibleTo Include="ControlFS.WindowsIntegrationTests" />
+  </ItemGroup>
+</Project>

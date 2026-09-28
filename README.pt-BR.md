@@ -76,7 +76,7 @@ Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpat
 - **Autores e revisores:** [@nextestudios](https://github.com/nextestudios) (mantenedor; toda mudança passa por pull request e CI)
 - **Aprovadores:** [@nextestudios](https://github.com/nextestudios) (cada release é aprovada manualmente antes de assinar)
 - **Build:** as releases são geradas só pelo [workflow de release](.github/workflows/release.yml) público no GitHub Actions a partir de uma tag no `main`; o certificado nunca sai do serviço de assinatura.
-- **Privacidade:** este programa não transfere nenhuma informação para outros sistemas em rede, a menos que seja pedido especificamente pelo usuário ou por quem o instala ou opera. O único acesso à rede é a verificação opcional de atualizações no GitHub ([política de privacidade](docs/PRIVACY.md)).
+- **Privacidade:** este programa não transfere nenhuma informação para outros sistemas em rede, a menos que seja pedido especificamente pelo usuário ou por quem o instala ou opera. O único acesso à internet é a verificação opcional de atualizações no GitHub; conectar o celular como controle (Menu → Conectar celular) usa só a sua rede local, e só enquanto você usa ([política de privacidade](docs/PRIVACY.md)).
 
 Detalhes: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
 

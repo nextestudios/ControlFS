@@ -674,11 +674,44 @@ public static partial class ModalView
         return grid;
     }
 
+    /// <summary>
+    /// QR Code (#223): módulos escuros num fundo branco com a zona de silêncio de 4 módulos, em pixels inteiros por módulo
+    /// (nítido para a câmera). Cada trecho escuro de uma linha é um retângulo da mesma geometria (sem frestas entre eles).
+    /// </summary>
+    private static Border QrImage(bool[,] modules)
+    {
+        var n = modules.GetLength(0);
+        var target = Math.Min(Theme.Scaled(280), Theme.Viewport.Height * 0.3); // cabe inteiro com as opções em 1280×720
+        var module = Math.Max(3, Math.Floor(target / (n + 8)));
+        var geometry = new GeometryGroup { FillRule = FillRule.Nonzero };
+        for (var y = 0; y < n; y++)
+            for (var x = 0; x < n; x++)
+            {
+                if (!modules[y, x]) continue;
+                var start = x;
+                while (x + 1 < n && modules[y, x + 1]) x++;
+                geometry.Children.Add(new RectangleGeometry { Rect = new Rect(start * module, y * module, (x - start + 1) * module, module) });
+            }
+        var path = new Microsoft.UI.Xaml.Shapes.Path { Data = geometry, Fill = new SolidColorBrush(Microsoft.UI.Colors.Black), Width = n * module, Height = n * module };
+        var code = new Border
+        {
+            Background = new SolidColorBrush(Microsoft.UI.Colors.White),
+            Padding = new Thickness(4 * module),
+            CornerRadius = new CornerRadius(Theme.Scaled(6)),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            UseLayoutRounding = true,
+            Child = path,
+        };
+        AutomationProperties.SetName(code, "QR Code para conectar o celular");
+        return code;
+    }
+
     private static string CheckGlyph(bool on) => char.ConvertFromUtf32(on ? 0xE73A : 0xE739);
 
     private static Border BuildDialog(AppController app, DialogModal dialog, out Action update)
     {
         var stack = new StackPanel { Spacing = Theme.Space(12) };
+        if (dialog.QrModules is { } qr) stack.Children.Add(QrImage(qr));
         if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody));
         if (dialog.Progress is { } progress) stack.Children.Add(ProgressBar(progress));
         if (dialog.Message is { } message)

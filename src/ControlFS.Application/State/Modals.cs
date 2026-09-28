@@ -176,6 +176,9 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
 
     /// <summary>Andamento (0–1) de uma operação mostrada no diálogo; null: sem barra.</summary>
     public double? Progress { get; internal set; }
+
+    /// <summary>QR Code desenhado acima das linhas (módulos [linha, coluna], true = escuro); null: sem código. #223.</summary>
+    public bool[,]? QrModules { get; internal set; }
     internal DialogOption? BackOption { get; set; }
 
     /// <summary>Opção executada por Start/Menu (ex.: aplicar a renomeação em lote de qualquer opção em foco). Opcional.</summary>

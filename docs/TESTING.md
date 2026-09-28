@@ -679,3 +679,28 @@ Automático: `ThemeContrastTests` (contraste de todo tema × destaque), `Appeara
 - [ ] Com Windows Terminal instalado: Norte → Abrir terminal aqui… → Abrir terminal: abre na pasta atual (também numa pasta com espaço, `;` e acento no nome, e na raiz de uma unidade).
 - [ ] Sem Windows Terminal: abre o Windows PowerShell na pasta.
 - [ ] "Abrir terminal e o teclado virtual do Windows": o teclado na tela do Windows aparece e digita no terminal.
+
+## Celular como controle (#223) — não validado com celulares reais
+Automático: `PhoneChannelTests` (HTTP, quadros cifrados com vetores da biblioteca da página, sessão, mensagens),
+`PhoneJourneyTests` (QR Code, permissão, ações, texto, bloqueio em confirmação sensível) e `PhoneLinkIntegrationTests`
+(servidor real em 127.0.0.1 com ClientWebSocket; porta fechada depois de Desconectar). A página também foi aberta num
+Chromium sem interface contra o servidor real durante o desenvolvimento (pareamento, botões, texto, desconectar).
+- [ ] Android (Chrome atual) e iPhone (Safari atual) na mesma Wi-Fi do PC: Menu → Conectar celular; a câmera lê o QR
+      Code a ~1 m da tela (TV a ~3 m: aproximar o celular); a página abre sem aviso de certificado nem recurso externo.
+- [ ] Primeira vez: o Firewall do Windows pergunta; permitir em "Redes privadas" e a página abre. Negar: a página não
+      abre e o diálogo do PC continua explicando o firewall; Cancelar encerra sem travar.
+- [ ] O PC mostra o IP do celular e o mesmo código que a página; Recusar encerra a página ("O PC recusou"); Permitir
+      libera os controles.
+- [ ] Direcional, área de deslizar (rolar lista, grade, texto, menu), Abrir, Voltar, Marcar, Ações, Menu, Buscar,
+      Lista/Grade, regiões e páginas fazem o mesmo que os botões do controle; segurar uma seta repete e soltar para.
+- [ ] Buscar → digitar no celular (acentos, emoji, correção automática do Gboard/iOS apagando e reescrevendo a palavra)
+      → o texto aparece igual no campo do ControlFS; ⌫ Apagar e OK funcionam; senha de compactado também.
+- [ ] Excluir um arquivo com o controle: no celular aparece "responda no PC" e só Voltar funciona.
+- [ ] Bloquear a tela do celular / trocar de app / desligar o Wi-Fi: em até ~20 s o PC mostra que o celular
+      desconectou; nada fica "segurado"; reconectar exige um QR Code novo. Recarregar a página também exige.
+- [ ] PC com várias redes (Wi-Fi + cabo, Hyper-V/WSL): "Usar outra rede do PC" troca o endereço; a rede de casa vem
+      primeiro.
+- [ ] Desconectar pelo Menu do PC e pelo botão do celular; fechar o ControlFS com o celular conectado: a página diz
+      "O ControlFS foi fechado".
+- [ ] Controle e teclado físicos continuam funcionando normalmente com o celular conectado.
+

@@ -22,6 +22,7 @@ Monólito modular desktop. O núcleo não depende de WinUI, SDL3 nem SharpCompre
 | `Infrastructure.Archives` | `FormatDetector`, `SharpCompressZipEngine`, `SafeExtractor`, `DestinationGuard`, `Crc32`, `MarkOfTheWeb`, `ArchiveService`. | Core, Infrastructure.Windows (`PinnedDirectory`), SharpCompress |
 | `Infrastructure.Input.Sdl3` | `Sdl3InputBackend` (sem janela SDL). | Core, ppy.SDL3-CS |
 | `Infrastructure.Media` | Visualizações com APIs do Windows (alvo `-windows`): `WindowsPdfRenderer` (Windows.Data.Pdf → pixels), `WindowsMediaPlayerFactory` (MediaPlayer por fluxo local). | Core |
+| `Infrastructure.Remote` | Celular como controle (#223): `PhoneLinkServer` (TcpListener só na rede local privada, durante uma sessão), `HttpRequestParser` (duas rotas), quadros AES-256-GCM (`PhoneCrypto`), página embutida (`Companion/`). A sessão, as mensagens e o QR Code ficam no Core (`Core/Remote`). | Core |
 | `App` | Janela WinUI, `InputHost`, views em C#. | todos |
 
 ## Princípios aplicados

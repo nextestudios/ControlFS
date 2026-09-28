@@ -104,6 +104,9 @@ public enum ActionIcon
     Controller,
     ControllerTest,
     ControllerSetup,
+
+    /// <summary>Celular como controle (#223).</summary>
+    Phone,
     Labels,
     Import,
     Export,
@@ -216,6 +219,7 @@ public static class ActionIcons
         ActionIcon.Controller => "\uE7FC",
         ActionIcon.ControllerTest => "\uE9D9",
         ActionIcon.ControllerSetup => "\uE713",
+        ActionIcon.Phone => "\uE8EA",
         ActionIcon.Labels => "\uE8EC",
         ActionIcon.Import => "\uE8B5",
         ActionIcon.Export => "\uEDE1",
