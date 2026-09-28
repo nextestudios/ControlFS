@@ -50,6 +50,8 @@ public sealed class MainWindow : Window
     private readonly DriveWatcher _drives = new();
     /// <summary>"Leve em segundo plano" (docs/performance.md); null nas capturas.</summary>
     private readonly BackgroundMode? _background;
+    private bool _activated = true;
+    private bool _foreground = true;
     private readonly IconLoader _icons;
     private readonly IconLoader _tileIcons;
     private IReadOnlyList<FileEntry>? _shownPlaces;
@@ -238,11 +240,13 @@ public sealed class MainWindow : Window
         Activated += (_, e) =>
         {
             var active = e.WindowActivationState != WindowActivationState.Deactivated;
-            _input.OnWindowActivated(active);
-            _background?.OnWindowActivated(active);
+            _activated = active;
+            UpdateForeground();
             _titleBar.SetActive(active);
             if (active) _root.Focus(FocusState.Programmatic);
         };
+        // Minimizar a única janela da área de trabalho a deixa ativa (sem Deactivated): o estado do presenter também conta.
+        AppWindow.Changed += (_, _) => UpdateForeground();
         Closed += (_, _) =>
         {
             _app.ReleaseMediaForShutdown();
@@ -282,6 +286,16 @@ public sealed class MainWindow : Window
         ApplyLayout();
         if (AppPaths.Notice is { } notice) _app.ShowNotice(notice);
         AppLog.Info($"MainWindow: controlador iniciado ({startup.ElapsedMilliseconds} ms); entrada: {(_input.BackendReady ? _input.BackendDescription : "SDL indisponível: " + _input.BackendError)}");
+    }
+
+    /// <summary>Janela ativa e não minimizada: só assim os controles são lidos no ritmo rápido e o processo fica "à frente".</summary>
+    private void UpdateForeground()
+    {
+        var foreground = _activated && !_titleBar.IsMinimized;
+        if (foreground == _foreground) return;
+        _foreground = foreground;
+        _input.OnWindowActivated(foreground);
+        _background?.OnWindowActivated(foreground);
     }
 
     private void OnFirstFrame()

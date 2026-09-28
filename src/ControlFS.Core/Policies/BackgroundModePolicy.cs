@@ -36,7 +36,7 @@ public sealed class BackgroundModePolicy
 
     public bool IsLowered => _lowered;
 
-    /// <param name="windowActive">A janela do ControlFS está ativa.</param>
+    /// <param name="windowActive">A janela do ControlFS está ativa e não minimizada.</param>
     /// <param name="enabled">A preferência "Leve em segundo plano".</param>
     /// <param name="mediaPlaying">Áudio ou vídeo tocando no ControlFS.</param>
     /// <param name="now">Relógio monotônico.</param>
