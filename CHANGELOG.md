@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Correções
+- Fechar o ControlFS depois de ouvir um áudio ou ver um vídeo não derruba mais o processo em PCs sem placa de vídeo (máquinas virtuais, área de trabalho remota). (#224)
 
 ## [0.9.0-alpha.1]
 ### Melhorias
