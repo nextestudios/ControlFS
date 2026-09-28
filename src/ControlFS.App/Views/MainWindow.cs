@@ -61,8 +61,8 @@ public sealed class MainWindow : Window
     private readonly IconLoader _cardIcons;
     private readonly TopBarView _topBar;
     private readonly HomeView _home;
-    private readonly TextBlock _device = new() { FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
-    private readonly TextBlock _operation = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Right, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly TextBlock _device = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1 };
+    private readonly TextBlock _operation = new() { FontSize = Theme.FontBody, Foreground = Theme.Text, HorizontalAlignment = HorizontalAlignment.Right, TextWrapping = TextWrapping.NoWrap, TextAlignment = TextAlignment.Right, MaxLines = 1, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _empty = new() { FontSize = Theme.FontBody, Foreground = Theme.TextMuted, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
     private readonly ListView _list = new();
     /// <summary>Lista (fase C): cartão com o cabeçalho das colunas e as linhas.</summary>
@@ -1009,7 +1009,9 @@ public sealed class MainWindow : Window
         _topBar.ApplyLayout();
         _home.ApplyLayout();
         _home.SetTrailingGutter(_detailsShown ? DetailsGap : null);
-        _badge.FontSize = _device.FontSize = _operation.FontSize = _status.FontSize = Theme.FontCaption;
+        _badge.FontSize = _status.FontSize = Theme.FontCaption;
+        // Controle em uso e operação na faixa do título (#230): no tamanho do corpo, legíveis de longe.
+        _device.FontSize = _operation.FontSize = Theme.FontBody;
         _empty.FontSize = Theme.FontBody;
         // Lista (fase C): cartão escuro com cantos arredondados, recuado como na referência; linhas quase até a borda.
         _listCard.Background = Theme.SurfaceRaised;

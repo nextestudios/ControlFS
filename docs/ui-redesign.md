@@ -44,6 +44,8 @@ hardware, visual or timing checks that CI can't prove.
   size and presenter changes. The header reserves the caption inset (`RightInset`) plus the full screen button on the
   right. Windows without title bar customization keep the system bar. Captures (`--render-screens`) can't show the real
   caption buttons: they reserve 3 × 46 px and draw look-alike glyphs.
+  No separate logo row: logo, tabs, controller/device and operation status all live in this strip (status at `FontBody`,
+  one line each, so the strip height stays the logo's). The full screen button shows "exit full screen" while active.
 - **Header**: official logo with text (`assets/controlfs-logo-text-900.png`, copied as `controlfs-logo.png`) on every
   screen; the icon-only logo stays for the exe, taskbar and installer. Right side: active controller and running
   operation/update/clipboard status (unchanged texts).
