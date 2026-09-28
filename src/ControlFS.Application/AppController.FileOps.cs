@@ -222,9 +222,18 @@ public sealed partial class AppController
         foreach (var skipped in result.Items.Where(i => i.Outcome == ItemOutcome.Skipped && i.Error == OperationErrorKind.LinkOrSpecialBlocked).Take(3))
             lines.Add(("• " + skipped.Name, skipped.Message ?? "Ignorado."));
 
-        // O desfazer é registrado antes de montar o diálogo: o título (e o aviso no rodapé) já sai com a dica de restaurar.
+        // O desfazer é registrado antes: o aviso de sucesso e o título do diálogo já saem com a dica de desfazer.
         var undo = RegisterFileUndo(item, plan, result);
         if (undo is not null && plan.Kind == FileOperationKind.Delete) title += " (Menu → Desfazer restaura)";
+        OnFileOperationFinished(plan, result);
+        if (result.FinalState == OperationState.Completed)
+        {
+            // Sucesso limpo não interrompe: um aviso que some sozinho. O resultado continua em Menu → Operações.
+            StatusMessage = SuccessMessage(plan, result, undo is not null);
+            RefreshAffected(plan);
+            return;
+        }
+
         var dialog = new DialogModal(title, lines) { Message = result.Message, Icon = ResultIcon(result.FinalState) };
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         AddRetryFailedOption(dialog, item);
@@ -248,11 +257,29 @@ public sealed partial class AppController
         }
         dialog.Options.Add(close);
         dialog.BackOption = close;
-        OnFileOperationFinished(plan, result);
-        // Operações totalmente bem-sucedidas não interrompem com diálogo: um aviso no rodapé basta.
-        if (result.FinalState == OperationState.Completed && plan.Kind == FileOperationKind.Delete) StatusMessage = title;
-        else ShowOperationResult(dialog);
-        // Todas as abas que mostram a origem ou o destino são atualizadas, não só a ativa.
+        ShowOperationResult(dialog);
+        RefreshAffected(plan);
+    }
+
+    /// <summary>"3 itens copiados · Menu → Desfazer": o aviso de uma cópia, movimentação ou exclusão sem nenhum problema.</summary>
+    private static string SuccessMessage(FileOperationPlan plan, OperationResult result, bool undoable)
+    {
+        var count = plan.Sources.Count;
+        var done = plan.Kind switch
+        {
+            FileOperationKind.Copy => Plural.Word(count, "copiado", "copiados"),
+            FileOperationKind.Move => Plural.Word(count, "movido", "movidos"),
+            _ when plan.Permanent => Plural.Word(count, "excluído", "excluídos") + " permanentemente",
+            _ => Plural.Word(count, "movido", "movidos") + " para a Lixeira",
+        };
+        var text = $"{Plural.Of(count, "item", "itens")} {done}";
+        if (result.Count(ItemOutcome.Skipped) is > 0 and var skipped) text += $" · {Plural.Of(skipped, "ignorado", "ignorados")}";
+        return undoable ? text + " · Menu → Desfazer" : text + ".";
+    }
+
+    /// <summary>Todas as abas que mostram a origem ou o destino são atualizadas, não só a ativa.</summary>
+    private void RefreshAffected(FileOperationPlan plan)
+    {
         var affected = new[] { plan.Destination, plan.SourceFolder }.Where(p => p is not null).ToList();
         foreach (var tab in BrowsePanes.Where(t => t.Location is PhysicalLocation here && affected.Any(p => string.Equals(p, here.FullPath, StringComparison.OrdinalIgnoreCase))).ToList())
             Refresh(tab);

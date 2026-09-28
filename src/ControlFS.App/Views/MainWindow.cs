@@ -87,7 +87,12 @@ public sealed class MainWindow : Window
     private readonly Grid _header = new();
     private readonly StackPanel _headerRight = new() { VerticalAlignment = VerticalAlignment.Center };
     private Grid? _layout;
-    private readonly TextBlock _status = new() { FontSize = Theme.FontCaption, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap };
+    /// <summary>Avisos do momento: flutuam sobre o conteúdo e somem sozinhos; o rodapé fica sempre da mesma altura.</summary>
+    private readonly StatusToastView _toast;
+
+    /// <summary>Barra fina de andamento das operações ativas, na borda de baixo da faixa do título.</summary>
+    private readonly Grid _progress = new() { VerticalAlignment = VerticalAlignment.Bottom, IsHitTestVisible = false, Visibility = Visibility.Collapsed };
+    private readonly Border _progressFill = new();
     private readonly Grid _overlay = new();
     private readonly VideoPlayerView _video = new();
     private readonly TutorialOverlayView _tutorial;
@@ -148,6 +153,7 @@ public sealed class MainWindow : Window
         _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
         _details = new DetailsPanelView(_detailIcons);
         _paneView = new PaneView(_app, _icons);
+        _toast = new StatusToastView(DispatcherQueue);
         // Nas capturas (--render-screens) a janela não muda de modo nem de barra de título: só o espaço dos botões é reservado.
         _titleBar = new TitleBarView(this, _header, _tabs, _app, live: dataDirectory is null);
         _tutorial = new TutorialOverlayView(_app, target => target switch
@@ -186,7 +192,7 @@ public sealed class MainWindow : Window
             _input.OnKeyDown(e);
         };
         _root.CharacterReceived += (_, e) => _input.OnCharacter(e.Character);
-        AutomationProperties.SetLiveSetting(_status, AutomationLiveSetting.Polite); // avisos e resultados são lidos sem mover o foco
+        AutomationProperties.SetLiveSetting(_badge, AutomationLiveSetting.Polite); // resumo da busca e itens omitidos são lidos sem mover o foco
         _root.Loaded += (_, _) =>
         {
             _root.Focus(FocusState.Programmatic);
@@ -287,6 +293,11 @@ public sealed class MainWindow : Window
         Grid.SetColumn(right, 2);
         header.Children.Add(right);
         layout.Children.Add(header);
+        // Andamento das operações: uma linha fina na borda de baixo do cabeçalho, sem mudar a altura dele.
+        _progress.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0, GridUnitType.Star) });
+        _progress.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        _progress.Children.Add(_progressFill);
+        layout.Children.Add(_progress);
         // Botão de tela cheia colado aos botões do Windows (minimizar, maximizar, fechar), na mesma faixa do cabeçalho.
         layout.Children.Add(_titleBar.Buttons);
 
@@ -334,11 +345,12 @@ public sealed class MainWindow : Window
         content.Children.Add(_empty);
         Grid.SetRow(content, 3);
         layout.Children.Add(content);
+        Grid.SetRow(_toast.Root, 3);
+        layout.Children.Add(_toast.Root);
 
-        // Rodapé
+        // Rodapé: só as legendas (os avisos flutuam sobre o conteúdo), então a altura não muda quando um aviso aparece.
         // Legendas quebram linha em vez de rolar para o lado: em 1280×720 todas continuam visíveis.
         var footer = _footer;
-        footer.Children.Add(_status);
         footer.Children.Add(_hints);
         _footerBar.Child = footer;
         Grid.SetRow(_footerBar, 4);
@@ -495,13 +507,24 @@ public sealed class MainWindow : Window
     {
         // Cabeçalho e barra superior. O aviso abaixo da barra só aparece quando diz algo que o caminho não diz.
         var pane = _app.ActivePane;
-        _badge.Text = _app.Screen switch
+        var badge = _app.Screen switch
         {
             Screen.FolderPicker => "ESCOLHER PASTA · " + _app.PickerTitle,
             Screen.Browser when pane.Location is ArchiveLocation => "COMPACTADO · SOMENTE LEITURA" + (_app.ArchiveSummary is { } summary ? " · " + summary : string.Empty),
             Screen.Browser when _app.GitSummary is { } git => git,
             _ => string.Empty,
         };
+        // Estado da pasta mostrada (antes no rodapé): resumo da busca e itens sem permissão ficam na linha de contexto.
+        var context = _app.Screen == Screen.Home ? null
+            : pane.ActiveSearch is { } search ? search.Summary
+            : pane.InaccessibleCount > 0 ? $"{Plural.Of(pane.InaccessibleCount, "item", "itens")} sem permissão de leitura {Plural.Word(pane.InaccessibleCount, "foi omitido", "foram omitidos")}."
+            : null;
+        if (!string.IsNullOrEmpty(context)) badge = badge.Length > 0 ? badge + " · " + context : context;
+        if (badge != _badge.Text)
+        {
+            _badge.Text = badge;
+            if (badge.Length > 0) (FrameworkElementAutomationPeer.FromElement(_badge) ?? FrameworkElementAutomationPeer.CreatePeerForElement(_badge))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
+        }
         _badge.Visibility = _badge.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         _logoPlate.Visibility = _logo.Source is not null ? Visibility.Visible : Visibility.Collapsed;
         _topBar.Render();
@@ -522,7 +545,8 @@ public sealed class MainWindow : Window
                 UpdateState.AvailableManual => $"⬆ Nova versão {_app.AvailableUpdate!.Version} disponível",
                 _ => _app.Clipboard is { } clip ? $"Área de transferência: {Plural.Of(clip.Paths.Count, "item", "itens")} {(clip.IsCut ? Plural.Word(clip.Paths.Count, "recortado", "recortados") : Plural.Word(clip.Paths.Count, "copiado", "copiados"))} — Ações → Colar" : string.Empty,
             }
-            : $"{op.Title} — {(op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State switch { OperationState.WaitingForUser => "aguardando você", OperationState.Paused => "pausada", _ => "em andamento" })})";
+            : $"{op.Title} — {(op.Fraction is { } f ? $"{Math.Floor(f * 100)}%" : op.Progress is { } p ? $"{p.ItemsProcessed}/{p.ItemsTotal?.ToString() ?? "?"}" : "…")} ({(op.State switch { OperationState.WaitingForUser => "aguardando você", OperationState.Paused => "pausada", _ => "em andamento" })})";
+        RenderProgress();
 
         // Lista (a identidade dos itens decide se o ItemsSource muda)
         if (!ReferenceEquals(_app.Places, _shownPlaces))
@@ -744,15 +768,8 @@ public sealed class MainWindow : Window
 
     private void RenderFooter()
     {
-        var pane = _app.ActivePane;
-        var search = _app.Screen == Screen.Home ? null : pane.ActiveSearch;
-        if (search is not null && _app.StatusMessage is null)
-            _status.Text = search.Summary; // parcial, concluída ou cancelada, e as pastas puladas
-        else if (_app.Screen != Screen.Home && pane.InaccessibleCount > 0 && _app.StatusMessage is null)
-            _status.Text = $"{Plural.Of(pane.InaccessibleCount, "item", "itens")} sem permissão de leitura {Plural.Word(pane.InaccessibleCount, "foi omitido", "foram omitidos")}.";
-        else
-            _status.Text = _app.StatusMessage ?? string.Empty;
-        _status.Visibility = _status.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed; // sem aviso, o rodapé fica só com as legendas
+        _toast.Render(_app.StatusMessage, _app.StatusSerial, _app.TopModal is not null, _layoutPinned);
+        if (_toast.IsShown) DispatcherQueue.TryEnqueue(PlaceToast); // depois do layout: o item em foco já está no lugar
 
         // Rodapé: somente ações válidas no contexto, com a legenda do dispositivo em uso (glifo do controle ou tecla)
         _hints.Children.Clear();
@@ -796,18 +813,38 @@ public sealed class MainWindow : Window
     /// </summary>
     private void Announce()
     {
-        if (_status.Text != _announcedStatus)
-        {
-            _announcedStatus = _status.Text;
-            if (_status.Text.Length > 0) (FrameworkElementAutomationPeer.FromElement(_status) ?? FrameworkElementAutomationPeer.CreatePeerForElement(_status))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
-        }
         if (_app.TakeAnnouncement() is not { Length: > 0 } text) return;
         AutomationProperties.SetName(_root, text);
         (FrameworkElementAutomationPeer.FromElement(_root) ?? FrameworkElementAutomationPeer.CreatePeerForElement(_root))?.RaiseNotificationEvent(
             AutomationNotificationKind.ActionCompleted, AutomationNotificationProcessing.ImportantMostRecent, text, "ControlFS.Focus");
     }
 
-    private string? _announcedStatus;
+    /// <summary>
+    /// O aviso sobe para o canto de cima quando o item em foco (lista ou grade) passaria por baixo dele. Os cartões do
+    /// início ficam acima do canto de baixo do conteúdo em qualquer tamanho.
+    /// </summary>
+    private void PlaceToast()
+    {
+        if (!_toast.IsShown || _content.ActualHeight <= 0) return;
+        Windows.Foundation.Rect? focused = null;
+        if (_home.Root.Visibility != Visibility.Visible && _shownFocus >= 0 && ActiveList.ContainerFromIndex(_shownFocus) is FrameworkElement row && row.ActualHeight > 0)
+            focused = row.TransformToVisual(_content).TransformBounds(new Windows.Foundation.Rect(0, 0, row.ActualWidth, row.ActualHeight));
+        _toast.AvoidFocus(focused, new Windows.Foundation.Size(_content.ActualWidth, _content.ActualHeight));
+    }
+
+    /// <summary>Barra fina: o andamento somado das operações ativas; some quando não há nenhuma.</summary>
+    private void RenderProgress()
+    {
+        if (_app.Operations.Progress is not { } progress)
+        {
+            _progress.Visibility = Visibility.Collapsed;
+            return;
+        }
+        _progress.Visibility = Visibility.Visible;
+        _progress.ColumnDefinitions[0].Width = new GridLength(progress, GridUnitType.Star);
+        _progress.ColumnDefinitions[1].Width = new GridLength(1 - progress, GridUnitType.Star);
+        AutomationProperties.SetName(_progress, $"Operações: {Math.Floor(progress * 100)}%");
+    }
 
     /// <summary>
     /// Ao fechar um modal, o elemento que tinha o foco do XAML pode sair da árvore e o teclado ficaria sem destino.
@@ -1002,6 +1039,7 @@ public sealed class MainWindow : Window
             var needed = card.ActualHeight + card.Margin.Top + card.Margin.Bottom;
             fit += $"; modal {card.ActualWidth:0}x{card.ActualHeight:0}" + (needed > viewport.Height + 0.5 ? " NÃO CABE" : " cabe");
         }
+        if (_toast.IsShown) fit += $"; aviso {_toast.Root.ActualWidth:0}x{_toast.Root.ActualHeight:0}";
         var layoutTooTall = _header.ActualHeight + _topBar.Root.ActualHeight + _badge.ActualHeight + _footerBar.ActualHeight > viewport.Height - 2 * Theme.Scaled(48);
         return fit + (layoutTooTall ? " · LISTA ESPREMIDA" : string.Empty);
     }
@@ -1021,7 +1059,11 @@ public sealed class MainWindow : Window
         _topBar.ApplyLayout();
         _home.ApplyLayout();
         _home.SetTrailingGutter(_detailsShown ? DetailsGap : null);
-        _badge.FontSize = _status.FontSize = Theme.FontCaption;
+        _badge.FontSize = Theme.FontCaption;
+        _toast.ApplyLayout();
+        _progress.Height = Theme.Space(4);
+        _progress.Background = Theme.Border;
+        _progressFill.Background = Theme.Accent;
         // Controle em uso e operação na faixa do título (#230): no tamanho do corpo, legíveis de longe.
         _device.FontSize = _operation.FontSize = Theme.FontBody;
         _empty.FontSize = Theme.FontBody;

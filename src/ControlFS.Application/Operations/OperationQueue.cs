@@ -24,6 +24,14 @@ public sealed class OperationItem
 
     public bool IsActive => !OperationStateMachine.IsTerminal(State);
 
+    /// <summary>Andamento (0–1) pelos bytes ou, sem o total de bytes, pelos itens; null enquanto o total não é conhecido.</summary>
+    public double? Fraction => Progress switch
+    {
+        { BytesTotal: > 0 and var bytes } p => Math.Clamp((double)p.BytesProcessed / bytes, 0, 1),
+        { ItemsTotal: > 0 and var items } p => Math.Clamp((double)p.ItemsProcessed / items, 0, 1),
+        _ => null,
+    };
+
     /// <summary>Quando saiu da fila e começou (null: cancelada antes de iniciar).</summary>
     public DateTimeOffset? StartedAt { get; internal set; }
 
@@ -90,6 +98,19 @@ public sealed class OperationQueue
     public IReadOnlyList<OperationItem> Items => _items;
     public OperationItem? Current => _items.FirstOrDefault(i => i.State is OperationState.Planning or OperationState.Running or OperationState.WaitingForUser or OperationState.Paused or OperationState.CancelRequested);
     public int ActiveCount => _items.Count(i => i.IsActive);
+
+    /// <summary>
+    /// Andamento somado das operações ativas (0–1; a média, cada uma sem total conhecido contando como zero), para a barra
+    /// fina sob o título; null sem operação ativa.
+    /// </summary>
+    public double? Progress
+    {
+        get
+        {
+            var active = _items.Where(i => i.IsActive).ToList();
+            return active.Count == 0 ? null : active.Average(i => i.Fraction ?? 0);
+        }
+    }
 
     public event Action? Changed;
     public event Action<OperationItem>? Completed;

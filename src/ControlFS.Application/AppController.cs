@@ -55,7 +55,11 @@ public sealed partial class AppController
         _updates = updates;
         _ui = SynchronizationContext.Current ?? throw new InvalidOperationException("AppController precisa de um SynchronizationContext de UI.");
         Operations.Completed += OnOperationCompleted;
-        Operations.Changed += RaiseChanged;
+        Operations.Changed += () =>
+        {
+            RefreshOperationsMenu();
+            RaiseChanged();
+        };
         PromptProvider = new ControllerPromptProvider(() => ActiveController is null ? null : PromptFamily, () => Settings.Convention, () => TopModal is KeyboardModal);
     }
 
@@ -71,7 +75,25 @@ public sealed partial class AppController
     public OperationQueue Operations { get; } = new();
     public AppSettings Settings { get; private set; } = new();
     public ExtractionLimits Limits { get; set; } = ExtractionLimits.Default;
-    public string? StatusMessage { get; private set; }
+
+    /// <summary>
+    /// Aviso do momento (resultado, confirmação, por que algo está indisponível). A janela mostra como um aviso flutuante
+    /// que some sozinho (fora dos modais) ou no rodapé do painel (dentro deles); some na próxima ação.
+    /// </summary>
+    public string? StatusMessage
+    {
+        get => _statusMessage;
+        private set
+        {
+            _statusMessage = value;
+            if (value is not null) StatusSerial++;
+        }
+    }
+
+    private string? _statusMessage;
+
+    /// <summary>Muda a cada aviso definido, mesmo repetido (o mesmo texto de novo reinicia o tempo do aviso flutuante).</summary>
+    public int StatusSerial { get; private set; }
 
     /// <summary>Cabeçalho do compactado aberto (formato, arquivos, tamanho, com senha, bloqueadas); null fora de um compactado.</summary>
     public string? ArchiveSummary => ActivePane is { Location: ArchiveLocation, Archive: { } tree } ? tree.Summary : null;

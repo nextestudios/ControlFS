@@ -35,6 +35,11 @@ public sealed class Driver(AppController app)
         return (DialogModal)App.TopModal!;
     }
 
+    /// <summary>Aviso flutuante (StatusMessage) que começa com <paramref name="textStart"/>, sem nenhum modal por cima.</summary>
+    public async Task WaitStatus(string textStart) =>
+        await UiContext.WaitUntil(() => App.StatusMessage?.StartsWith(textStart, StringComparison.Ordinal) == true,
+            $"aviso \"{textStart}\" (aviso atual: {App.StatusMessage ?? "nenhum"}; topo: {App.TopModal?.Title ?? "nenhum"})");
+
     public async Task<KeyboardModal> WaitKeyboard()
     {
         await UiContext.WaitUntil(() => App.TopModal is KeyboardModal { IsBusy: false }, "teclado virtual");
