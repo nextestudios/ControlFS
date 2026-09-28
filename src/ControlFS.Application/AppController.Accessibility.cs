@@ -45,6 +45,11 @@ public sealed partial class AppController
                     return new($"Teclado virtual: {kb.Title}", $"sugestão {suggestion}, {Position(kb.SuggestionIndex ?? 0, kb.Suggestions.Count)}");
                 var key = kb.FocusedKey;
                 return new($"Teclado virtual: {kb.Title}", "tecla " + key.Name + (kb.IsKeyEnabled(key) ? string.Empty : ", indisponível neste campo"));
+            case PromoModal promo:
+                if (promo.CloseFocused) return new(Sentence("Mais da equipe", "Outros aplicativos da equipe."), "Fechar, botão");
+                var app = promo.Cards[promo.FocusIndex];
+                return new(Sentence($"Mais da equipe: {app.Name}", $"{app.Tagline}. {app.Description}"),
+                    $"{app.ActionLabel}, abre no navegador, {Position(promo.FocusIndex, promo.Cards.Count)}");
             case OnboardingModal onboarding:
                 var chosen = onboarding.FocusedOption;
                 return new(Sentence($"Boas-vindas, passo {onboarding.StepIndex + 1} de {onboarding.StepCount}: {onboarding.StepTitle}", onboarding.StepBody),

@@ -36,6 +36,21 @@ public sealed partial class WindowsShellService : IShellService
         }
     }
 
+    public void OpenLink(Uri url)
+    {
+        if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");
+        if (url is not { IsAbsoluteUri: true, Scheme: "https", UserInfo.Length: 0 } || url.Host.Length == 0 || url.AbsoluteUri.Length > 200)
+            throw new ShellException("Só endereços https simples podem ser abertos no navegador.");
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch (Win32Exception ex)
+        {
+            throw new ShellException($"O Windows não conseguiu abrir o navegador. {UserErrors.Describe(ex, "Abrir link").Text}", ex);
+        }
+    }
+
     public void OpenWith(string path)
     {
         if (!OperatingSystem.IsWindows()) throw new ShellException("Disponível apenas no Windows.");

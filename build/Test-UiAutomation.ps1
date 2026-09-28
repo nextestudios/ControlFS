@@ -83,7 +83,7 @@ function Check([string]$description, [scriptblock]$condition) {
 $data = Join-Path (Split-Path -Parent $Exe) "ControlFS_Data"
 Remove-Item $data -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $data | Out-Null
-[IO.File]::WriteAllText((Join-Path $data "settings.json"), '{ "AutoCheckUpdates": false, "OnboardingCompleted": true }')
+[IO.File]::WriteAllText((Join-Path $data "settings.json"), '{ "AutoCheckUpdates": false, "OnboardingCompleted": true, "PromoSeen": true }')
 $p = Start-Process -FilePath $Exe -WorkingDirectory (Split-Path -Parent $Exe) -PassThru
 $failed = $null
 try {

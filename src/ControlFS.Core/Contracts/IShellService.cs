@@ -17,6 +17,13 @@ public interface IShellService
     /// <summary>Abre o Explorador de Arquivos com o item selecionado.</summary>
     /// <exception cref="ShellException"/>
     void RevealInExplorer(string path);
+
+    /// <summary>
+    /// Abre um endereço https no navegador padrão. Só https, sem usuário/senha; quem chama passa endereços fixos do app,
+    /// nunca texto de arquivos ou da rede.
+    /// </summary>
+    /// <exception cref="ShellException"/>
+    void OpenLink(Uri url) => throw new ShellException("Não disponível nesta compilação.");
 }
 
 public sealed class ShellException(string message, Exception? inner = null) : Exception(message, inner);
