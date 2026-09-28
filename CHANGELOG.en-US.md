@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.10.0-alpha.1]
 ### Performance
 - **Light in the background (to game with ControlFS open):** with the window minimized or behind a game, ControlFS drops to below-normal priority and Windows 11 efficiency mode, reads controllers only to notice connections (once per second, without queuing the buttons and sticks the game is using), stops polling drives and, after 5 seconds, gives the memory it isn't using back to Windows (in the Smoke run: from ~153 MB to ~18 MB working set). CPU while minimized: from ~1.4–2% to ~0.5% of one core. Coming back to the window restores everything at once; copies and extractions keep running (slower) and playing audio or video keeps normal priority. Menu → Configurações → **Leve em segundo plano** (on by default).
 - **Lighter idle:** with no controller connected, ControlFS no longer reads SDL every 8 ms with the Windows timer at 1 ms — keyboard and mouse arrive as events and reading drops to 4 times per second, only to notice a controller arriving (fast reading comes back as soon as it connects). Idle CPU with the window in front: from ~1.5% to ~0.5% of one core.
@@ -20,7 +22,6 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Settings in grids** (#227): in each group of Configurações, short settings (view, density, details panel, theme, accent color, sort, hidden items, search in subfolders, recents, restore tabs, suggestions, confirm button, button labels, Fluidez) are now tiles with an icon, a name and the current value; settings with long descriptions or that open another screen stay in a list. The controller moves in 2D between the grids and the lists.
 
 ### Fixes
-- Minimizing the window closed ControlFS (a Windows fail-fast while reading the minimized title bar, found by the performance measurement). Minimizing also no longer redoes the layout.
 - Details panel: "Este item não está marcado" (this item isn't marked) showed the amber marked symbol; it now shows an empty box.
 - Welcome and tutorial texts name the buttons of the controller in use (LB/RB on Xbox, L1/R1 on PlayStation, L/R on Nintendo), like the glyphs.
 - Item menus open on the first available tile of the grid instead of a list row below it (archives still open on **Extrair para**). Actions about the open folder (favorites, Colar, Nova pasta aqui, Abrir terminal aqui) sit in a titled **Nesta pasta (name)** group so they don't read as actions on the file.
@@ -32,6 +33,11 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - Consistent labels: the top bar shortcut is now **Recentes**, as on Home (was "Arquivos recentes"), and South on it says **Abrir** (open); the R3 prompt names the action (**Ver em grade** / **Ver em lista**, view as grid/list) instead of reading like the current state; two tabs with the same name show the folder they are in, e.g. "Fotos (Viagem)"; titles use Brazilian curly quotes (Buscar em “x”, Renomear “x”, Desfazer “x”?).
 - Distinct icons for different meanings: Copy to, Keep both, Compress, Properties, About, Operations (no longer looks like Refresh), Controllers without a profile, Sort order, Close tab, Subfolders, Merge, Empty clipboard, Tabs… and Reopen closed tab got their own symbols. A test makes sure only the documented pairs share a symbol.
 - Closing ControlFS after playing audio or video no longer crashes the process on PCs without a GPU (virtual machines, Remote Desktop). (#224)
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Phone-as-controller, the title bar, the light background mode and media were verified only as far as Windows CI can; the rest is in `docs/TESTING.md`.
 
 ## [0.9.0-alpha.1]
 ### Improvements

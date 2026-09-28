@@ -30,6 +30,16 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## UX, boas-vindas e desempenho (0.10.0-alpha.1)
+
+- Análise geral de UX aplicada (PRs #234–#239): foco dos menus, diálogos sem prompt repetido, erros em pt-BR com ação,
+  estados vazios, busca no início, avisos que não empurram a lista, progresso, legibilidade e densidade em portáteis,
+  rótulos e ícones consistentes. Barra de título na cor do tema e tela cheia (#232), boas-vindas e tutorial guiado
+  (#233), celular como controle (#226), Configurações em grades (#229), ícone limpo (#187).
+- Desempenho (#240): minimizado 153 → 18 MB de memória e 2,0% → 0,47% de CPU; parado na frente 1,7% → 0,47%; modo
+  "Leve em segundo plano". Medição automática no smoke completo (`build/Measure-Performance.ps1`).
+- Correções de travamento no WARP: entrada por quadro (#222) e saída depois de mídia (#225); análise de dumps no smoke (#221).
+
 ## Backlog concluído (0.9.0-alpha.1)
 
 - Todas as issues Could/Won't do roadmap entregues (#27, #37, #51–#53, #56, #59–#62, #65, #67, #70–#77, #86, #170, #171,
