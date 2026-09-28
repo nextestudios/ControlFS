@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Correções
+- As boas-vindas agora aparecem uma vez também para quem reinstala ou atualiza (a pasta de dados sobrevive à reinstalação, e as preferências antigas eram tratadas como "já vistas"). Para rever quando quiser: Menu → Ajuda e tutorial → Rever boas-vindas.
 
 ## [0.10.0-alpha.1]
 ### Desempenho

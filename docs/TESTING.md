@@ -776,7 +776,7 @@ Chromium sem interface contra o servidor real durante o desenvolvimento (pareame
 
 ## Boas-vindas e tutorial guiado (#231) — não validado em hardware
 Automático: `OnboardingJourneyTests` (primeira execução só na janela real, passos pelo controle, ajuste com efeito
-imediato, conclusão salva, quem atualiza não vê, Start pula, Menu reabre) e `TutorialJourneyTests` (os 8 passos pelo
+imediato, conclusão salva, quem reinstala vê uma vez, Start pula, Menu reabre) e `TutorialJourneyTests` (os 8 passos pelo
 `Driver`, cada um só com a ação pedida, Voltar passo, Pular, nenhum arquivo alterado, máquina de estados). Capturas
 `o1`–`o7` no Smoke (`-f screens=o`).
 - [ ] Portátil numa pasta nova (sem `ControlFS_Data`): as boas-vindas abrem em tela cheia; com um controle Xbox, depois
