@@ -74,7 +74,7 @@ internal sealed class StatusToastView
     /// <summary>Medidas e cores da faixa de layout e do tema atuais.</summary>
     public void ApplyLayout()
     {
-        Root.Background = Theme.SurfaceRaised;
+        Root.Background = Theme.AccentSoft; // destaca-se da lista e do painel de detalhes (texto conferido nos testes de contraste)
         Root.BorderBrush = Theme.ModalEdge;
         Root.BorderThickness = Theme.Hairline;
         Root.CornerRadius = Theme.RowRadius;
