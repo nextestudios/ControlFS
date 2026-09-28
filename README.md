@@ -39,20 +39,21 @@ ControlFS is a native app, not a web page in a box, so it can sit next to a game
 
 | Folder of 5,000 files | ControlFS | File Explorer* | Files |
 |---|---|---|---|
-| RAM, working set | 161 MB | 147 MB | 267 MB |
-| RAM, private bytes | 66 MB | 58 MB | 110 MB |
-| CPU, idle (% of one core) | 0.47 | about 0 | 0.31 |
-| Threads | 35 | 55 | 55 |
-| Time until the window appears | 754 ms | 610 ms | 491 ms |
+| RAM, working set (ControlFS after its own idle trim) | 18 MB | 144 MB | 264 MB |
+| RAM, private bytes | 59 MB | 56.5 MB | 109 MB |
+| CPU, idle (% of one core) | 0.31 | about 0 | 0.47 |
+| Threads | 36 | 55 | 50 |
+| Time until the window appears | 980 ms | 753 ms | 705 ms |
 
 ![Bar chart: working set, private bytes and time to window for ControlFS, File Explorer and Files](docs/images/performance-comparison.svg)
 
-- ControlFS uses **about 40% less memory than Files** (working set and private bytes, in both scenarios we ran), with median CPU at idle under 1% of a core for all three.
-- It is **not** the lightest in every column: a File Explorer window costs about 15 MB less working set and 8 MB less private memory, and both File Explorer and Files show their window sooner than ControlFS (about 150 to 260 ms). ControlFS's own first-frame time was 995 ms.
-- Minimized (or behind a game), ControlFS trims itself further: **about 18 MB** of working set in the light background mode (measured for ControlFS only; the others were not measured minimized).
+- ControlFS uses **about 45% less memory than Files** (private bytes; 59 vs 109 MB), with median CPU at idle under 1% of a core for all three.
+- **Working set:** 18 MB is measured after ControlFS gives back what startup left over, once, two seconds after the first frame (Windows does the same to idle processes; the pages come back on demand). File Explorer and Files are not trimmed by us, so compare the **private bytes** row, which the trim barely changes: ControlFS is still about 2.5 MB (roughly 4%) above a File Explorer window there.
+- It is **not** the lightest in every column: File Explorer and Files still show their window sooner than ControlFS (about 230 and 270 ms in this run; the runner is noisy, ±300 ms between runs), and File Explorer sits at about 0% CPU where ControlFS idles at about 0.3%.
+- Minimized (or behind a game), ControlFS trims itself further: about 12 MB of working set in the light background mode (measured for ControlFS only; the others were not measured minimized).
 - \* File Explorer shows the cost of the window's own `explorer.exe` process: on the CI runner each `explorer.exe <folder>` starts its own process, and that process is what is counted. On a real desktop the window lives inside the running shell and the cost differs.
 
-**Read this before quoting the numbers.** They come from a GitHub Actions `windows-latest` runner (4 vCPUs, **no GPU, software rendering (WARP), no controller**), not from a real PC: rendering costs differ from real hardware, and the numbers vary from machine to machine. "Working set" counts shared pages once per process; "private bytes" is the more honest memory figure. A 5,000-file folder was also measured with a 40-file folder (same conclusions), and the "navigate into a subfolder and back" scenario was **not** measured (it can't be scripted the same way in the three apps). Tested: ControlFS built from `main` at commit `e584b39` (after 0.10.0-alpha.1), Windows 10.0.26100, 2026-09-28, [run 36477018137](https://github.com/nextestudios/ControlFS/actions/runs/36477018137). The exact method, every scenario and how to reproduce it are in [docs/performance.md](docs/performance.md); the script is [build/Compare-Performance.ps1](build/Compare-Performance.ps1) (run it from the Smoke workflow, mode `full`).
+**Read this before quoting the numbers.** They come from a GitHub Actions `windows-latest` runner (4 vCPUs, **no GPU, software rendering (WARP), no controller**), not from a real PC: rendering costs differ from real hardware, and the numbers vary from machine to machine. "Working set" counts shared pages once per process; "private bytes" is the more honest memory figure. A 5,000-file folder was also measured with a 40-file folder (same conclusions), and the "navigate into a subfolder and back" scenario was **not** measured (it can't be scripted the same way in the three apps). Tested: ControlFS built from `main` at commit `55eaef4`, Windows 10.0.26100, 2026-09-28, medians of three Smoke runs ([36491965336](https://github.com/nextestudios/ControlFS/actions/runs/36491965336), [36491968039](https://github.com/nextestudios/ControlFS/actions/runs/36491968039), [36491972002](https://github.com/nextestudios/ControlFS/actions/runs/36491972002)). The exact method, every scenario and how to reproduce it are in [docs/performance.md](docs/performance.md); the script is [build/Compare-Performance.ps1](build/Compare-Performance.ps1) (run it from the Smoke workflow, mode `full`).
 
 ## How it works
 

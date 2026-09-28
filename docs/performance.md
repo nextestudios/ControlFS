@@ -108,6 +108,54 @@ conta páginas compartilhadas de novo em cada processo; os bytes privados são a
 não foram medidos minimizados. Pasta de 5.000 arquivos não mudou o custo de nenhum dos três de forma relevante (as listas
 são virtualizadas ou carregadas sob demanda).
 
+## Segunda rodada: mais leve e mais rápido? (setembro de 2026)
+
+**Método.** Medir → mudar → medir com o Smoke `full`. Cada alavanca foi testada numa branch de experimento, rodando ao mesmo
+tempo que uma linha de base do mesmo commit (pares medidos na mesma hora: o runner varia ±300 ms entre horas do dia, então só
+pares lado a lado valem). Duas linhas novas no log de inicialização (`startup.log`) mostram onde o tempo vai: "Início do
+controlador (ms acumulados)", "Memória depois do primeiro quadro / da limpeza" (heap gerenciado, bytes privados, conjunto de
+trabalho, threads, módulos) e "Pasta aberta: N itens; listagem, ordenação, desenho" (por pasta). O passo de medição também
+salva `modules-*.txt` (as DLLs mapeadas) no artefato `performance`.
+
+**O que os números mostraram.**
+
+- O heap gerenciado é só ~2 MB vivos (~6 MB reservados) dos ~60 MB de bytes privados: o resto é nativo (WinUI, Windows App
+  SDK, coreclr, WARP no runner). Por isso ajustes de GC mexem pouco nos bytes privados.
+- Início do controlador (~200-270 ms): preferências 67-85 ms (o maior pedaço), primeiro desenho ~100 ms, configuração ~35 ms,
+  locais ~15 ms. O resto até a janela (~500 ms) é o runtime e o Windows App SDK antes do `Main`.
+- Abrir uma pasta de 5.000 arquivos: listagem 15-28 ms, **ordenação 35 ms**, desenho 27-35 ms, total ~125 ms.
+
+**Ficou (PRs #247, #248, #251).**
+
+| Mudança | Antes | Depois | Evidência |
+|---|---|---|---|
+| Ordenação por nome sem chamada de cultura por letra | 35-36 ms (5.001 itens) | 14-15 ms | log "Pasta aberta", runs 36484058155 (antes) e 36484054171 (depois) |
+| `ConcurrentGarbageCollection=false` e `TieredPGO=false` | até a janela 1025 ms (portátil) / 918 (instalado) | 733 / 662 | par 36481195863 x 36481243610; segundo par 36486458738 x 36486486539: 1059 / 1158 contra 809 / 793 |
+| Limpeza única depois do primeiro quadro (GC compactador + conjunto de trabalho), só com "Leve em segundo plano" | conjunto de trabalho em repouso ~152 MB, bytes privados ~60 MB (b: 67) | ~18 MB e ~56 MB (b: 59) | par 36481195863 x 36481202150 |
+
+Honestidade sobre a abertura: nas três execuções finais do `main` (36491965336, 36491968039, 36491972002) o tempo até a
+janela ficou em 958-1130 ms no cenário b, contra 754 ms no run do README anterior; o Explorador também foi de 610 para
+741-786 ms nessas execuções, ou seja, a hora do dia do runner pesa mais que a mudança. **Não dá para afirmar** um ganho de
+abertura só com essas execuções: os pares simultâneos favoreceram o GC não concorrente (~250-350 ms), mas as execuções
+seguintes, não pareadas, não repetem o ganho. Mantivemos a mudança (não piora nada medido), sem prometer o número.
+
+**Testado e descartado.**
+
+- `PublishTrimmed` com `TrimMode=partial` (experimento `exp/perf-trimmed`): o portátil **não abriu** ("ControlFS não ficou
+  aberto com janela"; a UI depende de reflexão/recursos do WinUI). Descartado.
+- ICU → NLS (`System.Globalization.UseNls=true`, experimento `exp/perf-nls`): 893 ms contra 954 ms de janela, conjunto de
+  trabalho e bytes privados iguais, dentro do ruído. Descartado (mudaria a comparação de textos sem ganho medido).
+- JSON das preferências gerado em compilação (`JsonSerializerContext`, #250, fechado): o app fechou ao abrir com
+  `NullReferenceException` em `AppController.FavoriteEntries` (run 36486599840). Não valeu depurar por ~60 ms; a alavanca
+  segue aberta se alguém quiser investigar (o maior pedaço do início do controlador é a leitura das preferências).
+- `InvariantGlobalization`: não testado, quebraria a formatação pt-BR de datas e números.
+
+**Ainda mais lento que o Explorador (cenário b, mediana de três execuções):** tempo até a janela (980 contra 753 ms) e ~2,5 MB
+de bytes privados (59 contra 56,5 MB); CPU em repouso ~0,3% contra ~0%. Motivo: o Explorador é nativo em C++ e já residente,
+enquanto o ControlFS paga a inicialização do .NET e do Windows App SDK (~500 ms antes do `Main`) e mantém ~40 MB de memória
+nativa do WinUI que não conseguimos reduzir sem trocar de framework. O conjunto de trabalho de 18 MB vem da limpeza
+descrita acima: o Explorador não passa por ela, então a linha comparável é a de bytes privados.
+
 ## Decisões (com as medições que as sustentam)
 
 ### Leitura dos controles (`InputCadence`)
