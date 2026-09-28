@@ -64,6 +64,7 @@ public sealed partial class AppController
         if (tutorial) StartTutorial();
         else StatusMessage = skipped ? "Boas-vindas puladas. Para rever: Menu → Ajuda." : "Tudo pronto. O tutorial guiado fica em Menu → Ajuda.";
         RaiseChanged();
+        TryShowPromo(); // sem tutorial: "Mais da equipe" logo depois das boas-vindas (com tutorial, quando ele terminar)
     }
 
     /// <summary>Fim das boas-vindas e do tutorial: o início, com o primeiro cartão (ou local) em foco, sem nada aberto por cima.</summary>
@@ -218,6 +219,7 @@ public sealed partial class AppController
             new("Tutorial guiado", StartTutorial, Screen == Screen.FolderPicker ? "Conclua a escolha de pasta primeiro." : null,
                 Detail: $"{GuidedTutorial.Steps.Count} passos com os botões de verdade, sem alterar arquivos. Dá para pular a qualquer momento.", Icon: ActionIcon.Tutorial),
             new("Rever boas-vindas", ShowOnboarding, Detail: "Controles, ajustes básicos e privacidade.", Icon: ActionIcon.Help),
+            new("Mais da equipe", ShowPromo, Detail: "NextBoost PRO e Console Mode, os outros aplicativos da equipe.", Icon: ActionIcon.Game),
             new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only", Icon: ActionIcon.About),
         ]) { Icon = ActionIcon.Help });
 
@@ -241,6 +243,7 @@ public sealed partial class AppController
         if (Tutorial is null) return;
         Tutorial = null;
         SetStatus("Tutorial encerrado. Para refazer: Menu → Ajuda → Tutorial guiado.");
+        TryShowPromo();
     }
 
     /// <summary>Volta um passo do tutorial (Voltar passo).</summary>

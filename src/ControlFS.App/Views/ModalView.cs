@@ -95,6 +95,7 @@ public static partial class ModalView
             DialogModal dialog => BuildDialog(app, dialog, out update),
             KeyboardModal keyboard => BuildKeyboard(app, keyboard, out update),
             AboutModal about => BuildAbout(app, about),
+            PromoModal promo => BuildPromo(app, promo),
             MappingWizardModal wizard => BuildMappingWizard(app, wizard),
             ControllerTestModal test => BuildControllerTest(app, test),
             ImagePreviewModal preview => BuildImagePreview(app, preview),
@@ -783,6 +784,53 @@ public static partial class ModalView
         var option = dialog.Options[index];
         var glyph = option.Kind == DialogOptionKind.Toggle ? CheckGlyph(option.IsChecked) : ActionIcons.Glyph(option.Icon);
         return Row(option.Label, glyph, index == dialog.FocusIndex, true, option.IsDestructive, () => app.PointerChooseModalOption(index));
+    }
+
+    // ---------- Mais da equipe ----------
+
+    private static Border BuildPromo(AppController app, PromoModal promo)
+    {
+        var cards = new Grid { ColumnSpacing = Theme.SpaceM };
+        for (var i = 0; i < promo.Cards.Count; i++)
+        {
+            cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var card = PromoCardView(app, promo, i);
+            Grid.SetColumn(card, i);
+            cards.Children.Add(card);
+        }
+        var stack = new StackPanel { Spacing = Theme.SpaceM };
+        stack.Children.Add(cards);
+        stack.Children.Add(Row("Fechar", ActionIcons.Glyph(ActionIcon.Close), promo.CloseFocused, true, false, () => app.PointerChoosePromo(promo.Cards.Count)));
+        return Panel(app, Header(promo), stack, 880);
+    }
+
+    /// <summary>Um aplicativo: logo, nome, o que faz e o botão que abre o site no navegador (nada é baixado por aqui).</summary>
+    private static Border PromoCardView(AppController app, PromoModal promo, int index)
+    {
+        var info = promo.Cards[index];
+        var focused = !promo.CloseFocused && promo.FocusIndex == index;
+        var content = new StackPanel { Spacing = Theme.SpaceS };
+        if (Branding.Asset(info.LogoFile) is { } logo)
+        {
+            var image = new Image { Source = logo, Height = Theme.Scaled(72), HorizontalAlignment = HorizontalAlignment.Left, Stretch = Stretch.Uniform };
+            AutomationProperties.SetName(image, info.Name);
+            content.Children.Add(image);
+        }
+        content.Children.Add(new TextBlock { Text = info.Name, FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text });
+        content.Children.Add(new TextBlock { Text = info.Tagline, FontSize = Theme.FontBody, Foreground = Theme.Accent, TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(new TextBlock { Text = info.Description, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(new Border { Margin = new Thickness(0, Theme.SpaceXs, 0, 0), Child = Row(info.ActionLabel, ActionIcons.Glyph(ActionIcon.Open), focused, true, false, () => app.PointerChoosePromo(index)) });
+        var card = new Border
+        {
+            Background = Theme.ModalInset,
+            CornerRadius = Theme.RowRadius,
+            Padding = new Thickness(Theme.SpaceM),
+            BorderBrush = focused ? Theme.Accent : Theme.Transparent,
+            BorderThickness = Theme.FocusRing,
+            Child = content,
+        };
+        AutomationProperties.SetName(card, $"{info.Name}: {info.Tagline}");
+        return card;
     }
 
     private static Border BuildAbout(AppController app, AboutModal about)

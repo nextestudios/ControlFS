@@ -139,6 +139,8 @@ public sealed partial class AppController
         {
             StartAutomaticUpdateCheck();
         }
+        ArmPromo();
+        TryShowPromo();
         if (_temporaries is not null) Track(CleanUpLeftoversAsync(_temporaries));
     }
 
@@ -406,6 +408,7 @@ public sealed partial class AppController
         {
             ModalContextChanged?.Invoke();
             RaiseChanged();
+            TryShowPromo(); // "Mais da equipe": só se ainda for a vez dela e o app estiver livre
         }
     }
 
@@ -417,6 +420,7 @@ public sealed partial class AppController
             case KeyboardModal keyboard: HandleKeyboard(keyboard, action); break;
             case DialogModal dialog: HandleDialog(dialog, action); break;
             case AboutModal about: HandleAbout(about, action); break;
+            case PromoModal promo: HandlePromo(promo, action); break;
             case OnboardingModal onboarding: HandleOnboarding(onboarding, action); break;
             case MappingWizardModal wizard: HandleMappingWizard(wizard, action); break;
             case ControllerTestModal test: HandleControllerTest(test, action); break;

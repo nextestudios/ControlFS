@@ -588,7 +588,7 @@ public sealed partial class AppController
             .. UndoMenuItems(),
             PhoneMenuItem(),
             new("Esvaziar área de transferência", ClearClipboard, Clipboard is null ? "A área de transferência está vazia." : null, Icon: ActionIcon.Clear, Section: "ControlFS"),
-            new("Ajuda e tutorial…", ShowHelpMenu, Detail: "Tutorial guiado, boas-vindas e Sobre.", Icon: ActionIcon.Help, Section: "ControlFS"),
+            new("Ajuda e tutorial…", ShowHelpMenu, Detail: "Tutorial guiado, boas-vindas, Mais da equipe e Sobre.", Icon: ActionIcon.Help, Section: "ControlFS"),
             new("Sobre o ControlFS", ShowAbout, Detail: $"Versão {AppVersion} · licença AGPL-3.0-only", Icon: ActionIcon.About, Section: "ControlFS"),
             new("Sair", ShowExitDialog, Icon: ActionIcon.Exit, Section: "ControlFS"),
         ];

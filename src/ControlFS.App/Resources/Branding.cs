@@ -17,6 +17,15 @@ public static class Branding
     /// <summary>Logo do tema: a variante escura no claro (se faltar, a de sempre).</summary>
     public static BitmapImage? LogoFor(bool dark) => dark ? Logo : (_logoLight ??= Load("controlfs-logo-light.png")) ?? Logo;
 
+    private static readonly Dictionary<string, BitmapImage?> Assets = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Imagem do pacote ("Mais da equipe"): decodificada uma vez na altura de exibição e guardada.</summary>
+    public static BitmapImage? Asset(string file)
+    {
+        if (!Assets.TryGetValue(file, out var image)) Assets[file] = image = Load(file);
+        return image;
+    }
+
     private static BitmapImage? Load(string file)
     {
         var path = Path.Join(AppContext.BaseDirectory, file);

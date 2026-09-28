@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **More from the team:** a single screen, right after the welcome and the tutorial (or on launch for people who already saw them), presents the team's other apps: **NextBoost PRO** (a Windows optimizer for gaming) and **Console Mode** (turns the PC into a console). Each shows its logo, what it does and a button that opens its site in the browser. It appears only once and never returns on its own; to see it again: Menu → Ajuda e tutorial → Mais da equipe. The logos ship in the package: ControlFS doesn't use the internet for it, and the links only open when you choose.
 ### Fixes
 - The welcome screens now show once for people who reinstall or update too (the data folder survives a reinstall, and old preferences were treated as "already seen"). To see them again anytime: Menu → Ajuda e tutorial → Rever boas-vindas.
 

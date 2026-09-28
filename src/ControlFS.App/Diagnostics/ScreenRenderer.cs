@@ -440,6 +440,13 @@ internal static class ScreenRenderer
         await CaptureAsync(stage, target, dir, "m9-about", window);
         CloseModals(app);
 
+        // "Mais da equipe": o primeiro app em foco e o segundo.
+        app.ShowPromo();
+        await CaptureAsync(stage, target, dir, "m11-team", window);
+        app.Handle(InputAction.NavigateRight);
+        await CaptureAsync(stage, target, dir, "m11b-team-second", window);
+        CloseModals(app);
+
         // Celular como controle (#223): QR Code e a permissão no PC, sem rede (canal falso só para as capturas).
         if (Wanted("m10"))
         {

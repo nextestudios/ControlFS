@@ -81,4 +81,12 @@ geométricas e letras desenhadas em código. Nenhuma imagem, fonte de ícones, l
 terceiros (Xbox, PlayStation, Nintendo ou outros) é incluído. Xbox, PlayStation e Nintendo são marcas de seus
 respectivos donos e aparecem aqui só para identificar compatibilidade.
 
+Logos de "Mais da equipe"
+------------------------------------------------------------------------------
+
+assets/promo/nextboost.png (NextBoost PRO, https://nextboost.pro/) e assets/promo/consolemode.png (Console Mode,
+https://github.com/lippdev/consolemode) são os logos de outros aplicativos da equipe, incluídos com autorização do
+mantenedor só para a tela "Mais da equipe". São marcas e artes dos respectivos projetos: NÃO estão cobertas pela
+AGPL-3.0-only deste código e não podem ser reutilizadas sem permissão dos donos.
+
 O Windows e seus serviços não fazem parte deste código aberto.

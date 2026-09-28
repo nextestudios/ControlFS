@@ -789,3 +789,8 @@ imediato, conclusão salva, quem reinstala vê uma vez, Start pula, Menu reabre)
 - [ ] Cada passo só avança fazendo o que ele pede; Marcar abre as opções (Voltar passo, Pular tutorial); com o mouse, os
       botões do balão funcionam; no fim, o resumo e o início com o primeiro cartão em foco.
 - [ ] Nenhum arquivo muda durante o tutorial (buscar e abrir pastas só leem).
+
+## Mais da equipe — não validado em hardware
+- [ ] Instalação nova (ou apagar `%LOCALAPPDATA%\ControlFS\settings.json`): boas-vindas → (tutorial, se aceitar) → a tela "Mais da equipe" aparece **uma vez**; ao reabrir o app ela não volta.
+- [ ] Sul no cartão abre o navegador padrão no NextBoost PRO e no Console Mode; nada abre sozinho; Voltar fecha; com o tutorial em andamento a tela espera terminar.
+- [ ] Legível a 3 m e em 1280×720; os logos nítidos; Narrador lê o nome, o que faz e "abre no navegador".

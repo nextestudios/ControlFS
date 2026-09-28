@@ -123,6 +123,12 @@ public sealed record AppSettings
     /// ignoram a propriedade, então o esquema não muda.
     /// </summary>
     public bool? OnboardingCompleted { get; init; }
+
+    /// <summary>
+    /// "Mais da equipe": mostrada uma única vez, depois das boas-vindas e do tutorial. True assim que abre (mesmo que o app
+    /// seja fechado com ela aberta); nunca volta sozinha. Rever: Menu → Ajuda e tutorial → Mais da equipe.
+    /// </summary>
+    public bool? PromoSeen { get; init; }
 }
 
 /// <param name="FirstRun">Nenhuma preferência salva ainda (primeira abertura): padrões que dependem do aparelho podem valer.</param>

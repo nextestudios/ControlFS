@@ -56,6 +56,8 @@
     <Content Include="..\..\assets\controlfs-logo-text-900.png" Link="controlfs-logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Variante do tema claro: as mesmas formas, com o nome escuro (sem placa atrás do logo). -->
     <Content Include="..\..\assets\controlfs-logo-text-light-900.png" Link="controlfs-logo-light.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Logos de "Mais da equipe" (NextBoost PRO e Console Mode): vão no pacote, sem baixar nada da internet. -->
+    <Content Include="..\..\assets\promo\*.png" Link="promo-%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <!-- Componentes, não o metapacote Microsoft.WindowsAppSDK (#85): sem IA/ML, Widgets, Search e DWriteCore. -->
