@@ -27,16 +27,25 @@ hardware, visual or timing checks that CI can't prove.
 ## Shell
 
 ```
-┌ [ControlFS logo with text] [tabs, only with 2+]                  [controller · operation] ┐  (system title bar above)
+┌ [ControlFS logo with text] [tabs, only with 2+]   [controller · operation] [⛶][_][□][X] ┐  (header = title bar, #230)
 ├ [L1] [Locais|Meu computador] › segment › … › current │ Favoritos · Arquivos recentes · known folders · Meu computador · Lixeira [R1]
 ├ badge line (archive summary, search, recycle bin, picker title) — only when there is something to say
 ├ CONTENT: Grid (B: Home = card sections; elsewhere tiles) or List, each + details panel (C; grid #177)
 └ status line · prompts: A Abrir · B Voltar · X Marcar · Y Ações · Menu · Buscar · R Lista/Grade
 ```
 
-- **Window chrome** stays the system title bar (min/max/close, resize, move, F11 full screen). The reference draws the
-  logo inside the title bar; doing that needs `ExtendsContentIntoTitleBar` plus pass-through regions for the tab strip,
-  which can't be verified without a Windows desktop session, so the logo sits in the first content row instead.
+- **Window chrome (#230)**: the header *is* the title bar, like the reference and Discord. `TitleBarView` sets
+  `AppWindow.TitleBar.ExtendsContentIntoTitleBar`; the system caption buttons (min/max/close, snap layouts, double-click
+  to maximize) stay, colored from the theme tokens (`Background`/`Text`/`TextMuted`/`Border`/`AccentSoft`; close hover is
+  the system red; null = system colors under high contrast), recolored live with the theme. The drag region
+  (`InputNonClientPointerSource`, Caption) is the header minus its top-right button corner; the tab strip and the full
+  screen button are Passthrough. With a modal/video on screen or in full screen nothing drags (the whole header is
+  Passthrough), because a tall panel can overlap the header. Regions are recomputed on header/tabs size, DPI, window
+  size and presenter changes. The header reserves the caption inset (`RightInset`) plus the full screen button on the
+  right. Windows without title bar customization keep the system bar. Captures (`--render-screens`) can't show the real
+  caption buttons: they reserve 3 × 46 px and draw look-alike glyphs.
+  No separate logo row: logo, tabs, controller/device and operation status all live in this strip (status at `FontBody`,
+  one line each, so the strip height stays the logo's). The full screen button shows "exit full screen" while active.
 - **Header**: official logo with text (`assets/controlfs-logo-text-900.png`, copied as `controlfs-logo.png`) on every
   screen; the icon-only logo stays for the exe, taskbar and installer. Right side: active controller and running
   operation/update/clipboard status (unchanged texts).
@@ -296,7 +305,8 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Responsive tiers (compact/regular/large), Windows text scale | `LayoutBreakpointsTests` (3); Screens (720p, 800p, 800p+150% text, 1080p, 1080p@150%, 4K@100/200/300%); Manual "Layout responsivo (#36)" |
 | Shell icons (known folders, drives, file associations), cached, async | `IconRequestTests` (2), `ShellIconIntegrationTests`; Manual "Ícones do Windows (#24)" |
 | Shortcut icons: Steam `.url` games show their title (no `.url`), "Jogo da Steam" and the icon the shortcut declares (local only, cache keyed by path + date + size); `.lnk` its own icon; game/link glyph as fallback. Details/Properties keep the real name and type | `ShortcutTests` (7), `SteamShortcutJourneyTests`, `ShortcutIconIntegrationTests` (4); Screens `6-shortcuts-list`, `6b-shortcuts-grid`; Manual "Atalhos de jogos da Steam e .lnk (#168)" |
-| Full screen (F11) and windowed (min/max/close/resize/move) | Manual "Antes de cada release" |
+| Full screen (#230): F11, title-bar button, Menu → Tela cheia tile, Configurações → Tela cheia; saved (`AppSettings.FullScreen`) and applied at startup; video forces full screen without changing the choice (F11 during a video leaves it for that video only); no controller shortcut (all buttons taken), Esc stays Back | `FullScreenJourneyTests`; Manual "Barra de título e tela cheia (#230)" |
+| Theme-colored title bar (#230): header in the title bar, caption buttons in theme colors (live, inactive, high contrast), drag region excluding tabs/button, double-click maximize, snap layouts, windowed (min/max/close/resize/move) | Screens `0-title-bar-dark`, `0b-title-bar-light` (1080p); Manual "Barra de título e tela cheia (#230)", "Antes de cada release" |
 | Settings persisted (view, density, favorites, recents, hidden, labels, convention, updates) and migrated | `DensityJourneyTests`, `GridViewJourneyTests`, `ControllerFamilyTests::Settings_v1_…`, `FavoritesJourneyTests`, `RecentsJourneyTests` |
 
 ## Notes for phases B and C

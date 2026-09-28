@@ -61,9 +61,11 @@ public sealed record MenuGrid(int Start, int Count)
 
     /// <summary>
     /// Blocos por linha: até 4 numa linha só; mais que isso, duas (ou mais) linhas equilibradas de no máximo 4 (os rótulos
-    /// curtos cabem inteiros, legíveis de longe).
+    /// curtos cabem inteiros, legíveis de longe). Nove blocos (menu do app) ficam 3×3 em vez de 4+4+1.
     /// </summary>
-    public int Columns => Count <= MaxColumns ? Count : Math.Min(MaxColumns, (Count + 1) / 2);
+    public int Columns => Count <= MaxColumns ? Count
+        : Count > 2 * MaxColumns && Count % MaxColumns != 0 && Count % (MaxColumns - 1) == 0 ? MaxColumns - 1
+        : Math.Min(MaxColumns, (Count + 1) / 2);
 
     public int Rows => (Count + Columns - 1) / Columns;
     public int End => Start + Count;

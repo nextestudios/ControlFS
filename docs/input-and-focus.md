@@ -27,6 +27,12 @@ Celular (#223) ─► PhoneLinkServer (quadro autenticado) ─► PhoneProtocol 
 | R3 (pressionar analógico direito) | Lista ↔ grade (`ChangeView`) | Ctrl+G |
 | L3 (pressionar analógico esquerdo) | Com dois painéis (#56): troca o painel ativo (`SwitchPane`); nunca muda marcação nem inicia operação | Tab |
 
+**Tela cheia (#230)**: F11 no teclado, o botão ao lado de minimizar, Menu → **Tela cheia** (bloco) e Menu → Configurações →
+**Tela cheia**. Não há combinação no controle: todos os botões já têm função (LB/RB barra superior, LT/RT páginas e abas,
+R3 exibição, L3 painéis, Start menu, Select busca) e um acorde de dois botões dispararia as ações de cada um. Esc é sempre
+Voltar (fecha modais, sobe no histórico e, no início, pergunta se quer sair), então não sai da tela cheia — ficaria ambíguo.
+F11 é tratado pela janela antes do `InputHost` e chama `AppController.ToggleFullScreen`.
+
 "Confirmar com botão direito" (Menu → Configurações) troca **comportamento e legendas** (`ConfirmBackConvention.EastConfirms`).
 Guide/Home não é mapeado. L3 troca o painel ativo com os dois painéis ligados (sem conflito: LB/RB são da barra
 superior, LT/RT das abas com 2+ abas, R3 da exibição); com um painel só, não faz nada. R3 troca lista ↔ grade (também Ctrl+G e Menu → Configurações → Exibição). Joysticks sem

@@ -90,6 +90,12 @@ To jump anywhere, use Menu → **Go to path…** (also in the folder picker's St
 
 ControlFS draws at your display's refresh rate (60, 120, 144 Hz…), as set in Windows. With Menu → Configurações → **Fluidez: máxima** (the default) it reads the controller ~125 times per second, enough for a 120 Hz screen; **economia de bateria** reads it less often, which saves power on handhelds. A 60 Hz screen can't show more than 60 frames per second: to get 120, set the display to 120 Hz in Windows (Settings → Display → Advanced display).
 
+## Title bar and full screen
+
+The top of the window has no white Windows title bar: the header with the ControlFS logo goes all the way up and uses the theme colors, and minimize, maximize and close sit in its top-right corner with the same colors (close turns red on hover; with a Windows high-contrast theme they use the system colors). Drag the empty part of the header to move the window, double-click it to maximize or restore, and hover maximize for Windows 11 snap layouts.
+
+**Full screen**: the button next to minimize, **F11**, Menu → **Tela cheia** (a tile) or Menu → Configurações → **Tela cheia**. The same button, F11 or Menu → **Sair da tela cheia** goes back to the window as it was (maximized or not). The choice is saved, so ControlFS opens full screen next time. There's no controller shortcut (every button already has a job); Esc is Back, so it doesn't leave full screen. A video always plays full screen; F11 during a video leaves full screen just for that video, and closing it returns the window to your choice.
+
 ## Theme and accent color
 
 Menu → Configurações → **Tema** (theme) switches between **automático** (the default: follows Windows' app mode in Settings → Personalization → Colors, live), **escuro** (dark) and **claro** (light). **Cor de destaque** (accent color) cycles through cyan, blue, green, amber, magenta and orange: it colors the focus ring, the focused option, the text cursor and highlighted symbols. Both apply at once, and Configurações stays open so you can compare. Every combination is checked for contrast: text and the focused option stay readable (≥ 4.5:1), and the focus ring stands out from the background (≥ 3:1). Marked items, warnings and dangerous actions keep their own colors and symbols, whatever the accent.
@@ -215,7 +221,7 @@ If ControlFS is closed in the middle of an operation (crash, power loss), the ne
 
 ## Video player
 
-**South** on an MP4, M4V, MOV, WMV, AVI, MKV, WebM or 3GP file, from the list or the grid, plays it full screen (North → **Assistir aqui** does the same; **Open with the default app** is still there). The window goes full screen while the video is open and comes back when you leave (if you had pressed F11 yourself, it stays). An overlay with the title, elapsed and remaining time, a progress bar, the volume and the subtitle/audio track state appears on any button and fades after 3 seconds of playback; while paused it stays.
+**South** on an MP4, M4V, MOV, WMV, AVI, MKV, WebM or 3GP file, from the list or the grid, plays it full screen (North → **Assistir aqui** does the same; **Open with the default app** is still there). The window goes full screen while the video is open and comes back when you leave (if you had chosen full screen yourself, it stays; F11 during the video leaves full screen just for that video). An overlay with the title, elapsed and remaining time, a progress bar, the volume and the subtitle/audio track state appears on any button and fades after 3 seconds of playback; while paused it stays.
 
 - **South:** pause/resume (at the end, watch again).
 - **Left/Right:** 10 seconds back/forward; **LB/RB:** 1 minute; **LT/RT:** 5% of the video (the timeline). Presses add up: the target time shows in large type and as a white mark on the bar, and the jump happens when you stop pressing (**South** jumps right away, **Back** cancels). It never goes before the start or past the end.

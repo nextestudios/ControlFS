@@ -522,7 +522,7 @@ public sealed partial class AppController
 
     /// <summary>
     /// Menu do app (Start): as ações mais usadas em blocos (Colar, Nova pasta, Nova aba, Atualizar, Ir para caminho,
-    /// Operações, Configurações, Início) e o resto numa lista curta que termina em Sair. Os ajustes ficam em Configurações.
+    /// Operações, Configurações, Início, Tela cheia) e o resto numa lista curta que termina em Sair. Os ajustes ficam em Configurações.
     /// </summary>
     private void ShowAppMenu()
     {
@@ -540,6 +540,7 @@ public sealed partial class AppController
                 Icon: ActionIcon.Operations, Placement: quick, ShortLabel: "Operações"),
             new("Configurações…", ShowSettings, Detail: "Exibição, busca, privacidade, controles e atualizações.", Icon: ActionIcon.Settings, Placement: quick),
             new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null, Icon: ActionIcon.Home, Placement: quick, ShortLabel: "Início"),
+            FullScreenTile(),
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
                 Detail: "Também pela barra de caminho (botão de ombro esquerdo).", Icon: ActionIcon.FolderUp, Section: "Navegar"),
             new(_tabs.Count > 1 ? $"Abas ({ActiveTab + 1} de {_tabs.Count})…" : "Abas…", ShowTabMenu, inBrowser || _closedTabs.Count > 0 ? null : "Abra uma pasta primeiro.",
@@ -604,6 +605,9 @@ public sealed partial class AppController
             new($"Status do Git: {(Settings.ShowGitStatus ? "mostrar" : "não mostrar")}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
                 Detail: "Em pastas de repositórios Git: o ramo no topo e \"Git: modificado/novo\" nos itens. Somente leitura; não precisa do Git instalado.",
                 Icon: ActionIcon.Info, Section: view, KeepOpen: true),
+            new($"Tela cheia: {YesNo(Settings.FullScreen)}", ToggleFullScreen,
+                Detail: "Ocupa a tela inteira, sem a barra do Windows; fica salva para a próxima vez. Também F11 ou o botão ao lado de minimizar.",
+                Icon: Settings.FullScreen ? ActionIcon.ExitFullScreen : ActionIcon.FullScreen, Section: view, KeepOpen: true),
             new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true,
                 Placement: tile, ShortLabel: "Subpastas", Value: SearchIncludesSubfolders ? "incluir" : "não incluir"),

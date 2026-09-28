@@ -130,6 +130,17 @@ internal static class ScreenRenderer
                 Report.AppendLine($"{target.Name}: {target.Width}x{target.Height} @ {target.Scale:0.##}x, texto {target.TextScale:0.##}x → {Theme.Layout.Tier} (fonte {Theme.Layout.FontScale:0.##}x)");
 
                 app.GoHome();
+                // Barra de título no tema (#230): a faixa do topo (logo, tela cheia e os botões do Windows imitados) no escuro
+                // e no claro, a 1080p.
+                if (target.Name == "1920x1080" && WantedGroup("0"))
+                {
+                    await CaptureAsync(stage, target, dir, "0-title-bar-dark", window);
+                    SetTheme(app, ThemeMode.Light, AccentColor.Cyan);
+                    app.GoHome();
+                    await CaptureAsync(stage, target, dir, "0b-title-bar-light", window);
+                    SetTheme(app, ThemeMode.Dark, AccentColor.Cyan);
+                    app.GoHome();
+                }
                 await CaptureAsync(stage, target, dir, "1-home", window);
                 app.Handle(InputAction.PreviousRegion); // L1: acesso rápido da barra superior
                 app.Handle(InputAction.NavigateRight);

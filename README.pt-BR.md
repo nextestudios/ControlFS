@@ -35,7 +35,7 @@ Windows 11 x64. Ainda sem assinatura de código, então o SmartScreen pode avisa
 | Norte (Y / △) | Ações do item | F2 |
 | LT / RT | Página anterior / próxima | PgUp / PgDn |
 | Start | Menu do app | F10 |
-| — | Tela cheia | F11 |
+| Menu → Tela cheia | Tela cheia (também o botão ao lado de minimizar) | F11 |
 
 Os botões seguem a **posição física**, então um controle Nintendo não inverte confirmar e voltar. Dá para trocar para "confirmar com o botão direito" no menu.
 
