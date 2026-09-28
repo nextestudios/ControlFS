@@ -117,6 +117,9 @@ public sealed partial class AppController
 
     public void Start()
     {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var marks = new List<string>();
+        void Mark(string what) => marks.Add($"{what} {clock.ElapsedMilliseconds}");
         if (_settingsStore is not null)
         {
             var loaded = _settingsStore.Load();
@@ -124,14 +127,22 @@ public sealed partial class AppController
             StatusMessage = loaded.Notice;
             _firstRunDensity = loaded.FirstRun;
         }
+        Mark("preferências");
         LoadControllerProfiles();
+        Mark("perfis");
         LoadHistory();
+        Mark("histórico");
         Places = BuildPlaces();
+        Mark("locais");
         PlacesFocus = IsGrid && HomeSections is [{ Places: [var first, ..] }, ..] ? first : 0; // grade: o primeiro cartão na tela
         Screen = RestoreOpenTabs() ? Screen.Browser : Screen.Home;
+        Mark("abas");
         if (Settings.DualPane) OpenSecondPaneBeside();
         SettingsChanged?.Invoke(Settings);
+        Mark("configuração");
         RaiseChanged();
+        Mark("primeiro desenho");
+        Trace?.Invoke("Início do controlador (ms acumulados): " + string.Join(", ", marks));
         // Primeira execução (#231): boas-vindas; a verificação automática de atualizações espera o passo de privacidade.
         if (OnboardingPending)
         {
