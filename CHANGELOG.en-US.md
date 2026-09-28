@@ -13,6 +13,7 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 - **Settings in grids** (#227): in each group of Configurações, short settings (view, density, details panel, theme, accent color, sort, hidden items, search in subfolders, recents, restore tabs, suggestions, confirm button, button labels, Fluidez) are now tiles with an icon, a name and the current value; settings with long descriptions or that open another screen stay in a list. The controller moves in 2D between the grids and the lists.
 
 ### Fixes
+- Welcome and tutorial texts name the buttons of the controller in use (LB/RB on Xbox, L1/R1 on PlayStation, L/R on Nintendo), like the glyphs.
 - Item menus open on the first available tile of the grid instead of a list row below it (archives still open on **Extrair para**). Actions about the open folder (favorites, Colar, Nova pasta aqui, Abrir terminal aqui) sit in a titled **Nesta pasta (name)** group so they don't read as actions on the file.
 - Dialogs no longer show the same text on two buttons ("A Cancelar · B Cancelar"): with the focus on the back option, the footer shows the next option.
 - The footer no longer says "Extração iniciada…" (extraction started) under the "Extração concluída" (extraction finished) dialog: an operation's result replaces the start notice.
