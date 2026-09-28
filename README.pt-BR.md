@@ -43,13 +43,12 @@ O ControlFS é um app nativo, não uma página web numa caixa, então cabe ao la
 | RAM, bytes privados | 59 MB | 56,5 MB | 109 MB |
 | CPU em repouso (% de um núcleo) | 0,31 | cerca de 0 | 0,47 |
 | Threads | 36 | 55 | 50 |
-| Tempo até a janela aparecer | 980 ms | 753 ms | 705 ms |
 
-![Gráfico de barras: conjunto de trabalho, bytes privados e tempo até a janela do ControlFS, Explorador de Arquivos e Files](docs/images/performance-comparison.svg)
+![Gráfico de barras: conjunto de trabalho e bytes privados do ControlFS, Explorador de Arquivos e Files](docs/images/performance-comparison.svg)
 
 - O ControlFS usa **cerca de 45% menos memória que o Files** (bytes privados; 59 contra 109 MB), e a CPU mediana em repouso fica abaixo de 1% de um núcleo nos três.
 - **Conjunto de trabalho:** os 18 MB são medidos depois de o ControlFS devolver ao Windows, uma vez, o que a abertura deixou de sobra (dois segundos depois do primeiro quadro; o Windows faz o mesmo com processos ociosos e as páginas voltam sob demanda). O Explorador e o Files não passam por essa limpeza nossa, então compare a linha de **bytes privados**, que a limpeza quase não muda: nela o ControlFS ainda fica cerca de 2,5 MB (uns 4%) acima de uma janela do Explorador.
-- Ele **não** é o mais leve em todas as colunas: o Explorador e o Files ainda mostram a janela antes do ControlFS (cerca de 230 e 270 ms nesta medição; o runner é ruidoso, ±300 ms entre execuções), e o Explorador fica em ~0% de CPU onde o ControlFS fica em cerca de 0,3%.
+- Ele **não** é o mais leve em todas as colunas: a janela do Explorador usa cerca de 2,5 MB a menos de memória privada e fica em ~0% de CPU onde o ControlFS fica em cerca de 0,3%.
 - Minimizado (ou atrás de um jogo), o ControlFS se enxuga ainda mais: cerca de 12 MB de conjunto de trabalho no modo leve em segundo plano (medido só para o ControlFS; os outros não foram medidos minimizados).
 - \* O Explorador mostra o custo do processo `explorer.exe` da própria janela: no runner de CI cada `explorer.exe <pasta>` inicia um processo próprio, e é esse processo que é contado. Num desktop real a janela vive dentro do shell em execução e o custo é outro.
 

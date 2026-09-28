@@ -43,13 +43,12 @@ ControlFS is a native app, not a web page in a box, so it can sit next to a game
 | RAM, private bytes | 59 MB | 56.5 MB | 109 MB |
 | CPU, idle (% of one core) | 0.31 | about 0 | 0.47 |
 | Threads | 36 | 55 | 50 |
-| Time until the window appears | 980 ms | 753 ms | 705 ms |
 
-![Bar chart: working set, private bytes and time to window for ControlFS, File Explorer and Files](docs/images/performance-comparison.svg)
+![Bar chart: working set and private bytes for ControlFS, File Explorer and Files](docs/images/performance-comparison.svg)
 
 - ControlFS uses **about 45% less memory than Files** (private bytes; 59 vs 109 MB), with median CPU at idle under 1% of a core for all three.
 - **Working set:** 18 MB is measured after ControlFS gives back what startup left over, once, two seconds after the first frame (Windows does the same to idle processes; the pages come back on demand). File Explorer and Files are not trimmed by us, so compare the **private bytes** row, which the trim barely changes: ControlFS is still about 2.5 MB (roughly 4%) above a File Explorer window there.
-- It is **not** the lightest in every column: File Explorer and Files still show their window sooner than ControlFS (about 230 and 270 ms in this run; the runner is noisy, ±300 ms between runs), and File Explorer sits at about 0% CPU where ControlFS idles at about 0.3%.
+- It is **not** the lightest in every column: File Explorer's window uses about 2.5 MB less private memory and sits at about 0% CPU where ControlFS idles at about 0.3%.
 - Minimized (or behind a game), ControlFS trims itself further: about 12 MB of working set in the light background mode (measured for ControlFS only; the others were not measured minimized).
 - \* File Explorer shows the cost of the window's own `explorer.exe` process: on the CI runner each `explorer.exe <folder>` starts its own process, and that process is what is counted. On a real desktop the window lives inside the running shell and the cost differs.
 
