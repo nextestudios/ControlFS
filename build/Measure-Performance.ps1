@@ -72,6 +72,10 @@ function Measure-Run([string] $Exe, [string] $LogDir, [string] $Package, [string
     $a = Get-Sample $p
     Start-Sleep -Seconds $IdleSeconds
     $b = Get-Sample $p
+    if ($Run -eq "warm1") {
+        # Lista das DLLs mapeadas (nome e tamanho) para ver o que o app carrega em repouso.
+        try { $p.Modules | Sort-Object ModuleMemorySize -Descending | ForEach-Object { "{0,9:N0} KB  {1}" -f ($_.ModuleMemorySize / 1KB), $_.FileName } | Set-Content -LiteralPath (Join-Path $OutDir "modules-$Package.txt") -Encoding utf8 } catch { }
+    }
     $null = [ControlFSPerf.Win32]::ShowWindow($hwnd, 6) # SW_MINIMIZE: minimiza e ativa a próxima janela
     Start-Sleep -Seconds 3
     $minimized = [ControlFSPerf.Win32]::IsIconic($hwnd)

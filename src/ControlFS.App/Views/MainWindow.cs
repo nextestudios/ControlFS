@@ -304,6 +304,14 @@ public sealed class MainWindow : Window
     {
         AppLog.Info($"Primeiro quadro ({AppLog.SinceProcessStart()} ms desde o início do processo)");
         _app.OnFirstFrame(); // verificação automática de atualizações, se for a hora
+        _ = SettleMemoryAsync();
+    }
+
+    /// <summary>Depois que o primeiro quadro assentou: registra onde a memória está (docs/performance.md).</summary>
+    private static async Task SettleMemoryAsync()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+        AppLog.Info("Memória depois do primeiro quadro: " + Infrastructure.Windows.Diagnostics.ProcessEfficiency.DescribeMemory());
     }
 
     private Grid BuildLayout()
