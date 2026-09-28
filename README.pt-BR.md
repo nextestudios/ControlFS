@@ -39,20 +39,21 @@ O ControlFS é um app nativo, não uma página web numa caixa, então cabe ao la
 
 | Pasta com 5.000 arquivos | ControlFS | Explorador* | Files |
 |---|---|---|---|
-| RAM, conjunto de trabalho | 161 MB | 147 MB | 267 MB |
-| RAM, bytes privados | 66 MB | 58 MB | 110 MB |
-| CPU em repouso (% de um núcleo) | 0,47 | cerca de 0 | 0,31 |
-| Threads | 35 | 55 | 55 |
-| Tempo até a janela aparecer | 754 ms | 610 ms | 491 ms |
+| RAM, conjunto de trabalho (ControlFS depois da própria limpeza em repouso) | 18 MB | 144 MB | 264 MB |
+| RAM, bytes privados | 59 MB | 56,5 MB | 109 MB |
+| CPU em repouso (% de um núcleo) | 0,31 | cerca de 0 | 0,47 |
+| Threads | 36 | 55 | 50 |
+| Tempo até a janela aparecer | 980 ms | 753 ms | 705 ms |
 
 ![Gráfico de barras: conjunto de trabalho, bytes privados e tempo até a janela do ControlFS, Explorador de Arquivos e Files](docs/images/performance-comparison.svg)
 
-- O ControlFS usa **cerca de 40% menos memória que o Files** (conjunto de trabalho e bytes privados, nos dois cenários medidos), e a CPU mediana em repouso fica abaixo de 1% de um núcleo nos três.
-- Ele **não** é o mais leve em todas as colunas: uma janela do Explorador custa cerca de 15 MB a menos de conjunto de trabalho e 8 MB a menos de memória privada, e tanto o Explorador quanto o Files mostram a janela antes do ControlFS (cerca de 150 a 260 ms). O primeiro quadro do ControlFS levou 995 ms.
-- Minimizado (ou atrás de um jogo), o ControlFS se enxuga ainda mais: **cerca de 18 MB** de conjunto de trabalho no modo leve em segundo plano (medido só para o ControlFS; os outros não foram medidos minimizados).
+- O ControlFS usa **cerca de 45% menos memória que o Files** (bytes privados; 59 contra 109 MB), e a CPU mediana em repouso fica abaixo de 1% de um núcleo nos três.
+- **Conjunto de trabalho:** os 18 MB são medidos depois de o ControlFS devolver ao Windows, uma vez, o que a abertura deixou de sobra (dois segundos depois do primeiro quadro; o Windows faz o mesmo com processos ociosos e as páginas voltam sob demanda). O Explorador e o Files não passam por essa limpeza nossa, então compare a linha de **bytes privados**, que a limpeza quase não muda: nela o ControlFS ainda fica cerca de 2,5 MB (uns 4%) acima de uma janela do Explorador.
+- Ele **não** é o mais leve em todas as colunas: o Explorador e o Files ainda mostram a janela antes do ControlFS (cerca de 230 e 270 ms nesta medição; o runner é ruidoso, ±300 ms entre execuções), e o Explorador fica em ~0% de CPU onde o ControlFS fica em cerca de 0,3%.
+- Minimizado (ou atrás de um jogo), o ControlFS se enxuga ainda mais: cerca de 12 MB de conjunto de trabalho no modo leve em segundo plano (medido só para o ControlFS; os outros não foram medidos minimizados).
 - \* O Explorador mostra o custo do processo `explorer.exe` da própria janela: no runner de CI cada `explorer.exe <pasta>` inicia um processo próprio, e é esse processo que é contado. Num desktop real a janela vive dentro do shell em execução e o custo é outro.
 
-**Leia isto antes de citar os números.** Eles vêm de um runner `windows-latest` do GitHub Actions (4 vCPUs, **sem GPU, renderização por software (WARP), sem controle**), não de um PC real: o custo de renderização difere do hardware de verdade e os números variam de máquina para máquina. "Conjunto de trabalho" conta páginas compartilhadas uma vez por processo; "bytes privados" é a medida de memória mais honesta. Uma pasta de 40 arquivos também foi medida (mesmas conclusões) e o cenário "entrar numa subpasta e voltar" **não** foi medido (não dá para automatizar da mesma forma nos três apps). Testado: ControlFS compilado do `main` no commit `e584b39` (depois da 0.10.0-alpha.1), Windows 10.0.26100, 28/09/2026, [execução 36477018137](https://github.com/nextestudios/ControlFS/actions/runs/36477018137). O método exato, todos os cenários e como reproduzir estão em [docs/performance.md](docs/performance.md) (em português); o script é [build/Compare-Performance.ps1](build/Compare-Performance.ps1) (rode pelo workflow Smoke, modo `full`).
+**Leia isto antes de citar os números.** Eles vêm de um runner `windows-latest` do GitHub Actions (4 vCPUs, **sem GPU, renderização por software (WARP), sem controle**), não de um PC real: o custo de renderização difere do hardware de verdade e os números variam de máquina para máquina. "Conjunto de trabalho" conta páginas compartilhadas uma vez por processo; "bytes privados" é a medida de memória mais honesta. Uma pasta de 40 arquivos também foi medida (mesmas conclusões) e o cenário "entrar numa subpasta e voltar" **não** foi medido (não dá para automatizar da mesma forma nos três apps). Testado: ControlFS compilado do `main` no commit `55eaef4`, Windows 10.0.26100, 28/09/2026, medianas de três execuções do Smoke ([36491965336](https://github.com/nextestudios/ControlFS/actions/runs/36491965336), [36491968039](https://github.com/nextestudios/ControlFS/actions/runs/36491968039), [36491972002](https://github.com/nextestudios/ControlFS/actions/runs/36491972002)). O método exato, todos os cenários e como reproduzir estão em [docs/performance.md](docs/performance.md) (em português); o script é [build/Compare-Performance.ps1](build/Compare-Performance.ps1) (rode pelo workflow Smoke, modo `full`).
 
 ## Como funciona
 
