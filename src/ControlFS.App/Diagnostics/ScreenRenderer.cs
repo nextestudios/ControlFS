@@ -220,6 +220,8 @@ internal static class ScreenRenderer
 
                 // Grade (#29): compacta e confortável, com o foco uma linha abaixo (navegação 2D).
                 app.Handle(InputAction.ChangeView);
+                // Aviso flutuante (auditoria de UX, P2-1): "Exibição em grade." no canto, com o rodapé da mesma altura.
+                await CaptureAsync(stage, target, dir, "3a-status-toast", window);
                 app.Handle(InputAction.NavigateDown);
                 await CaptureAsync(stage, target, dir, "3b-folder-grid-compact", window);
                 ChooseAppMenu(app, "Densidade");
