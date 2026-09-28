@@ -70,9 +70,9 @@ public sealed record AppSettings
     public bool DualPane { get; init; }
 
     /// <summary>
-    /// Fluidez máxima: com a janela ativa, o controle é lido a cada quadro desenhado (120 vezes por segundo numa tela de
-    /// 120 Hz, 144 numa de 144), em sincronia com a tela. Desligado (economia): um temporizador mais lento, que gasta
-    /// menos bateria em portáteis.
+    /// Fluidez máxima: com a janela ativa, o controle é lido a cada 8 ms (~125 vezes por segundo, o bastante para telas de
+    /// 120 Hz), com o relógio do Windows em 1 ms. Desligado (economia): o temporizador comum (~64 vezes por segundo), que
+    /// gasta menos bateria em portáteis. O desenho segue a taxa da tela nos dois casos.
     /// </summary>
     public bool SyncInputToDisplay { get; init; } = true;
 

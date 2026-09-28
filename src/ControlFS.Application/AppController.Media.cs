@@ -158,6 +158,29 @@ public sealed partial class AppController
         if (status.IsMuted && delta > 0) session.SetMuted(false); // aumentar o volume tira o "sem som"
     }
 
+    /// <summary>
+    /// Na saída do app: para e libera players e documentos ainda abertos antes de o processo terminar. Sem isso o
+    /// player do Windows (e o Direct3D por trás dele) ainda tinha trabalho pendente durante o encerramento e derrubava o
+    /// processo no renderizador de software (WARP: VMs, área de trabalho remota, CI).
+    /// </summary>
+    public void ReleaseMediaForShutdown()
+    {
+        foreach (var modal in _modals.ToList())
+        {
+            switch (modal)
+            {
+                case MediaPreviewModal media:
+                    media.IsClosed = true;
+                    media.Session?.Dispose();
+                    media.Session = null;
+                    break;
+                case PdfPreviewModal pdf:
+                    pdf.Document?.Dispose();
+                    break;
+            }
+        }
+    }
+
     /// <summary>Para o som, libera o arquivo e devolve o foco da lista ao arquivo.</summary>
     private void CloseMedia(MediaPreviewModal modal)
     {

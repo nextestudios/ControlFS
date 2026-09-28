@@ -5,10 +5,10 @@ using ControlFS.Core.Contracts;
 using ControlFS.Core.Input;
 using ControlFS.Core.Input.Mapping;
 using ControlFS.Infrastructure.Input.Sdl3;
+using ControlFS.Infrastructure.Windows.Timing;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using VirtualKey = Windows.System.VirtualKey;
 using Windows.UI.Core;
 
@@ -30,7 +30,10 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly DispatcherQueueTimer _timer;
     private bool _active = true;
-    private bool _frameSynced;
+    private readonly DispatcherQueue _queue;
+    private Thread? _ticker;
+    private volatile bool _tickerRunning;
+    private int _pumpQueued;
     private readonly Dictionary<string, InputDeviceInfo> _devices = [];
     private readonly Dictionary<string, ControllerProfileTranslator> _translators = [];
     private readonly Dictionary<string, LongPressTranslator> _longPress = [];
@@ -40,6 +43,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     public InputHost(AppController app, DispatcherQueue queue)
     {
         _app = app;
+        _queue = queue;
         Router = new InputRouter(new ActionMap(app.Settings.Convention), InputSettings.Default, app.Handle);
         Router.RepeatPolicy = app.IsRepeatableInContext;
         Router.ActiveDeviceChanged += _ =>
@@ -81,28 +85,66 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     }
 
     /// <summary>
-    /// Cadência da leitura: com a janela ativa e "Fluidez máxima", a cada quadro desenhado (CompositionTarget.Rendering,
-    /// na taxa da tela: 60/120/144 Hz); senão o temporizador (8 ms ativo — na prática limitado pelo relógio do Windows —
-    /// e 120 ms em segundo plano, só para notar conexões).
+    /// Cadência da leitura. Com a janela ativa e "Fluidez máxima", uma thread leve acorda a cada 8 ms (~125 leituras por
+    /// segundo, o bastante para telas de 120 Hz) com o relógio do Windows em 1 ms e pede à thread de UI um Pump — nunca
+    /// mais de um pendente. Não usa CompositionTarget.Rendering: ele obriga o compositor a desenhar quadros sem parar,
+    /// gasta bateria e derrubava o app no renderizador de software do Windows (WARP: VMs, área de trabalho remota, CI).
+    /// Sem "Fluidez máxima" ou em segundo plano: o temporizador da UI (8 ms ativo, na prática ~15,6 ms; 120 ms em
+    /// segundo plano, só para notar conexões).
     /// </summary>
     private void UpdateCadence()
     {
-        var frameSync = _active && _app.Settings.SyncInputToDisplay;
-        if (frameSync != _frameSynced)
+        var fast = _active && _app.Settings.SyncInputToDisplay;
+        if (fast)
         {
-            if (frameSync) CompositionTarget.Rendering += OnRendering;
-            else CompositionTarget.Rendering -= OnRendering;
-            _frameSynced = frameSync;
+            _timer.Stop();
+            StartTicker();
         }
-        if (frameSync) _timer.Stop();
         else
         {
+            StopTicker();
             _timer.Interval = _active ? ActiveInterval : BackgroundInterval;
             if (!_timer.IsRunning) _timer.Start();
         }
     }
 
-    private void OnRendering(object? sender, object e) => Pump();
+    private void StartTicker()
+    {
+        if (_ticker is not null) return;
+        TimerResolution.Begin();
+        _tickerRunning = true;
+        _ticker = new Thread(TickerLoop) { IsBackground = true, Name = "ControlFS input ticker", Priority = ThreadPriority.AboveNormal };
+        _ticker.Start();
+    }
+
+    private void StopTicker()
+    {
+        if (_ticker is not { } ticker) return;
+        _tickerRunning = false;
+        ticker.Join(100);
+        _ticker = null;
+        TimerResolution.End();
+    }
+
+    private void TickerLoop()
+    {
+        var clock = Stopwatch.StartNew();
+        var next = clock.Elapsed;
+        while (_tickerRunning)
+        {
+            next += ActiveInterval;
+            if (Interlocked.Exchange(ref _pumpQueued, 1) == 0 && !_queue.TryEnqueue(RunQueuedPump)) _pumpQueued = 0;
+            var wait = next - clock.Elapsed;
+            if (wait > TimeSpan.Zero) Thread.Sleep(wait);
+            else next = clock.Elapsed; // atrasou (UI ocupada): não tenta compensar em rajada
+        }
+    }
+
+    private void RunQueuedPump()
+    {
+        Volatile.Write(ref _pumpQueued, 0);
+        if (_tickerRunning) Pump();
+    }
 
     public InputRouter Router { get; }
     public bool BackendReady { get; }
@@ -344,7 +386,7 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
 
     public void Dispose()
     {
-        if (_frameSynced) CompositionTarget.Rendering -= OnRendering;
+        StopTicker();
         _timer.Stop();
         _backend.Dispose();
     }

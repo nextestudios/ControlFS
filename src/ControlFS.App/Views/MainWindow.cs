@@ -196,6 +196,7 @@ public sealed class MainWindow : Window
         };
         Closed += (_, _) =>
         {
+            _app.ReleaseMediaForShutdown();
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
             _updates?.Dispose();
