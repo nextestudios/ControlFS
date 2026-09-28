@@ -1,5 +1,6 @@
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Policies;
 using SharpCompress.Common;
 
 namespace ControlFS.Infrastructure.Archives.Security;
@@ -41,6 +42,13 @@ internal static class ErrorMapper
         DirectoryNotFoundException or DriveNotFoundException => (OperationErrorKind.DestinationUnavailable, "Destino indisponível (pasta ou unidade removida?)."),
         IOException io when io.HResult is ErrorDiskFull or ErrorHandleDiskFull or UnixEnospc =>
             (OperationErrorKind.InsufficientSpace, "Espaço insuficiente no destino."),
-        _ => (OperationErrorKind.Unknown, $"Erro inesperado ({ex.GetType().Name})."),
+        _ => Friendly(ex),
     };
+
+    /// <summary>Demais erros do sistema: a categoria legível do tradutor único (o texto cru só no log).</summary>
+    private static (OperationErrorKind Kind, string Message) Friendly(Exception ex)
+    {
+        var error = UserErrors.Describe(ex, "Compactado");
+        return (UserErrors.OperationKind(error.Kind), error.Text);
+    }
 }

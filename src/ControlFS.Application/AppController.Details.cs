@@ -422,7 +422,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new ImageFacts(header, null, "Não foi possível ler a imagem: " + ex.Message);
+            return new ImageFacts(header, null, "Não foi possível ler a imagem: " + ErrorText(ex, "Detalhes da imagem"));
         }
     }
 

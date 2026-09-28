@@ -49,7 +49,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            return (null, null, $"Não foi possível acessar {path}: {ex.Message}");
+            return (null, null, $"Não foi possível acessar {path}: {ErrorText(ex, "Ir para caminho")}");
         }
         return (null, null, $"Pasta não encontrada: {path}");
     }

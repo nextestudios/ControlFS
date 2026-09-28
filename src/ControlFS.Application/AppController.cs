@@ -289,6 +289,7 @@ public sealed partial class AppController
                 if (PlacesFocus >= 0 && PlacesFocus < Places.Count) OpenPlace(Places[PlacesFocus]);
                 break;
             case InputAction.OpenContextMenu: ShowHomeMenu(); break;
+            case InputAction.Search: BeginHomeSearch(); break;
             case InputAction.Back: ShowExitDialog(); break;
             case InputAction.OpenAppMenu: ShowAppMenu(); break;
             case InputAction.ChangeView: ToggleView(); break;
@@ -548,7 +549,7 @@ public sealed partial class AppController
         }
         catch (Exception ex)
         {
-            modal.Keyboard.Reopen($"Erro inesperado: {ex.GetType().Name}");
+            modal.Keyboard.Reopen(ErrorText(ex, modal.Keyboard.Title));
         }
         finally
         {

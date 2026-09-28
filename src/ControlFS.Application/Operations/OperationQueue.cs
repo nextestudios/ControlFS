@@ -1,4 +1,5 @@
 using ControlFS.Core.Models;
+using ControlFS.Core.Policies;
 
 namespace ControlFS.Application.Operations;
 
@@ -191,7 +192,8 @@ public sealed class OperationQueue
                 }
                 catch (Exception ex)
                 {
-                    result = new OperationResult(OperationState.Failed, [], OperationErrorKind.Unknown, $"Erro inesperado: {ex.GetType().Name}.");
+                    var error = UserErrors.Describe(ex, next.Title);
+                    result = new OperationResult(OperationState.Failed, [], UserErrors.OperationKind(error.Kind), error.Text);
                 }
                 next.Finish(result);
                 Changed?.Invoke();

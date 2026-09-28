@@ -8,7 +8,18 @@ namespace ControlFS.Core.Models;
 /// </summary>
 public sealed record SearchLocation(string RootPath, string Query, bool IncludeSubfolders) : Location
 {
-    public override string DisplayPath => $"Busca por \"{Query}\" em {RootPath}" + (IncludeSubfolders ? " e subpastas" : string.Empty);
+    /// <summary>
+    /// Busca em várias pastas de uma vez (Início: as pastas principais). Null: só <see cref="RootPath"/>. Cada pasta
+    /// é percorrida com as mesmas regras (nunca segue links).
+    /// </summary>
+    public IReadOnlyList<string>? Roots { get; init; }
+
+    /// <summary>Nome do escopo mostrado no lugar do caminho (ex.: "pastas principais"); null: o caminho.</summary>
+    public string? ScopeName { get; init; }
+
+    public IReadOnlyList<string> AllRoots => Roots ?? [RootPath];
+
+    public override string DisplayPath => $"Busca por \"{Query}\" em {ScopeName ?? RootPath}" + (IncludeSubfolders ? " e subpastas" : string.Empty);
 }
 
 /// <summary>Pedido de busca por nome. Nunca usa índice: enumera a pasta (e, se pedido, as subpastas) na hora.</summary>

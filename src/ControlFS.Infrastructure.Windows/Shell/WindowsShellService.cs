@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Policies;
 
 namespace ControlFS.Infrastructure.Windows.Shell;
 
@@ -31,7 +32,7 @@ public sealed partial class WindowsShellService : IShellService
         }
         catch (Win32Exception ex)
         {
-            throw new ShellException($"O Windows não conseguiu abrir o arquivo ({ex.Message}).", ex);
+            throw new ShellException($"O Windows não conseguiu abrir o arquivo. {UserErrors.Describe(ex, "Abrir arquivo").Text}", ex);
         }
     }
 

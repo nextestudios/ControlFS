@@ -108,7 +108,7 @@ public sealed partial class AppController
         {
             UpdateState = UpdateState.Failed;
             UpdateMessage = "Não foi possível gravar a atualização no disco.";
-            if (manual) ShowMessage("Falha ao baixar a atualização", [("Motivo", UpdateMessage), ("Detalhe", ex.GetType().Name)], icon: ActionIcon.Error);
+            if (manual) ShowError("Falha ao baixar a atualização", [], ex, "Baixar atualização");
         }
     }
 
@@ -150,7 +150,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is UpdateException or IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            ShowMessage("Não foi possível instalar a atualização", [("Motivo", ex is UpdateException ? ex.Message : ex.GetType().Name)], icon: ActionIcon.Error);
+            ShowError("Não foi possível instalar a atualização", [], ex, "Instalar atualização");
         }
     }
 

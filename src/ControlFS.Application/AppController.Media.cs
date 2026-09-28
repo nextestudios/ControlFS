@@ -63,7 +63,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+            modal.Error = "Não foi possível ler o arquivo: " + ErrorText(ex, "Áudio");
         }
         if (!modal.IsClosed) RaiseChanged();
     }

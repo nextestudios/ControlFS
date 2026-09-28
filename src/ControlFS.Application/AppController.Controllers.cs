@@ -265,7 +265,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ControllerProfileException)
         {
-            SetStatus($"Não foi possível salvar o perfil: {ex.Message}");
+            SetStatus($"Não foi possível salvar o perfil: {ErrorText(ex, "Salvar perfil de controle")}");
             return false;
         }
         _controllerProfiles.RemoveAll(p => SameDevice(p.Match, profile.Match));
@@ -310,7 +310,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ControllerProfileException)
         {
-            SetStatus($"Não foi possível exportar o perfil: {ex.Message}");
+            SetStatus($"Não foi possível exportar o perfil: {ErrorText(ex, "Exportar perfil de controle")}");
         }
     });
 
@@ -320,7 +320,7 @@ public sealed partial class AppController
         try { files = _profileStore!.ListImportable(folder); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            SetStatus($"Não foi possível ler a pasta: {ex.Message}");
+            SetStatus($"Não foi possível ler a pasta: {ErrorText(ex, "Importar perfil de controle")}");
             return;
         }
         var items = files.Select(f => new MenuItem(Path.GetFileName(f), () => ImportProfile(f), Icon: ActionIcon.File)).ToList();
@@ -337,7 +337,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is ControllerProfileException or IOException or UnauthorizedAccessException)
         {
-            ShowMessage("Perfil não importado", [("Arquivo", Path.GetFileName(path))], ex.Message, icon: ActionIcon.Error);
+            ShowError("Perfil não importado", [("Arquivo", Path.GetFileName(path))], ex, "Importar perfil de controle");
             return;
         }
         var match = profile.Match;

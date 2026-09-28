@@ -69,7 +69,7 @@ hardware, visual or timing checks that CI can't prove.
 | East | exit dialog | back (selection → search → history → Home) | back to content | back to content |
 | Down | move | move | back to content | back to content |
 | Start / F10 | app menu | app menu | app menu | app menu |
-| Select / Ctrl+F | — | search (disk folders) | — | — |
+| Select / Ctrl+F | search in the main folders | search (disk folders; This PC: focused drive) | — | — |
 | R3 / Ctrl+G | Lista ↔ Grade | Lista ↔ Grade | — | — |
 | L3 / Tab | other pane (two panes, #56) | other pane (two panes, #56) | — | — |
 
@@ -186,6 +186,9 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Recycle Bin: list, restore (never overwrite), permanent delete asks on Cancel | Home, top bar (A2) | South/North on an item | `RecycleBinJourneyTests`, `RecycleBinIntegrationTests` (2), `UndoJourneyTests::Undo_of_a_recycle_…` |
 | Search (on-screen keyboard, streaming, partial/complete, skipped folders, cancel keeps partial) | results in the current mode | Select/View, Ctrl+F | `SearchJourneyTests` (2), `SearchIntegrationTests` (3); Manual "Busca (#46)" |
 | Search filters (type/size/date), subfolders toggle | North on results | — | `SearchFilterJourneyTests` |
+| Search from Home across the main folders (Downloads, Documentos, Área de trabalho, Imagens, Vídeos, Músicas; nested/duplicate roots skipped, links never followed, cancellable, "Buscar" prompt on Home, Back returns Home); This PC searches the focused drive | Home, This PC | Select/View, Ctrl+F | `SearchJourneyTests::Search_from_home_…`, `PromptJourneyTests` |
+| Empty states: "Lixeira vazia", "Compactado vazio", "Pasta vazia — Y Ações: Colar / Nova pasta" (Colar only when it would work), "Nenhum resultado — Y Filtros · Select Nova busca" (button names follow the active controller) | list/grid empty text (`AppController.EmptyMessage`) | — | `ClipboardJourneyTests::Empty_folder_…`, `SearchJourneyTests::Search_from_home_…` |
+| Readable errors: system exceptions map to one pt-BR category with one suggested action (não encontrado, acesso negado, em uso, disco cheio, caminho longo, dispositivo não pronto, genérico) via `UserErrors`; raw text only as "Detalhes técnicos" and in the local log | error dialogs, status line, keyboard, previews, operation results | — | `UserErrorsTests` |
 | OneDrive files-on-demand folders searched without downloading | — | — | `SearchIntegrationTests::Reparse_tag_…`; Manual "OneDrive sob demanda (#126)" |
 | Grid view with 2D navigation, persisted; switching keeps focus and marks (no re-read; also inside archives and in search results: `ListModeJourneyTests::Switching_views_…`); cards with responsive columns (B2: comfortable 3 at 1080p, 2 handheld, 1 narrow, 4 on 4K TV; compact one more; counted from the width left by the details panel, #177: 2 at 1080p with it) | Menu → Configurações → Exibição, R3, Ctrl+G | — | `GridViewJourneyTests`, `HomeGridJourneyTests::Home_sections_…` |
 | Density comfortable/compact, persisted (C1: tall/short rows with the same columns; the type column drops first when narrow) | Menu → Configurações → Densidade da lista | — | `DensityJourneyTests`; Screens `3-folder-compact` |

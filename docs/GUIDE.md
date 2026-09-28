@@ -153,6 +153,12 @@ Text fields open the on-screen keyboard; empty is allowed (e.g. no prefix). File
 
 Press **Select/View** (or Ctrl+F) inside a folder, type part of the name on the on-screen keyboard and press **Done**. Case and accents don't matter ("relatorio" finds "Relatório"). Results appear as they are found; the bottom bar says whether the list is **partial** (still searching or cancelled), **complete**, or stopped at the 10,000-result limit, and how many folders could not be read (no permission). North → **Other search actions** → **Skipped folders** lists them. Nothing is indexed: only the folder you are in is read, when you search.
 
+On the **home screen**, **Select/View** searches the main folders (Downloads, Documents, Desktop, Pictures, Videos and Music) at once, with the same rules; **East/B** cancels and, on the results, returns home. In **Meu computador** (This PC), search looks in the focused drive.
+
+**Empty lists** say what to do next: "Lixeira vazia" (Recycle Bin empty), "Compactado vazio" (empty archive), "Pasta vazia — Y Ações: Colar / Nova pasta" (empty folder — paste / new folder; paste only when something is copied) and, for a search with no results, the filters and a new search, with the active controller's buttons.
+
+**Errors** show in plain language with what to do (not found, access denied, in use by another program, disk full, path too long, device not ready). The original Windows text stays on a **Detalhes técnicos** (technical details) line and in the local log, for reporting a problem.
+
 - **Subfolders:** included by default. Change it in Menu → Configurações → "Search in subfolders" (for the next search) or North → **Other search actions** → "Subfolders" on the results (searches again).
 - **East/B** while searching stops it and keeps the partial results; East/B again goes back to the folder.
 - **South/A** on a result opens its folder with the item focused; Back returns to the results.

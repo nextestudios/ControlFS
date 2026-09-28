@@ -78,7 +78,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (generation == modal.Generation && ex is IOException or UnauthorizedAccessException)
         {
-            modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+            modal.Error = "Não foi possível ler o arquivo: " + ErrorText(ex, "Visualização");
         }
         if (generation != modal.Generation) return;
         modal.IsLoading = false;
@@ -178,7 +178,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+            modal.Error = "Não foi possível ler o arquivo: " + ErrorText(ex, "Visualização");
         }
         modal.IsLoading = false;
         RaiseChanged();
@@ -317,7 +317,7 @@ public sealed partial class AppController
                 modal.Error = preview.Message;
                 return true;
             case IOException or UnauthorizedAccessException:
-                modal.Error = "Não foi possível ler o arquivo: " + ex.Message;
+                modal.Error = "Não foi possível ler o arquivo: " + ErrorText(ex, "Visualização");
                 return true;
             default:
                 modal.Error = "Não foi possível mostrar este PDF.";

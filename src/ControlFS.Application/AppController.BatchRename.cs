@@ -68,7 +68,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileOperationException)
         {
-            ShowMessage("Não foi possível renomear em lote", [("Pasta", folder)], ex.Message, icon: ActionIcon.Error);
+            ShowError("Não foi possível renomear em lote", [("Pasta", folder)], ex, "Renomear em lote");
             return;
         }
         var dialog = new DialogModal($"Renomear {Plural.Of(sources.Count, "item", "itens")}", []) { Icon = ActionIcon.Rename };

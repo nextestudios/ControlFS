@@ -608,11 +608,8 @@ public sealed class MainWindow : Window
                 if (view.ContainerFromIndex(focus) is SelectorItem current) EntryRowTemplate.SetFocused(current, true);
             }
         }
-        var search = _app.Screen == Screen.Home ? null : pane.ActiveSearch;
-        _empty.Text = pane.IsLoading && _app.Screen != Screen.Home ? "Carregando…"
-            : items.Count > 0 ? string.Empty
-            : search is null ? "Pasta vazia"
-            : search.IsRunning ? "Buscando…" : "Nenhum resultado";
+        // Lista vazia: onde você está e o próximo passo (Lixeira vazia, Compactado vazio, Pasta vazia — Y Ações…).
+        _empty.Text = _app.Screen == Screen.Home ? (items.Count > 0 ? string.Empty : "Nenhum local") : _app.EmptyMessage(pane);
     }
 
     /// <summary>

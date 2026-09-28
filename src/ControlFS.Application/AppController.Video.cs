@@ -54,7 +54,7 @@ public sealed partial class AppController
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ShowMessage("Não foi possível abrir o vídeo", [("Motivo", ex.Message)], icon: ActionIcon.Error);
+            ShowError("Não foi possível abrir o vídeo", [], ex, "Vídeo");
             return;
         }
         var saved = Positions.FirstOrDefault(p => p.Key == key);
@@ -287,7 +287,7 @@ public sealed partial class AppController
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Post(() => StatusMessage = "Não foi possível salvar onde o vídeo parou: " + ex.Message);
+                Post(() => StatusMessage = "Não foi possível salvar onde o vídeo parou: " + ErrorText(ex, "Posição do vídeo"));
             }
         }));
     }

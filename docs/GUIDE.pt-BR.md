@@ -153,6 +153,12 @@ Os campos de texto abrem o teclado virtual; vazio é permitido (ex.: sem prefixo
 
 Aperte **Select/View** (ou Ctrl+F) dentro de uma pasta, digite parte do nome no teclado virtual e aperte **Concluir**. Maiúsculas e acentos não importam ("relatorio" acha "Relatório"). Os resultados aparecem enquanto são encontrados; o rodapé diz se a lista é **parcial** (ainda buscando ou cancelada), **concluída** ou parou no limite de 10.000 resultados, e quantas pastas não puderam ser lidas (sem permissão). Norte → **Outras ações da busca** → **Pastas puladas** mostra quais. Nada é indexado: só a pasta em que você está é lida, na hora da busca.
 
+Na **tela inicial**, **Select/View** busca nas pastas principais (Downloads, Documentos, Área de trabalho, Imagens, Vídeos e Músicas) de uma vez, com as mesmas regras; **Leste/B** cancela e, nos resultados, volta ao início. Em **Meu computador**, a busca procura na unidade em foco.
+
+**Listas vazias** dizem o próximo passo: "Lixeira vazia", "Compactado vazio", "Pasta vazia — Y Ações: Colar / Nova pasta" (Colar só com algo copiado) e, numa busca sem resultados, os filtros e uma nova busca, com os botões do controle em uso.
+
+**Erros** aparecem em linguagem simples com o que fazer (não encontrado, acesso negado, em uso por outro programa, disco cheio, caminho longo demais, dispositivo não pronto). O texto original do Windows fica numa linha **Detalhes técnicos** e no log local, para relatar um problema.
+
 - **Subpastas:** incluídas por padrão. Troque em Menu → Configurações → "Busca em subpastas" (vale para a próxima busca) ou em Norte → **Outras ações da busca** → "Subpastas" nos resultados (busca de novo).
 - **Leste/B** durante a busca para a busca e mantém os resultados parciais; Leste/B de novo volta para a pasta.
 - **Sul/A** num resultado abre a pasta dele com o foco no item; Voltar retorna aos resultados.

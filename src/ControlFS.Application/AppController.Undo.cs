@@ -192,7 +192,7 @@ public sealed partial class AppController
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                results.Add(new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.Unknown, ex.Message));
+                results.Add(new ItemResult(name, ItemOutcome.Failed, OperationErrorKind.Unknown, ErrorText(ex, "Desfazer")));
             }
         }
         var ok = results.All(r => r.Outcome == ItemOutcome.Succeeded);

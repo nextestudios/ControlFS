@@ -734,8 +734,14 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         IOException io when io.HResult is ErrorDiskFull or ErrorHandleDiskFull or 28 => (OperationErrorKind.InsufficientSpace, "Espaço insuficiente no destino."),
         IOException io when io.HResult is ErrorSharingViolation or ErrorLockViolation => (OperationErrorKind.Unknown, "O arquivo está em uso por outro programa."),
         PathTooLongException => (OperationErrorKind.InvalidName, "Caminho longo demais para o destino."),
-        _ => (OperationErrorKind.Unknown, $"Erro de E/S ({ex.GetType().Name})."),
+        _ => Friendly(ex),
     };
+
+    private static (OperationErrorKind Kind, string Message) Friendly(Exception ex)
+    {
+        var error = UserErrors.Describe(ex, "Operação de arquivo");
+        return (UserErrors.OperationKind(error.Kind), error.Text);
+    }
 
     private static OperationResult Fail(OperationErrorKind kind, string message) => new(OperationState.Failed, [], kind, message);
 
