@@ -11,6 +11,10 @@ Um **gerenciador de arquivos nativo para Windows, feito para o controle**, com *
 
 > **Pré-alfa.** A primeira jornada funciona e é coberta por testes automatizados sobre arquivos reais, mas o app **ainda não foi validado em Windows com controles físicos**. Veja o [PROGRESS.md](PROGRESS.md).
 
+<p align="center">
+  <img src="docs/images/controlfs-tour.gif" alt="Tour animado do ControlFS: navegar do sofá com o direcional, visualização de imagens em tela grande, player de vídeo em tela cheia com legendas e faixas de áudio, extrair ZIP, 7z, RAR, TAR e GZ, o teclado na tela e os temas claro e escuro com cores de destaque" width="800">
+</p>
+
 ## Capturas de tela
 
 Capturas reais do app (tema escuro, 1920x1080), geradas pela CI do projeto.
