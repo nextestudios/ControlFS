@@ -41,7 +41,10 @@ MinVersion=10.0.19041
 OutputDir={#OutputDir}
 OutputBaseFilename=ControlFS-Setup-x64
 SetupIconFile=..\assets\controlfs.ico
-UninstallDisplayIcon={app}\{#AppExe}
+; O ícone do atalho vem do controlfs.ico ao lado do app (um caminho novo para o Windows) e o instalador avisa o Shell no fim:
+; o cache de ícones do Windows guarda a imagem antiga pelo caminho do .exe e sobrevivia à reinstalação (#187).
+ChangesAssociations=yes
+UninstallDisplayIcon={app}\controlfs.ico
 UninstallDisplayName={#AppName}
 LicenseFile=..\LICENSE
 Compression=lzma2/ultra64
@@ -73,8 +76,8 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Source: "ControlFS.installed"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\controlfs.ico"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\controlfs.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
