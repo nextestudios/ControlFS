@@ -305,14 +305,21 @@ public sealed class MainWindow : Window
     {
         AppLog.Info($"Primeiro quadro ({AppLog.SinceProcessStart()} ms desde o início do processo)");
         _app.OnFirstFrame(); // verificação automática de atualizações, se for a hora
-        _ = SettleMemoryAsync();
+        _ = SettleMemoryAsync(_app.Settings.LightInBackground);
     }
 
-    /// <summary>Depois que o primeiro quadro assentou: registra onde a memória está (docs/performance.md).</summary>
-    private static async Task SettleMemoryAsync()
+    /// <summary>
+    /// Depois que o primeiro quadro assentou: registra onde a memória está e, com "Leve em segundo plano", devolve ao
+    /// Windows o que a abertura deixou de sobra (uma coleta compactadora e a limpeza do conjunto de trabalho, uma vez).
+    /// As páginas que o app usa voltam sob demanda (docs/performance.md).
+    /// </summary>
+    private static async Task SettleMemoryAsync(bool trim)
     {
         await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
         AppLog.Info("Memória depois do primeiro quadro: " + Infrastructure.Windows.Diagnostics.ProcessEfficiency.DescribeMemory());
+        if (!trim) return;
+        await Task.Run(Infrastructure.Windows.Diagnostics.ProcessEfficiency.TrimMemory).ConfigureAwait(false);
+        AppLog.Info("Memória depois da limpeza: " + Infrastructure.Windows.Diagnostics.ProcessEfficiency.DescribeMemory());
     }
 
     private Grid BuildLayout()
