@@ -191,6 +191,17 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     conta só os itens da lista. Mouse/toque num bloco escolhe (mesmo caminho de `PointerChooseModalOption`).
   - Configurações (Menu → Configurações…): opções `KeepOpen` aplicam o ajuste e o menu continua aberto com o texto novo
     e o foco no mesmo ajuste; opções com tela própria fecham Configurações. Coberto por `ModalSystemJourneyTests`.
+  - Grades por grupo (#227, `MenuModal(..., sectionGrids: true)`, só em Configurações): a ordem do `AppController` vale e
+    cada sequência de blocos do mesmo grupo é uma grade (`MenuModal.Grids`), seguida da lista desse grupo. As regras da
+    grade acima valem para todas; entre partes:
+    - **Baixo** na última linha de uma grade vai ao item seguinte (outra grade logo abaixo: mesma coluna, encolhida se a
+      linha for mais curta); **Baixo** numa linha de lista que tem uma grade embaixo entra no **primeiro bloco** dela.
+    - **Cima** na primeira linha de uma grade vai ao item anterior; **Cima** para dentro de uma grade (vindo de uma linha
+      de lista ou de outra grade) cai na **última linha, na coluna de onde o foco saiu** da última grade (`GridColumn`).
+    - No fim/começo do menu dá a volta (último item ↔ primeiro), como na lista.
+    - Narrador: "rótulo completo com o valor (ex.: Itens ocultos: mostrar), descrição, bloco N de M" (M = blocos do grupo).
+  - Largura (#227): todo menu tem largura fixa (`MenuModal.PanelWidth`: 540 com grade, 460 sem; mínimo = máximo, os dois
+    limitados pela janela). Mover o foco ou mostrar a descrição da linha focada nunca muda a largura; o texto quebra linha.
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas
   `Gamepad*` do WinUI são descartadas para evitar entrada dupla com o SDL.
 

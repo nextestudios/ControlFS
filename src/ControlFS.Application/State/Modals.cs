@@ -18,25 +18,29 @@ public abstract class Modal(string title)
     public virtual bool IsSensitive => false;
 }
 
-/// <summary>Onde uma opção aparece no menu (#193): na grade de ações rápidas do topo ou na lista abaixo dela.</summary>
+/// <summary>
+/// Onde uma opção aparece no menu (#193): num bloco de grade ou na lista. Num menu comum, os blocos formam a grade de ações
+/// rápidas do topo; num menu com grades por grupo (Configurações, #227), blocos seguidos do mesmo grupo formam a grade desse grupo.
+/// </summary>
 public enum MenuPlacement
 {
     List,
 
-    /// <summary>Ação frequente: bloco com ícone e rótulo curto na grade do topo (como o menu de contexto do Windows 11).</summary>
+    /// <summary>Bloco com ícone e rótulo curto (como o menu de contexto do Windows 11); ajuste: também o valor atual.</summary>
     Quick,
 }
 
 /// <summary>
 /// Opção de menu. <paramref name="Icon"/> diz o que a ação faz (a tela desenha o símbolo ao lado do texto);
 /// <paramref name="Section"/> agrupa opções: quando muda de um item para o seguinte, a tela desenha um separador com o
-/// título do grupo (vazio: só a linha). <paramref name="Placement"/> põe a opção na grade de ações rápidas, com
-/// <paramref name="ShortLabel"/> sob o ícone (o Narrador e o foco sempre usam <paramref name="Label"/> por extenso).
+/// título do grupo (vazio: só a linha). <paramref name="Placement"/> põe a opção numa grade, com <paramref name="ShortLabel"/>
+/// sob o ícone e, num ajuste, <paramref name="Value"/> (o valor atual) embaixo; o Narrador e o foco sempre usam
+/// <paramref name="Label"/> por extenso (que já diz o valor).
 /// <paramref name="KeepOpen"/>: a opção muda um ajuste e o menu continua aberto, com os textos atualizados.
 /// </summary>
 public sealed record MenuItem(string Label, Action? Execute, string? DisabledReason = null, string? Detail = null,
     ActionIcon Icon = ActionIcon.None, string? Section = null, MenuPlacement Placement = MenuPlacement.List, string? ShortLabel = null,
-    bool KeepOpen = false)
+    bool KeepOpen = false, string? Value = null)
 {
     public bool IsEnabled => Execute is not null && DisabledReason is null;
 
@@ -49,19 +53,45 @@ public sealed record MenuItem(string Label, Action? Execute, string? DisabledRea
     public string TileLabel => ShortLabel ?? Label.TrimEnd('…');
 }
 
+/// <summary>Uma grade de blocos: <see cref="Count"/> itens seguidos de <see cref="MenuModal.Items"/> a partir de <see cref="Start"/>.</summary>
+public sealed record MenuGrid(int Start, int Count)
+{
+    /// <summary>Máximo de blocos por linha.</summary>
+    public const int MaxColumns = 4;
+
+    /// <summary>
+    /// Blocos por linha: até 4 numa linha só; mais que isso, duas (ou mais) linhas equilibradas de no máximo 4 (os rótulos
+    /// curtos cabem inteiros, legíveis de longe).
+    /// </summary>
+    public int Columns => Count <= MaxColumns ? Count : Math.Min(MaxColumns, (Count + 1) / 2);
+
+    public int Rows => (Count + Columns - 1) / Columns;
+    public int End => Start + Count;
+    public bool Contains(int index) => index >= Start && index < End;
+    public int Row(int index) => (index - Start) / Columns;
+    public int Column(int index) => (index - Start) % Columns;
+
+    /// <summary>Bloco numa linha e coluna da grade (a coluna encolhe na última linha, se ela for mais curta).</summary>
+    public int At(int row, int column) => Math.Min(End - 1, Start + (row * Columns) + column);
+}
+
 /// <summary>
-/// Menu com ações rápidas (grade no topo, <see cref="QuickCount"/> primeiros itens de <see cref="Items"/>) e a lista das
-/// demais. A ordem de quem montou o menu vale dentro de cada parte; o foco inicial é o primeiro item que ele passou (ou
-/// <see cref="FocusOn"/>), nunca uma ação perigosa (AppController.SafeInitialFocus).
+/// Menu com blocos em grade e a lista das demais opções. Menu comum: grade de ações rápidas no topo (os blocos de
+/// <see cref="Items"/> vêm primeiro) e a lista embaixo. Com <c>sectionGrids</c> (Configurações, #227): a ordem de quem montou
+/// vale e cada sequência de blocos do mesmo grupo vira a grade desse grupo, entre as linhas da lista. O foco inicial é o
+/// primeiro item que ele passou (ou <see cref="FocusOn"/>), nunca uma ação perigosa (AppController.SafeInitialFocus).
 /// </summary>
 public sealed class MenuModal : Modal
 {
     /// <summary>Máximo de blocos por linha da grade.</summary>
-    public const int MaxQuickColumns = 4;
+    public const int MaxQuickColumns = MenuGrid.MaxColumns;
 
-    public MenuModal(string title, IReadOnlyList<MenuItem> items) : base(title)
+    private readonly bool _sectionGrids;
+
+    public MenuModal(string title, IReadOnlyList<MenuItem> items, bool sectionGrids = false) : base(title)
     {
         Icon = ActionIcon.Menu;
+        _sectionGrids = sectionGrids;
         Arrange(items);
         FocusIndex = items.Count == 0 ? 0 : IndexOf(items[0]);
     }
@@ -69,20 +99,36 @@ public sealed class MenuModal : Modal
     public IReadOnlyList<MenuItem> Items { get; private set; } = [];
     public int FocusIndex { get; internal set; }
 
-    /// <summary>Quantos itens (do início de <see cref="Items"/>) são blocos da grade de ações rápidas.</summary>
-    public int QuickCount { get; private set; }
+    /// <summary>As grades do menu, na ordem de <see cref="Items"/> (menu comum: no máximo uma, no topo).</summary>
+    public IReadOnlyList<MenuGrid> Grids { get; private set; } = [];
+
+    /// <summary>Grades por grupo (Configurações): cada grupo com blocos mostra a sua grade.</summary>
+    public bool HasSectionGrids => _sectionGrids;
+
+    /// <summary>Quantos itens são blocos (menu comum: os primeiros de <see cref="Items"/>).</summary>
+    public int QuickCount => Grids.Sum(g => g.Count);
+
+    /// <summary>Blocos por linha da primeira grade.</summary>
+    public int QuickColumns => Grids.Count == 0 ? 0 : Grids[0].Columns;
+
+    public int QuickRows => Grids.Count == 0 ? 0 : Grids[0].Rows;
+
+    public MenuGrid? GridOf(int index)
+    {
+        foreach (var grid in Grids)
+            if (grid.Contains(index)) return grid;
+        return null;
+    }
+
+    public bool IsQuick(int index) => GridOf(index) is not null;
 
     /// <summary>
-    /// Blocos por linha: até 4 numa linha só; mais que isso, duas (ou mais) linhas equilibradas de no máximo 4 (os rótulos
-    /// curtos cabem inteiros, legíveis de longe).
+    /// Largura do painel (px lógicos): fixa para o menu inteiro, nunca pelo item em foco (#227). O texto longo quebra
+    /// dentro dela; a tela ainda limita ao tamanho da janela.
     /// </summary>
-    public int QuickColumns => QuickCount <= MaxQuickColumns ? QuickCount : Math.Min(MaxQuickColumns, (QuickCount + 1) / 2);
+    public double PanelWidth => Grids.Count > 0 ? 540 : 460;
 
-    public int QuickRows => QuickCount == 0 ? 0 : (QuickCount + QuickColumns - 1) / QuickColumns;
-
-    public bool IsQuick(int index) => index >= 0 && index < QuickCount;
-
-    /// <summary>Coluna da grade de onde o foco saiu para a lista: Cima volta a ela (navegação previsível).</summary>
+    /// <summary>Coluna da grade de onde o foco saiu: voltar a uma grade (Cima, ou Baixo de outra grade) usa a mesma coluna.</summary>
     internal int GridColumn { get; set; }
 
     /// <summary>Remonta as opções depois de uma opção <see cref="MenuItem.KeepOpen"/> (ex.: Configurações).</summary>
@@ -110,9 +156,28 @@ public sealed class MenuModal : Modal
 
     private void Arrange(IReadOnlyList<MenuItem> items)
     {
+        if (_sectionGrids)
+        {
+            Items = items;
+            var grids = new List<MenuGrid>();
+            for (var i = 0; i < items.Count;)
+            {
+                if (!items[i].IsQuick)
+                {
+                    i++;
+                    continue;
+                }
+                var start = i;
+                while (i < items.Count && items[i].IsQuick && items[i].Section == items[start].Section) i++;
+                grids.Add(new MenuGrid(start, i - start));
+            }
+            Grids = grids;
+            return;
+        }
         // Blocos perigosos (Excluir) sempre no fim da grade, longe do ponto de entrada.
         Items = [.. items.Where(i => i.IsQuick && !i.IsDestructive), .. items.Where(i => i.IsQuick && i.IsDestructive), .. items.Where(i => !i.IsQuick)];
-        QuickCount = items.Count(i => i.IsQuick);
+        var quick = items.Count(i => i.IsQuick);
+        Grids = quick > 0 ? [new MenuGrid(0, quick)] : [];
     }
 
     private int IndexOf(MenuItem item)

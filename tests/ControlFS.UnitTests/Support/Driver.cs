@@ -66,17 +66,30 @@ public sealed class Driver(AppController app)
 
     private static int IndexOf(MenuModal menu, string labelStart) => menu.Items.ToList().FindIndex(i => i.Label.StartsWith(labelStart, StringComparison.Ordinal));
 
-    /// <summary>Bloco da grade: do primeiro (PageUp), Baixo por linha e Direita por coluna. Item da lista: Baixo (dá a volta).</summary>
+    /// <summary>
+    /// Só setas, como no controle. Bloco de uma grade: Baixo até entrar na grade, depois Cima/Baixo até a linha e
+    /// Esquerda/Direita até a coluna. Item da lista: Baixo (dá a volta e atravessa as grades).
+    /// </summary>
     public void FocusMenu(MenuModal menu, int index)
     {
-        if (menu.IsQuick(index))
+        if (menu.GridOf(index) is { } grid)
         {
-            Press(InputAction.PageUp);
-            for (var r = 0; r < index / menu.QuickColumns; r++) Press(InputAction.NavigateDown);
-            while (menu.FocusIndex != index) Press(InputAction.NavigateRight);
+            for (var guard = 0; !grid.Contains(menu.FocusIndex); guard++)
+            {
+                Assert.True(guard < 500, "Grade inalcançável descendo.");
+                Press(InputAction.NavigateDown);
+            }
+            while (grid.Row(menu.FocusIndex) > grid.Row(index)) Press(InputAction.NavigateUp);
+            while (grid.Row(menu.FocusIndex) < grid.Row(index)) Press(InputAction.NavigateDown);
+            while (menu.FocusIndex > index) Press(InputAction.NavigateLeft);
+            while (menu.FocusIndex < index) Press(InputAction.NavigateRight);
             return;
         }
-        while (menu.FocusIndex != index) Press(InputAction.NavigateDown);
+        for (var guard = 0; menu.FocusIndex != index; guard++)
+        {
+            Assert.True(guard < 500, "Item inalcançável descendo.");
+            Press(InputAction.NavigateDown);
+        }
     }
 
     public void ChooseOption(DialogModal dialog, string labelStart)

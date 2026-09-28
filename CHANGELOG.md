@@ -5,9 +5,11 @@ Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CH
 ## [Unreleased]
 ### Melhorias
 - **Celular como controle** (#223): Menu → **Conectar celular…** mostra um QR Code. Aponte a câmera do celular (Android ou iPhone, na mesma rede Wi-Fi/cabo do PC) e uma página abre no navegador, sem instalar app e sem nuvem: direcional, área de deslizar para rolar, **Abrir**, **Voltar**, **Marcar**, **Ações**, **Menu**, **Buscar**, **Lista/Grade**, regiões e páginas, e um campo que usa o teclado do celular para digitar no campo aberto no ControlFS. O PC mostra o IP do celular e um código de 6 dígitos que o celular também mostra; só depois de **Permitir** no PC o celular comanda. O código do QR vale 2 minutos e para uma conexão; a conexão é local e cifrada (AES-256-GCM, chave nova a cada pareamento, que nunca trafega pela rede). Confirmações importantes (excluir, substituir, desfazer) continuam só no PC — do celular, só Voltar. Menu → **Desconectar celular** (ou Desconectar no celular) encerra; fechar a página, perder a rede ou fechar o ControlFS também, e reconectar pede um QR Code novo. Na primeira vez o Firewall do Windows pode perguntar: permita em redes privadas. Ainda não validado com celulares reais (ver `docs/TESTING.md`).
+- **Configurações em grades** (#227): em cada grupo, os ajustes curtos (exibição, densidade, painel de detalhes, tema, cor de destaque, ordenação, itens ocultos, busca em subpastas, recentes, restaurar abas, sugestões, confirmar com, legendas, Fluidez) viram blocos com ícone, nome e valor atual; os de descrição longa e os que abrem outra tela continuam em lista. O controle anda em 2D entre as grades e as listas.
 
 ### Correções
 - Ícone do ControlFS limpo: fundo transparente, sem o brilho neon nem a névoa em volta, com o logo sólido em todos os tamanhos (atalho, barra de tarefas, barra de título, menu Iniciar, instalador). Se o Windows mostrar o ícone antigo, é o cache de ícones dele. (#187)
+- Os menus (Configurações, Menu, ações) têm largura fixa: mover o foco ou mostrar a descrição da opção focada não alarga nem encolhe mais o painel; textos longos quebram linha. (#227)
 - Fechar o ControlFS depois de ouvir um áudio ou ver um vídeo não derruba mais o processo em PCs sem placa de vídeo (máquinas virtuais, área de trabalho remota). (#224)
 
 ## [0.9.0-alpha.1]

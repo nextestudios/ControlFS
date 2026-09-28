@@ -558,12 +558,13 @@ public sealed partial class AppController
     }
 
     /// <summary>
-    /// Configurações (Menu → Configurações): todos os ajustes, em grupos. Alternar um ajuste mantém o menu aberto com o
-    /// texto novo e o foco nele; Voltar fecha. Opções com tela própria (controle ativo, teste, joysticks, atualizações) fecham
-    /// Configurações e abrem essa tela, como os outros submenus.
+    /// Configurações (Menu → Configurações): todos os ajustes, em grupos. Ajustes curtos e independentes são blocos na grade
+    /// do grupo, com o valor atual (#227); os de descrição longa e os que abrem outra tela ficam na lista abaixo da grade.
+    /// Alternar um ajuste mantém o menu aberto com o texto novo e o foco nele; Voltar fecha. Opções com tela própria
+    /// (controle ativo, teste, joysticks, atualizações) fecham Configurações e abrem essa tela, como os outros submenus.
     /// </summary>
     internal void ShowSettings() =>
-        PushModal(new MenuModal("Configurações", SettingsItems()) { Icon = ActionIcon.Settings, Reload = SettingsItems });
+        PushModal(new MenuModal("Configurações", SettingsItems(), sectionGrids: true) { Icon = ActionIcon.Settings, Reload = SettingsItems });
 
     private List<MenuItem> SettingsItems()
     {
@@ -571,51 +572,66 @@ public sealed partial class AppController
         var inBrowser = Screen == Screen.Browser;
         var sort = pane.List.Sort;
         const string view = "Exibição", privacy = "Busca e privacidade", controls = "Controles", app = "ControlFS";
+        const MenuPlacement tile = MenuPlacement.Quick;
+        static string YesNo(bool on) => on ? "sim" : "não";
         return
         [
-            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: view, KeepOpen: true),
+            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Exibição", Value: ViewName(Settings.View)),
             new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
-                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: view, KeepOpen: true),
+                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Densidade", Value: DensityName(Settings.Density)),
             new(DetailsPanelMenuLabel, ToggleDetailsPanel,
-                Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: view, KeepOpen: true),
+                Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Detalhes", Value: DetailsPanelVisible ? "visível" : "oculto"),
             new($"Tema: {ThemeName(Settings.Theme)}", CycleTheme,
-                Detail: "Automático segue o modo de apps do Windows (Configurações → Personalização → Cores). Muda na hora.", Icon: ActionIcon.Theme, Section: view, KeepOpen: true),
+                Detail: "Automático segue o modo de apps do Windows (Configurações → Personalização → Cores). Muda na hora.", Icon: ActionIcon.Theme, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Tema", Value: Settings.Theme == Core.Appearance.ThemeMode.System ? "automático" : ThemeName(Settings.Theme)),
             new($"Cor de destaque: {AccentName(Settings.Accent)}", CycleAccent,
-                Detail: "Cor do foco, do cursor e dos símbolos em destaque. Todas as opções mantêm o contraste nos dois temas.", Icon: ActionIcon.Accent, Section: view, KeepOpen: true),
+                Detail: "Cor do foco, do cursor e dos símbolos em destaque. Todas as opções mantêm o contraste nos dois temas.", Icon: ActionIcon.Accent, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Destaque", Value: AccentName(Settings.Accent)),
             new($"Ordenar por: {SortLabel(sort.Field)}", () => pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) }),
-                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true),
+                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Ordenar", Value: SortLabel(sort.Field)),
             new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }),
-                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true),
+                inBrowser ? null : "Abra uma pasta primeiro.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true,
+                Placement: tile, ShortLabel: "Ordem", Value: sort.Descending ? "decrescente" : "crescente"),
             new($"Itens ocultos: {(Settings.ShowHidden ? "mostrar" : "esconder")}", () =>
             {
                 UpdateSettings(s => s with { ShowHidden = !s.ShowHidden });
                 if (inBrowser) Refresh(pane);
-            }, Icon: ActionIcon.Hidden, Section: view, KeepOpen: true),
+            }, Icon: ActionIcon.Hidden, Section: view, KeepOpen: true, Placement: tile, ShortLabel: "Ocultos", Value: Settings.ShowHidden ? "mostrar" : "esconder"),
             new($"Status do Git: {(Settings.ShowGitStatus ? "mostrar" : "não mostrar")}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
                 Detail: "Em pastas de repositórios Git: o ramo no topo e \"Git: modificado/novo\" nos itens. Somente leitura; não precisa do Git instalado.",
                 Icon: ActionIcon.Info, Section: view, KeepOpen: true),
             new($"Busca em subpastas: {(SearchIncludesSubfolders ? "incluir" : "não incluir")}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
-                Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true),
+                Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true,
+                Placement: tile, ShortLabel: "Subpastas", Value: SearchIncludesSubfolders ? "incluir" : "não incluir"),
             new($"Recentes: {(Settings.RememberRecents ? "lembrar" : "não lembrar")}", ToggleRememberRecents,
-                Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true),
-            new($"Restaurar abas ao abrir: {(Settings.RestoreTabs ? "sim" : "não")}", ToggleRestoreTabs,
-                Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.NewTab, Section: privacy, KeepOpen: true),
+                Detail: "Pastas e arquivos abertos, só neste computador. Desligar apaga as listas.", Icon: ActionIcon.Recent, Section: privacy, KeepOpen: true,
+                Placement: tile, ShortLabel: "Recentes", Value: Settings.RememberRecents ? "lembrar" : "não lembrar"),
+            new($"Restaurar abas ao abrir: {YesNo(Settings.RestoreTabs)}", ToggleRestoreTabs,
+                Detail: "Com 2+ abas abertas, reabre as mesmas pastas na próxima vez; pastas que sumiram mostram o início. Desligar apaga a lista.", Icon: ActionIcon.NewTab, Section: privacy, KeepOpen: true,
+                Placement: tile, ShortLabel: "Restaurar abas", Value: YesNo(Settings.RestoreTabs)),
+            new($"Sugestões do teclado: {YesNo(Settings.KeyboardSuggestions)}", ToggleKeyboardSuggestions,
+                Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true,
+                Placement: tile, ShortLabel: "Sugestões", Value: YesNo(Settings.KeyboardSuggestions)),
             new("Apagar onde os vídeos pararam", ForgetAllPositions, PlaybackPositions is null ? "Posições não são lembradas nesta compilação." : null,
                 Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true),
-            new($"Sugestões do teclado: {(Settings.KeyboardSuggestions ? "sim" : "não")}", ToggleKeyboardSuggestions,
-                Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true),
             new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
                 UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
-                Detail: "Troca comportamento e legendas de confirmar/voltar.", Icon: ActionIcon.Accept, Section: controls, KeepOpen: true),
+                Detail: "Troca comportamento e legendas de confirmar/voltar.", Icon: ActionIcon.Accept, Section: controls, KeepOpen: true,
+                Placement: tile, ShortLabel: "Confirmar", Value: Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito"),
             new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
                 UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
                 Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? null
-                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true),
+                    : ActiveController is { } family ? $"Seguem o controle em uso (agora: {FamilyName(family)})." : "Seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true,
+                Placement: tile, ShortLabel: "Legendas", Value: LabelStyleName(Settings.LabelStyle)),
             new($"Fluidez: {(Settings.SyncInputToDisplay ? "máxima" : "economia de bateria")}",
                 () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
                 Detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis.",
-                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true),
-            new($"Mira por giroscópio no teclado: {(Settings.GyroKeyboard ? "sim" : "não")} (experimental)", ToggleGyroKeyboard,
+                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true, Placement: tile, ShortLabel: "Fluidez", Value: Settings.SyncInputToDisplay ? "máxima" : "economia"),
+            new($"Mira por giroscópio no teclado: {YesNo(Settings.GyroKeyboard)} (experimental)", ToggleGyroKeyboard,
                 Detail: "Controles com giroscópio (ex.: DualSense): no teclado virtual, gire ou incline o controle para apontar as teclas; R3 recentraliza. O direcional continua funcionando.",
                 Icon: ActionIcon.Keyboard, Section: controls, KeepOpen: true),
             new(ActiveControllerMenuLabel, ShowActiveControllerMenu, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
