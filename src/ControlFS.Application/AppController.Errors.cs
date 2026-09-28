@@ -23,7 +23,7 @@ public sealed partial class AppController
     /// <summary>Diálogo de erro: as linhas de contexto, o motivo, o que fazer e, por último, os detalhes técnicos.</summary>
     internal DialogModal ShowError(string title, IReadOnlyList<(string, string)> lines, Exception ex, string context)
     {
-        if (IsOwnError(ex)) return ShowMessage(title, [.. lines, ("Motivo", ex.Message)], icon: ActionIcon.Error);
+        if (IsOwnError(ex)) return ShowMessage(title, lines, ex.Message, ActionIcon.Error); // já é uma frase em pt-BR
         var error = UserErrors.Describe(ex, context);
         return ShowMessage(title, [.. lines, ("Motivo", error.Message), (UserError.TechnicalLabel, error.Technical)], error.Suggestion, ActionIcon.Error);
     }
