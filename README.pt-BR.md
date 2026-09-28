@@ -22,7 +22,7 @@ Capturas reais do app (tema escuro, 1920x1080), geradas pela CI do projeto.
 
 ## Download
 
-Baixe a **[0.10.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.10.0-alpha.1)** (pré-lançamento):
+Baixe a **[0.11.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.11.0-alpha.1)** (pré-lançamento):
 
 - **`ControlFS-Setup-x64.exe`** (recomendado): instala por usuário, sem admin, e **se atualiza sozinho** (atualizações assinadas e verificadas).
 - **`ControlFS-Portable-x64.exe`**: um único executável que guarda os dados na pasta `ControlFS_Data` ao lado dele; avisa de novas versões, a troca é manual.
@@ -35,8 +35,8 @@ O ControlFS é um app nativo, não uma página web numa caixa, então cabe ao la
 
 | Pasta com 5.000 arquivos | ControlFS | Explorador* | Files |
 |---|---|---|---|
-| RAM, conjunto de trabalho | **161 MB** | 147 MB | 267 MB |
-| RAM, bytes privados | **66 MB** | 58 MB | 110 MB |
+| RAM, conjunto de trabalho | 161 MB | 147 MB | 267 MB |
+| RAM, bytes privados | 66 MB | 58 MB | 110 MB |
 | CPU em repouso (% de um núcleo) | 0,47 | cerca de 0 | 0,31 |
 | Threads | 35 | 55 | 55 |
 | Tempo até a janela aparecer | 754 ms | 610 ms | 491 ms |

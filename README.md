@@ -22,7 +22,7 @@ The interface is in Portuguese today; these are real captures of the app (dark t
 
 ## Download
 
-Get **[0.10.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.10.0-alpha.1)** (pre-release):
+Get **[0.11.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.11.0-alpha.1)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
 - **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.
@@ -35,8 +35,8 @@ ControlFS is a native app, not a web page in a box, so it can sit next to a game
 
 | Folder of 5,000 files | ControlFS | File Explorer* | Files |
 |---|---|---|---|
-| RAM, working set | **161 MB** | 147 MB | 267 MB |
-| RAM, private bytes | **66 MB** | 58 MB | 110 MB |
+| RAM, working set | 161 MB | 147 MB | 267 MB |
+| RAM, private bytes | 66 MB | 58 MB | 110 MB |
 | CPU, idle (% of one core) | 0.47 | about 0 | 0.31 |
 | Threads | 35 | 55 | 55 |
 | Time until the window appears | 754 ms | 610 ms | 491 ms |

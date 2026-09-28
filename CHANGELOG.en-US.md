@@ -3,12 +3,18 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.11.0-alpha.1]
 ### Improvements
 - **README with the native positioning, every feature and a measured comparison:** the README (English and Portuguese) says ControlFS is a native Windows app (C#/.NET 10 + WinUI 3, no Electron, no browser engine, no telemetry), lists every feature by group, shows screenshots and has a "Light on your PC" section with RAM, CPU, threads and startup time against File Explorer and Files (measured in CI, with the method and the warning that the runner has no GPU). The `build/Compare-Performance.ps1` script runs in Smoke (full mode) and the method is in docs/performance.md.
 - **More from the team:** a single screen, right after the welcome and the tutorial (or on launch for people who already saw them), presents the team's other apps: **NextBoost PRO** (a Windows optimizer for gaming) and **Console Mode** (turns the PC into a console). Each shows its logo, what it does and a button that opens its site in the browser. It appears only once and never returns on its own; to see it again: Menu → Ajuda e tutorial → Mais da equipe. The logos ship in the package: ControlFS doesn't use the internet for it, and the links only open when you choose.
 ### Fixes
 - The Desktop and Start menu shortcuts use the new icon even after reinstalling: the installer points the shortcut at `controlfs.ico` and notifies Windows, which kept the old icon cached by the executable's path. If the old one still shows, close Explorer and clear the icon cache (steps in docs/TESTING.md). (#187)
 - The welcome screens now show once for people who reinstall or update too (the data folder survives a reinstall, and old preferences were treated as "already seen"). To see them again anytime: Menu → Ajuda e tutorial → Rever boas-vindas.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…).
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
 
 ## [0.10.0-alpha.1]
 ### Performance
