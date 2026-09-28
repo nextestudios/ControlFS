@@ -30,6 +30,12 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Mais da equipe, README e ícone (0.11.0-alpha.1)
+
+- Tela única "Mais da equipe" com NextBoost PRO e Console Mode (#243); boas-vindas também para quem reinstala (#242);
+  atalhos do instalador com o ícone novo e aviso ao Shell (#244); READMEs com o posicionamento nativo, todas as funções
+  e o comparativo medido com Explorer e Files (#245, `build/Compare-Performance.ps1`).
+
 ## UX, boas-vindas e desempenho (0.10.0-alpha.1)
 
 - Análise geral de UX aplicada (PRs #234–#239): foco dos menus, diálogos sem prompt repetido, erros em pt-BR com ação,
