@@ -23,6 +23,10 @@
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Ícone oficial (logos/controlfs-icon.png → assets/controlfs.ico, gerado por build/make-icons.py com fundo transparente): executável, atalhos, Alt+Tab. -->
+    <!-- Ajustes do runtime (docs/performance.md): sem a thread de GC em segundo plano e sem a instrumentação do PGO
+         nas primeiras chamadas, a abertura fica mais curta. Medido no Smoke; vão para o ControlFS.runtimeconfig.json. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
     <ApplicationIcon>..\..\assets\controlfs.ico</ApplicationIcon>
   </PropertyGroup>
   <!-- Portátil: um único .exe que se extrai sozinho na primeira execução. -->
