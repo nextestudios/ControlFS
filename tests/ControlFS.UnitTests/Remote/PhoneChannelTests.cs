@@ -11,7 +11,7 @@ namespace ControlFS.UnitTests.Remote;
 /// </summary>
 public class PhoneChannelTests
 {
-    private static HttpParseStatus Parse(string head) => HttpRequestParser.TryParse(Encoding.ASCII.GetBytes(head), out _);
+    private static HttpParseStatus Parse(string head) => HttpRequestParser.TryParse(Encoding.UTF8.GetBytes(head), out _);
 
     [Fact]
     public void Http_parser_accepts_only_a_bare_get_within_limits()
