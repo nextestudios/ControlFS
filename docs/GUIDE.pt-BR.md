@@ -90,6 +90,12 @@ Para pular direto para qualquer lugar, use Menu → **Ir para caminho…** (tamb
 
 O ControlFS desenha na taxa de atualização da sua tela (60, 120, 144 Hz…), definida no Windows. Com Menu → Configurações → **Fluidez: máxima** (o padrão) ele lê o controle ~125 vezes por segundo, o bastante para uma tela de 120 Hz; **economia de bateria** lê num ritmo menor, que gasta menos energia em portáteis. Uma tela de 60 Hz não mostra mais de 60 quadros por segundo: para ter 120, ajuste a tela para 120 Hz no Windows (Configurações → Tela → Configurações de vídeo avançadas).
 
+## Barra de título e tela cheia
+
+O topo da janela não tem a barra de título branca do Windows: o cabeçalho com o logo do ControlFS vai até o alto e usa as cores do tema, e minimizar, maximizar e fechar ficam no canto superior direito com as mesmas cores (fechar fica vermelho ao passar o mouse; com um tema de alto contraste do Windows, as cores do sistema). Arraste a parte vazia do cabeçalho para mover a janela, clique duas vezes para maximizar ou restaurar e pare o mouse em maximizar para os layouts de ajuste do Windows 11.
+
+**Tela cheia**: o botão ao lado de minimizar, **F11**, Menu → **Tela cheia** (um bloco) ou Menu → Configurações → **Tela cheia**. O mesmo botão, F11 ou Menu → **Sair da tela cheia** volta à janela como estava (maximizada ou não). A escolha fica salva: o ControlFS abre em tela cheia na próxima vez. Não há atalho no controle (todos os botões já têm função); Esc é Voltar, então não sai da tela cheia. Vídeo sempre toca em tela cheia; F11 durante o vídeo sai da tela cheia só para aquele vídeo, e ao fechá-lo a janela volta à sua escolha.
+
 ## Tema e cor de destaque
 
 Menu → Configurações → **Tema** alterna entre **automático** (o padrão: segue o modo de apps do Windows em Configurações → Personalização → Cores, na hora), **escuro** e **claro**. **Cor de destaque** passa por ciano, azul, verde, âmbar, magenta e laranja: pinta o anel de foco, a opção focada, o cursor do texto e os símbolos em destaque. As duas mudam na hora, e Configurações continua aberta para comparar. Toda combinação tem o contraste conferido: textos e a opção focada continuam legíveis (≥ 4,5:1) e o anel de foco se destaca do fundo (≥ 3:1). Itens marcados, avisos e ações perigosas mantêm as próprias cores e símbolos, qualquer que seja o destaque.
@@ -215,7 +221,7 @@ Se o ControlFS for fechado no meio de uma operação (travamento, falta de energ
 
 ## Reprodutor de vídeo
 
-**Sul** num MP4, M4V, MOV, WMV, AVI, MKV, WebM ou 3GP, na lista ou na grade, toca o vídeo em tela cheia (Norte → **Assistir aqui** faz o mesmo; **Abrir com o aplicativo padrão** continua lá). A janela entra em tela cheia enquanto o vídeo está aberto e volta ao sair (se você mesmo tinha apertado F11, continua). Uma sobreposição com o título, o tempo decorrido e o restante, a barra de progresso, o volume e o estado das legendas/faixa de áudio aparece com qualquer botão e some depois de 3 segundos tocando; pausado, ela fica.
+**Sul** num MP4, M4V, MOV, WMV, AVI, MKV, WebM ou 3GP, na lista ou na grade, toca o vídeo em tela cheia (Norte → **Assistir aqui** faz o mesmo; **Abrir com o aplicativo padrão** continua lá). A janela entra em tela cheia enquanto o vídeo está aberto e volta ao sair (se você mesmo tinha escolhido tela cheia, continua; F11 durante o vídeo sai da tela cheia só para aquele vídeo). Uma sobreposição com o título, o tempo decorrido e o restante, a barra de progresso, o volume e o estado das legendas/faixa de áudio aparece com qualquer botão e some depois de 3 segundos tocando; pausado, ela fica.
 
 - **Sul:** pausa/continua (no fim, ver de novo).
 - **Esquerda/Direita:** 10 segundos para trás/frente; **LB/RB:** 1 minuto; **LT/RT:** 5% do vídeo (a linha do tempo). Os toques se somam: o destino aparece em letras grandes e como uma marca branca na barra, e o salto acontece quando você para de apertar (**Sul** pula na hora, **Voltar** cancela). Nunca vai antes do início nem depois do fim.

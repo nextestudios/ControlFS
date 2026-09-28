@@ -66,6 +66,12 @@ public sealed record AppSettings
     /// <summary>Índice, em <see cref="OpenTabs"/>, da aba que estava ativa.</summary>
     public int ActiveOpenTab { get; init; }
 
+    /// <summary>
+    /// Tela cheia (#230): F11, Menu → Tela cheia ou o botão ao lado de minimizar. Fica salva e vale na próxima abertura.
+    /// O vídeo põe a janela em tela cheia enquanto toca sem mudar esta escolha.
+    /// </summary>
+    public bool FullScreen { get; init; }
+
     /// <summary>Dois painéis lado a lado (#56) onde a tela comporta; portáteis e janelas estreitas mostram um.</summary>
     public bool DualPane { get; init; }
 

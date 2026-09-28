@@ -35,7 +35,7 @@ Windows 11 x64. Not code-signed yet, so SmartScreen may warn ([policy](docs/CODE
 | North (Y / △) | Item actions | F2 |
 | LT / RT | Page up / down | PgUp / PgDn |
 | Start | App menu | F10 |
-| — | Full screen | F11 |
+| Menu → Tela cheia | Full screen (also the button next to minimize) | F11 |
 
 Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm and back. You can switch to "confirm with the right button" in the menu.
 

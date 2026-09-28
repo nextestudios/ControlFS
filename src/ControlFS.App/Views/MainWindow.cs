@@ -91,13 +91,13 @@ public sealed class MainWindow : Window
     private readonly Grid _overlay = new();
     private readonly VideoPlayerView _video = new();
 
-    /// <summary>A janela entrou em tela cheia por causa do vídeo (e sai ao fechá-lo); F11 do usuário não é desfeito.</summary>
-    private bool _fullScreenForVideo;
     private IReadOnlyList<FileEntry>? _shownItems;
     private HashSet<string> _shownSelection = [];
     private int _shownFocus = -1;
     private object? _shownClipboard;
-    private bool _fullScreen;
+
+    /// <summary>Barra de título do tema (#230): o cabeçalho ocupa a faixa do título; os botões do Windows ficam por cima, à direita.</summary>
+    private readonly TitleBarView _titleBar;
 
     public MainWindow()
         : this(dataDirectory: null)
@@ -129,7 +129,6 @@ public sealed class MainWindow : Window
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
             PlaybackPositions = new JsonPlaybackPositionStore(data),
         };
-        if (dataDirectory is null) _video.ActiveChanged += OnVideoActive; // nas capturas a janela não muda de modo
         if (dataDirectory is null)
         {
             _phone = new Infrastructure.Remote.PhoneLinkServer();
@@ -146,6 +145,8 @@ public sealed class MainWindow : Window
         _detailIcons = new IconLoader(_iconProvider, DetailsPanelView.IconSize);
         _details = new DetailsPanelView(_detailIcons);
         _paneView = new PaneView(_app, _icons);
+        // Nas capturas (--render-screens) a janela não muda de modo nem de barra de título: só o espaço dos botões é reservado.
+        _titleBar = new TitleBarView(this, _header, _tabs, _app, live: dataDirectory is null);
         _detailIcons.Invalidated += () =>
         {
             _details.ApplyLayout(); // refaz o ícone grande no novo tamanho
@@ -171,7 +172,7 @@ public sealed class MainWindow : Window
         AppLog.Info("MainWindow: layout montado");
         _root.PreviewKeyDown += (_, e) =>
         {
-            if (e.Key == Windows.System.VirtualKey.F11) { ToggleFullScreen(); e.Handled = true; return; }
+            if (e.Key == Windows.System.VirtualKey.F11) { _app.ToggleFullScreen(); e.Handled = true; return; }
             _input.OnKeyDown(e);
         };
         _root.CharacterReceived += (_, e) => _input.OnCharacter(e.Character);
@@ -180,7 +181,12 @@ public sealed class MainWindow : Window
         {
             _root.Focus(FocusState.Programmatic);
             UpdateLayoutProfile();
-            _root.XamlRoot.Changed += (_, _) => UpdateLayoutProfile(); // tamanho, monitor ou DPI
+            _root.XamlRoot.Changed += (_, _) =>
+            {
+                UpdateLayoutProfile(); // tamanho, monitor ou DPI
+                _titleBar.Update();
+            };
+            _titleBar.Update();
         };
         // Tamanho do texto do Windows (Acessibilidade): o WinUI aumenta cada texto; o layout decide o que cabe.
         _uiSettings.TextScaleFactorChanged += (_, _) => DispatcherQueue.TryEnqueue(UpdateLayoutProfile);
@@ -200,6 +206,7 @@ public sealed class MainWindow : Window
         {
             var active = e.WindowActivationState != WindowActivationState.Deactivated;
             _input.OnWindowActivated(active);
+            _titleBar.SetActive(active);
             if (active) _root.Focus(FocusState.Programmatic);
         };
         Closed += (_, _) =>
@@ -270,6 +277,8 @@ public sealed class MainWindow : Window
         Grid.SetColumn(right, 2);
         header.Children.Add(right);
         layout.Children.Add(header);
+        // Botão de tela cheia colado aos botões do Windows (minimizar, maximizar, fechar), na mesma faixa do cabeçalho.
+        layout.Children.Add(_titleBar.Buttons);
 
         Grid.SetRow(_topBar.Root, 1);
         layout.Children.Add(_topBar.Root);
@@ -521,6 +530,7 @@ public sealed class MainWindow : Window
         RenderDualPane(dual);
         RenderDetails();
         RenderFooter();
+        _titleBar.Render();
     }
 
     /// <summary>
@@ -911,7 +921,10 @@ public sealed class MainWindow : Window
     private void ApplyTheme(AppSettings settings)
     {
         var dark = ThemePalettes.IsDark(settings.Theme, SystemIsDark());
-        if (!Theme.Apply(ThemePalettes.Build(dark, settings.Accent))) return;
+        var changed = Theme.Apply(ThemePalettes.Build(dark, settings.Accent));
+        // Botões da barra de título (#230): sempre, também na abertura e quando só o alto contraste mudou.
+        _titleBar.ApplyColors(Setting(() => _accessibility.HighContrast, fallback: false));
+        if (!changed) return;
         _root.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
         if (_root.XamlRoot is not null) ApplyLayout();
     }
@@ -984,7 +997,7 @@ public sealed class MainWindow : Window
     /// <summary>Aplica os tokens da faixa atual ao cabeçalho, à lista e ao rodapé e refaz a tela.</summary>
     private void ApplyLayout()
     {
-        _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL, Theme.SpaceM);
+        _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL + _titleBar.ReservedWidth, Theme.SpaceM);
         _header.ColumnSpacing = Theme.SpaceXl;
         _headerRight.MaxWidth = Math.Max(240, Theme.Viewport.Width * 0.35); // as abas nunca são espremidas pelo status
         _logo.Height = Theme.Layout.LogoHeight;
@@ -1038,26 +1051,12 @@ public sealed class MainWindow : Window
         Render();
     }
 
-    /// <summary>Vídeo aberto: tela cheia (se a janela ainda não estava); fechado: volta ao que era.</summary>
-    private void OnVideoActive(bool active)
-    {
-        if (active && !_fullScreen)
-        {
-            _fullScreenForVideo = true;
-            ToggleFullScreen();
-        }
-        else if (!active && _fullScreenForVideo)
-        {
-            _fullScreenForVideo = false;
-            if (_fullScreen) ToggleFullScreen();
-        }
-    }
-
-    private void ToggleFullScreen()
-    {
-        _fullScreen = !_fullScreen;
-        AppWindow.SetPresenter(_fullScreen ? AppWindowPresenterKind.FullScreen : AppWindowPresenterKind.Default);
-    }
+    /// <summary>
+    /// Espaço dos botões da barra de título mudou (tela cheia, DPI, Windows 10/11): o cabeçalho reserva a nova largura à
+    /// direita para o status nunca ficar sob minimizar/maximizar/fechar.
+    /// </summary>
+    internal void OnTitleBarInsetChanged() =>
+        _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL + _titleBar.ReservedWidth, Theme.SpaceM);
 
     private static int IndexOf(IReadOnlyList<FileEntry> items, FileEntry entry)
     {

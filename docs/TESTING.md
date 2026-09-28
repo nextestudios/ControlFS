@@ -157,7 +157,7 @@ Não validado em hardware.
 - [ ] 1280×720 e 1280×800: os atalhos que não cabem mostram só o ícone (o focado e o da pasta atual mostram o nome);
       nada sai da tela; os glifos de LB e RB aparecem nas pontas da barra e não no rodapé.
 - [ ] O logo com o nome aparece em todas as telas; minimizar, maximizar, fechar, redimensionar, mover e F11 continuam
-      funcionando (barra de título do Windows).
+      funcionando (barra de título no tema, #230).
 - [ ] Clique/toque num atalho ou num segmento faz o mesmo que focar e apertar Sul.
 - [ ] Narrador: "Acesso rápido. Downloads, 3 de 10" ao andar pelos atalhos; "Barra de caminho" nos segmentos.
 
@@ -569,11 +569,34 @@ Inventário e matriz de regressão: `docs/ui-redesign.md`. Não validado em hard
 - [ ] Sem nenhum dispositivo de som (desativado no Painel de Som): aparece "Nenhuma saída de áudio foi encontrada neste PC…" (é o que o runner do CI mostra).
 - [ ] Legível a ~3 m em 1080p/4K e em 1280×720.
 
+## Barra de título e tela cheia (#230) — não validado em hardware
+
+As capturas (`0-title-bar-dark`, `0b-title-bar-light`) mostram só o XAML, com botões do Windows imitados; o resto é manual.
+
+- [ ] Windows 11, tema escuro e claro: sem faixa branca no topo; o cabeçalho com o logo vai até o alto; minimizar,
+      maximizar e fechar com símbolos na cor do texto do tema, fundo igual ao cabeçalho; passar o mouse em minimizar/
+      maximizar mostra o fundo da borda do tema; em fechar, vermelho do Windows; pressionar mostra o destaque suave.
+- [ ] Trocar o tema e a cor de destaque em Configurações com a janela aberta: o topo e os botões mudam na hora.
+- [ ] Janela inativa (clique em outro app): símbolos dos botões esmaecem (inclusive o de tela cheia); ativa de novo, voltam.
+- [ ] Alto contraste do Windows ligado com o app aberto: os botões voltam às cores do sistema e continuam legíveis.
+- [ ] Arrastar pela parte vazia do cabeçalho (ao lado do logo, entre as abas e o status) move a janela; clique duplo
+      maximiza e restaura; arrastar para o topo da tela maximiza; parar o mouse em maximizar mostra os layouts de ajuste.
+- [ ] Com 2+ abas, clicar numa aba no cabeçalho troca de aba (não arrasta a janela); o botão de tela cheia responde ao clique.
+- [ ] Com um menu ou diálogo aberto que passe por cima do cabeçalho, clicar nele age no menu (não arrasta a janela).
+- [ ] 100%, 150% e 200% de escala e ao mover a janela entre monitores de DPI diferentes: os botões do Windows não cobrem
+      o status do controle; a área de arrastar continua certa depois de redimensionar e maximizar.
+- [ ] Tela cheia: botão, F11, Menu → Tela cheia e Configurações → Tela cheia ligam e desligam; em tela cheia só o botão
+      de sair aparece no canto; voltar restaura a janela como estava (maximizada ou não).
+- [ ] Fechar em tela cheia e abrir de novo: abre em tela cheia; desligar e reabrir: janela comum.
+- [ ] Esc em tela cheia continua sendo Voltar (não sai da tela cheia).
+- [ ] Windows 10 (21H2/22H2): barra no tema ou, se o Windows não permitir, a barra do sistema com tudo funcionando.
+
 ## Vídeo (#61, #170) — não validado em hardware
 
 - [ ] Sul num MP4 (H.264/AAC) pela lista e pela grade: a janela entra em tela cheia e o vídeo toca; a sobreposição some em
       ~3 s e volta com qualquer botão; Voltar esconde, Voltar de novo volta à lista com a mesma pasta, foco e seleção, e
-      a janela sai da tela cheia (se F11 não estava ligado antes).
+      a janela sai da tela cheia (se a tela cheia não estava escolhida antes; se estava, continua em tela cheia).
+- [ ] F11 durante o vídeo: a janela sai da tela cheia só para esse vídeo; ao fechar, volta à escolha salva.
 - [ ] Esquerda/Direita, LB/RB e LT/RT: o destino aparece grande e na barra, o salto acontece ao parar; Sul pula na hora;
       Voltar cancela; nunca passa do início/fim.
 - [ ] MKV com duas faixas de áudio e legendas embutidas, e um MP4 com `.srt` ao lado: Norte lista as faixas; trocar

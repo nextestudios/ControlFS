@@ -88,9 +88,6 @@ public sealed class VideoPlayerView
 
     public Grid Root { get; }
 
-    /// <summary>O vídeo entrou ou saiu da pilha (a janela entra/sai de tela cheia).</summary>
-    public event Action<bool>? ActiveChanged;
-
     private static LinearGradientBrush Shade(bool top)
     {
         var brush = new LinearGradientBrush { StartPoint = new Windows.Foundation.Point(0, top ? 0 : 1), EndPoint = new Windows.Foundation.Point(0, top ? 1 : 0) };
@@ -109,17 +106,14 @@ public sealed class VideoPlayerView
             _surface = null;
             _element.SetMediaPlayer(null);
             Root.Visibility = Visibility.Collapsed;
-            ActiveChanged?.Invoke(false);
             return;
         }
         if (!ReferenceEquals(modal, _current))
         {
-            var wasActive = _current is not null;
             _current = modal;
             _surface = null;
             _element.SetMediaPlayer(null);
             Root.Visibility = Visibility.Visible;
-            if (!wasActive) ActiveChanged?.Invoke(true);
         }
         if (modal.VideoSurface is Windows.Media.Playback.MediaPlayer player && !ReferenceEquals(player, _surface))
         {

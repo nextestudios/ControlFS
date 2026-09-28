@@ -79,6 +79,10 @@ public enum ActionIcon
     Theme,
     Accent,
 
+    /// <summary>Janela em tela cheia (#230) e a volta à janela comum.</summary>
+    FullScreen,
+    ExitFullScreen,
+
     // Operações, histórico e desfazer
     Operations,
     Undo,
@@ -198,6 +202,8 @@ public static class ActionIcons
         ActionIcon.Density => "\uE8FD",
         ActionIcon.Theme => "\uE793", // Brightness (claro/escuro)
         ActionIcon.Accent => "\uE790", // Color
+        ActionIcon.FullScreen => "\uE740",
+        ActionIcon.ExitFullScreen => "\uE73F", // BackToWindow
         ActionIcon.DetailsPane => "\uE90D",
         ActionIcon.DualPane => "\uE90C",
         ActionIcon.Subfolders => "\uE8B7",
