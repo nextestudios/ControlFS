@@ -79,12 +79,11 @@ public sealed partial class AppController
         PhoneAddress = null;
 
         var network = pairing.AddressCount > 1 ? $"{pairing.Address} ({pairing.AddressIndex + 1} de {pairing.AddressCount})" : pairing.Address;
-        var dialog = new DialogModal("Conectar celular", [("Endereço", pairing.Url), ("Rede do PC", network), ("Estado", "Aguardando o celular…")])
+        var dialog = new DialogModal("Conectar celular", [("Endereço", pairing.Url), ("Rede do PC", network)])
         {
             Icon = ActionIcon.Phone,
             QrModules = QrCode.Encode(pairing.Url),
-            Message = $"Aponte a câmera do celular para o código (o celular precisa estar na mesma rede do PC). Vale por {pairing.Lifetime.TotalMinutes:0} minutos e para uma "
-                + "conexão só. Se a página não abrir, permita o ControlFS em \"Redes privadas\" no Firewall do Windows.",
+            Message = $"Celular na mesma rede do PC. Vale {pairing.Lifetime.TotalMinutes:0} min, para uma conexão. Se a página não abrir, permita o ControlFS em redes privadas no Firewall do Windows.",
         };
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => StopPhone(PhoneEndReason.Disconnected), ActionIcon.Close);
         dialog.Options.Add(cancel);

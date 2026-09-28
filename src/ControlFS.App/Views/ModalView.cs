@@ -681,7 +681,7 @@ public static partial class ModalView
     private static Border QrImage(bool[,] modules)
     {
         var n = modules.GetLength(0);
-        var target = Math.Min(Theme.Scaled(280), Theme.Viewport.Height * 0.36);
+        var target = Math.Min(Theme.Scaled(280), Theme.Viewport.Height * 0.3); // cabe inteiro com as opções em 1280×720
         var module = Math.Max(3, Math.Floor(target / (n + 8)));
         var geometry = new GeometryGroup { FillRule = FillRule.Nonzero };
         for (var y = 0; y < n; y++)
