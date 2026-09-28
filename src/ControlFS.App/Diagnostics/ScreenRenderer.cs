@@ -85,13 +85,14 @@ internal static class ScreenRenderer
         _only = ListArgument(args, "--only");
         _sizes = ListArgument(args, "--sizes");
         var work = Path.Join(Path.GetTempPath(), "ControlFS-render-" + Guid.NewGuid().ToString("N")[..8]);
+        MainWindow? window = null;
         try
         {
             Directory.CreateDirectory(outputDirectory);
             var sample = CreateSampleFolder(Path.Join(work, "files"));
             var shortcuts = CreateShortcutFolder(Path.Join(work, "files", "Área de trabalho"));
             var modals = CreateModalFolder(Path.Join(work, "files", "Modais"));
-            var window = new MainWindow(Path.Join(work, "data"));
+            window = new MainWindow(Path.Join(work, "data"));
             var loaded = new TaskCompletionSource();
             window.RootHost.Loaded += (_, _) => loaded.TrySetResult();
             window.Activate();
@@ -285,6 +286,7 @@ internal static class ScreenRenderer
         }
         finally
         {
+            window?.Controller.ReleaseMediaForShutdown();
             try { Directory.Delete(work, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             Microsoft.UI.Xaml.Application.Current.Exit();
         }
