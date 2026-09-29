@@ -336,7 +336,9 @@ public static partial class ModalView
             // Um aviso que aparece (ex.: o fim de uma operação em segundo plano) ocupa uma linha já reservada: o painel não cresce (#227).
             footer.Children.Add(new Border { Height = StatusLineHeight });
         }
-        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody, KeyboardSecondaryPrompt(app));
+        // A legenda que nomeia a opção focada ("Confirmar: <opção>") é cortada com reticências em vez de quebrar a linha das legendas: o rodapé não muda de altura (#227).
+        var inner = PanelWidthFor(app.TopModal?.Size ?? ModalSize.Standard) - (2 * MenuPadding);
+        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody, KeyboardSecondaryPrompt(app), labelMaxWidth: inner * 0.55);
         if (fadedHints) FadeHints(bar);
         footer.Children.Add(bar);
         return footer;
@@ -383,18 +385,18 @@ public static partial class ModalView
     private static double PromptGlyphHeight => Math.Round(Theme.FontBody * (Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? 1.6 : 1.8));
 
     /// <summary>Legendas (glifo do controle ou tecla do teclado + texto) que quebram linha; usadas também pelo rodapé da janela.</summary>
-    public static WrapPanel PromptBar(IEnumerable<ControllerPrompt> prompts, double glyphHeight, double labelSize, Func<ControllerPrompt, bool>? skip = null)
+    public static WrapPanel PromptBar(IEnumerable<ControllerPrompt> prompts, double glyphHeight, double labelSize, Func<ControllerPrompt, bool>? skip = null, double labelMaxWidth = 0)
     {
         var bar = new WrapPanel { HorizontalSpacing = Theme.SpaceL, VerticalSpacing = Theme.SpaceS };
         foreach (var prompt in prompts)
         {
             if (skip?.Invoke(prompt) == true) continue;
-            bar.Children.Add(PromptChip(prompt, glyphHeight, labelSize));
+            bar.Children.Add(PromptChip(prompt, glyphHeight, labelSize, labelMaxWidth));
         }
         return bar;
     }
 
-    public static StackPanel PromptChip(ControllerPrompt prompt, double glyphHeight, double labelSize)
+    public static StackPanel PromptChip(ControllerPrompt prompt, double glyphHeight, double labelSize, double labelMaxWidth = 0)
     {
         var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS + Theme.SpaceXs };
         if (prompt is { Button: { } button, Family: { } family })
@@ -411,7 +413,14 @@ public static partial class ModalView
                 Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
                 Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
             });
-        chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = labelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
+        var label = new TextBlock { Text = prompt.Label, FontSize = labelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center };
+        if (labelMaxWidth > 0)
+        {
+            label.MaxWidth = labelMaxWidth;
+            label.MaxLines = 1;
+            label.TextTrimming = TextTrimming.CharacterEllipsis;
+        }
+        chip.Children.Add(label);
         AutomationProperties.SetName(chip, prompt.AccessibilityText);
         chip.Tag = prompt;
         return chip;
@@ -626,8 +635,14 @@ public static partial class ModalView
         if (menu.AllDescriptions.Any())
         {
             description.Root.MinHeight = lineHeight;
-            description.Root.Margin = new Thickness(Theme.Space(4), 0, Theme.Space(4), 0);
-            below = description.Root;
+            // Caixa própria, separada da lista que rola por trás: a descrição não parece parte dela.
+            below = new Border
+            {
+                Background = Theme.ModalInset,
+                CornerRadius = Theme.RowRadius,
+                Padding = new Thickness(Theme.Space(12), Theme.Space(8), Theme.Space(12), Theme.Space(8)),
+                Child = description.Root,
+            };
         }
         description.Show(menu.Description);
 

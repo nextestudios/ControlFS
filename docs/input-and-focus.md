@@ -210,8 +210,11 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     - Narrador: "rótulo completo com o valor (ex.: Itens ocultos: escondidos), descrição, bloco N de M" (M = blocos do grupo).
       Valores são estados, nunca verbos ("ligado/desligado", "visíveis/escondidos"); a linha sob a grade
       (`MenuModal.TileCaption`) diz o que o ajuste faz, sem repetir o valor que o bloco já mostra.
-  - Largura (#227): todo menu tem largura fixa (`MenuModal.PanelWidth`: 540 com grade, 460 sem; mínimo = máximo, os dois
-    limitados pela janela). Mover o foco ou mostrar a descrição da linha focada nunca muda a largura; o texto quebra linha.
+  - Tamanho (#227): todo modal tem uma classe de tamanho (`Modal.Size`; menus: `MenuModal.Size`, Medium 540 com grade,
+    Compact 460 sem), com largura fixa limitada pela janela. Mover o foco, mudar um valor, trocar de variante (Compactar:
+    ZIP/7z/TAR.GZ) ou mostrar um aviso nunca muda largura nem altura: a descrição da opção em foco fica numa área fixa entre
+    a lista e o rodapé, com a altura da descrição mais longa (`MenuModal.AllDescriptions`); o texto quebra linha. A classe
+    e as regras de altura de cada modal estão em `docs/ui-redesign.md` ("Modal sizing").
 - O WinUI não recebe foco de XAML para navegação: a raiz (`ContentControl`) captura teclas em `PreviewKeyDown`; teclas
   `Gamepad*` do WinUI são descartadas para evitar entrada dupla com o SDL.
 

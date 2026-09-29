@@ -109,9 +109,16 @@ as capturas `m1-menu-actions`, `m1b-menu-destructive-focus`, `m2-confirm-delete`
 `m7-operation-details`, `m8-picker-menu`, `m9-about`, `4-menu` e `5-keyboard` em 1280×720, 1280×800, 1920×1080 e
 3840×2160 (100% e 200%), mais `icons/action-icons.png` (todos os ícones com o nome) no artefato `smoke-screens`.
 
-Largura estável e grades em Configurações (#227): as capturas `4-menu`/`4a-menu-long-row` e `4b-settings`/`4c-settings-long-row`
-(foco num bloco e numa linha de descrição longa) têm a mesma largura de modal no relatório (`modal LxA`) em cada tamanho.
+Tamanho estável dos modais e grades em Configurações (#227): o relatório do `--render-screens` traz, por grupo de capturas, o
+tamanho do painel (`tamanho do grupo …: LxA = igual a …`) e a execução **falha** com `TAMANHO DIFERENTE` se dois modais do mesmo
+grupo e alvo diferirem em mais de 1 px: `menu-app` (`4`, `4a`), `menu-actions` (`m1`, `m1b`), `settings` (`4b`–`4e`: bloco,
+linha longa, valor longo, rótulo que quebra), `compress` (`q1`, `q1b`, `q1c`: ZIP, TAR.GZ, 7z; largura e altura),
+`extract-summary` (`m3`, `m3b`), `keyboard-password` (`m4`, `m5`: com e sem erro) e `confirm-delete` (`m2`, `m2b`, `q2`: só a
+largura, o nome longo quebra). Para rodar: `mode=screens`, `screens=4,m,q`, `sizes=1920x1080,1280x720`.
 
+- [ ] Tamanho estável dos modais (#227): abrir Compactar e trocar ZIP/TAR.GZ/7z e a compressão, Extrair e alternar a pasta
+      dedicada, o teclado com e sem erro, e deixar uma operação terminar com um modal aberto: nenhum deles muda de tamanho;
+      uma confirmação curta continua compacta; conferir em TV 4K a ~3 m e no portátil 1280×720 (corpo rola dentro do painel).
 - [ ] Largura estável e grades em Configurações (#227): no controle, percorrer todas as opções de Configurações (e do Menu)
       em 1920×1080, 1280×720/800 e numa TV 4K a ~3 m: o painel não fica mais largo nem mais estreito; descrições longas
       quebram linha; os blocos mostram rótulo e valor legíveis; Baixo/Cima entre grade e lista seguem
