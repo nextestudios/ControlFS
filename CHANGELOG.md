@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Correções
+- **Arquivos .rar com ícone reconhecível** (#274): sem programa associado, o Windows mostrava uma página em branco. Agora o ControlFS usa o ícone que o Windows registrou para .rar (o do WinRAR, por exemplo) e, quando não há nenhum, um ícone de arquivo compactado próprio (uma caixa com zíper, desenhado no app, sem arte de terceiros). Vale na lista e na grade, em qualquer escala, e o ícone se atualiza sozinho se você instalar ou trocar o programa de .rar.
 
 ## [0.12.0-alpha.1]
 ### Novidades

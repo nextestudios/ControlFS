@@ -69,4 +69,10 @@ public interface IIconProvider
 {
     /// <summary>Ícone com lado de <paramref name="sizePx"/> pixels físicos, ou <c>null</c> quando não há (o chamador usa um símbolo).</summary>
     Task<IconImage?> GetIconAsync(IconRequest request, int sizePx, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Muda quando algo que altera os ícones já entregues mudou fora do app (ex.: o programa associado a .rar): o chamador
+    /// descarta o cache. Barato de ler; implementações sem essa noção devolvem sempre o mesmo valor.
+    /// </summary>
+    long Revision => 0;
 }

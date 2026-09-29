@@ -98,6 +98,7 @@ Ainda manual, num aparelho real:
 - [ ] Windows → Acessibilidade → Tamanho do texto em 150% e 200% com o app aberto: o layout se ajusta na hora, nada
       essencial fica cortado (menus rolam até o item focado).
 - [ ] Arrastar a janela entre um monitor 100% e outro 150%/200%: textos e ícones nítidos, sem reiniciar.
+- [ ] .rar: com WinRAR instalado, o ícone é o dele na lista e na grade; sem programa para .rar, aparece a caixa roxa com zíper (nunca a página em branco). Instalar/trocar o programa com o ControlFS aberto atualiza o ícone em até alguns segundos. Não validado em hardware.
 
 ## Modais (#172)
 

@@ -51,4 +51,13 @@ public sealed class ShellIconIntegrationTests : IDisposable
             Assert.True(visible > icon.Width, $"{request.Key}: ícone sem pixels visíveis");
         }
     }
+
+    [Fact]
+    public async Task A_rar_file_gets_an_icon_even_when_windows_has_no_program_for_it()
+    {
+        var request = IconRequest.For(new FileEntry("a.rar", "a.rar", EntryKind.File, FullPath: Path.Join(_root, "a.rar")))!;
+        var icon = await _icons.GetIconAsync(request, 48, TestContext.Current.CancellationToken);
+        Assert.NotNull(icon); // o do Windows, ou o de reserva do ControlFS: nunca a página em branco nem nada
+        Assert.InRange(icon.Width, 16, 256);
+    }
 }
