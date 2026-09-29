@@ -33,20 +33,24 @@ public sealed partial class AppController
     /// <summary>Um lote enfileirado: pares (caminho atual → nome novo) e a pasta, para o resultado e o Desfazer.</summary>
     internal sealed record BatchRenameRun(string Folder, IReadOnlyList<(string Path, string NewName)> Pairs, bool Redo);
 
-    private static string ModeLabel(BatchRenameMode mode) => mode switch
-    {
-        BatchRenameMode.Numbering => "Numeração",
-        BatchRenameMode.FindReplace => "Localizar e substituir",
-        BatchRenameMode.PrefixSuffix => "Prefixo e sufixo",
-        _ => "Maiúsculas e minúsculas",
-    };
+    private static IReadOnlyList<Choice<BatchRenameMode>> BatchModeChoices { get; } =
+    [
+        new(BatchRenameMode.Numbering, "Numeração", "Um nome base e um número em sequência: Foto 001, Foto 002…"),
+        new(BatchRenameMode.FindReplace, "Localizar e substituir", "Troca um trecho do nome por outro."),
+        new(BatchRenameMode.PrefixSuffix, "Prefixo e sufixo", "Acrescenta um texto antes ou depois do nome."),
+        new(BatchRenameMode.Case, "Maiúsculas e minúsculas", "Só muda a caixa das letras."),
+    ];
 
-    private static string CaseLabel(BatchRenameCase value) => value switch
-    {
-        BatchRenameCase.Upper => "MAIÚSCULAS",
-        BatchRenameCase.Title => "Iniciais Maiúsculas",
-        _ => "minúsculas",
-    };
+    private static IReadOnlyList<Choice<BatchRenameCase>> BatchCaseChoices { get; } =
+    [
+        new(BatchRenameCase.Lower, "minúsculas"),
+        new(BatchRenameCase.Upper, "MAIÚSCULAS"),
+        new(BatchRenameCase.Title, "Iniciais Maiúsculas"),
+    ];
+
+    private static string ModeLabel(BatchRenameMode mode) => BatchModeChoices.First(c => c.Value == mode).Label;
+
+    private static string CaseLabel(BatchRenameCase value) => BatchCaseChoices.First(c => c.Value == value).Label;
 
     internal void BeginBatchRename(PaneState pane, IReadOnlyList<FileEntry> entries)
     {
@@ -112,8 +116,8 @@ public sealed partial class AppController
             RebuildBatchRename(session);
             RaiseChanged();
         }
-        dialog.Options.Add(new DialogOption($"Modo: {ModeLabel(options.Mode)}", DialogOptionKind.Primary,
-            () => Change(o => o with { Mode = (BatchRenameMode)(((int)o.Mode + 1) % 4) }), icon: ActionIcon.Settings));
+        // Modo e caixa têm várias alternativas escondidas: abrem o seletor (#261).
+        dialog.Options.Add(ChoiceOption("Modo", () => session.Options.Mode, BatchModeChoices, mode => Change(o => o with { Mode = mode }), ActionIcon.Settings, "Renomear em lote"));
         switch (options.Mode)
         {
             case BatchRenameMode.Numbering:
@@ -133,8 +137,7 @@ public sealed partial class AppController
                 dialog.Options.Add(TextOption(session, "Sufixo", options.Suffix, (o, v) => o with { Suffix = v }));
                 break;
             default:
-                dialog.Options.Add(new DialogOption($"Converter para: {CaseLabel(options.Case)}", DialogOptionKind.Primary,
-                    () => Change(o => o with { Case = (BatchRenameCase)(((int)o.Case + 1) % 3) }), icon: ActionIcon.Settings));
+                dialog.Options.Add(ChoiceOption("Converter para", () => session.Options.Case, BatchCaseChoices, value => Change(o => o with { Case = value }), ActionIcon.Settings, "Renomear em lote"));
                 break;
         }
         var apply = new DialogOption(plan.BlockedReason is null ? $"Renomear {Plural.Of(plan.RenameCount, "item", "itens")}" : "Renomear (bloqueado)",

@@ -210,6 +210,15 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
     - Narrador: "rótulo completo com o valor (ex.: Itens ocultos: escondidos), descrição, bloco N de M" (M = blocos do grupo).
       Valores são estados, nunca verbos ("ligado/desligado", "visíveis/escondidos"); a linha sob a grade
       (`MenuModal.TileCaption`) diz o que o ajuste faz, sem repetir o valor que o bloco já mostra.
+  - Seletor de opções (#261, `AppController.ChoiceRow`/`ChoiceOption`): ativar uma linha ou bloco com várias alternativas
+    escondidas (Tema, Cor de destaque, Ordenar por, Legendas, Confirmar com, Fluidez, Exibição, Densidade; Compactar: Formato e
+    Compressão; filtros: Tamanho e Modificado; lote: Modo e Converter para) empilha um `MenuModal` (`IsPicker`) sobre o modal atual:
+    todas as alternativas com a descrição embaixo de cada uma, a atual marcada (ícone `RadioOn` + texto "atual") e o foco nela
+    (`SafeInitialFocus` respeita o foco inicial). Confirmar aplica (também a atual) e fecha só o seletor: o modal de baixo volta
+    como estava (estado e foco), e em Configurações (`Reload`) é remontado com o valor novo no mesmo ajuste. Voltar/Cancelar
+    fecha sem aplicar. Legendas: "Escolher" e "Cancelar". Narrador: "Escolha: Formato" e "ZIP, …, opção 1 de 3, selecionada".
+    Alternar simples (ligado/desligado, Ordem) e ações diretas continuam de um toque. Mouse: clicar numa alternativa aplica.
+    Testes: `OptionPickerJourneyTests`.
   - Tamanho (#227): todo modal tem uma classe de tamanho (`Modal.Size`; menus: `MenuModal.Size`, Medium 540 com grade,
     Compact 460 sem), com largura fixa limitada pela janela. Mover o foco, mudar um valor, trocar de variante (Compactar:
     ZIP/7z/TAR.GZ) ou mostrar um aviso nunca muda largura nem altura: a descrição da opção em foco fica numa área fixa entre

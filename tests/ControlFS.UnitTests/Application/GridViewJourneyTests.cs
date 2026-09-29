@@ -32,7 +32,7 @@ public class GridViewJourneyTests : IDisposable
         await d.FocusItem("b.txt");
 
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Exibição: lista");
+        await d.ChoosePick("Exibição", "grade");
         Assert.True(app.IsGrid);
         Assert.Equal("b.txt", app.ActivePane.List.Focused!.Name); // trocar de visualização não perde o foco
         app.SetGridLayout(columns: 3, rowsPerPage: 2);

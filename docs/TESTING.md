@@ -709,6 +709,24 @@ Não validado em hardware:
 - [ ] Mouse: clicar num bloco escolhe; clicar num ajuste em Configurações alterna e mantém a tela aberta.
 - [ ] Narrador: bloco lido com o nome completo, "ação perigosa"/"indisponível: motivo" e "ação rápida N de M".
 
+## Seletor de opções (#261) — não validado em hardware
+Automático: `OptionPickerJourneyTests` (todos os ajustes de Configurações com várias alternativas: lista completa, atual marcada
+por ícone e texto, abre na atual, Voltar não muda nada e devolve Configurações no mesmo ajuste, escolher aplica e volta; ligar/
+desligar continua de um toque; mouse; legendas Escolher/Cancelar), `ShellAndCompressJourneyTests::Format_picker_…` (todos os formatos
+de Compactar alcançáveis, foco do diálogo preservado, compressão), `SearchFilterJourneyTests::Size_and_date_filters_…` e os testes
+de Densidade, Exibição, Tema, Legendas, Confirmar com, Ordenar por e Renomear em lote, que agora escolhem pelo seletor. Capturas
+`p1-picker-theme`, `p1b-…`, `p1c-settings-after-picker`, `p2-picker-labels`, `p3-picker-compress-format`, `p3b-…`, `p3c-compress-after-picker`:
+o relatório compara o tamanho do seletor ao mover o foco (`picker-theme`, `picker-format`), a largura de todos (`picker-width`) e o
+tamanho de Configurações e de Compactar antes e depois do seletor.
+
+- [ ] Controle real: em Compactar, Formato abre o seletor com ZIP, TAR.GZ e 7z e a descrição de cada um; o foco começa no atual;
+      South aplica e volta ao diálogo na mesma opção; East volta sem mudar; o glifo do botão de confirmar/voltar segue a família.
+- [ ] Configurações: Tema, Destaque, Ordenar por, Legendas, Confirmar com abrem o seletor; "Confirmar com: botão direito" troca as
+      legendas do próprio seletor na hora; ligar/desligar (Recentes, Itens ocultos, Ordem…) continua de um toque.
+- [ ] TV 4K a ~3 m e portátil 1280×720: a alternativa atual se distingue sem depender da cor (círculo cheio e a palavra "atual"); as descrições
+      quebram linha dentro do painel.
+- [ ] Mouse: clicar numa alternativa aplica; clicar fora não fecha. Narrador: "opção N de M, selecionada".
+
 ## Rolagem com o analógico direito (#175) — não validado em hardware
 - [ ] Xbox, DualSense (USB e Bluetooth), Switch Pro e um controle genérico com mapeamento SDL: numa pasta com 500+ itens, em lista e em grade, inclinar pouco rola devagar e com precisão; inclinar tudo rola rápido e acelera se mantido; soltar para na hora, sem drift com o analógico em repouso (deixar parado 1 min).
 - [ ] O item focado fica sempre à vista e a rolagem não "pula" itens de forma imprevisível; com o analógico direito solto, o direcional e o analógico esquerdo navegam exatamente como antes (mesma velocidade).

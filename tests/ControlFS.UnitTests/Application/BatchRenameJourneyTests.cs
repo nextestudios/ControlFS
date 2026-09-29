@@ -76,7 +76,7 @@ public class BatchRenameJourneyTests : IDisposable
         File.WriteAllText(_tmp.Sub("parte 1.mkv"), "existente");
         var d = await BootAndMark("cap 1.mkv", "cap 2.mkv");
         var dialog = await d.WaitDialog("Renomear 2 itens");
-        d.ChooseOption(dialog, "Modo:"); // Numeração → Localizar e substituir
+        await d.PickOption(dialog, "Modo", "Localizar e substituir"); // do seletor: Numeração → Localizar e substituir
         await Type(d, dialog, "Localizar", "CAP");
         await Type(d, dialog, "Substituir por", "parte");
 

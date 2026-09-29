@@ -65,4 +65,37 @@ public class SearchFilterJourneyTests : IDisposable
         await d.ChooseMenu("Limpar filtros");
         Assert.Equal(5, app.Browser.List.Items.Count);
     });
+
+    [Fact]
+    public void Size_and_date_filters_open_a_picker_and_cancelling_it_keeps_the_filters_menu_as_it_was() => UiContext.Run(async () =>
+    {
+        foreach (var name in new[] { "casa.jpg", "casa.pdf" }) File.WriteAllText(_tmp.Sub(name), "x");
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService());
+        app.Start();
+        var d = new Driver(app);
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        await Search(d, "casa");
+
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Tamanho");
+        var picker = await d.WaitMenu();
+        Assert.True(picker.IsPicker);
+        Assert.Equal(["qualquer", "menos de 1 MB", "1 MB a 100 MB", "100 MB a 1 GB", "mais de 1 GB"], picker.Items.Select(i => i.Label));
+        d.Press(InputAction.Back); // cancelar: os filtros continuam como estavam, o menu de filtros volta
+        var filters = await d.WaitMenu();
+        Assert.StartsWith("Filtros", filters.Title, StringComparison.Ordinal);
+        Assert.Equal("Tamanho: qualquer", filters.Items[filters.FocusIndex].Label);
+        Assert.Equal(2, app.Browser.List.Items.Count);
+
+        d.Press(InputAction.Confirm);
+        var again = await d.WaitMenu();
+        d.FocusMenu(again, again.Items.ToList().FindIndex(i => i.Label == "1 MB a 100 MB"));
+        d.Press(InputAction.Confirm);
+        var reopened = await d.WaitMenu();
+        Assert.Equal("Tamanho: 1 MB a 100 MB", reopened.Items[reopened.FocusIndex].Label); // menu novo, no mesmo item, com o valor
+        Assert.Empty(app.Browser.List.Items); // os dois arquivos são pequenos
+        d.Press(InputAction.Back);
+        Assert.Null(app.TopModal); // só um menu de filtros ficou aberto
+    });
 }

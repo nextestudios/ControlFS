@@ -42,9 +42,9 @@ public sealed partial class AppController
             // O painel tem o mesmo tamanho para ZIP, 7z e TAR.GZ e para cada compressão (#227): a altura já reserva o texto mais longo de cada linha.
             dialog.LineReserve = new Dictionary<string, IReadOnlyList<string>>
             {
-                ["Arquivo"] = [plan.BaseName + CompressionRequest.Extension(CompressionFormat.TarGZip) + numbered],
-                ["Formato"] = [.. Enum.GetValues<CompressionFormat>().Select(FormatDescription)],
-                ["Compressão"] = [.. Enum.GetValues<CompressionStrength>().Select(StrengthLabel)],
+                ["Arquivo"] = [plan.BaseName + CompressFormats.Select(c => CompressionRequest.Extension(c.Value)).MaxBy(e => e.Length) + numbered],
+                ["Formato"] = [.. CompressFormats.Select(c => FormatDescription(c.Value))],
+                ["Compressão"] = [.. StrengthChoices.Select(c => c.Label)],
             };
             dialog.Lines =
             [
@@ -57,25 +57,24 @@ public sealed partial class AppController
             ];
         }
         Refill();
-        DialogOption? name = null, format = null, strength = null;
+        DialogOption? name = null;
         name = new DialogOption($"Nome: {plan.BaseName}…", DialogOptionKind.Toggle, () => AskCompressName(plan, newName =>
         {
             plan = plan with { BaseName = newName };
             name!.Label = $"Nome: {plan.BaseName}…";
             Refill();
         }), icon: ActionIcon.Rename);
-        format = new DialogOption(FormatLabel(plan.Format), DialogOptionKind.Toggle, () =>
+        // Formato e compressão têm várias alternativas escondidas: abrem o seletor (#261) em vez de alternar às cegas.
+        var format = ChoiceOption("Formato", () => plan.Format, CompressFormats, picked =>
         {
-            plan = plan with { Format = plan.Format switch { CompressionFormat.Zip => CompressionFormat.TarGZip, CompressionFormat.TarGZip => CompressionFormat.SevenZip, _ => CompressionFormat.Zip } };
-            format!.Label = FormatLabel(plan.Format);
+            plan = plan with { Format = picked };
             Refill();
-        }, icon: ActionIcon.Archive);
-        strength = new DialogOption(StrengthOption(plan.Strength), DialogOptionKind.Toggle, () =>
+        }, ActionIcon.Archive, "Compactar");
+        var strength = ChoiceOption("Compressão", () => plan.Strength, StrengthChoices, picked =>
         {
-            plan = plan with { Strength = (CompressionStrength)(((int)plan.Strength + 1) % 3) };
-            strength!.Label = StrengthOption(plan.Strength);
+            plan = plan with { Strength = picked };
             Refill();
-        }, icon: ActionIcon.Density);
+        }, ActionIcon.Density, "Compactar");
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Cancel);
         dialog.Options.Add(new DialogOption("Compactar", DialogOptionKind.Primary, () =>
         {
@@ -159,26 +158,27 @@ public sealed partial class AppController
             Refresh(Browser, result.Destination is { } d ? Path.GetFileName(d) : null);
     }
 
-    private static string FormatDescription(CompressionFormat format) => format switch
-    {
-        CompressionFormat.Zip => "ZIP — abre em qualquer Windows",
-        CompressionFormat.SevenZip => "7z — menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)",
-        _ => "TAR.GZ — comum em Linux/macOS",
-    };
+    /// <summary>
+    /// Formatos que Compactar cria, na ordem do seletor (#261). Um formato novo é uma linha a mais aqui (mais o que o cria em
+    /// <c>IArchiveService.CompressAsync</c>): o seletor, o texto do resumo e a reserva de altura do diálogo (#227) o pegam sozinhos.
+    /// </summary>
+    internal static IReadOnlyList<Choice<CompressionFormat>> CompressFormats { get; } =
+    [
+        new(CompressionFormat.Zip, "ZIP", "abre em qualquer Windows"),
+        new(CompressionFormat.TarGZip, "TAR.GZ", "comum em Linux/macOS"),
+        new(CompressionFormat.SevenZip, "7z", "menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)"),
+    ];
 
-    private static string FormatLabel(CompressionFormat format) => format switch
-    {
-        CompressionFormat.Zip => "Formato: ZIP",
-        CompressionFormat.SevenZip => "Formato: 7z",
-        _ => "Formato: TAR.GZ",
-    };
+    internal static IReadOnlyList<Choice<CompressionStrength>> StrengthChoices { get; } =
+    [
+        new(CompressionStrength.Fast, "rápida", "Comprime menos e termina antes."),
+        new(CompressionStrength.Normal, "normal", "O equilíbrio entre tamanho e tempo."),
+        new(CompressionStrength.Maximum, "máxima (mais lenta)", "O menor arquivo possível; demora mais."),
+    ];
 
-    private static string StrengthOption(CompressionStrength strength) => $"Compressão: {StrengthLabel(strength)}";
+    /// <summary>A linha "Formato" do resumo: o nome e o que o formato tem de bom.</summary>
+    private static string FormatDescription(CompressionFormat format) =>
+        CompressFormats.FirstOrDefault(c => c.Value == format) is { } choice ? $"{choice.Label} — {choice.Description}" : format.ToString();
 
-    private static string StrengthLabel(CompressionStrength strength) => strength switch
-    {
-        CompressionStrength.Fast => "rápida",
-        CompressionStrength.Maximum => "máxima (mais lenta)",
-        _ => "normal",
-    };
+    private static string StrengthLabel(CompressionStrength strength) => StrengthChoices.First(c => c.Value == strength).Label;
 }

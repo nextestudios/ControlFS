@@ -440,7 +440,7 @@ public static partial class ModalView
     /// vermelho, se perigosa), texto escuro em negrito e um pouco maior — nunca depende só da cor. Perigosa: vermelha e
     /// com o símbolo de alerta no fim da linha. Indisponível: esmaecida; focada, diz o motivo.
     /// </summary>
-    private static Border Row(string label, string glyph, bool focused, bool enabled, bool destructive, Action onTap, string? secondary = null, bool compact = false)
+    private static Border Row(string label, string glyph, bool focused, bool enabled, bool destructive, Action onTap, string? secondary = null, bool compact = false, string? trailing = null)
     {
         var fill = !focused ? Theme.Transparent : !enabled ? Theme.DisabledFill : destructive ? Theme.DangerFill : Theme.FocusFill;
         var ink = focused && enabled ? Theme.FocusText : !enabled ? Theme.TextDisabled : destructive ? Theme.Danger : Theme.Text;
@@ -482,6 +482,20 @@ public static partial class ModalView
             Grid.SetColumn(warning, 2);
             grid.Children.Add(warning);
         }
+        else if (trailing is { Length: > 0 })
+        {
+            // Marca em texto ao lado do ícone (a alternativa atual de um seletor, #261): nunca só a cor.
+            var mark = new TextBlock
+            {
+                Text = trailing,
+                FontSize = Theme.FontCaption,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = focused && enabled ? Theme.FocusText : Theme.Accent,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(mark, 2);
+            grid.Children.Add(mark);
+        }
 
         var row = new Border
         {
@@ -498,7 +512,7 @@ public static partial class ModalView
             row.RenderTransform = new ScaleTransform { ScaleX = Theme.ModalFocusScale, ScaleY = Theme.ModalFocusScale };
             KeepInView(row);
         }
-        AutomationProperties.SetName(row, label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty));
+        AutomationProperties.SetName(row, label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty) + (!destructive && trailing is { Length: > 0 } ? ", " + trailing : string.Empty));
         row.Tapped += (_, _) => onTap();
         return row;
     }
@@ -632,7 +646,7 @@ public static partial class ModalView
         var lineHeight = Math.Ceiling(Theme.FontCaption * 1.4);
         var description = new TextSlot(menu.AllDescriptions, text => new TextBlock { Text = text, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         UIElement? below = null;
-        if (menu.AllDescriptions.Any())
+        if (!menu.IsPicker && menu.AllDescriptions.Any())
         {
             description.Root.MinHeight = lineHeight;
             // Caixa própria, separada da lista que rola por trás: a descrição não parece parte dela.
@@ -753,7 +767,9 @@ public static partial class ModalView
     {
         var item = menu.Items[index];
         var focused = index == menu.FocusIndex;
-        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), compact: true);
+        // Seletor de opções (#261): a descrição de cada alternativa fica sob ela (todas à vista) e a atual leva a marca "atual".
+        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index),
+            menu.IsPicker ? item.Detail : null, compact: true, trailing: item.Value);
     }
 
     // ---------- Diálogos ----------

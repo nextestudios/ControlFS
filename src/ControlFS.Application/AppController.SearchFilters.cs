@@ -4,7 +4,7 @@ using ControlFS.Core.Actions;
 namespace ControlFS.Application;
 
 /// <summary>
-/// Filtros da busca (#47): Norte nos resultados abre os filtros; Sul liga/desliga um tipo ou avança o tamanho/data, e o
+/// Filtros da busca (#47): Norte nos resultados abre os filtros; Sul liga/desliga um tipo ou abre o seletor do tamanho/data, e o
 /// menu continua aberto no mesmo item. Os filtros valem para a sessão (também nas próximas buscas) e são aplicados aos
 /// resultados já encontrados, sem refazer a busca.
 /// </summary>
@@ -25,18 +25,28 @@ public sealed partial class AppController
                 () => ApplySearchFilter(pane, search, filter with { Types = filter.Types ^ type }, index),
                 Detail: on ? "Filtrando por este tipo" : null, Icon: ActionIcon.Filter, Section: "Tipo"));
         }
+        MenuModal? filters = null;
+        // Tamanho e data têm várias faixas escondidas: abrem o seletor (#261). O menu de filtros fica por baixo e, ao escolher, é
+        // substituído por outro com o valor novo (Voltar no seletor volta a ele sem mudar nada).
         var sizeIndex = items.Count;
-        items.Add(new MenuItem($"Tamanho: {SearchFilter.SizeName(filter.Size)}",
-            () => ApplySearchFilter(pane, search, filter with { Size = Next(filter.Size) }, sizeIndex), Detail: "Sul troca a faixa.", Icon: ActionIcon.Sort, Section: "Tamanho e data"));
+        items.Add(ChoiceRow("Tamanho", filter.Size, SearchSizeChoices, size =>
+        {
+            if (filters is not null) CloseModal(filters);
+            ApplySearchFilter(pane, search, filter with { Size = size }, sizeIndex);
+        }, ActionIcon.Sort, section: "Tamanho e data", detail: "Faixa de tamanho dos resultados.", context: "Filtros"));
         var dateIndex = items.Count;
-        items.Add(new MenuItem($"Modificado: {SearchFilter.DateName(filter.Date)}",
-            () => ApplySearchFilter(pane, search, filter with { Date = Next(filter.Date) }, dateIndex), Detail: "Sul troca o período.", Icon: ActionIcon.Recent, Section: "Tamanho e data"));
+        items.Add(ChoiceRow("Modificado", filter.Date, SearchDateChoices, date =>
+        {
+            if (filters is not null) CloseModal(filters);
+            ApplySearchFilter(pane, search, filter with { Date = date }, dateIndex);
+        }, ActionIcon.Recent, section: "Tamanho e data", detail: "Período da última modificação.", context: "Filtros"));
         var clearIndex = items.Count;
         items.Add(new MenuItem("Limpar filtros", () => ApplySearchFilter(pane, search, SearchFilter.None, clearIndex),
             filter.IsActive ? null : "Nenhum filtro ativo.", Icon: ActionIcon.ClearFilter, Section: "Busca"));
         items.Add(new MenuItem("Outras ações da busca…", () => ShowSearchMenu(pane, search), Detail: "Mostrar na pasta, nova busca, subpastas, propriedades.", Icon: ActionIcon.Search, Section: "Busca"));
         var visible = search.VisibleResults().Count();
-        PushModal(new MenuModal($"Filtros ({visible} de {search.ResultCount})", items) { Icon = ActionIcon.Filter, FocusIndex = Math.Clamp(focus, 0, items.Count - 1) });
+        filters = new MenuModal($"Filtros ({visible} de {search.ResultCount})", items) { Icon = ActionIcon.Filter, FocusIndex = Math.Clamp(focus, 0, items.Count - 1) };
+        PushModal(filters);
     }
 
     /// <summary>Guarda o filtro na sessão e refiltra os resultados guardados (a busca em andamento continua).</summary>
@@ -48,9 +58,9 @@ public sealed partial class AppController
         ShowSearchFilters(pane, search, reopenAt);
     }
 
-    private static T Next<T>(T value) where T : struct, Enum
-    {
-        var values = Enum.GetValues<T>();
-        return values[(Array.IndexOf(values, value) + 1) % values.Length];
-    }
+    private static IReadOnlyList<Choice<SearchSizeFilter>> SearchSizeChoices { get; } =
+        [.. Enum.GetValues<SearchSizeFilter>().Select(v => new Choice<SearchSizeFilter>(v, SearchFilter.SizeName(v)))];
+
+    private static IReadOnlyList<Choice<SearchDateFilter>> SearchDateChoices { get; } =
+        [.. Enum.GetValues<SearchDateFilter>().Select(v => new Choice<SearchDateFilter>(v, SearchFilter.DateName(v)))];
 }

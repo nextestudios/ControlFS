@@ -69,6 +69,36 @@ public sealed class Driver(AppController app)
         Press(InputAction.Confirm);
     }
 
+    /// <summary>
+    /// Ajuste com várias alternativas (#261): abre o seletor da linha <paramref name="labelStart"/> (do Menu ou de Configurações),
+    /// escolhe <paramref name="choice"/> só com setas e Confirmar e volta ao menu de onde saiu; quem começou no Menu fecha
+    /// Configurações no fim, como <see cref="ChooseMenu"/>.
+    /// </summary>
+    public async Task ChoosePick(string labelStart, string choice)
+    {
+        var enteredFromMenu = App.TopModal is MenuModal { Title: "Menu" };
+        await ChooseMenu(labelStart);
+        await PickInPicker(choice);
+        if (enteredFromMenu && App.TopModal is MenuModal { Title: "Configurações" }) Press(InputAction.Back);
+    }
+
+    /// <summary>Opção de diálogo com várias alternativas (Compactar: Formato; Renomear em lote: Modo): abre o seletor e escolhe.</summary>
+    public async Task PickOption(DialogModal dialog, string optionLabelStart, string choice)
+    {
+        ChooseOption(dialog, optionLabelStart);
+        await PickInPicker(choice);
+    }
+
+    private async Task PickInPicker(string choice)
+    {
+        var picker = await WaitMenu();
+        Assert.True(picker.IsPicker, $"Esperava um seletor de opções, veio o menu \"{picker.Title}\".");
+        var index = picker.Items.ToList().FindIndex(i => i.Label == choice);
+        Assert.True(index >= 0, $"Alternativa \"{choice}\" ausente: {string.Join(" | ", picker.Items.Select(i => i.Label))}");
+        FocusMenu(picker, index);
+        Press(InputAction.Confirm);
+    }
+
     private static int IndexOf(MenuModal menu, string labelStart) => menu.Items.ToList().FindIndex(i => i.Label.StartsWith(labelStart, StringComparison.Ordinal));
 
     /// <summary>

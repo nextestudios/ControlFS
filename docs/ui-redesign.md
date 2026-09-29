@@ -178,9 +178,10 @@ Inventory (every modal type; the render report proves the rule for the marked on
 
 | Modal | Class | Height | Proof |
 |---|---|---|---|
-| Menu (Início), item actions, path menu, drive/tab/operation menus, picker menu, "Locais" | Medium (with grid) / Compact | reserved description area; body scrolls | Screens `4`/`4a` (group `menu-app`), `m1`/`m1b` (`menu-actions`) |
+| Option picker (#261: Formato, Compressão, Tema, Destaque, Ordenar por, Legendas, Tamanho, Modo…) | Medium | every choice and its description always visible (no description area, no per-focus growth); the current one is marked | Screens `p1`/`p1b` (group `picker-theme`, width and height), `p3`/`p3b` (`picker-format`), all pickers same width (`picker-width`), `p1c`/`p3c` (the modal underneath returns at its size) |
+| Menu (Início), item actions, path menu, drive/tab/operation menus, folder picker menu, "Locais" | Medium (with grid) / Compact | reserved description area; body scrolls | Screens `4`/`4a` (group `menu-app`), `m1`/`m1b` (`menu-actions`) |
 | Configurações | Medium | reserved description area; tiles and rows measure bold | Screens `4b`–`4e` (group `settings`: tile, long row, long value, wrapped label) |
-| Compactar (ZIP / TAR.GZ / 7z) | Standard | `LineReserve`: identical for every format and compression | Screens `q1`, `q1b`, `q1c` (group `compress`, width and height) |
+| Compactar (ZIP / TAR.GZ / 7z) | Standard | `LineReserve`: identical for every format and compression | Screens `q1`, `q1b`, `q1c`, `p3c` (group `compress`, width and height) |
 | Extrair (summary) | Standard | `LineReserve` for the destination | Screens `m3`/`m3b` (group `extract-summary`) |
 | Confirmations (delete, exit, run, terminal, unmount, discard…) | Compact | content only; long names wrap | Screens `m2`/`m2b`/`q2` (group `confirm-delete`, width) |
 | Results, conflict, batch, history and operation details, errors, disk usage, "Continuar o vídeo?" | Standard (Compact when short) | content only | Screens `m5b`, `m5c`, `m7` |
@@ -200,6 +201,32 @@ The render harness (`--render-screens`) records the panel size of every capture 
 (`FALHA: … mudou de tamanho`, and `TAMANHO DIFERENTE` in `report.txt`) when two captures of the same group and target differ by
 more than 1 px in width (and in height where the group asserts it: `menu-app`, `menu-actions`, `settings`, `compress`,
 `extract-summary`, `keyboard-password`; confirmations compare width only because different names wrap differently).
+
+### Option pickers (#261)
+
+One pattern for every value with several alternatives that the row hides: activating the row opens a **picker** on top of the
+current modal (`MenuModal` with `IsPicker`; no third modal type): every alternative is listed with an optional one-line
+description under it (all visible at once), the current one marked with a filled radio icon **and** the text "atual" (never
+color alone), the focus starts on the current one (`SafeInitialFocus`), confirming applies and returns to the modal underneath
+exactly as it was (state and focus; the picker is a separate modal on the stack, so nothing underneath is rebuilt) and Back
+returns without changing anything. Keyboard, mouse (click a row), controller and Narrator ("Escolha: Formato", "ZIP, …, opção
+1 de 3, selecionada") come from the menu machinery; the footer prompts say **Escolher** and **Cancelar**.
+
+API (`AppController.Choices.cs`): `Choice<T>(Value, Label, Description?)`, `ChoiceRow(label, current, choices, onPick, icon, …)`
+for menus (Configurações, filters) and `ChoiceOption(label, () => current, choices, onPick, icon)` for dialogs (Compress,
+batch rename). A new alternative is one more `Choice` in the declaring list: Compress formats live in
+`AppController.CompressFormats` (the picker, the summary text and the height reservation all read it), so a new format is one
+added line.
+
+| Where | Pickers | Stays one press |
+|---|---|---|
+| Compactar | Formato, Compressão | Nome (keyboard), Compactar |
+| Configurações | Exibição, Densidade da lista, Tema, Cor de destaque, Ordenar por, Confirmar com, Legendas, Fluidez | Ordem, Painel de detalhes, Itens ocultos, Status do Git, Tela cheia, Busca em subpastas, Recentes, Restaurar abas, Sugestões do teclado, Segundo plano, Mira por giroscópio (on/off or symmetric two-way toggles); Controle ativo, Teste de controles, Controles sem perfil, Atualizações (they open their own screen) |
+| Filtros da busca | Tamanho, Modificado | Tipos (checkboxes) |
+| Renomear em lote | Modo, Converter para | Dígitos (1–6, a stepper), text fields |
+
+The welcome (onboarding) keeps its own inline choices (one press advances the value; it is a full-screen flow with the
+tutorial state machine watching it).
 
 ## Regression matrix
 
@@ -318,17 +345,18 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Colar, Nova pasta, Atualizar, Ir para pasta acima…, Ir para caminho… | `ClipboardJourneyTests`, `JourneyTests::Vertical_journey_…`, `GoToPathJourneyTests` |
 | Configurações (grouped: Exibição, Busca e privacidade, Controles, ControlFS; toggles keep it open) | `ModalSystemJourneyTests::Settings_live_in_Configuracoes_…`; Screens `4b-settings` |
 | Settings wording (UX audit): values are states ("ligado/desligado", "visíveis/escondidos", "incluídas/ignoradas"), one label per setting at every size ("Painel de detalhes: visível/oculto"); the caption under a focused tile explains it (`MenuModal.TileCaption`) instead of repeating the value | `ModalSystemJourneyTests::Settings_grids_per_section_…` |
-| → Configurações: Ordenar por, Ordem | `StateTests` (sorting), `ListModeJourneyTests`; Manual |
+| → Configurações: Ordenar por (picker), Ordem | `StateTests` (sorting), `ListModeJourneyTests`, `OptionPickerJourneyTests`; Manual |
 | → Configurações: Busca em subpastas | `SearchJourneyTests` |
 | → Configurações: Recentes: ligado/desligado | `RecentsJourneyTests` |
 | → Configurações: Itens ocultos: visíveis/escondidos | Manual "Lista: estados e densidade (#28)" |
-| → Configurações: Exibição: lista/grade | `GridViewJourneyTests` |
-| → Configurações: Densidade da lista | `DensityJourneyTests` |
+| → Configurações: Exibição: lista/grade (picker) | `GridViewJourneyTests`, `OptionPickerJourneyTests` |
+| → Configurações: Densidade da lista (picker) | `DensityJourneyTests` |
+| Option pickers (#261): every choice listed with the current one marked (icon + text), focus on the current, confirm applies and returns to the previous modal with its state and focus, Back changes nothing, mouse and Narrator, one-press toggles kept | Compactar (Formato, Compressão), Configurações, Filtros da busca, Renomear em lote | South / click; Back | `OptionPickerJourneyTests` (4), `ShellAndCompressJourneyTests::Format_picker_…`, `SearchFilterJourneyTests::Size_and_date_filters_open_a_picker_…`; Screens `p1`–`p3c`; Manual "Seletor de opções (#261)" |
 | Operações (N ativas) → operation → Pausar/Continuar/Cancelar operação/Tentar de novo; Limpar histórico… | `PauseJourneyTests`, `FileOperationJourneyTests::Retry_…` (2), `JourneyTests::Retry_failed_items_of_a_cancelled_extraction_…`, `HistoryJourneyTests` (2) |
 | Desfazer / Refazer | `UndoJourneyTests` (4) |
-| → Configurações: Confirmar com | `PromptJourneyTests`, `InputRouterTests` |
-| → Configurações: Legendas | `PromptJourneyTests`, `ControllerFamilyTests` |
-| → Configurações: Fluidez (máxima / economia) | Manual "Fluidez máxima (leitura por quadro)" |
+| → Configurações: Confirmar com (picker) | `PromptJourneyTests`, `InputRouterTests`, `OptionPickerJourneyTests` |
+| → Configurações: Legendas (picker) | `PromptJourneyTests`, `ControllerFamilyTests`, `OptionPickerJourneyTests` |
+| → Configurações: Fluidez (picker: máxima / economia) | `OptionPickerJourneyTests`; Manual "Fluidez máxima (leitura por quadro)" |
 | → Configurações: Leve em segundo plano (tile "Segundo plano", group Controles, on by default): minimized/inactive window → BelowNormal + EcoQoS, controllers only watched for connections (1 s, SDL input events off), drive polling paused, memory trimmed once after 5 s; activation restores; media playing keeps normal priority. No controller connected → 250 ms poll (no 8 ms ticker) | `BackgroundModePolicyTests` (2), `InputCadenceTests` (2); Smoke "Measure performance" (`docs/performance.md`); Manual "Leve em segundo plano" |
 | → Configurações: Teste de controles…, Controle ativo, Controles sem perfil… | `ControllerTestJourneyTests`, `ActiveControllerJourneyTests`, `ControllerMappingJourneyTests` |
 | → Configurações: Atualizações (Instalar e reiniciar, Verificar agora, automático, instalar ao sair, pré-lançamento) | `UpdateFlowTests` (6), `UpdateServiceTests` (12) |
@@ -348,7 +376,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Batch rename (#71): Y Operações (N) → Renomear em lote…; numbering, find/replace, prefix/suffix, case; live preview = result; conflicts block before disk; Start applies; undoable | `BatchRenameJourneyTests` (2) |
 | Create folder (accented, invalid name keeps keyboard with the reason) | `JourneyTests::Vertical_journey_…`, `::Invalid_folder_name_keeps_keyboard_open_with_reason` |
 | Clipboard copy/cut/paste across folders and tabs | `ClipboardJourneyTests` (2) |
-| Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67; same panel size for every format, #227) | `ShellAndCompressJourneyTests::Compress_…` (3), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
+| Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" and "Compressão" open option pickers, #261, ZIP / TAR.GZ / 7z, #67; same panel size for every format, #227) | `ShellAndCompressJourneyTests::Compress_…` (3), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
 | Operations center: progress, cancel, results, errors, retry, history persisted without passwords; Menu → Operações grouped **Em andamento** (state icon, %, items; refreshed in place while open) / **Histórico** | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text and progress bar (Manual "Avisos e andamento") |
 | Responsive UI and consistent progress (#257): progress flood is coalesced (no freeze after a copy), % / items / bytes / speed / ETA rules, indeterminate = activity only, cancel, Cut shows no transfer until Paste, compress/extract totals, live details | `ProgressJourneyTests` (9), `ProgressEstimatorTests` (6), `FileOperationIntegrationTests::Cross_volume_move_of_a_large_file_…`; Manual "Andamento e resposta (#257)" |
 | Clean success of copy/move/delete = toast ("N itens copiados · Menu → Desfazer"), no dialog; warnings/failures/cancel keep the result dialog | `FileOperationJourneyTests::Copy_to_a_folder_…`, `UndoJourneyTests`, `PauseJourneyTests`, `DualPaneJourneyTests`, `ClipboardJourneyTests` (`Driver.WaitStatus`); Screens `3-folder-compact`, `3b-folder-grid-compact` (toast) |
