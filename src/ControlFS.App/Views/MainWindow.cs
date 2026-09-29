@@ -153,7 +153,7 @@ public sealed class MainWindow : Window
         };
         if (dataDirectory is null)
         {
-            _phone = new Infrastructure.Remote.PhoneLinkServer();
+            _phone = new Infrastructure.Remote.PhoneLinkServer(AppLog.Info);
             _app.AttachPhoneLink(_phone);
         }
         var inputStarted = startup.ElapsedMilliseconds;

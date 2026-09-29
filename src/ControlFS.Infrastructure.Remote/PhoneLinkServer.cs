@@ -27,18 +27,27 @@ public sealed class PhoneLinkServer : IPhoneLink
     private const int MaxFrameBytes = PhoneProtocol.MaxMessageBytes + PhoneCrypto.Overhead;
 
     private readonly Func<IReadOnlyList<IPAddress>> _addresses;
+    private readonly Action<string>? _trace;
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private readonly Lock _gate = new();
     private ActiveSession? _active;
     private int _lastSession;
     private (bool Keyboard, bool Locked) _ui;
 
-    public PhoneLinkServer() : this(LanAddresses.Discover)
+    /// <param name="trace">
+    /// Diagnóstico para o log local (#259): uma linha por recusa ou falha, só com código curto, IP privado do celular e
+    /// número da sessão; nunca chave, id de sessão, URL ou conteúdo.
+    /// </param>
+    public PhoneLinkServer(Action<string>? trace = null) : this(LanAddresses.Discover, trace)
     {
     }
 
     /// <summary>Testes: escuta em endereços escolhidos (ex.: 127.0.0.1) em vez das redes locais do PC.</summary>
-    internal PhoneLinkServer(Func<IReadOnlyList<IPAddress>> addresses) => _addresses = addresses;
+    internal PhoneLinkServer(Func<IReadOnlyList<IPAddress>> addresses, Action<string>? trace = null)
+    {
+        _addresses = addresses;
+        _trace = trace;
+    }
 
     public event Action<PhoneLinkEvent>? Event;
 
@@ -72,6 +81,7 @@ public sealed class PhoneLinkServer : IPhoneLink
         var active = new ActiveSession(Interlocked.Increment(ref _lastSession), new PhoneSession(Now), listener, host, port, key, phoneToPc, pcToPhone,
             "/" + Base64Url.Encode(sessionId));
         lock (_gate) _active = active;
+        Trace(active.Id, $"session started address={address} port={port}");
         _ = AcceptLoopAsync(active);
         _ = WatchAsync(active);
         return new PhonePairing(active.Id, $"http://{host}{active.Path}#k={Base64Url.Encode(key)}", address.ToString(), index, addresses.Count, PhoneSession.PairingLifetime);
@@ -152,7 +162,20 @@ public sealed class PhoneLinkServer : IPhoneLink
         if (active is not null) End(active, PhoneEndReason.AppClosing);
     }
 
-    private void Raise(PhoneLinkEvent e) => Event?.Invoke(e);
+    private void Raise(PhoneLinkEvent e)
+    {
+        if (e is PhoneEnded ended) Trace(ended.Session, $"session ended reason={ended.Reason}");
+        Event?.Invoke(e);
+    }
+
+    private void Trace(int session, string message) => _trace?.Invoke($"phone: #{session} {message}");
+
+    /// <summary>Uma conexão foi recusada ou falhou: vai para o log local e para o diálogo do PC (a sessão segue esperando).</summary>
+    private void Attempt(ActiveSession active, PhoneAttemptStage stage, string code, IPAddress? peer = null)
+    {
+        Trace(active.Id, $"{stage} code={code}" + (peer is null ? string.Empty : $" peer={(peer.IsIPv4MappedToIPv6 ? peer.MapToIPv4() : peer)}"));
+        Raise(new PhoneAttempt(active.Id, stage, code));
+    }
 
     /// <summary>
     /// Encerra a sessão uma vez: para de escutar na hora (antes de avisar a interface), avisa o celular do motivo, fecha
@@ -251,29 +274,55 @@ public sealed class PhoneLinkServer : IPhoneLink
             using (client)
             {
                 client.NoDelay = true;
-                if (client.Client.RemoteEndPoint is not IPEndPoint remote || !IsAllowedPeer(remote.Address, active)) return;
+                if (client.Client.RemoteEndPoint is not IPEndPoint remote || !IsAllowedPeer(remote.Address, active))
+                {
+                    Trace(active.Id, "Refused code=peer-not-local");
+                    return;
+                }
                 var stream = client.GetStream();
                 HttpRequestHead? head;
+                var headRejected = HttpParseStatus.Incomplete;
                 using (var headTimeout = CancellationTokenSource.CreateLinkedTokenSource(active.Cancellation))
                 {
                     headTimeout.CancelAfter(HeadTimeout);
-                    head = await HttpRequestParser.ReadAsync(stream, headTimeout.Token).ConfigureAwait(false);
+                    head = await HttpRequestParser.ReadAsync(stream, headTimeout.Token, status => headRejected = status).ConfigureAwait(false);
                 }
                 if (head is null)
                 {
-                    await RespondAsync(stream, "400 Bad Request", active.Cancellation).ConfigureAwait(false);
+                    // Conexão vazia ou fechada sem pedido (pré-conexão do navegador) não é falha; pedido que o leitor recusou é.
+                    if (headRejected != HttpParseStatus.Incomplete)
+                    {
+                        Attempt(active, PhoneAttemptStage.Refused, headRejected == HttpParseStatus.TooLarge ? "head-too-large" : "head-invalid", remote.Address);
+                        await RespondAsync(stream, "400 Bad Request", active.Cancellation).ConfigureAwait(false);
+                    }
                     return;
                 }
                 // Host exato (IP:porta): recusa nomes de DNS apontados para o PC (DNS rebinding).
                 if (!string.Equals(head.Header("Host"), active.Host, StringComparison.Ordinal))
                 {
+                    Attempt(active, PhoneAttemptStage.Refused, "host-mismatch", remote.Address);
                     await RespondAsync(stream, "421 Misdirected Request", active.Cancellation).ConfigureAwait(false);
                     return;
                 }
                 if (head.Target == active.Path)
                 {
-                    if (active.Session.CanServePage(Now)) await WritePageAsync(stream, active).ConfigureAwait(false);
-                    else await RespondAsync(stream, "410 Gone", active.Cancellation, "Este QR Code não vale mais. Gere outro no ControlFS (Menu → Conectar celular).").ConfigureAwait(false);
+                    if (active.Session.CanServePage(Now))
+                    {
+                        Attempt(active, PhoneAttemptStage.PageOpened, "page", remote.Address);
+                        await WritePageAsync(stream, active).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        Attempt(active, PhoneAttemptStage.Refused, "page-gone", remote.Address);
+                        await RespondAsync(stream, "410 Gone", active.Cancellation, GoneText).ConfigureAwait(false);
+                    }
+                    return;
+                }
+                // Sonda da página: o celular pergunta se o QR Code ainda vale para separar "PC fora do alcance" de "QR vencido".
+                if (head.Target == active.Path + "/ping")
+                {
+                    if (active.Session.CanServePage(Now)) await RespondAsync(stream, "204 No Content", active.Cancellation, empty: true).ConfigureAwait(false);
+                    else await RespondAsync(stream, "410 Gone", active.Cancellation, GoneText).ConfigureAwait(false);
                     return;
                 }
                 if (head.Target == active.Path + "/ws" && HttpRequestParser.IsWebSocketUpgrade(head))
@@ -281,6 +330,7 @@ public sealed class PhoneLinkServer : IPhoneLink
                     await RunChannelAsync(active, stream, head, remote.Address).ConfigureAwait(false);
                     return;
                 }
+                Attempt(active, PhoneAttemptStage.Refused, head.Target == active.Path + "/ws" ? "not-websocket-upgrade" : "unknown-route", remote.Address);
                 await RespondAsync(stream, "404 Not Found", active.Cancellation).ConfigureAwait(false);
             }
         }
@@ -301,20 +351,25 @@ public sealed class PhoneLinkServer : IPhoneLink
         return LanAddresses.IsPrivate(peer) || (IPAddress.IsLoopback(peer) && IPAddress.IsLoopback(((IPEndPoint)active.Listener.LocalEndpoint).Address));
     }
 
+    private const string GoneText = "Este QR Code não vale mais. Gere outro no ControlFS (Menu → Conectar celular).";
+
     private async Task RunChannelAsync(ActiveSession active, NetworkStream stream, HttpRequestHead head, IPAddress peer)
     {
         if (!string.Equals(head.Header("Origin"), "http://" + active.Host, StringComparison.Ordinal))
         {
+            Attempt(active, PhoneAttemptStage.Refused, "origin-mismatch", peer);
             await RespondAsync(stream, "403 Forbidden", active.Cancellation).ConfigureAwait(false);
             return;
         }
         if (HttpRequestParser.WebSocketAccept(head.Header("Sec-WebSocket-Key")) is not { } accept)
         {
+            Attempt(active, PhoneAttemptStage.Refused, "websocket-key-invalid", peer);
             await RespondAsync(stream, "400 Bad Request", active.Cancellation).ConfigureAwait(false);
             return;
         }
         if (!active.Session.TryBeginHandshake(Now))
         {
+            Attempt(active, PhoneAttemptStage.Refused, "channel-busy-or-expired", peer);
             await RespondAsync(stream, "409 Conflict", active.Cancellation, "Outro celular já usou este QR Code, ou ele expirou.").ConfigureAwait(false);
             return;
         }
@@ -341,6 +396,7 @@ public sealed class PhoneLinkServer : IPhoneLink
             }
             if (hello is null || !opener.TryOpen(hello, out var plaintext) || !PhoneProtocol.TryParse(plaintext, out var message) || message.Kind != PhoneMessageKind.Hello)
             {
+                Attempt(active, PhoneAttemptStage.HandshakeFailed, hello is null ? "hello-missing" : "hello-invalid", peer);
                 FailHandshake(active);
                 return;
             }
@@ -378,7 +434,11 @@ public sealed class PhoneLinkServer : IPhoneLink
         catch (Exception ex) when (ex is WebSocketException or IOException or OperationCanceledException or ObjectDisposedException)
         {
             if (authenticated) End(active, PhoneEndReason.PhoneLeft);
-            else FailHandshake(active);
+            else
+            {
+                Attempt(active, PhoneAttemptStage.HandshakeFailed, ex is OperationCanceledException ? "hello-timeout" : "channel-dropped", peer);
+                FailHandshake(active);
+            }
         }
     }
 
@@ -427,7 +487,7 @@ public sealed class PhoneLinkServer : IPhoneLink
             + "Content-Type: text/html; charset=utf-8\r\n"
             + $"Content-Length: {page.Length}\r\n"
             + "Cache-Control: no-store\r\n"
-            + $"Content-Security-Policy: default-src 'none'; script-src '{CompanionPage.ScriptHash}'; style-src 'unsafe-inline'; connect-src ws://{active.Host}; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n"
+            + $"Content-Security-Policy: default-src 'none'; script-src '{CompanionPage.ScriptHash}'; style-src 'unsafe-inline'; connect-src ws://{active.Host} http://{active.Host}; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\n"
             + "Referrer-Policy: no-referrer\r\n"
             + "X-Content-Type-Options: nosniff\r\n"
             + "X-Frame-Options: DENY\r\n"
@@ -436,9 +496,9 @@ public sealed class PhoneLinkServer : IPhoneLink
         await stream.WriteAsync(page, active.Cancellation).ConfigureAwait(false);
     }
 
-    private static async Task RespondAsync(NetworkStream stream, string status, CancellationToken cancellation, string? text = null)
+    private static async Task RespondAsync(NetworkStream stream, string status, CancellationToken cancellation, string? text = null, bool empty = false)
     {
-        var body = Encoding.UTF8.GetBytes(text ?? status);
+        var body = empty ? [] : Encoding.UTF8.GetBytes(text ?? status);
         var head = $"HTTP/1.1 {status}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {body.Length}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
         await stream.WriteAsync(Encoding.ASCII.GetBytes(head), cancellation).ConfigureAwait(false);
         await stream.WriteAsync(body, cancellation).ConfigureAwait(false);

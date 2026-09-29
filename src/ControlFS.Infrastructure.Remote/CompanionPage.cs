@@ -18,9 +18,16 @@ internal static class CompanionPage
     /// <summary>'sha256-…' do conteúdo do único &lt;script&gt; da página.</summary>
     public static string ScriptHash => Page.Value.Hash;
 
-    private static (byte[], string) Build()
+    private static (byte[], string) Build() => Compose(Read("ControlFS.Companion.phone.html"), Read("ControlFS.Companion.noble.js"));
+
+    /// <summary>
+    /// Monta a página com a biblioteca dentro do script. Quebras de linha viram LF: o navegador normaliza CRLF para LF
+    /// ao ler o HTML e calcula o hash do script sobre o texto normalizado, então um recurso embutido com CRLF (checkout
+    /// do Git no Windows com autocrlf) teria hash diferente do declarado na CSP e o script seria bloqueado (#259).
+    /// </summary>
+    internal static (byte[] Html, string Hash) Compose(string page, string library)
     {
-        var html = Read("ControlFS.Companion.phone.html").Replace(LibraryMarker, Read("ControlFS.Companion.noble.js"), StringComparison.Ordinal);
+        var html = page.Replace(LibraryMarker, library, StringComparison.Ordinal).Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
         var start = html.IndexOf("<script>", StringComparison.Ordinal) + "<script>".Length;
         var end = html.IndexOf("</script>", start, StringComparison.Ordinal);
         if (start < "<script>".Length || end < 0 || html.IndexOf("<script", end, StringComparison.Ordinal) >= 0)

@@ -21,6 +21,24 @@ public sealed record PhoneCommand(int Session, PhoneMessage Message) : PhoneLink
 
 public sealed record PhoneEnded(int Session, PhoneEndReason Reason) : PhoneLinkEvent(Session);
 
+public enum PhoneAttemptStage
+{
+    /// <summary>Um celular abriu a página do QR Code (ainda falta o canal seguro).</summary>
+    PageOpened,
+
+    /// <summary>Um celular pediu a página ou o canal e foi recusado (endereço, origem, cabeçalho, QR Code vencido).</summary>
+    Refused,
+
+    /// <summary>O celular abriu o canal mas não provou ter a chave a tempo (ou mandou algo inválido). Pode tentar de novo.</summary>
+    HandshakeFailed,
+}
+
+/// <summary>
+/// Andamento sem consequência para a sessão (ela continua esperando): mostra no PC que um celular chegou até onde e por
+/// que falhou. <see cref="Code"/> é um código curto de diagnóstico (nunca chave, id de sessão ou conteúdo).
+/// </summary>
+public sealed record PhoneAttempt(int Session, PhoneAttemptStage Stage, string Code) : PhoneLinkEvent(Session);
+
 /// <summary>
 /// Canal local e cifrado com um celular (sem nuvem, sem conta, sem retransmissor). Nada escuta na rede fora de uma
 /// sessão iniciada pelo usuário; um celular por vez.

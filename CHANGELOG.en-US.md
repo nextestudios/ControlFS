@@ -6,6 +6,11 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 ### Improvements
 - **More from the team in the main Menu** (#260): the Menu has a **Mais da equipe** entry that opens the list of the team's official apps (name, logo, what it does, platform and the button that opens the site in the browser). The catalog grows in two-column rows as the team publishes more apps, and an empty catalog shows just a notice and **Fechar**. Nothing is downloaded, installed or launched on its own.
 
+### Fixed
+- **Phone pairing stuck on "Connecting to PC…" (#259):** the phone page's script is allowed by a hash in the Content-Security-Policy, and a build whose embedded page had Windows line endings (CRLF) produced a hash the browser never matched, so the browser blocked the script and the page stayed on its first text with no error. The page is now assembled with LF endings (the way browsers hash it), and a `.gitattributes` rule keeps the phone page files LF. Reproduced with the real server and WebKit (Safari's engine) and Chromium; not verified on a physical iPhone.
+- **The phone page always ends in a clear state:** 12 s to open the secure channel and 10 s to verify it, then a message that tells apart "PC unreachable" (same Wi-Fi, guest networks, Firewall), "the QR code expired or was already used" (generate and scan a new one), "the PC answered but the secure check failed" and a **Try again** button while the QR code is still valid. While waiting for **Permitir** on the PC the page shows "Waiting for permission on the PC" with a countdown. A script that can't start in the browser now says so on screen.
+- **The PC dialog follows the phone:** the QR code dialog shows "A phone opened the page" or why a phone that arrived was refused or failed the check (short reason code), and the local log (`startup.log`) records refusals with reason codes only (never keys, addresses of the QR code or content).
+
 ## [0.11.1-alpha.1]
 ### Performance
 - **Lower memory at rest:** two seconds after the first frame, with "Light in the background" on (the default), ControlFS returns what startup left over to Windows once (one compacting garbage collection and a working-set trim). In the CI measurement the working set at idle went from ~152 MB to ~18 MB and private bytes from ~60 MB to ~56 MB; pages the app uses come back on demand.
