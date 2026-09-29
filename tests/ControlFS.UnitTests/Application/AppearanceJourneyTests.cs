@@ -31,10 +31,10 @@ public class AppearanceJourneyTests : IDisposable
 
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Configurações");
-        await d.ChooseMenu("Tema: automático");
+        await d.ChoosePick("Tema", "escuro");
         Assert.Equal("Configurações", app.TopModal?.Title); // continua aberto para ver o resultado e seguir trocando
-        await d.ChooseMenu("Tema: escuro");
-        await d.ChooseMenu("Cor de destaque: ciano");
+        await d.ChoosePick("Tema", "claro");
+        await d.ChoosePick("Cor de destaque", "azul");
         Assert.Equal((ThemeMode.Light, AccentColor.Blue), (app.Settings.Theme, app.Settings.Accent));
         Assert.Equal((ThemeMode.Light, AccentColor.Blue), applied[^1]); // a janela recebe cada troca na hora
 

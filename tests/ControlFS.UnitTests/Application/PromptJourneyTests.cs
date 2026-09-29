@@ -48,13 +48,13 @@ public class PromptJourneyTests : IDisposable
 
         // Convenção "confirmar com o botão direito": troca comportamento E legenda.
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Confirmar com");
+        await d.ChoosePick("Confirmar com", "botão direito");
         Assert.Equal(ControllerButton.FaceEast, Prompt(app, InputAction.Confirm).Button);
         Assert.Equal(ControllerButton.FaceSouth, Prompt(app, InputAction.Back).Button);
 
         // Estilo fixado no menu vence a família detectada.
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Legendas"); // automáticas -> genéricas
+        await d.ChoosePick("Legendas", "genéricas");
         Assert.Equal(ControllerFamily.Generic, Prompt(app, InputAction.Confirm).Family);
 
         app.SetActiveController(null); // voltou ao teclado

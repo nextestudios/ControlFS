@@ -93,7 +93,7 @@ public class ShellAndCompressJourneyTests : IDisposable
         await d.ChooseMenu("Compactar 2 itens");
 
         var dialog = await d.WaitDialog("Compactar");
-        d.ChooseOption(dialog, "Formato: ZIP");  // alterna para TAR.GZ
+        await d.PickOption(dialog, "Formato", "TAR.GZ");
         Assert.Contains(dialog.Lines, l => l.Label == "Arquivo" && l.Value.EndsWith(".tar.gz", StringComparison.Ordinal));
         d.ChooseOption(dialog, "Compactar");
 
@@ -123,10 +123,10 @@ public class ShellAndCompressJourneyTests : IDisposable
         var size = dialog.Size;
         Assert.Equal(ModalSize.Standard, size);
         var formats = new List<string>();
-        for (var i = 0; i < 3; i++)
+        foreach (var format in new[] { "TAR.GZ", "7z", "ZIP" })
         {
+            await d.PickOption(dialog, "Formato", format);
             formats.Add(dialog.Lines.Single(l => l.Label == "Formato").Value);
-            d.ChooseOption(dialog, "Formato:");
             Assert.Equal(size, dialog.Size); // a largura vem da classe, não do formato em foco (#227)
         }
         Assert.Equal(3, formats.Distinct().Count());
@@ -134,6 +134,53 @@ public class ShellAndCompressJourneyTests : IDisposable
         Assert.All(formats, f => Assert.Contains(f, dialog.LineReserve!["Formato"]));
         Assert.Equal(3, dialog.LineReserve!["Compressão"].Count);
         Assert.Contains(dialog.LineReserve["Arquivo"], t => t.Contains("numerado", StringComparison.Ordinal));
+    });
+
+    [Fact]
+    public void Format_picker_lists_every_format_marks_the_current_and_returns_to_the_dialog_as_it_was() => UiContext.Run(async () =>
+    {
+        File.WriteAllText(_tmp.Sub("x.txt"), "x");
+        var (d, _) = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("x.txt");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Compactar…");
+        var dialog = await d.WaitDialog("Compactar");
+        d.ChooseOption(dialog, "Formato: ZIP");
+        var focusBefore = dialog.FocusIndex;
+
+        // Abre com todos os formatos, a atual marcada (ícone e texto) e uma descrição em cada um.
+        var picker = await d.WaitMenu();
+        Assert.True(picker.IsPicker);
+        Assert.Equal("Formato", picker.Title);
+        Assert.Equal(["ZIP", "TAR.GZ", "7z"], picker.Items.Select(i => i.Label));
+        Assert.All(picker.Items, i => Assert.False(string.IsNullOrEmpty(i.Detail)));
+        Assert.Equal(0, picker.FocusIndex);
+        Assert.Equal((ActionIcon.RadioOn, "atual"), (picker.Items[0].Icon, picker.Items[0].Value));
+        Assert.All(picker.Items.Skip(1), i => Assert.Equal((ActionIcon.RadioOff, (string?)null), (i.Icon, i.Value)));
+        Assert.Contains("opção 1 de 3, selecionada", d.App.DescribeFocus().Item, StringComparison.Ordinal);
+        d.Press(InputAction.NavigateDown);
+        Assert.Contains("opção 2 de 3", d.App.DescribeFocus().Item, StringComparison.Ordinal);
+        Assert.DoesNotContain("selecionada", d.App.DescribeFocus().Item, StringComparison.Ordinal);
+
+        // Voltar deixa tudo como estava.
+        d.Press(InputAction.Back);
+        Assert.Same(dialog, d.App.TopModal);
+        Assert.Equal((focusBefore, "Formato: ZIP"), (dialog.FocusIndex, dialog.Options[focusBefore].Label));
+
+        // Escolher aplica e volta ao diálogo, com o foco na mesma opção; 7z é alcançável e o arquivo ganha a extensão.
+        await d.PickOption(dialog, "Formato", "7z");
+        Assert.Same(dialog, d.App.TopModal);
+        Assert.Equal(("Formato: 7z", focusBefore), (dialog.Options[focusBefore].Label, dialog.FocusIndex));
+        Assert.Contains(dialog.Lines, l => l.Label == "Arquivo" && l.Value.EndsWith(".7z", StringComparison.Ordinal));
+
+        // A compressão também tem seletor, aberto na alternativa atual.
+        d.ChooseOption(dialog, "Compressão");
+        var strength = await d.WaitMenu();
+        Assert.Equal(["rápida", "normal", "máxima (mais lenta)"], strength.Items.Select(i => i.Label));
+        Assert.Equal(1, strength.FocusIndex);
+        d.Press(InputAction.Back);
+        Assert.Contains(dialog.Lines, l => l is { Label: "Compressão", Value: "normal" });
     });
 
     [Fact]

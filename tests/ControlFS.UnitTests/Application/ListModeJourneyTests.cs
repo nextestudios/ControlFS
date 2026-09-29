@@ -51,7 +51,7 @@ public class ListModeJourneyTests : IDisposable
 
         // Menu → Ordenar por / Ordem: a seta vai para a coluna escolhida e vira.
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Ordenar por");
+        await d.ChoosePick("Ordenar por", "tipo");
         Assert.Equal(SortField.Type, app.ListHeader.Sort!.Field);
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Ordem");

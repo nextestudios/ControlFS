@@ -31,6 +31,8 @@ public sealed partial class AppController
                 var listBefore = Enumerable.Range(0, menu.FocusIndex).Count(i => !menu.IsQuick(i));
                 var spot = grid is not null ? (menu.HasSectionGrids ? "bloco " : "ação rápida ") + Position(menu.FocusIndex - grid.Start, grid.Count)
                     : Position(listBefore, menu.Items.Count - menu.QuickCount);
+                if (menu.IsPicker) // "opção 2 de 3, selecionada" (#261)
+                    return new($"Escolha: {menu.Title}", $"{item.Label}{detail}, opção {menu.FocusIndex + 1} de {menu.Items.Count}{(menu.FocusIndex == menu.PickerCurrent ? ", selecionada" : string.Empty)}");
                 return new($"Menu {menu.Title}", $"{item.Label}{state}{detail}, {spot}");
             case DialogModal dialog:
                 var body = string.Join(" ", dialog.Lines.Select(l => $"{l.Label}: {l.Value}.").Append(dialog.Message ?? string.Empty).Where(t => t.Length > 0));

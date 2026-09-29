@@ -31,7 +31,7 @@ public class DensityJourneyTests : IDisposable
         // A pessoa volta para a confortável: nenhuma abertura seguinte no portátil muda isso.
         var d = new Driver(app);
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Densidade da lista: compacta");
+        await d.ChoosePick("Densidade da lista", "confortável");
         Assert.Equal(ListDensity.Comfortable, app.Settings.Density);
         var relaunched = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), store);
         relaunched.Start();
@@ -57,7 +57,7 @@ public class DensityJourneyTests : IDisposable
         Assert.Equal(ListDensity.Comfortable, app.Settings.Density);
 
         d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Densidade da lista: confortável");
+        await d.ChoosePick("Densidade da lista", "compacta");
         Assert.Equal(ListDensity.Compact, app.Settings.Density);
 
         // Novo "lançamento" com o mesmo armazenamento

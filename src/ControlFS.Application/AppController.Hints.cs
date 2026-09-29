@@ -56,7 +56,7 @@ public sealed partial class AppController
             case MenuModal menu:
                 // Item indisponível em foco: Confirmar só mostraria o motivo, que já aparece no item.
                 if (menu.Items.Count > 0 && menu.Items[menu.FocusIndex].IsEnabled) hints.Add(new(InputAction.Confirm, "Escolher"));
-                hints.Add(new(InputAction.Back, "Fechar"));
+                hints.Add(new(InputAction.Back, menu.IsPicker ? "Cancelar" : "Fechar"));
                 return hints;
             case KeyboardModal { IsBusy: true }:
                 return hints; // aguardando a validação do texto: nenhuma ação é aceita

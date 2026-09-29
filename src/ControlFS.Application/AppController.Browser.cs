@@ -625,27 +625,22 @@ public sealed partial class AppController
         var details = DetailsPanelVisible ? "visível" : "oculto";
         var hidden = Settings.ShowHidden ? "visíveis" : "escondidos";
         var subfolders = SearchIncludesSubfolders ? "incluídas" : "ignoradas";
-        var smoothness = Settings.SyncInputToDisplay ? "máxima" : "economia";
-        var theme = Settings.Theme == Core.Appearance.ThemeMode.System ? "automático" : ThemeName(Settings.Theme);
+        const string settingsContext = "Configurações";
         return
         [
-            new($"Exibição: {ViewName(Settings.View)}", ToggleView, Detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G).", Icon: ActionIcon.View, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Exibição", Value: ViewName(Settings.View)),
-            new($"Densidade da lista: {DensityName(Settings.Density)}", ToggleDensity,
-                Detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores.", Icon: ActionIcon.Density, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Densidade", Value: DensityName(Settings.Density)),
+            ChoiceRow("Exibição", Settings.View, ViewChoices, SetView, ActionIcon.View, section: view, placement: tile, shortLabel: "Exibição", context: settingsContext,
+                detail: "Lista ou grade de ícones grandes (também R3 ou Ctrl+G)."),
+            ChoiceRow("Densidade da lista", Settings.Density, DensityChoices, SetDensity, ActionIcon.Density, section: view, placement: tile, shortLabel: "Densidade", context: settingsContext,
+                detail: "Confortável: duas linhas, para TV. Compacta: uma linha com tipo, tamanho e data; na grade, blocos menores."),
             new($"Painel de detalhes: {details}", ToggleDetailsPanel,
                 Detail: $"Ícone, tipo, tamanho e datas do item em foco ao lado da {ViewName(Settings.View)}. A escolha vale para a {ViewName(Settings.View)} e fica salva.", Icon: ActionIcon.DetailsPane, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Detalhes", Value: details),
-            new($"Tema: {theme}", CycleTheme,
-                Detail: "Automático segue o modo de apps do Windows (Configurações → Personalização → Cores). Muda na hora.", Icon: ActionIcon.Theme, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Tema", Value: theme),
-            new($"Cor de destaque: {AccentName(Settings.Accent)}", CycleAccent,
-                Detail: "Cor do foco, do cursor e dos símbolos em destaque. Todas as opções mantêm o contraste nos dois temas.", Icon: ActionIcon.Accent, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Destaque", Value: AccentName(Settings.Accent)),
-            new($"Ordenar por: {SortLabel(sort.Field)}", () => pane.List.SetSort(sort with { Field = (SortField)(((int)sort.Field + 1) % 4) }),
-                inBrowser ? null : "Abra uma pasta primeiro.", Detail: "Critério da lista e da grade desta pasta: nome, tipo, tamanho ou data. Pastas vêm sempre primeiro.", Icon: ActionIcon.Sort, Section: view, KeepOpen: true,
-                Placement: tile, ShortLabel: "Ordenar", Value: SortLabel(sort.Field)),
+            ChoiceRow("Tema", Settings.Theme, ThemeChoices, SetTheme, ActionIcon.Theme, section: view, placement: tile, shortLabel: "Tema", context: settingsContext,
+                detail: "Automático segue o modo de apps do Windows (Configurações → Personalização → Cores). Muda na hora."),
+            ChoiceRow("Cor de destaque", Settings.Accent, AccentChoices, SetAccent, ActionIcon.Accent, section: view, placement: tile, shortLabel: "Destaque", context: settingsContext,
+                detail: "Cor do foco, do cursor e dos símbolos em destaque. Todas as opções mantêm o contraste nos dois temas."),
+            ChoiceRow("Ordenar por", sort.Field, SortChoices, field => pane.List.SetSort(sort with { Field = field }), ActionIcon.Sort, section: view, placement: tile, shortLabel: "Ordenar", context: settingsContext,
+                detail: "Critério da lista e da grade desta pasta: nome, tipo, tamanho ou data. Pastas vêm sempre primeiro.", disabledReason: inBrowser ? null : "Abra uma pasta primeiro."),
             new($"Ordem: {(sort.Descending ? "decrescente" : "crescente")}", () => pane.List.SetSort(sort with { Descending = !sort.Descending }),
                 inBrowser ? null : "Abra uma pasta primeiro.", Detail: "Crescente: A→Z, menor e mais antigo primeiro. Decrescente: o contrário.", Icon: ActionIcon.SortOrder, Section: view, KeepOpen: true,
                 Placement: tile, ShortLabel: "Ordem", Value: sort.Descending ? "decrescente" : "crescente"),
@@ -675,19 +670,15 @@ public sealed partial class AppController
                 Placement: tile, ShortLabel: "Sugestões", Value: OnOff(Settings.KeyboardSuggestions)),
             new("Apagar onde os vídeos pararam", ForgetAllPositions, PlaybackPositions is null ? "Posições não são lembradas nesta compilação." : null,
                 Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true),
-            new($"Confirmar com: {(Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito")}", () =>
-                UpdateSettings(s => s with { Convention = s.Convention == ConfirmBackConvention.SouthConfirms ? ConfirmBackConvention.EastConfirms : ConfirmBackConvention.SouthConfirms }),
-                Detail: "Troca comportamento e legendas de confirmar/voltar.", Icon: ActionIcon.Accept, Section: controls, KeepOpen: true,
-                Placement: tile, ShortLabel: "Confirmar", Value: Settings.Convention == ConfirmBackConvention.SouthConfirms ? "botão inferior" : "botão direito"),
-            new($"Legendas: {LabelStyleName(Settings.LabelStyle)}", () =>
-                UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) }),
-                Detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? "Símbolos dos botões nas legendas e dicas. Automáticas: seguem o controle em uso."
-                    : ActiveController is { } family ? $"Símbolos dos botões nas legendas: seguem o controle em uso (agora: {FamilyName(family)})." : "Símbolos dos botões nas legendas: seguem o controle em uso.", Icon: ActionIcon.Labels, Section: controls, KeepOpen: true,
-                Placement: tile, ShortLabel: "Legendas", Value: LabelStyleName(Settings.LabelStyle)),
-            new($"Fluidez: {smoothness}",
-                () => UpdateSettings(s => s with { SyncInputToDisplay = !s.SyncInputToDisplay }),
-                Detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis.",
-                Icon: ActionIcon.Settings, Section: controls, KeepOpen: true, Placement: tile, ShortLabel: "Fluidez", Value: smoothness),
+            ChoiceRow("Confirmar com", Settings.Convention, ConventionChoices, c => UpdateSettings(s => s with { Convention = c }), ActionIcon.Accept, section: controls, placement: tile,
+                shortLabel: "Confirmar", context: settingsContext, detail: "Troca comportamento e legendas de confirmar/voltar."),
+            ChoiceRow("Legendas", Settings.LabelStyle, LabelStyleChoices, style => UpdateSettings(s => s with { LabelStyle = style }), ActionIcon.Labels, section: controls, placement: tile,
+                shortLabel: "Legendas", context: settingsContext,
+                detail: Settings.LabelStyle != ButtonLabelStyle.Automatic ? "Símbolos dos botões nas legendas e dicas. Automáticas: seguem o controle em uso."
+                    : ActiveController is { } family ? $"Símbolos dos botões nas legendas: seguem o controle em uso (agora: {FamilyName(family)})." : "Símbolos dos botões nas legendas: seguem o controle em uso."),
+            ChoiceRow("Fluidez", Settings.SyncInputToDisplay, SmoothnessChoices, on => UpdateSettings(s => s with { SyncInputToDisplay = on }), ActionIcon.Settings, section: controls, placement: tile,
+                shortLabel: "Fluidez", context: settingsContext,
+                detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis."),
             new($"Leve em segundo plano: {OnOff(Settings.LightInBackground)}",
                 () => UpdateSettings(s => s with { LightInBackground = !s.LightInBackground }),
                 Detail: "Com a janela minimizada ou atrás de um jogo, o ControlFS cede o processador, para de consultar unidades e devolve memória ao Windows. Cópias e extrações continuam, mais devagar.",

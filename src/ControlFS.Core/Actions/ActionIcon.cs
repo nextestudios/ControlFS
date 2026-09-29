@@ -99,6 +99,12 @@ public enum ActionIcon
     Cancel,
     Close,
     Accept,
+
+    /// <summary>A escolha atual de um seletor de opções (#261).</summary>
+    RadioOn,
+
+    /// <summary>Uma alternativa de um seletor de opções que não é a atual (#261).</summary>
+    RadioOff,
     Skip,
     KeepBoth,
     Replace,
@@ -250,6 +256,8 @@ public static class ActionIcons
         ActionIcon.Cancel => "\uE711",
         ActionIcon.Close => "\uE711",
         ActionIcon.Accept => "\uE8FB",
+        ActionIcon.RadioOn => "\uECCB", // RadioBtnOn
+        ActionIcon.RadioOff => "\uECCA", // RadioBtnOff
         ActionIcon.Skip => "\uE893",
         ActionIcon.KeepBoth => "\uE89A",
         ActionIcon.Replace => "\uE8AB",

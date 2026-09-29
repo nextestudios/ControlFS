@@ -176,12 +176,12 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.NavigateDown); // foco no nome longo (mostra a quebra em até três linhas)
                 await CaptureAsync(stage, target, dir, "2-folder", window);
                 // Lista (fase C): ordenada por tamanho, do maior para o menor (seta no título "Tamanho").
-                ChooseAppMenu(app, "Ordenar por"); // tipo
-                ChooseAppMenu(app, "Ordenar por"); // tamanho
+                PickAppSetting(app, "Ordenar por", "tipo");
+                PickAppSetting(app, "Ordenar por", "tamanho");
                 ChooseAppMenu(app, "Ordem");
                 await CaptureAsync(stage, target, dir, "2c-folder-sorted-size", window);
-                ChooseAppMenu(app, "Ordenar por"); // data
-                ChooseAppMenu(app, "Ordenar por"); // nome
+                PickAppSetting(app, "Ordenar por", "data");
+                PickAppSetting(app, "Ordenar por", "nome");
                 ChooseAppMenu(app, "Ordem");
 
                 // Painel de detalhes (fase C): pasta, imagem (miniatura real) e compactado (formato e arquivos contados).
@@ -221,7 +221,7 @@ internal static class ScreenRenderer
                 ChooseAppMenu(app, "Dois painéis");
                 await app.WhenIdleAsync();
 
-                ChooseAppMenu(app, "Densidade");
+                PickAppSetting(app, "Densidade", "compacta");
                 await CaptureAsync(stage, target, dir, "3-folder-compact", window);
 
                 // Grade (#29): compacta e confortável, com o foco uma linha abaixo (navegação 2D).
@@ -230,7 +230,7 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "3a-status-toast", window);
                 app.Handle(InputAction.NavigateDown);
                 await CaptureAsync(stage, target, dir, "3b-folder-grid-compact", window);
-                ChooseAppMenu(app, "Densidade");
+                PickAppSetting(app, "Densidade", "confortável");
                 await CaptureAsync(stage, target, dir, "3c-folder-grid", window);
                 // Painel de detalhes na grade (#177): 3c mostra o automático (ao lado onde cabe, fora nos portáteis); 3d,
                 // o contrário pelo menu (portátil: a grade perde colunas). Depois volta ao automático.
@@ -257,6 +257,18 @@ internal static class ScreenRenderer
                 await CaptureAsync(stage, target, dir, "4d-settings-tile-long-text", window, "settings");
                 FocusMenuItem(app, "Restaurar abas");
                 await CaptureAsync(stage, target, dir, "4e-settings-tile-wrapped-label", window, "settings");
+                // Seletor de opções (#261): abre sobre Configurações com a alternativa atual em foco; mover o foco não o redimensiona;
+                // Voltar devolve Configurações como estava (mesmo tamanho, foco no mesmo bloco).
+                FocusMenuItem(app, "Tema");
+                app.Handle(InputAction.Confirm);
+                await CaptureAsync(stage, target, dir, "p1-picker-theme", window, "picker-theme", sameWidthAs: "picker-width");
+                app.Handle(InputAction.NavigateDown);
+                await CaptureAsync(stage, target, dir, "p1b-picker-theme-next", window, "picker-theme");
+                app.Handle(InputAction.Back);
+                await CaptureAsync(stage, target, dir, "p1c-settings-after-picker", window, "settings");
+                FocusMenuItem(app, "Legendas");
+                app.Handle(InputAction.Confirm);
+                await CaptureAsync(stage, target, dir, "p2-picker-labels", window, sameWidthAs: "picker-width");
                 CloseModals(app);
 
                 app.Handle(InputAction.Search);
@@ -398,6 +410,14 @@ internal static class ScreenRenderer
             FocusMenuItem(app, "Compactar");
             app.Handle(InputAction.Confirm);
             await CaptureAsync(stage, target, dir, "q1-compress-zip", window, "compress");
+            // Seletor de opções (#261): todos os formatos com a descrição, a atual marcada; Voltar volta ao diálogo sem mudar.
+            FocusDialogOption(app, "Formato");
+            app.Handle(InputAction.Confirm);
+            await CaptureAsync(stage, target, dir, "p3-picker-compress-format", window, "picker-format", sameWidthAs: "picker-width");
+            app.Handle(InputAction.NavigateDown);
+            await CaptureAsync(stage, target, dir, "p3b-picker-compress-format-next", window, "picker-format");
+            app.Handle(InputAction.Back);
+            await CaptureAsync(stage, target, dir, "p3c-compress-after-picker", window, "compress");
             foreach (var (name, shot) in new[] { ("TAR.GZ", "q1b-compress-targz"), ("7z", "q1c-compress-7z") })
             {
                 ChooseCompressFormat(app, name);
@@ -610,14 +630,12 @@ internal static class ScreenRenderer
             app.Handle(dialog.FocusIndex < index ? InputAction.NavigateDown : InputAction.NavigateUp);
     }
 
-    /// <summary>Muda o formato no diálogo Compactar até a opção mostrar <paramref name="format"/>.</summary>
+    /// <summary>Muda o formato no diálogo Compactar pelo seletor (#261): abre "Formato", escolhe <paramref name="format"/> e volta ao diálogo.</summary>
     private static void ChooseCompressFormat(AppController app, string format)
     {
-        for (var i = 0; i < 4 && app.TopModal is Application.State.DialogModal dialog && !dialog.Options.Any(o => o.Label == "Formato: " + format); i++)
-        {
-            FocusDialogOption(app, "Formato");
-            app.Handle(InputAction.Confirm);
-        }
+        FocusDialogOption(app, "Formato");
+        app.Handle(InputAction.Confirm);
+        PickChoice(app, format);
     }
 
     private static void FocusMenuItem(AppController app, string prefix)
@@ -822,11 +840,33 @@ internal static class ScreenRenderer
     }
 
     /// <summary>Abre o menu do app e escolhe o item que começa com <paramref name="prefix"/>, só com ações semânticas.</summary>
-    /// <summary>Tema e destaque pelos próprios itens de Configurações (cada escolha avança uma opção).</summary>
+    /// <summary>Tema e destaque pelos seletores de Configurações (#261), só com ações semânticas.</summary>
     private static void SetTheme(AppController app, ThemeMode theme, AccentColor accent)
     {
-        for (var i = 0; i < 4 && app.Settings.Theme != theme; i++) ChooseAppMenu(app, "Tema");
-        for (var i = 0; i < 8 && app.Settings.Accent != accent; i++) ChooseAppMenu(app, "Cor de destaque");
+        if (app.Settings.Theme != theme) PickAppSetting(app, "Tema", theme switch { ThemeMode.Dark => "escuro", ThemeMode.Light => "claro", _ => "automático" });
+        if (app.Settings.Accent != accent)
+            PickAppSetting(app, "Cor de destaque", accent switch { AccentColor.Blue => "azul", AccentColor.Green => "verde", AccentColor.Amber => "âmbar", AccentColor.Magenta => "magenta", AccentColor.Orange => "laranja", _ => "ciano" });
+    }
+
+    /// <summary>
+    /// Menu → Configurações → <paramref name="prefix"/> abre o seletor de opções (#261); escolhe a alternativa
+    /// <paramref name="choice"/> e fecha o que sobrar aberto.
+    /// </summary>
+    private static void PickAppSetting(AppController app, string prefix, string choice)
+    {
+        ChooseAppMenu(app, prefix);
+        PickChoice(app, choice);
+        CloseModals(app);
+    }
+
+    /// <summary>No seletor de opções aberto, foca a alternativa <paramref name="choice"/> só com setas e confirma (sem seletor, não faz nada).</summary>
+    private static void PickChoice(AppController app, string choice)
+    {
+        if (app.TopModal is not Application.State.MenuModal { IsPicker: true } picker) return;
+        var index = picker.Items.ToList().FindIndex(i => i.Label == choice);
+        if (index < 0) return;
+        StepTo(app, picker, index);
+        app.Handle(InputAction.Confirm);
     }
 
     private static void ChooseAppMenu(AppController app, string prefix)
@@ -961,26 +1001,33 @@ internal static class ScreenRenderer
     /// <paramref name="sameHeight"/>, a mesma altura), mudando o foco, o valor, a variante ou o aviso. Uma diferença de mais de
     /// 1 px entra no relatório como "TAMANHO DIFERENTE" e a execução falha.
     /// </param>
-    private static async Task CaptureAsync(FrameworkElement stage, Target target, string directory, string name, MainWindow window, string? sameSizeAs = null, bool sameHeight = true)
+    /// <param name="sameWidthAs">Segundo grupo, só da largura (ex.: todos os seletores de opções, #261, têm a mesma largura).</param>
+    private static async Task CaptureAsync(FrameworkElement stage, Target target, string directory, string name, MainWindow window, string? sameSizeAs = null, bool sameHeight = true, string? sameWidthAs = null)
     {
         if (!Wanted(name)) return;
         await SettleAsync(stage);
         var file = Path.Join(directory, name + ".png");
         await SaveAsync(stage, target.Width, target.Height, file);
         Report.AppendLine($"  {name}: {window.DescribeFit()}");
-        if (sameSizeAs is null || window.ModalCardSize() is not { } size) return;
-        var key = target.Name + "|" + sameSizeAs;
+        if (window.ModalCardSize() is not { } size) return;
+        if (sameSizeAs is not null) CompareSize(target, name, sameSizeAs, size, sameHeight);
+        if (sameWidthAs is not null) CompareSize(target, name, sameWidthAs, size, sameHeight: false);
+    }
+
+    private static void CompareSize(Target target, string name, string group, (double Width, double Height) size, bool sameHeight)
+    {
+        var key = target.Name + "|" + group;
         if (!SizeGroups.TryGetValue(key, out var first))
         {
             SizeGroups[key] = (name, size.Width, size.Height);
-            Report.AppendLine($"    tamanho do grupo {sameSizeAs}: {size.Width:0}x{size.Height:0}{(sameHeight ? string.Empty : " (só a largura é comparada)")}");
+            Report.AppendLine($"    tamanho do grupo {group}: {size.Width:0}x{size.Height:0}{(sameHeight ? string.Empty : " (só a largura é comparada)")}");
             return;
         }
         var widthOk = Math.Abs(size.Width - first.Width) <= 1;
         var heightOk = !sameHeight || Math.Abs(size.Height - first.Height) <= 1;
-        Report.AppendLine($"    tamanho do grupo {sameSizeAs}: {size.Width:0}x{size.Height:0} {(widthOk && heightOk ? "= igual a " : "TAMANHO DIFERENTE de ")}{first.First} ({first.Width:0}x{first.Height:0})");
+        Report.AppendLine($"    tamanho do grupo {group}: {size.Width:0}x{size.Height:0} {(widthOk && heightOk ? "= igual a " : "TAMANHO DIFERENTE de ")}{first.First} ({first.Width:0}x{first.Height:0})");
         if (!widthOk || !heightOk)
-            SizeFailures.Add($"{target.Name}: o modal do grupo {sameSizeAs} mudou de tamanho ({first.First} {first.Width:0}x{first.Height:0} → {name} {size.Width:0}x{size.Height:0})");
+            SizeFailures.Add($"{target.Name}: o modal do grupo {group} mudou de tamanho ({first.First} {first.Width:0}x{first.Height:0} → {name} {size.Width:0}x{size.Height:0})");
     }
 
     /// <summary>

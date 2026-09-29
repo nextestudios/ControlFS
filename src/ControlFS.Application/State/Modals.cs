@@ -199,8 +199,18 @@ public sealed class MenuModal : Modal
     /// </summary>
     public IEnumerable<string> AllDescriptions => Enumerable.Range(0, Items.Count).Select(DescriptionOf).Where(t => t.Length > 0).Distinct();
 
-    /// <summary>Menu com grade: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
-    public override ModalSize Size => Grids.Count > 0 ? ModalSize.Medium : ModalSize.Compact;
+    /// <summary>Menu com grade ou seletor de opções: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
+    public override ModalSize Size => Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
+
+    /// <summary>
+    /// Seletor de opções (#261): cada item é uma alternativa de um valor; <see cref="PickerCurrent"/> é a atual (marcada com
+    /// ícone e texto). Confirmar aplica e volta ao modal anterior, Voltar volta sem mudar nada. A descrição de cada alternativa
+    /// aparece sob ela, todas ao mesmo tempo (nada fica escondido), então não há área de descrição.
+    /// </summary>
+    public bool IsPicker => PickerCurrent is not null;
+
+    /// <summary>Índice da alternativa atual num seletor de opções; null: não é um seletor.</summary>
+    public int? PickerCurrent { get; init; }
 
     /// <summary>Coluna da grade de onde o foco saiu: voltar a uma grade (Cima, ou Baixo de outra grade) usa a mesma coluna.</summary>
     internal int GridColumn { get; set; }

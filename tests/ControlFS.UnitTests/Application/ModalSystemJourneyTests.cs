@@ -251,7 +251,14 @@ public class ModalSystemJourneyTests : IDisposable
                      "Recentes:", "Sugestões do teclado:", "Confirmar com:", "Legendas:", "Fluidez:", "Controle ativo:", "Teste de controles…", "Controles sem perfil…", "Atualizações" })
             Assert.True(settings.Items.Any(i => i.Label.StartsWith(label, StringComparison.Ordinal)), label);
 
-        d.FocusMenu(settings, settings.Items.ToList().FindIndex(i => i.Label == "Densidade da lista: confortável"));
+        // Um ajuste com várias alternativas abre o seletor (#261) e, escolhida uma, volta a Configurações no mesmo ajuste.
+        var density = settings.Items.ToList().FindIndex(i => i.Label == "Densidade da lista: confortável");
+        d.FocusMenu(settings, density);
+        d.Press(InputAction.Confirm);
+        var picker = await d.WaitMenu();
+        Assert.True(picker.IsPicker);
+        Assert.Equal("confortável", picker.Items[picker.FocusIndex].Label); // abre na alternativa atual
+        d.FocusMenu(picker, picker.Items.ToList().FindIndex(i => i.Label == "compacta"));
         d.Press(InputAction.Confirm);
         Assert.Same(settings, app.TopModal);
         Assert.Equal(ListDensity.Compact, app.Settings.Density);
@@ -315,7 +322,9 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.Equal(hidden, settings.FocusIndex);
         Assert.Equal(("Itens ocultos: visíveis", "visíveis"), (Focused(), settings.Items[hidden].Value));
 
-        app.PointerChooseModalOption(1); // toque num bloco: o mesmo que Confirmar nele
+        app.PointerChooseModalOption(1); // toque num bloco com alternativas: abre o seletor, como Confirmar nele
+        Assert.True(app.TopModal is MenuModal { IsPicker: true });
+        app.PointerChooseModalOption(1); // toque numa alternativa do seletor: "compacta"
         Assert.Same(settings, app.TopModal);
         Assert.Equal(ListDensity.Compact, app.Settings.Density);
         Assert.Equal(("Densidade", "compacta"), (settings.Items[1].TileLabel, settings.Items[1].Value));
