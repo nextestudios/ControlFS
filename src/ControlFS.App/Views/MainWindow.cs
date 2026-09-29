@@ -1117,6 +1117,12 @@ public sealed class MainWindow : Window
 
     internal IconLoader Icons => _icons;
 
+    /// <summary>Gerador de capturas (#227): largura e altura do painel do modal na tela agora, ou null sem modal.</summary>
+    internal (double Width, double Height)? ModalCardSize() =>
+        _overlay.Children.Count > 0 && _overlay.Children[0] is Panel scrim && scrim.Children.OfType<FrameworkElement>().FirstOrDefault(c => Equals(c.Tag, ModalView.CardTag)) is { } card
+            ? (card.ActualWidth, card.ActualHeight)
+            : null;
+
     /// <summary>Gerador de capturas: quanto cada região ocupou e se o modal coube inteiro na área do app.</summary>
     internal string DescribeFit()
     {

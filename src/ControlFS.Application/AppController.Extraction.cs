@@ -30,10 +30,13 @@ public sealed partial class AppController
         void Refill()
         {
             var stem = ArchiveFormats.StemOf(plan.ArchivePath);
+            var dedicatedText = Path.Join(plan.Destination, stem) + "  (nova pasta; se existir, \"(2)\")";
+            // As duas formas do destino têm o espaço reservado: alternar "pasta dedicada" nunca muda o tamanho do diálogo (#227).
+            dialog.LineReserve = new Dictionary<string, IReadOnlyList<string>> { ["Destino"] = [dedicatedText, plan.Destination] };
             dialog.Lines =
             [
                 ("Origem", plan.ArchivePath),
-                ("Destino", plan.Dedicated ? Path.Join(plan.Destination, stem) + "  (nova pasta; se existir, \"(2)\")" : plan.Destination),
+                ("Destino", plan.Dedicated ? dedicatedText : plan.Destination),
                 ("Entradas", plan.Selected is null ? "todas" : $"{Plural.Of(plan.Selected.Count, "selecionada", "selecionadas")}" + (plan.BasePath.Length > 0 ? $" de /{plan.BasePath}" : string.Empty)),
                 ("Conflitos", "perguntar a cada conflito (padrão: manter o existente)"),
                 ("Segurança", "caminhos contidos no destino; links bloqueados; nada é executado"),

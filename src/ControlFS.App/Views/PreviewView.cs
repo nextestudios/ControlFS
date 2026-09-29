@@ -30,7 +30,7 @@ public static partial class ModalView
     {
         var inner = Math.Max(200, Theme.Viewport.Width - (2 * PanelMargin) - (2 * PanelPadding) - 2);
         header.Measure(new Size(inner, double.PositiveInfinity));
-        var footer = Footer(app);
+        var footer = Footer(app, statusBand: true);
         footer.Measure(new Size(inner, double.PositiveInfinity));
         var chrome = (2 * PanelMargin) + (PanelPadding - Theme.SpaceXs) + Theme.Space(20) + (3 * Theme.SpaceM) + Theme.Hairline.Top + 2;
         var height = Theme.Viewport.Height - chrome - header.DesiredSize.Height - footer.DesiredSize.Height - reserved - Theme.SpaceXs;
@@ -56,7 +56,7 @@ public static partial class ModalView
         {
             area.Children.Add(modal.IsLoading ? PreviewMessage("Carregando imagem…", error: false) : PreviewMessage(modal.Error ?? "Não foi possível mostrar esta imagem.", error: true));
         }
-        return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
+        return Panel(app, header, area, modal.Size, scroll: false, fadedHints: modal.HintsFaded);
     }
 
     /// <summary>
@@ -141,7 +141,7 @@ public static partial class ModalView
             area.Children.Add(PreviewMessage(modal.NeedsPassword ? error + " Confirme para digitar a senha." : error, error: true));
         else
             area.Children.Add(PreviewMessage(modal.PageCount > 0 ? "Desenhando a página…" : "Abrindo PDF…", error: false));
-        return Panel(app, header, area, 100_000, scroll: false, stretch: true, fadedHints: modal.HintsFaded);
+        return Panel(app, header, area, modal.Size, scroll: false, fadedHints: modal.HintsFaded);
     }
 
     /// <summary>Barra de progresso da reprodução: trilho escuro, parte tocada no ciano do tema.</summary>
@@ -177,7 +177,7 @@ public static partial class ModalView
         if (modal.DisplayError is { } error)
         {
             body.Children.Add(PreviewMessage(error, error: true));
-            return Panel(app, header, body, 900);
+            return Panel(app, header, body, modal.Size);
         }
         var state = new TextBlock { Text = StateLabel(status), FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text };
         AutomationProperties.SetLiveSetting(state, Microsoft.UI.Xaml.Automation.Peers.AutomationLiveSetting.Polite);
@@ -194,7 +194,7 @@ public static partial class ModalView
         times.Children.Add(volume);
         AutomationProperties.SetName(times, $"{StateLabel(status)}, {elapsed}, {VolumeLabel(status)}");
         body.Children.Add(times);
-        return Panel(app, header, body, 900, minWidth: 640);
+        return Panel(app, header, body, modal.Size);
     }
 
     /// <summary>Colunas desenhadas por linha: o resto da linha fica fora da tela (Esquerda/Direita deslocam).</summary>
@@ -308,6 +308,6 @@ public static partial class ModalView
             area.Children.Add(text);
         }
         body.Children.Add(area);
-        return Panel(app, header, body, 100_000, scroll: false, stretch: true);
+        return Panel(app, header, body, modal.Size, scroll: false);
     }
 }

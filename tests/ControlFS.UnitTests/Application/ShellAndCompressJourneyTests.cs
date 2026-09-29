@@ -111,6 +111,32 @@ public class ShellAndCompressJourneyTests : IDisposable
     });
 
     [Fact]
+    public void Compress_dialog_keeps_its_size_class_and_reserves_every_variant_text_across_formats() => UiContext.Run(async () =>
+    {
+        File.WriteAllText(_tmp.Sub("x.txt"), "x");
+        var (d, _) = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("x.txt");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Compactar…");
+        var dialog = await d.WaitDialog("Compactar");
+        var size = dialog.Size;
+        Assert.Equal(ModalSize.Standard, size);
+        var formats = new List<string>();
+        for (var i = 0; i < 3; i++)
+        {
+            formats.Add(dialog.Lines.Single(l => l.Label == "Formato").Value);
+            d.ChooseOption(dialog, "Formato:");
+            Assert.Equal(size, dialog.Size); // a largura vem da classe, não do formato em foco (#227)
+        }
+        Assert.Equal(3, formats.Distinct().Count());
+        // A altura reserva o texto mais longo de cada linha variável: todos os formatos e compressões, e o nome numerado.
+        Assert.All(formats, f => Assert.Contains(f, dialog.LineReserve!["Formato"]));
+        Assert.Equal(3, dialog.LineReserve!["Compressão"].Count);
+        Assert.Contains(dialog.LineReserve["Arquivo"], t => t.Contains("numerado", StringComparison.Ordinal));
+    });
+
+    [Fact]
     public void Compress_name_is_typed_with_the_virtual_keyboard_and_validated() => UiContext.Run(async () =>
     {
         File.WriteAllText(_tmp.Sub("x.txt"), "x");

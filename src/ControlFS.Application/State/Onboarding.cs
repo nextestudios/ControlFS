@@ -36,6 +36,8 @@ public sealed class OnboardingModal : Modal
         IsReplay = replay;
     }
 
+    public override ModalSize Size => ModalSize.Fill;
+
     public static IReadOnlyList<OnboardingStep> Steps { get; } = Enum.GetValues<OnboardingStep>();
 
     /// <summary>Aberto de novo pelo Menu ou por Configurações (não é a primeira execução).</summary>
