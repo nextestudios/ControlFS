@@ -5,6 +5,7 @@ using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
 using ControlFS.Core.Policies;
 using ControlFS.Infrastructure.Archives;
+using ControlFS.Infrastructure.Archives.Creation;
 using ControlFS.UnitTests.Support;
 
 namespace ControlFS.UnitTests.Application;
@@ -23,10 +24,11 @@ public class ShellAndCompressJourneyTests : IDisposable
         public void RevealInExplorer(string path) => Calls.Add(("reveal", path));
     }
 
-    private (Driver Driver, FakeShell Shell) Boot()
+    /// <summary><paramref name="rar"/> falso: o WinRAR "instalado" para o teste; null: sem WinRAR (não depende da máquina).</summary>
+    private (Driver Driver, FakeShell Shell) Boot(RarTool? rar = null)
     {
         var shell = new FakeShell();
-        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), shell: shell);
+        var app = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(rarLocator: () => rar), shell: shell);
         app.Start();
         return (new Driver(app), shell);
     }
@@ -153,14 +155,14 @@ public class ShellAndCompressJourneyTests : IDisposable
         var picker = await d.WaitMenu();
         Assert.True(picker.IsPicker);
         Assert.Equal("Formato", picker.Title);
-        Assert.Equal(["ZIP", "TAR.GZ", "7z"], picker.Items.Select(i => i.Label));
+        Assert.Equal(["ZIP", "TAR.GZ", "7z", "RAR"], picker.Items.Select(i => i.Label));
         Assert.All(picker.Items, i => Assert.False(string.IsNullOrEmpty(i.Detail)));
         Assert.Equal(0, picker.FocusIndex);
         Assert.Equal((ActionIcon.RadioOn, "atual"), (picker.Items[0].Icon, picker.Items[0].Value));
         Assert.All(picker.Items.Skip(1), i => Assert.Equal((ActionIcon.RadioOff, (string?)null), (i.Icon, i.Value)));
-        Assert.Contains("opção 1 de 3, selecionada", d.App.DescribeFocus().Item, StringComparison.Ordinal);
+        Assert.Contains("opção 1 de 4, selecionada", d.App.DescribeFocus().Item, StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown);
-        Assert.Contains("opção 2 de 3", d.App.DescribeFocus().Item, StringComparison.Ordinal);
+        Assert.Contains("opção 2 de 4", d.App.DescribeFocus().Item, StringComparison.Ordinal);
         Assert.DoesNotContain("selecionada", d.App.DescribeFocus().Item, StringComparison.Ordinal);
 
         // Voltar deixa tudo como estava.
@@ -181,6 +183,38 @@ public class ShellAndCompressJourneyTests : IDisposable
         Assert.Equal(1, strength.FocusIndex);
         d.Press(InputAction.Back);
         Assert.Contains(dialog.Lines, l => l is { Label: "Compressão", Value: "normal" });
+    });
+
+    [Fact]
+    public void Rar_is_listed_disabled_with_the_reason_without_winrar_and_selectable_with_it() => UiContext.Run(async () =>
+    {
+        File.WriteAllText(_tmp.Sub("x.txt"), "x");
+
+        // Sem WinRAR: a alternativa aparece, desativada, dizendo o que fazer; escolher não muda o formato.
+        var (d, _) = Boot();
+        d.Press(InputAction.Confirm);
+        await d.FocusItem("x.txt");
+        d.Press(InputAction.OpenContextMenu);
+        await d.ChooseMenu("Compactar…");
+        var dialog = await d.WaitDialog("Compactar");
+        d.ChooseOption(dialog, "Formato: ZIP");
+        var picker = await d.WaitMenu();
+        var rar = picker.Items.Single(i => i.Label == "RAR");
+        Assert.False(rar.IsEnabled);
+        Assert.Contains("WinRAR", rar.DisabledReason, StringComparison.Ordinal);
+        Assert.All(picker.Items.Where(i => i.Label != "RAR"), i => Assert.True(i.IsEnabled));
+        d.Press(InputAction.Back);
+        Assert.Equal("Formato: ZIP", dialog.Options.First(o => o.Label.StartsWith("Formato", StringComparison.Ordinal)).Label);
+
+        // Com o WinRAR do usuário: dá para escolher e o arquivo ganha a extensão .rar.
+        var (d2, _) = Boot(new RarTool("C:\\WinRAR\\Rar.exe"));
+        d2.Press(InputAction.Confirm);
+        await d2.FocusItem("x.txt");
+        d2.Press(InputAction.OpenContextMenu);
+        await d2.ChooseMenu("Compactar…");
+        var dialog2 = await d2.WaitDialog("Compactar");
+        await d2.PickOption(dialog2, "Formato", "RAR");
+        Assert.Contains(dialog2.Lines, l => l.Label == "Arquivo" && l.Value.EndsWith(".rar", StringComparison.Ordinal));
     });
 
     [Fact]

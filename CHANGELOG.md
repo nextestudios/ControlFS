@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Novidades
+- **Criar RAR** (#258): em Compactar, o **Formato** ganhou **RAR**, criado pelo **WinRAR que você já tem instalado** (o ControlFS confere o `Rar.exe` e a assinatura dele e nunca embute, baixa nem reimplementa o RAR, que é um formato proprietário). Sem o WinRAR, a opção aparece apagada dizendo para instalá-lo. O arquivo é gravado num temporário e só aparece no fim, sem sobrescrever nada; o ControlFS abre o RAR criado. Todos os itens precisam estar na mesma pasta, e não há senha nem volumes.
 ### Correções
 - **O app não trava mais depois de copiar arquivos:** o motor relatava o andamento a cada bloco de 80 KB e cada relato redesenhava a tela na thread de interface; numa cópia grande a fila da interface enchia e o app parava de responder durante e logo depois da cópia. Agora o motor limita os relatos e a interface recebe no máximo cerca de 10 atualizações por segundo, sempre a mais recente (#257).
 

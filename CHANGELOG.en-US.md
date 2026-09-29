@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### What's new
+- **Create RAR** (#258): in Compress, **Formato** gained **RAR**, created by the **WinRAR you already have installed** (ControlFS checks `Rar.exe` and its signature and never bundles, downloads or reimplements RAR, which is a proprietary format). Without WinRAR the option appears greyed out saying to install it. The archive is written to a temporary file and only appears at the end, overwriting nothing; ControlFS opens the RAR it creates. All items must be in the same folder, and there's no password or volumes.
 ### Fixes
 - **The app no longer freezes after copying files:** the engine reported progress for every 80 KB block and each report redrew the screen on the UI thread; on a large copy the UI queue filled up and the app stopped responding during and right after the copy. The engine now limits its reports and the UI receives at most about 10 updates per second, always the latest one (#257).
 
