@@ -137,10 +137,69 @@ Settings/ControllerSetup, Info/Properties/About, Replace/SortOrder, Archive/Comp
 and "Reabrir aba fechada" now have distinct glyphs; the gallery is the smoke capture `icons/action-icons.png`). Menus (#193): `MenuItem.Placement = Quick` (set by `AppController`) puts an
 option in the quick-action grid (≤ 4 tiles per row, destructive tiles last, `ShortLabel` under the icon, full label for
 Narrator/UIA); the rest is a compact list (40 px rows, detail only on the focused row; with a grid, groups are separated by a divider
-only, without titles). Menu panel: a fixed width per menu (#227, `MenuModal.PanelWidth`: 540 px with a grid, 460 without; min = max, both capped by the window), so focus and the focused row's detail never resize it (long text wraps); `MenuPadding` 20, compact header. Configurações uses per-section grids (#227, `sectionGrids: true`): short independent settings are tiles in their group's grid showing icon, `ShortLabel` and `MenuItem.Value` (the current value); long-description settings and submenus stay list rows under the grid. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
+only, without titles). Menu panel: a fixed size class per menu (#227, `MenuModal.Size`: Medium 540 px with a grid, Compact 460 without; a fixed `Width`, capped by the window), and the description of the focused option (tile caption or row detail, or why it is unavailable) lives in one fixed area between the list and the footer whose height is that of the longest description of the menu, so focus never resizes the panel (long text wraps); `MenuPadding` 20, compact header. Configurações uses per-section grids (#227, `sectionGrids: true`): short independent settings are tiles in their group's grid showing icon, `ShortLabel` and `MenuItem.Value` (the current value); long-description settings and submenus stay list rows under the grid. `MenuItem.KeepOpen` (Configurações) applies a setting and keeps the
 menu open (`MenuModal.Reload`). The retained panel (#191) swaps only the tile/row that loses and gains focus. `Theme.SolidSurfaces` comes from Windows transparency effects off or high
 contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContrast`); `Theme.ReduceMotion` from
 `UISettings.AnimationsEnabled`.
+
+### Modal sizing (#227)
+
+Every modal picks a **size class** (`Modal.Size`, `ModalSize`): the panel has a fixed `Width` per class (× the layout scale,
+capped by the window minus the margins, so 720p, handhelds and 4K all fit), never derived from the focused option, the
+selected value, a variant, a message or the longest label. The default of a new modal is **Standard**. Nothing forces one
+universal size on unrelated dialogs: a short confirmation stays Compact.
+
+| Class | Width | Used by |
+|---|---|---|
+| Compact | 460 | list-only menus, short confirmations |
+| Medium | 540 | menus with a quick-action grid (app menu, item actions, Configurações) |
+| Standard | 640 | dialogs with information/options, About, audio player |
+| Wide | 960 | on-screen keyboard, "Mais da equipe", controller test, mapping wizard |
+| Fill | window − margins | image/PDF/text preview, video, welcome |
+
+Height rules (the panel is at most the window minus the margins; the body scrolls inside those bounds):
+
+- **Reserve, don't resize.** Content that can change while the modal is open has its space reserved by overlapping every
+  possible text in one grid cell (`TextSlot`, `InfoLines` reserve, `WeightStable`): the invisible copies only measure.
+  The focus fill is bold, so an unfocused label also measures itself bold (a label that wraps only when focused would grow
+  its row).
+- **Menus**: one description area (`MenuModal.AllDescriptions`); no per-row detail inside the list.
+- **Dialogs**: `DialogModal.LineReserve` reserves every text of a variable info line (Compress: each format description,
+  each compression and the numbered file name; extraction: both destination texts). Size is Compact when the dialog is a
+  short confirmation (≤ 2 lines, no toggles, no progress, no QR code), otherwise Standard, decided once.
+- **Footer**: the status line has one reserved line (`StatusLineHeight`); a notice arriving while a modal is open fills it
+  (messages beyond two lines are ellipsized).
+- **Keyboard**: the validation-message line is reserved, the field reserves two lines for paths, and the suggestion strip has
+  its place while suggestions are on.
+- **Wizard / controller test**: step headline, detail, feedback, the options-or-hint area, the device list (2 rows), the
+  last 8 presses and the notice have reserved space.
+
+Inventory (every modal type; the render report proves the rule for the marked ones):
+
+| Modal | Class | Height | Proof |
+|---|---|---|---|
+| Menu (Início), item actions, path menu, drive/tab/operation menus, picker menu, "Locais" | Medium (with grid) / Compact | reserved description area; body scrolls | Screens `4`/`4a` (group `menu-app`), `m1`/`m1b` (`menu-actions`) |
+| Configurações | Medium | reserved description area; tiles and rows measure bold | Screens `4b`–`4e` (group `settings`: tile, long row, long value, wrapped label) |
+| Compactar (ZIP / TAR.GZ / 7z) | Standard | `LineReserve`: identical for every format and compression | Screens `q1`, `q1b`, `q1c` (group `compress`, width and height) |
+| Extrair (summary) | Standard | `LineReserve` for the destination | Screens `m3`/`m3b` (group `extract-summary`) |
+| Confirmations (delete, exit, run, terminal, unmount, discard…) | Compact | content only; long names wrap | Screens `m2`/`m2b`/`q2` (group `confirm-delete`, width) |
+| Results, conflict, batch, history and operation details, errors, disk usage, "Continuar o vídeo?" | Standard (Compact when short) | content only | Screens `m5b`, `m5c`, `m7` |
+| File-operation progress | Standard | values reserve their lines; body scrolls | Manual (#257 reworks the progress views) |
+| On-screen keyboard (name, path, password, search) | Wide | reserved error line, field lines, suggestion strip | Screens `m4`/`m5` (group `keyboard-password`), `5-keyboard` |
+| Sobre | Standard | content only | Screens `m9` |
+| Conectar celular (QR), Permitir este celular? | Standard / Compact | QR fits 30% of the height | Screens `m10`, `m10b` |
+| Mais da equipe | Wide | content only | Screens `m11`, `m11b` |
+| Teste de controles, assistente de mapeamento | Wide | reserved areas (see above) | Manual (Controles) |
+| Image, PDF, text preview | Fill | box computed from the window | Screens `2*`, `mp-pdf-preview` |
+| Áudio | Standard | content only | Manual |
+| Video player | Fill (own layer) | full window | Screen `mv-video-player` |
+| Welcome (onboarding) | Fill (own layer) | fixed 1240 content column, centered | Screens `o1`–`o4` |
+| Tutorial callout | overlay, not a modal panel | max width by tier | Screens `o5`–`o7` |
+
+The render harness (`--render-screens`) records the panel size of every capture that names a size group and fails the run
+(`FALHA: … mudou de tamanho`, and `TAMANHO DIFERENTE` in `report.txt`) when two captures of the same group and target differ by
+more than 1 px in width (and in height where the group asserts it: `menu-app`, `menu-actions`, `settings`, `compress`,
+`extract-summary`, `keyboard-password`; confirmations compare width only because different names wrap differently).
 
 ## Regression matrix
 
@@ -162,7 +221,7 @@ contrast (`UISettings.AdvancedEffectsEnabled`, `AccessibilitySettings.HighContra
 | Family detection and label style (automatic/generic/Xbox/PS/Nintendo) | Menu → Configurações → Legendas | — | `ControllerFamilyTests` (3), `PromptJourneyTests` |
 | Gyro aiming on the on-screen keyboard (#77, experimental, off by default): pointer layer over key focus, no wrap, D-pad re-anchors, R3 recenters; sensor only enabled with the setting | Menu → Configurações → Mira por giroscópio no teclado | turn/tilt controller; R3 | `GyroPointerTests` (2), `GyroKeyboardJourneyTests`; Manual "Mira por giroscópio (#77)" |
 | Light/dark theme (automatic follows Windows live) and accent color presets, applied live and persisted; contrast checked for every combination | Menu → Configurações → Tema / Cor de destaque | — | `ThemeContrastTests`, `AppearanceJourneyTests`; Screens `7-light-*`, `7d`, `7e`; Manual "Tema claro e cor de destaque (#37)" |
-| Stable menu width + per-section settings grids (#227): tiles with label and value, 2D navigation between grids and lists | Menu → Configurações | D-pad; click a tile | `ModalSystemJourneyTests::Settings_grids_per_section_navigate_in_two_dimensions_with_the_lists_between_them`; Screens `4`/`4a`, `4b`/`4c` (same modal width); Manual "Largura estável e grades em Configurações (#227)" |
+| Stable modal size (#227): size classes for every modal, fixed description area in menus, per-section settings grids (tiles with label and value, 2D navigation between grids and lists) | Menu → Configurações | D-pad; click a tile | `ModalSystemJourneyTests::Settings_grids_per_section_navigate_in_two_dimensions_with_the_lists_between_them`, `::Menu_size_class_and_reserved_descriptions_do_not_depend_on_the_focused_option`; Screens `4`/`4a`, `4b`–`4e`, `m1`–`m5`, `q1`–`q2` (same size per group, asserted by the render report); Manual "Largura estável e grades em Configurações (#227)" |
 | Right-stick scrolling (#175): active surface only (list/grid rows, menus, text lines/columns, zoomed image, dialog/About body); deadzone + hysteresis, proportional rate, sustained acceleration, instant stop; R3 press and context change latch until center; never steals the active device | all lists and modals | tilt right stick | `AnalogScrollerTests` (3), `InputRouterTests::Right_stick_scroll_never_takes_over_…`, `RightStickScrollJourneyTests`; Manual "Rolagem com o analógico direito (#175)" |
 | Dynamic footer prompts, hot swap, keyboard keys when typing on a physical keyboard | footer | — | `PromptJourneyTests`, `HintJourneyTests` (4), `JourneyTests::Footer_hints_only_show_actions_that_work_in_context` |
 | Footer order (A1): Confirm, Back, Mark, Actions, Menu, Search, Lista/Grade, L1, R1 (screens only; modals keep theirs); L1/R1 glyphs at the ends of the top bar while the list has focus (#176) | footer, top bar | — | `PromptJourneyTests` |
@@ -289,7 +348,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Batch rename (#71): Y Operações (N) → Renomear em lote…; numbering, find/replace, prefix/suffix, case; live preview = result; conflicts block before disk; Start applies; undoable | `BatchRenameJourneyTests` (2) |
 | Create folder (accented, invalid name keeps keyboard with the reason) | `JourneyTests::Vertical_journey_…`, `::Invalid_folder_name_keeps_keyboard_open_with_reason` |
 | Clipboard copy/cut/paste across folders and tabs | `ClipboardJourneyTests` (2) |
-| Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67) | `ShellAndCompressJourneyTests::Compress_…` (2), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
+| Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67; same panel size for every format, #227) | `ShellAndCompressJourneyTests::Compress_…` (3), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
 | Operations center: progress, cancel, results, errors, retry, history persisted without passwords; Menu → Operações grouped **Em andamento** (state icon, %, items; refreshed in place while open) / **Histórico** | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text and progress bar (Manual "Avisos e andamento") |
 | Responsive UI and consistent progress (#257): progress flood is coalesced (no freeze after a copy), % / items / bytes / speed / ETA rules, indeterminate = activity only, cancel, Cut shows no transfer until Paste, compress/extract totals, live details | `ProgressJourneyTests` (9), `ProgressEstimatorTests` (6), `FileOperationIntegrationTests::Cross_volume_move_of_a_large_file_…`; Manual "Andamento e resposta (#257)" |
 | Clean success of copy/move/delete = toast ("N itens copiados · Menu → Desfazer"), no dialog; warnings/failures/cancel keep the result dialog | `FileOperationJourneyTests::Copy_to_a_folder_…`, `UndoJourneyTests`, `PauseJourneyTests`, `DualPaneJourneyTests`, `ClipboardJourneyTests` (`Driver.WaitStatus`); Screens `3-folder-compact`, `3b-folder-grid-compact` (toast) |

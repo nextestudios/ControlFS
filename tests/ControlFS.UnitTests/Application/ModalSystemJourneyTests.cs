@@ -322,6 +322,30 @@ public class ModalSystemJourneyTests : IDisposable
     });
 
     [Fact]
+    public void Menu_size_class_and_reserved_descriptions_do_not_depend_on_the_focused_option() => UiContext.Run(async () =>
+    {
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Configurações");
+        var settings = (MenuModal)d.App.TopModal!;
+        Assert.Equal(ModalSize.Medium, settings.Size);
+        var reserved = settings.AllDescriptions.ToList();
+        for (var i = 0; i < settings.Items.Count; i++)
+        {
+            settings.FocusIndex = i;
+            Assert.Equal(ModalSize.Medium, settings.Size);
+            // Toda descrição que a tela pode mostrar tem o lugar reservado: focar a mais longa não redimensiona o painel (#227).
+            if (settings.Description.Length > 0) Assert.Contains(settings.Description, reserved);
+        }
+        Assert.Contains(reserved, t => t.Length > 100);
+        d.Press(InputAction.Back);
+        d.Press(InputAction.OpenContextMenu); // ações de um local, só lista ou com grade: a classe também é fixa
+        Assert.True(d.App.TopModal is MenuModal { Size: ModalSize.Compact or ModalSize.Medium });
+    });
+
+    [Fact]
     public void Menus_never_open_focused_on_an_unavailable_option() => UiContext.Run(async () =>
     {
         var d = Boot();

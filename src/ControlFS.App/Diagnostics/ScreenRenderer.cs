@@ -52,6 +52,12 @@ internal static class ScreenRenderer
 
     private static readonly StringBuilder Report = new();
 
+    /// <summary>Tamanho do painel do primeiro modal de cada grupo e alvo (#227): os demais do grupo têm de ter o mesmo.</summary>
+    private static readonly Dictionary<string, (string First, double Width, double Height)> SizeGroups = [];
+
+    /// <summary>Grupos de modais que mudaram de tamanho: qualquer um faz a execução falhar.</summary>
+    private static readonly List<string> SizeFailures = [];
+
     /// <summary><c>--only a,b</c>: só as capturas cujo nome começa com um dos prefixos (ex.: <c>m1,2d,glyphs</c>).</summary>
     private static string[]? _only;
 
@@ -237,16 +243,20 @@ internal static class ScreenRenderer
                 app.Handle(InputAction.ChangeView);
 
                 app.Handle(InputAction.OpenAppMenu);
-                await CaptureAsync(stage, target, dir, "4-menu", window);
+                await CaptureAsync(stage, target, dir, "4-menu", window, "menu-app");
                 // #227: a mesma largura com o foco numa linha de descrição longa (4a) e num bloco (4).
                 FocusMenuItem(app, "Dois painéis");
-                await CaptureAsync(stage, target, dir, "4a-menu-long-row", window);
+                await CaptureAsync(stage, target, dir, "4a-menu-long-row", window, "menu-app");
                 FocusMenuItem(app, "Configurações");
                 app.Handle(InputAction.Confirm);
                 FocusMenuItem(app, "Ordem");
-                await CaptureAsync(stage, target, dir, "4b-settings", window);
+                await CaptureAsync(stage, target, dir, "4b-settings", window, "settings");
                 FocusMenuItem(app, "Mira por giroscópio");
-                await CaptureAsync(stage, target, dir, "4c-settings-long-row", window);
+                await CaptureAsync(stage, target, dir, "4c-settings-long-row", window, "settings");
+                FocusMenuItem(app, "Tema");
+                await CaptureAsync(stage, target, dir, "4d-settings-tile-long-text", window, "settings");
+                FocusMenuItem(app, "Restaurar abas");
+                await CaptureAsync(stage, target, dir, "4e-settings-tile-wrapped-label", window, "settings");
                 CloseModals(app);
 
                 app.Handle(InputAction.Search);
@@ -333,8 +343,9 @@ internal static class ScreenRenderer
 
             if (Wanted("glyphs")) await RenderGlyphGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "glyphs"));
             if (Wanted("icons")) await RenderIconGalleryAsync(stage, layout, window, Path.Join(outputDirectory, "icons"));
+            foreach (var failure in SizeFailures) Report.AppendLine("FALHA: " + failure);
             await File.WriteAllTextAsync(Path.Join(outputDirectory, "report.txt"), Report.ToString());
-            Environment.ExitCode = 0;
+            Environment.ExitCode = SizeFailures.Count > 0 ? 1 : 0;
         }
         catch (Exception ex)
         {
@@ -368,32 +379,61 @@ internal static class ScreenRenderer
         await FocusAsync(app, stage, "relatório.txt");
         app.Handle(InputAction.OpenContextMenu);
         await app.WhenIdleAsync(); // o menu de arquivo detecta o formato antes de abrir
-        await CaptureAsync(stage, target, dir, "m1-menu-actions", window);
+        await CaptureAsync(stage, target, dir, "m1-menu-actions", window, "menu-actions");
         FocusMenuItem(app, "Excluir");
-        await CaptureAsync(stage, target, dir, "m1b-menu-destructive-focus", window);
+        await CaptureAsync(stage, target, dir, "m1b-menu-destructive-focus", window, "menu-actions");
         app.Handle(InputAction.Confirm);
-        await CaptureAsync(stage, target, dir, "m2-confirm-delete", window);
+        await CaptureAsync(stage, target, dir, "m2-confirm-delete", window, "confirm-delete");
         window.SimulateSolidSurfaces(true);
-        await CaptureAsync(stage, target, dir, "m2b-confirm-delete-solid", window);
+        await CaptureAsync(stage, target, dir, "m2b-confirm-delete-solid", window, "confirm-delete");
         window.SimulateSolidSurfaces(false);
         CloseModals(app);
+
+        // #227: o mesmo modal, três variantes (ZIP, TAR.GZ, 7z) e uma confirmação com nome curto e outra com nome longo.
+        if (WantedGroup("q"))
+        {
+            await FocusAsync(app, stage, "relatório.txt");
+            app.Handle(InputAction.OpenContextMenu);
+            await app.WhenIdleAsync();
+            FocusMenuItem(app, "Compactar");
+            app.Handle(InputAction.Confirm);
+            await CaptureAsync(stage, target, dir, "q1-compress-zip", window, "compress");
+            foreach (var (name, shot) in new[] { ("TAR.GZ", "q1b-compress-targz"), ("7z", "q1c-compress-7z") })
+            {
+                ChooseCompressFormat(app, name);
+                await CaptureAsync(stage, target, dir, shot, window, "compress");
+            }
+            CloseModals(app);
+            await FocusAsync(app, stage, LongFileName);
+            app.Handle(InputAction.OpenContextMenu);
+            await app.WhenIdleAsync();
+            FocusMenuItem(app, "Excluir");
+            app.Handle(InputAction.Confirm);
+            await CaptureAsync(stage, target, dir, "q2-confirm-delete-long-name", window, "confirm-delete", sameHeight: false);
+            CloseModals(app);
+        }
 
         // Compactado com senha: resumo da extração, teclado de senha e o resultado com a senha errada.
         await FocusAsync(app, stage, "protegido.zip");
         app.Handle(InputAction.OpenContextMenu);
         await app.WhenIdleAsync(); // abre em "Extrair para \"protegido\""
         app.Handle(InputAction.Confirm);
-        await CaptureAsync(stage, target, dir, "m3-extract-summary", window);
+        await CaptureAsync(stage, target, dir, "m3-extract-summary", window, "extract-summary");
+        app.Handle(InputAction.NavigateDown); // "Pasta dedicada" (alternar) troca o texto do destino: o painel não muda
+        app.Handle(InputAction.Confirm);
+        await CaptureAsync(stage, target, dir, "m3b-extract-summary-toggled", window, "extract-summary");
+        app.Handle(InputAction.Confirm); // volta ao que era
+        app.Handle(InputAction.NavigateUp);
         app.Handle(InputAction.Confirm); // Extrair
         if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal))
         {
             var first = app.TopModal;
             app.TypeText("senha errada");
-            await CaptureAsync(stage, target, dir, "m4-password", window);
+            await CaptureAsync(stage, target, dir, "m4-password", window, "keyboard-password");
             app.Handle(InputAction.OpenAppMenu); // Concluir: senha errada reabre o teclado com o erro
             if (await WaitForAsync(() => app.TopModal is Application.State.KeyboardModal k && !ReferenceEquals(k, first) && !k.IsBusy))
             {
-                await CaptureAsync(stage, target, dir, "m5-password-error", window);
+                await CaptureAsync(stage, target, dir, "m5-password-error", window, "keyboard-password");
                 app.TypeText("certa");
                 app.Handle(InputAction.OpenAppMenu);
                 if (await WaitForAsync(() => app.TopModal is Application.State.DialogModal))
@@ -558,6 +598,28 @@ internal static class ScreenRenderer
     }
 
     /// <summary>Move o foco do menu aberto até o item que começa com <paramref name="prefix"/> (só setas).</summary>
+    /// <summary>Nome muito longo (#227): a confirmação de exclusão dele tem a mesma largura da de um nome curto.</summary>
+    private const string LongFileName = "Relatório anual de desempenho financeiro e operacional da empresa — versão revisada para a diretoria.txt";
+
+    /// <summary>Foca a opção do diálogo que começa com <paramref name="prefix"/>, só com as setas (como no controle).</summary>
+    private static void FocusDialogOption(AppController app, string prefix)
+    {
+        if (app.TopModal is not Application.State.DialogModal dialog) return;
+        var index = dialog.Options.FindIndex(o => o.Label.StartsWith(prefix, StringComparison.Ordinal));
+        for (var i = 0; index >= 0 && dialog.FocusIndex != index && i < 40; i++)
+            app.Handle(dialog.FocusIndex < index ? InputAction.NavigateDown : InputAction.NavigateUp);
+    }
+
+    /// <summary>Muda o formato no diálogo Compactar até a opção mostrar <paramref name="format"/>.</summary>
+    private static void ChooseCompressFormat(AppController app, string format)
+    {
+        for (var i = 0; i < 4 && app.TopModal is Application.State.DialogModal dialog && !dialog.Options.Any(o => o.Label == "Formato: " + format); i++)
+        {
+            FocusDialogOption(app, "Formato");
+            app.Handle(InputAction.Confirm);
+        }
+    }
+
     private static void FocusMenuItem(AppController app, string prefix)
     {
         if (app.TopModal is not Application.State.MenuModal menu) return;
@@ -594,6 +656,7 @@ internal static class ScreenRenderer
     {
         Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Join(folder, "relatório.txt"), "Relatório de exemplo.");
+        File.WriteAllText(Path.Join(folder, LongFileName), "Nome longo.");
         Directory.CreateDirectory(Path.Join(folder, "Pasta removida"));
         File.WriteAllBytes(Path.Join(folder, "protegido.zip"), Convert.FromBase64String(ProtectedZip));
         File.WriteAllBytes(Path.Join(folder, "manual.pdf"), SamplePdf());
@@ -893,13 +956,31 @@ internal static class ScreenRenderer
         return folder;
     }
 
-    private static async Task CaptureAsync(FrameworkElement stage, Target target, string directory, string name, MainWindow window)
+    /// <param name="sameSizeAs">
+    /// Grupo de tamanho (#227): todas as capturas do mesmo grupo e alvo têm de ter o painel com a mesma largura (e, com
+    /// <paramref name="sameHeight"/>, a mesma altura), mudando o foco, o valor, a variante ou o aviso. Uma diferença de mais de
+    /// 1 px entra no relatório como "TAMANHO DIFERENTE" e a execução falha.
+    /// </param>
+    private static async Task CaptureAsync(FrameworkElement stage, Target target, string directory, string name, MainWindow window, string? sameSizeAs = null, bool sameHeight = true)
     {
         if (!Wanted(name)) return;
         await SettleAsync(stage);
         var file = Path.Join(directory, name + ".png");
         await SaveAsync(stage, target.Width, target.Height, file);
         Report.AppendLine($"  {name}: {window.DescribeFit()}");
+        if (sameSizeAs is null || window.ModalCardSize() is not { } size) return;
+        var key = target.Name + "|" + sameSizeAs;
+        if (!SizeGroups.TryGetValue(key, out var first))
+        {
+            SizeGroups[key] = (name, size.Width, size.Height);
+            Report.AppendLine($"    tamanho do grupo {sameSizeAs}: {size.Width:0}x{size.Height:0}{(sameHeight ? string.Empty : " (só a largura é comparada)")}");
+            return;
+        }
+        var widthOk = Math.Abs(size.Width - first.Width) <= 1;
+        var heightOk = !sameHeight || Math.Abs(size.Height - first.Height) <= 1;
+        Report.AppendLine($"    tamanho do grupo {sameSizeAs}: {size.Width:0}x{size.Height:0} {(widthOk && heightOk ? "= igual a " : "TAMANHO DIFERENTE de ")}{first.First} ({first.Width:0}x{first.Height:0})");
+        if (!widthOk || !heightOk)
+            SizeFailures.Add($"{target.Name}: o modal do grupo {sameSizeAs} mudou de tamanho ({first.First} {first.Width:0}x{first.Height:0} → {name} {size.Width:0}x{size.Height:0})");
     }
 
     /// <summary>

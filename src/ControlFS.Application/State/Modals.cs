@@ -3,10 +3,36 @@ using ControlFS.Core.Text;
 
 namespace ControlFS.Application.State;
 
+/// <summary>
+/// Classe de tamanho de um modal (#227): cada TIPO de modal tem uma largura fixa (a tela limita à janela, em 720p, portátil
+/// e 4K); as variantes do mesmo modal e o foco, os valores e os avisos nunca a mudam. Um modal novo herda a regra ao
+/// escolher uma classe (ou a padrão de <see cref="Modal.Size"/>); nada é forçado a um tamanho único.
+/// </summary>
+public enum ModalSize
+{
+    /// <summary>Confirmações e avisos curtos, menus só de lista.</summary>
+    Compact,
+
+    /// <summary>Menus com grade de blocos (menu do app, ações, Configurações).</summary>
+    Medium,
+
+    /// <summary>Diálogos com informações e opções (Compactar, extração, resultados, Sobre, pareamento).</summary>
+    Standard,
+
+    /// <summary>Teclado virtual, "Mais da equipe", assistente e teste de controles.</summary>
+    Wide,
+
+    /// <summary>A janela menos as margens (visualizações, boas-vindas).</summary>
+    Fill,
+}
+
 /// <summary>Um modal cria um escopo exclusivo de entrada: somente o topo da pilha recebe ações.</summary>
 public abstract class Modal(string title)
 {
     public string Title { get; } = title;
+
+    /// <summary>Classe de tamanho (#227): a largura do painel é fixa por classe, nunca pelo conteúdo em foco.</summary>
+    public virtual ModalSize Size => ModalSize.Standard;
 
     /// <summary>Linha de contexto sob o título (ex.: tipo do item cujas ações o menu mostra). Opcional.</summary>
     public string? Subtitle { get; internal set; }
@@ -142,23 +168,39 @@ public sealed class MenuModal : Modal
     /// repetição do que o bloco já mostra (#227). Um ajuste já mostra nome curto e valor: a linha só explica. Uma ação com
     /// rótulo curto ganha o nome completo antes (ex.: "Colar 2 itens (mover)").
     /// </summary>
-    public string TileCaption
+    public string TileCaption => IsQuick(FocusIndex) ? Caption(FocusIndex) : string.Empty;
+
+    private string Caption(int index)
     {
-        get
-        {
-            if (!IsQuick(FocusIndex)) return string.Empty;
-            var item = Items[FocusIndex];
-            var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
-            var name = item.Value is not null || item.Label.TrimEnd('…') == item.TileLabel ? null : item.Label;
-            return string.Join(" · ", new[] { name, about }.Where(t => t is { Length: > 0 }));
-        }
+        var item = Items[index];
+        var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
+        var name = item.Value is not null || item.Label.TrimEnd('…') == item.TileLabel ? null : item.Label;
+        return string.Join(" · ", new[] { name, about }.Where(t => t is { Length: > 0 }));
     }
 
     /// <summary>
-    /// Largura do painel (px lógicos): fixa para o menu inteiro, nunca pelo item em foco (#227). O texto longo quebra
-    /// dentro dela; a tela ainda limita ao tamanho da janela.
+    /// Texto que descreve a opção <paramref name="index"/> na área de descrição fixa do painel (#227): de um bloco, a linha
+    /// sob a grade (nome completo e o que faz); de uma linha, o detalhe (ou o motivo de estar indisponível). Vazio: nada a dizer.
     /// </summary>
-    public double PanelWidth => Grids.Count > 0 ? 540 : 460;
+    public string DescriptionOf(int index)
+    {
+        if (index < 0 || index >= Items.Count) return string.Empty;
+        if (IsQuick(index)) return Caption(index);
+        var item = Items[index];
+        return !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail ?? string.Empty;
+    }
+
+    /// <summary>Descrição da opção em foco.</summary>
+    public string Description => DescriptionOf(FocusIndex);
+
+    /// <summary>
+    /// Todas as descrições possíveis: a área de descrição reserva a altura da mais longa, então focar uma opção com texto
+    /// comprido nunca redimensiona o painel (#227).
+    /// </summary>
+    public IEnumerable<string> AllDescriptions => Enumerable.Range(0, Items.Count).Select(DescriptionOf).Where(t => t.Length > 0).Distinct();
+
+    /// <summary>Menu com grade: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
+    public override ModalSize Size => Grids.Count > 0 ? ModalSize.Medium : ModalSize.Compact;
 
     /// <summary>Coluna da grade de onde o foco saiu: voltar a uma grade (Cima, ou Baixo de outra grade) usa a mesma coluna.</summary>
     internal int GridColumn { get; set; }
@@ -233,6 +275,7 @@ public sealed class KeyboardModal(VirtualKeyboard keyboard, Func<VirtualKeyboard
     internal Func<VirtualKeyboard, Task> OnSubmit { get; } = onSubmit;
     internal Action? OnCancel { get; } = onCancel;
     public bool IsBusy { get; internal set; }
+    public override ModalSize Size => ModalSize.Wide;
 }
 
 public enum DialogOptionKind
@@ -284,6 +327,35 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
     public bool[,]? QrModules { get; internal set; }
     internal DialogOption? BackOption { get; set; }
 
+    /// <summary>
+    /// Textos alternativos de uma linha de informação, por rótulo (#227): a tela reserva o espaço do mais alto, então trocar
+    /// o formato de compactação (ou o nome que já existia) nunca muda o tamanho do diálogo. Opcional.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>>? LineReserve { get; internal set; }
+
+    /// <summary>
+    /// Linhas de informação reservadas (#227): a tela completa com linhas invisíveis até este número. Detalhes de uma operação
+    /// em andamento ganham linhas (Dados, Velocidade, Restante) à medida que o andamento se conhece; o painel não cresce por isso.
+    /// </summary>
+    public int ReservedRows { get; internal set; }
+
+    private ModalSize? _size;
+
+    /// <summary>
+    /// Confirmação curta (até duas linhas, sem alternâncias, andamento nem QR Code): <see cref="ModalSize.Compact"/>; o resto:
+    /// <see cref="ModalSize.Standard"/>. Decidido uma vez, na primeira leitura (a tela desenha), e mantido enquanto o diálogo
+    /// vive (#227). <see cref="UseSize"/> escolhe outra.
+    /// </summary>
+    public override ModalSize Size => _size ??=
+        Progress is not null || QrModules is not null || Lines.Count > 2 || Options.Any(o => o.Kind == DialogOptionKind.Toggle)
+            ? ModalSize.Standard : ModalSize.Compact;
+
+    internal DialogModal UseSize(ModalSize size)
+    {
+        _size = size;
+        return this;
+    }
+
     /// <summary>Opção executada por Start/Menu (ex.: aplicar a renomeação em lote de qualquer opção em foco). Opcional.</summary>
     internal DialogOption? StartOption { get; set; }
     public override bool IsSensitive => sensitive;
@@ -319,6 +391,7 @@ public sealed class MappingWizardModal(Core.Contracts.InputDeviceInfo device, Co
 
     public Core.Contracts.InputDeviceInfo Device { get; } = device;
     public override ActionIcon Icon { get; internal set; } = ActionIcon.ControllerSetup;
+    public override ModalSize Size => ModalSize.Wide;
     public Core.Input.Mapping.ControllerMappingWizard Wizard { get; } = wizard;
     public int ReviewFocus { get; internal set; }
 
@@ -345,6 +418,7 @@ public sealed class ControllerTestModal() : Modal("Teste de controles")
     public const int MaxLines = 300;
 
     public override ActionIcon Icon { get; internal set; } = ActionIcon.ControllerTest;
+    public override ModalSize Size => ModalSize.Wide;
 
     internal Dictionary<string, (int Number, Core.Contracts.InputDeviceInfo Info)> Seen { get; } = new(StringComparer.Ordinal);
     internal Dictionary<(string Device, int Axis), int> AxisBuckets { get; } = [];
@@ -371,6 +445,8 @@ public abstract class ZoomablePreviewModal(string title) : Modal(title)
 {
     /// <summary>Níveis de zoom sobre o conteúdo ajustado à tela (1 = inteiro na tela).</summary>
     public static IReadOnlyList<double> ZoomLevels { get; } = [1, 1.5, 2, 3, 4, 6, 8];
+
+    public override ModalSize Size => ModalSize.Fill;
 
     public int ZoomIndex { get; private set; }
     public double Zoom => ZoomLevels[ZoomIndex];
@@ -508,6 +584,8 @@ public abstract class MediaPreviewModal : Modal
 public sealed class AudioPreviewModal : MediaPreviewModal
 {
     internal AudioPreviewModal(PaneState pane, Core.Models.FileEntry entry) : base("Ouvir áudio", pane, entry) => Icon = ActionIcon.Audio;
+
+    public override ModalSize Size => ModalSize.Standard;
 }
 
 /// <summary>
@@ -517,6 +595,8 @@ public sealed class AudioPreviewModal : MediaPreviewModal
 /// </summary>
 public sealed class VideoPlayerModal : MediaPreviewModal
 {
+    public override ModalSize Size => ModalSize.Fill;
+
     internal VideoPlayerModal(PaneState pane, Core.Models.FileEntry entry, string resumeKey, TimeSpan? resumeAt, string? subtitlePath)
         : base("Vídeo", pane, entry)
     {
@@ -553,6 +633,8 @@ public sealed class VideoPlayerModal : MediaPreviewModal
 /// </summary>
 public sealed class TextPreviewModal : Modal
 {
+    public override ModalSize Size => ModalSize.Fill;
+
     /// <summary>Colunas deslocadas por Esquerda/Direita (linhas longas não quebram).</summary>
     public const int ColumnStep = 16;
 
@@ -628,6 +710,7 @@ public sealed record PromoCard(string Name, string Tagline, string Description, 
 public sealed class PromoModal(IReadOnlyList<PromoCard> cards) : Modal("Mais da equipe")
 {
     public override ActionIcon Icon { get; internal set; } = ActionIcon.Game;
+    public override ModalSize Size => ModalSize.Wide;
     public IReadOnlyList<PromoCard> Cards { get; } = cards;
 
     /// <summary>Cartões por linha (a lista cresce em linhas de duas colunas).</summary>

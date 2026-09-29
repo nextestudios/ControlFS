@@ -38,17 +38,20 @@ public sealed partial class AppController
         {
             var names = plan.Sources.Select(Path.GetFileName).Take(3).ToList();
             var more = plan.Sources.Count > 3 ? $" e mais {plan.Sources.Count - 3}" : string.Empty;
+            const string numbered = "  (o nome já existia: numerado)";
+            // O painel tem o mesmo tamanho para ZIP, 7z e TAR.GZ e para cada compressão (#227): a altura já reserva o texto mais longo de cada linha.
+            dialog.LineReserve = new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["Arquivo"] = [plan.BaseName + CompressionRequest.Extension(CompressionFormat.TarGZip) + numbered],
+                ["Formato"] = [.. Enum.GetValues<CompressionFormat>().Select(FormatDescription)],
+                ["Compressão"] = [.. Enum.GetValues<CompressionStrength>().Select(StrengthLabel)],
+            };
             dialog.Lines =
             [
                 ("Itens", $"{plan.Sources.Count}: {string.Join(", ", names)}{more}"),
                 ("Destino", plan.Folder),
-                ("Arquivo", plan.FileName(Exists) + (Exists(plan.BaseName + CompressionRequest.Extension(plan.Format)) ? "  (o nome já existia: numerado)" : string.Empty)),
-                ("Formato", plan.Format switch
-                {
-                    CompressionFormat.Zip => "ZIP — abre em qualquer Windows",
-                    CompressionFormat.SevenZip => "7z — menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)",
-                    _ => "TAR.GZ — comum em Linux/macOS",
-                }),
+                ("Arquivo", plan.FileName(Exists) + (Exists(plan.BaseName + CompressionRequest.Extension(plan.Format)) ? numbered : string.Empty)),
+                ("Formato", FormatDescription(plan.Format)),
                 ("Compressão", StrengthLabel(plan.Strength)),
                 ("Segurança", "links e junctions não são seguidos; nada é sobrescrito"),
             ];
@@ -155,6 +158,13 @@ public sealed partial class AppController
         if (Browser.Location is PhysicalLocation here && string.Equals(here.FullPath, plan.Folder, StringComparison.OrdinalIgnoreCase))
             Refresh(Browser, result.Destination is { } d ? Path.GetFileName(d) : null);
     }
+
+    private static string FormatDescription(CompressionFormat format) => format switch
+    {
+        CompressionFormat.Zip => "ZIP — abre em qualquer Windows",
+        CompressionFormat.SevenZip => "7z — menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)",
+        _ => "TAR.GZ — comum em Linux/macOS",
+    };
 
     private static string FormatLabel(CompressionFormat format) => format switch
     {

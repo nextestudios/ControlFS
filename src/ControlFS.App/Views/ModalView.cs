@@ -162,15 +162,33 @@ public static partial class ModalView
     private static double PanelMargin => Theme.SpaceM;
 
     /// <summary>
-    /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela) e, embaixo, o aviso do rodapé (se
-    /// houver) e as legendas do controle em uso. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
+    /// Largura fixa de cada classe de tamanho (#227, px lógicos antes da escala). Nunca depende do conteúdo em foco; a janela
+    /// (720p, portátil, 4K) sempre limita (<see cref="PanelWidthFor"/>).
     /// </summary>
-    private static Border Panel(AppController app, FrameworkElement header, UIElement body, double maxWidth, bool scroll = true, bool stretch = false, double minWidth = 0, Action<Border>? footerSink = null, bool compact = false, bool fadedHints = false)
+    private static double BaseWidth(ModalSize size) => size switch
+    {
+        ModalSize.Compact => 460,
+        ModalSize.Medium => 540,
+        ModalSize.Standard => 640,
+        ModalSize.Wide => 960,
+        _ => double.PositiveInfinity,
+    };
+
+    /// <summary>Largura real do painel: a da classe (escalada) ou, no máximo, a janela menos as margens; Fill ocupa tudo isso.</summary>
+    public static double PanelWidthFor(ModalSize size) => Math.Min(Theme.Scaled(BaseWidth(size)), Theme.Viewport.Width - (2 * PanelMargin));
+
+    /// <summary>
+    /// Painel do modal: cabeçalho, corpo (rolável; a altura nunca passa da janela), a área de descrição (menus, se houver) e,
+    /// embaixo, o aviso do rodapé e as legendas do controle em uso. A largura é fixa pela classe de tamanho (#227): mínimo =
+    /// máximo, então nada no conteúdo a muda. <paramref name="scroll"/> false: o corpo já cabe (visualizações).
+    /// </summary>
+    private static Border Panel(AppController app, FrameworkElement header, UIElement body, ModalSize size, bool scroll = true, Action<Border>? footerSink = null, bool compact = false, bool fadedHints = false, UIElement? below = null)
     {
         var padding = compact ? MenuPadding : PanelPadding;
         var grid = new Grid { RowSpacing = compact ? Theme.Space(12) : Theme.SpaceM };
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         // Cabeçalho separado do corpo por um fio: o conteúdo que rola nunca encosta no título.
         var top = new StackPanel { Spacing = compact ? Theme.Space(12) : Theme.SpaceM };
@@ -196,10 +214,16 @@ public static partial class ModalView
         Grid.SetRow((FrameworkElement)content, 1);
         grid.Children.Add(content);
 
-        var footer = new Border { Child = Footer(app, fadedHints) };
+        if (below is FrameworkElement belowElement)
+        {
+            Grid.SetRow(belowElement, 2);
+            grid.Children.Add(belowElement);
+        }
+
+        var footer = new Border { Child = Footer(app, fadedHints, statusBand: true) };
         _hintsFaded = fadedHints;
         footerSink?.Invoke(footer);
-        Grid.SetRow(footer, 2);
+        Grid.SetRow(footer, 3);
         grid.Children.Add(footer);
 
         return new Border
@@ -209,10 +233,8 @@ public static partial class ModalView
             BorderThickness = Theme.Hairline,
             CornerRadius = Theme.ModalRadius,
             Padding = compact ? new Thickness(padding, padding - Theme.SpaceXs, padding, Theme.Space(14)) : new Thickness(padding, padding - Theme.SpaceXs, padding, Theme.Space(20)),
-            MaxWidth = Math.Min(Theme.Scaled(maxWidth), Theme.Viewport.Width - (2 * PanelMargin)),
+            Width = size == ModalSize.Fill ? Theme.Viewport.Width - (2 * PanelMargin) : PanelWidthFor(size),
             MaxHeight = Theme.Viewport.Height - (2 * PanelMargin),
-            MinWidth = Math.Min(Theme.Scaled(minWidth), Theme.Viewport.Width - (2 * PanelMargin)),
-            Width = stretch ? Theme.Viewport.Width - (2 * PanelMargin) : double.NaN,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(PanelMargin),
@@ -298,22 +320,32 @@ public static partial class ModalView
     /// Rodapé do painel: o aviso do momento (ex.: por que uma opção está indisponível) e as legendas do controle em uso,
     /// as mesmas do rodapé da janela (glifo certo por família; só ações que funcionam neste modal).
     /// </summary>
-    private static StackPanel Footer(AppController app, bool fadedHints = false)
+    private static StackPanel Footer(AppController app, bool fadedHints = false, bool statusBand = false)
     {
         var footer = new StackPanel { Spacing = Theme.SpaceS };
         footer.Children.Add(new Border { Height = Theme.Hairline.Top, Background = Theme.ModalDivider, Margin = new Thickness(0, 0, 0, Theme.SpaceXs) });
         if (app.StatusMessage is { Length: > 0 } status)
         {
-            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
+            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS, MinHeight = StatusLineHeight };
             line.Children.Add(Glyph(ActionIcon.Info, Theme.FontBody, Theme.Accent));
-            line.Children.Add(new TextBlock { Text = status, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+            line.Children.Add(new TextBlock { Text = status, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });
             footer.Children.Add(line);
         }
-        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody, KeyboardSecondaryPrompt(app));
+        else if (statusBand)
+        {
+            // Um aviso que aparece (ex.: o fim de uma operação em segundo plano) ocupa uma linha já reservada: o painel não cresce (#227).
+            footer.Children.Add(new Border { Height = StatusLineHeight });
+        }
+        // A legenda que nomeia a opção focada ("Confirmar: <opção>") é cortada com reticências em vez de quebrar a linha das legendas: o rodapé não muda de altura (#227).
+        var inner = PanelWidthFor(app.TopModal?.Size ?? ModalSize.Standard) - (2 * MenuPadding);
+        var bar = PromptBar(app.Prompts, PromptGlyphHeight, Theme.FontBody, KeyboardSecondaryPrompt(app), labelMaxWidth: inner * 0.55);
         if (fadedHints) FadeHints(bar);
         footer.Children.Add(bar);
         return footer;
     }
+
+    /// <summary>Altura da linha de aviso do rodapé, reservada mesmo sem aviso (#227).</summary>
+    private static double StatusLineHeight => Math.Ceiling(Theme.FontBody * 1.4);
 
     /// <summary>
     /// Teclado virtual nos portáteis: as legendas ficam nas essenciais (Selecionar, Apagar, Maiúsculas, Símbolos, Concluir,
@@ -353,18 +385,18 @@ public static partial class ModalView
     private static double PromptGlyphHeight => Math.Round(Theme.FontBody * (Theme.Layout.Tier == Core.Layout.LayoutTier.Compact ? 1.6 : 1.8));
 
     /// <summary>Legendas (glifo do controle ou tecla do teclado + texto) que quebram linha; usadas também pelo rodapé da janela.</summary>
-    public static WrapPanel PromptBar(IEnumerable<ControllerPrompt> prompts, double glyphHeight, double labelSize, Func<ControllerPrompt, bool>? skip = null)
+    public static WrapPanel PromptBar(IEnumerable<ControllerPrompt> prompts, double glyphHeight, double labelSize, Func<ControllerPrompt, bool>? skip = null, double labelMaxWidth = 0)
     {
         var bar = new WrapPanel { HorizontalSpacing = Theme.SpaceL, VerticalSpacing = Theme.SpaceS };
         foreach (var prompt in prompts)
         {
             if (skip?.Invoke(prompt) == true) continue;
-            bar.Children.Add(PromptChip(prompt, glyphHeight, labelSize));
+            bar.Children.Add(PromptChip(prompt, glyphHeight, labelSize, labelMaxWidth));
         }
         return bar;
     }
 
-    public static StackPanel PromptChip(ControllerPrompt prompt, double glyphHeight, double labelSize)
+    public static StackPanel PromptChip(ControllerPrompt prompt, double glyphHeight, double labelSize, double labelMaxWidth = 0)
     {
         var chip = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS + Theme.SpaceXs };
         if (prompt is { Button: { } button, Family: { } family })
@@ -381,7 +413,14 @@ public static partial class ModalView
                 Padding = new Thickness(Theme.SpaceS, Theme.SpaceXs / 2, Theme.SpaceS, Theme.SpaceXs / 2),
                 Child = new TextBlock { Text = prompt.Key, FontSize = Theme.FontCaption, Foreground = Theme.Text, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
             });
-        chip.Children.Add(new TextBlock { Text = prompt.Label, FontSize = labelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center });
+        var label = new TextBlock { Text = prompt.Label, FontSize = labelSize, Foreground = Theme.Text, VerticalAlignment = VerticalAlignment.Center };
+        if (labelMaxWidth > 0)
+        {
+            label.MaxWidth = labelMaxWidth;
+            label.MaxLines = 1;
+            label.TextTrimming = TextTrimming.CharacterEllipsis;
+        }
+        chip.Children.Add(label);
         AutomationProperties.SetName(chip, prompt.AccessibilityText);
         chip.Tag = prompt;
         return chip;
@@ -424,7 +463,7 @@ public static partial class ModalView
             TextWrapping = TextWrapping.Wrap,
         };
         if (focused) AutomationProperties.SetAutomationId(text, FocusedOptionId);
-        texts.Children.Add(text);
+        texts.Children.Add(WeightStable(text, focused));
         if (secondary is { Length: > 0 })
             texts.Children.Add(new TextBlock
             {
@@ -464,6 +503,64 @@ public static partial class ModalView
         return row;
     }
 
+    /// <summary>
+    /// Texto que ocupa o mesmo espaço focado (negrito, mais largo) e não focado (#227): um rótulo que quebra em duas linhas só
+    /// quando ganha o foco faria a linha, e o painel, crescerem. A cópia em negrito, invisível, só mede.
+    /// </summary>
+    private static UIElement WeightStable(TextBlock text, bool focused)
+    {
+        if (focused) return text;
+        var ghost = new TextBlock
+        {
+            Text = text.Text,
+            FontSize = text.FontSize,
+            FontWeight = FontWeights.SemiBold,
+            TextWrapping = text.TextWrapping,
+            MaxLines = text.MaxLines,
+            TextTrimming = text.TextTrimming,
+            TextAlignment = text.TextAlignment,
+            Opacity = 0,
+            IsHitTestVisible = false,
+        };
+        AutomationProperties.SetAccessibilityView(ghost, AccessibilityView.Raw);
+        return new Grid { Children = { ghost, text }, HorizontalAlignment = text.HorizontalAlignment };
+    }
+
+    /// <summary>
+    /// Área de texto de altura fixa (#227): todos os textos possíveis ficam no mesmo lugar e só o atual é visível, então a área
+    /// já tem a altura do mais longo e mostrar outro nunca redimensiona o painel. <paramref name="minLines"/> linhas, no mínimo.
+    /// </summary>
+    private sealed class TextSlot
+    {
+        private readonly Dictionary<string, TextBlock> _blocks = [];
+        private readonly Func<string, TextBlock> _create;
+
+        public TextSlot(IEnumerable<string> reserved, Func<string, TextBlock> create)
+        {
+            _create = create;
+            foreach (var text in reserved) Ensure(text).Opacity = 0;
+        }
+
+        public Grid Root { get; } = new();
+
+        private TextBlock Ensure(string text)
+        {
+            if (_blocks.TryGetValue(text, out var block)) return block;
+            block = _create(text);
+            block.IsHitTestVisible = false;
+            AutomationProperties.SetAccessibilityView(block, AccessibilityView.Raw); // o Narrador já ouve o anúncio do foco
+            _blocks[text] = block;
+            Root.Children.Add(block);
+            return block;
+        }
+
+        public void Show(string text)
+        {
+            var current = text.Length > 0 ? Ensure(text) : null;
+            foreach (var block in _blocks.Values) block.Opacity = ReferenceEquals(block, current) ? 1 : 0;
+        }
+    }
+
     /// <summary>Título de um grupo de opções, com a linha que o separa do grupo anterior.</summary>
     private static StackPanel SectionHeading(string? title, bool first)
     {
@@ -488,10 +585,10 @@ public static partial class ModalView
     /// <summary>
     /// Menu (#193): grade de ações rápidas no topo (blocos com ícone e rótulo curto, 2D) e, abaixo, a lista compacta das
     /// demais opções, em grupos. Configurações (#227): cada grupo tem título, a grade dos ajustes curtos (com o valor atual)
-    /// e a lista dos demais. Sob cada grade, uma linha diz o nome completo do bloco focado, o que ele faz ou por que está
-    /// indisponível. A largura do painel é fixa para o menu (<see cref="MenuModal.PanelWidth"/>): o foco e a descrição da
-    /// linha focada nunca a mudam; o texto quebra dentro dela. Mantido na tela: mudar o foco troca só o bloco/linha que
-    /// perde e o que ganha o foco (e as linhas sob as grades).
+    /// e a lista dos demais. A descrição da opção em foco (o nome completo e o que faz um bloco; o detalhe de uma linha; ou por
+    /// que está indisponível) fica numa área fixa entre a lista e o rodapé, com a altura da descrição mais longa do menu.
+    /// Largura (<see cref="Modal.Size"/>) e altura nunca mudam com o foco (#227). Mantido na tela: mudar o foco troca só o
+    /// bloco/linha que perde e o que ganha o foco e o texto da descrição.
     /// </summary>
     private static Border BuildMenu(AppController app, MenuModal menu, out Action update)
     {
@@ -500,7 +597,7 @@ public static partial class ModalView
         // Títulos de grupo: em menus só de lista e nas Configurações; com a grade de ações rápidas no topo, só o fio (como o
         // menu de contexto do Windows 11).
         var titles = !hasGrid || menu.HasSectionGrids;
-        var grids = new Dictionary<MenuGrid, (Grid Tiles, TextBlock Caption)>();
+        var grids = new Dictionary<MenuGrid, Grid>();
         var positions = new int[menu.Items.Count];
         string? section = null;
         for (var i = 0; i < menu.Items.Count;)
@@ -525,41 +622,37 @@ public static partial class ModalView
             for (var r = 0; r < grid.Rows; r++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             for (var t = grid.Start; t < grid.End; t++) tiles.Children.Add(MenuTile(app, menu, t));
             stack.Children.Add(tiles);
-            var caption = new TextBlock
-            {
-                FontSize = Theme.FontCaption,
-                Foreground = Theme.TextMuted,
-                TextWrapping = TextWrapping.Wrap,
-                MaxLines = menu.HasSectionGrids ? 0 : 2,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                MinHeight = Math.Ceiling(Theme.FontCaption * 1.4),
-                Margin = new Thickness(Theme.Space(4), Theme.SpaceS, Theme.Space(4), menu.HasSectionGrids ? Theme.Space(4) : 0),
-            };
-            AutomationProperties.SetAccessibilityView(caption, AccessibilityView.Raw); // o Narrador já ouve o anúncio do foco
-            stack.Children.Add(caption);
-            grids[grid] = (tiles, caption);
+            grids[grid] = tiles;
             i = grid.End;
         }
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
-        Border? footer = null;
-        // Largura fixa (#227): mínimo = máximo, os dois limitados pela janela (720p, portátil, 4K).
-        var card = Panel(app, Header(menu, compact: true), stack, menu.PanelWidth, minWidth: menu.PanelWidth, footerSink: f => footer = f, compact: true);
-        void Captions()
+
+        // Descrição fixa da opção em foco (#227): a altura já é a da descrição mais longa; uma linha, no mínimo, se houver alguma.
+        var lineHeight = Math.Ceiling(Theme.FontCaption * 1.4);
+        var description = new TextSlot(menu.AllDescriptions, text => new TextBlock { Text = text, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        UIElement? below = null;
+        if (menu.AllDescriptions.Any())
         {
-            // Menu comum: a linha sob a grade guarda o lugar (nada pula). Configurações: só a grade em foco mostra a sua.
-            foreach (var (grid, (_, caption)) in grids)
+            description.Root.MinHeight = lineHeight;
+            // Caixa própria, separada da lista que rola por trás: a descrição não parece parte dela.
+            below = new Border
             {
-                caption.Text = grid.Contains(menu.FocusIndex) ? menu.TileCaption : string.Empty;
-                if (menu.HasSectionGrids) caption.Visibility = caption.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-            }
+                Background = Theme.ModalInset,
+                CornerRadius = Theme.RowRadius,
+                Padding = new Thickness(Theme.Space(12), Theme.Space(8), Theme.Space(12), Theme.Space(8)),
+                Child = description.Root,
+            };
         }
-        Captions();
+        description.Show(menu.Description);
+
+        Border? footer = null;
+        var card = Panel(app, Header(menu, compact: true), stack, menu.Size, footerSink: f => footer = f, compact: true, below: below);
         var shown = menu.FocusIndex;
         void Replace(int index)
         {
             if (index < 0 || index >= positions.Length) return;
-            if (menu.GridOf(index) is { } grid) grids[grid].Tiles.Children[index - grid.Start] = MenuTile(app, menu, index);
+            if (menu.GridOf(index) is { } grid) grids[grid].Children[index - grid.Start] = MenuTile(app, menu, index);
             else stack.Children[positions[index]] = MenuRow(app, menu, index);
         }
         update = () =>
@@ -570,9 +663,9 @@ public static partial class ModalView
                 Replace(shown);
                 Replace(now);
                 shown = now;
-                Captions();
+                description.Show(menu.Description);
             }
-            if (footer is not null) footer.Child = Footer(app);
+            if (footer is not null) footer.Child = Footer(app, statusBand: true);
         };
         return card;
     }
@@ -613,7 +706,7 @@ public static partial class ModalView
             AutomationProperties.SetAutomationId(text, FocusedOptionId);
             AutomationProperties.SetName(text, item.Label);
         }
-        content.Children.Add(text);
+        content.Children.Add(WeightStable(text, focused));
         if (item.Value is { Length: > 0 } value)
         {
             content.Spacing = Theme.Space(4);
@@ -655,19 +748,18 @@ public static partial class ModalView
         return tile;
     }
 
-    /// <summary>Linha compacta da lista; a linha secundária (o que faz, ou por que está indisponível) só na focada.</summary>
+    /// <summary>Linha compacta da lista; o que ela faz (ou por que está indisponível) aparece na área de descrição fixa do painel.</summary>
     private static Border MenuRow(AppController app, MenuModal menu, int index)
     {
         var item = menu.Items[index];
         var focused = index == menu.FocusIndex;
-        var secondary = !focused ? null : !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
-        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), secondary, compact: true);
+        return Row(item.Label, ActionIcons.Glyph(item.Icon), focused, item.IsEnabled, item.IsDestructive, () => app.PointerChooseModalOption(index), compact: true);
     }
 
     // ---------- Diálogos ----------
 
     /// <summary>Linhas "rótulo: valor" num quadro discreto (informações do diálogo, do Sobre e do assistente).</summary>
-    private static Border InfoLines(IReadOnlyList<(string Label, string Value)> lines, double fontSize)
+    private static Border InfoLines(IReadOnlyList<(string Label, string Value)> lines, double fontSize, IReadOnlyDictionary<string, IReadOnlyList<string>>? reserve = null, int reservedRows = 0)
     {
         var grid = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceS };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -677,11 +769,35 @@ public static partial class ModalView
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             var label = new TextBlock { Text = lines[i].Label, FontSize = fontSize, Foreground = Theme.TextMuted, MaxWidth = Theme.Scaled(260), TextWrapping = TextWrapping.Wrap };
             var value = new TextBlock { Text = lines[i].Value, FontSize = fontSize, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = false };
+            FrameworkElement cell = value;
+            if (reserve is not null && reserve.TryGetValue(lines[i].Label, out var alternatives))
+            {
+                // Textos alternativos (ex.: a descrição de cada formato): invisíveis, ocupam o mesmo lugar e o painel já tem a altura do mais alto (#227).
+                var stacked = new Grid();
+                foreach (var alternative in alternatives.Where(a => a != lines[i].Value))
+                {
+                    var ghost = new TextBlock { Text = alternative, FontSize = fontSize, TextWrapping = TextWrapping.Wrap, Opacity = 0, IsHitTestVisible = false };
+                    AutomationProperties.SetAccessibilityView(ghost, AccessibilityView.Raw);
+                    stacked.Children.Add(ghost);
+                }
+                stacked.Children.Add(value);
+                cell = stacked;
+            }
             Grid.SetRow(label, i);
-            Grid.SetRow(value, i);
-            Grid.SetColumn(value, 1);
+            Grid.SetRow(cell, i);
+            Grid.SetColumn(cell, 1);
             grid.Children.Add(label);
-            grid.Children.Add(value);
+            grid.Children.Add(cell);
+        }
+        // Linhas ainda por vir (#227): ocupam o lugar delas, invisíveis, até aparecerem.
+        for (var i = lines.Count; i < reservedRows; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var placeholder = new TextBlock { Text = " ", FontSize = fontSize, Opacity = 0, IsHitTestVisible = false };
+            AutomationProperties.SetAccessibilityView(placeholder, AccessibilityView.Raw);
+            Grid.SetRow(placeholder, i);
+            Grid.SetColumnSpan(placeholder, 2);
+            grid.Children.Add(placeholder);
         }
         return new Border
         {
@@ -755,7 +871,7 @@ public static partial class ModalView
     {
         var stack = new StackPanel { Spacing = Theme.Space(12) };
         if (dialog.QrModules is { } qr) stack.Children.Add(QrImage(qr));
-        if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody));
+        if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody, dialog.LineReserve, dialog.ReservedRows));
         if (dialog.Progress is { } progress) stack.Children.Add(ProgressBar(progress));
         if (dialog.Message is { } message)
             stack.Children.Add(new TextBlock { Text = message, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
@@ -763,7 +879,7 @@ public static partial class ModalView
         for (var i = 0; i < dialog.Options.Count; i++) options.Children.Add(DialogRow(app, dialog, i));
         if (dialog.Options.Count > 0) stack.Children.Add(options);
         Border? footer = null;
-        var card = Panel(app, Header(dialog), stack, 720, footerSink: f => footer = f);
+        var card = Panel(app, Header(dialog), stack, dialog.Size, footerSink: f => footer = f);
         var shown = dialog.FocusIndex;
         update = () =>
         {
@@ -774,7 +890,7 @@ public static partial class ModalView
                 if (now >= 0 && now < options.Children.Count) options.Children[now] = DialogRow(app, dialog, now);
                 shown = now;
             }
-            if (footer is not null) footer.Child = Footer(app);
+            if (footer is not null) footer.Child = Footer(app, statusBand: true);
         };
         return card;
     }
@@ -812,7 +928,7 @@ public static partial class ModalView
             stack.Children.Add(cards);
         }
         stack.Children.Add(Row("Fechar", ActionIcons.Glyph(ActionIcon.Close), promo.CloseFocused, true, false, () => app.PointerChoosePromo(promo.Cards.Count)));
-        return Panel(app, Header(promo), stack, 880);
+        return Panel(app, Header(promo), stack, promo.Size);
     }
 
     /// <summary>Um aplicativo: logo, nome, o que faz e o botão que abre o site no navegador (nada é baixado por aqui).</summary>
@@ -862,7 +978,7 @@ public static partial class ModalView
             Foreground = Theme.TextMuted,
             TextWrapping = TextWrapping.Wrap,
         });
-        return Panel(app, Header(about.Title, about.Icon, "Versão " + about.Version), stack, 720);
+        return Panel(app, Header(about.Title, about.Icon, "Versão " + about.Version), stack, about.Size);
     }
 
     // ---------- Teclado na tela ----------
@@ -938,7 +1054,7 @@ public static partial class ModalView
         }
         stack.Children.Add(grid);
         Border? footer = null;
-        var card = Panel(app, Header(modal), stack, 960, footerSink: f => footer = f);
+        var card = Panel(app, Header(modal), stack, modal.Size, footerSink: f => footer = f);
 
         var shown = (kb.Row, kb.Column, kb.SuggestionIndex);
         update = () =>
@@ -952,7 +1068,7 @@ public static partial class ModalView
                 Refresh(now.Row, now.Column);
                 shown = now;
             }
-            if (footer is not null) footer.Child = Footer(app);
+            if (footer is not null) footer.Child = Footer(app, statusBand: true);
         };
         return card;
 
@@ -962,6 +1078,8 @@ public static partial class ModalView
             grid.Children[positions[r][k]] = KeyCell(app, kb, r, k, columns[r][k]);
         }
     }
+
+    private static double SuggestionChipHeight => Math.Ceiling(Theme.FontBody * 1.4) + (2 * Theme.SpaceS) + (2 * Theme.Hairline.Top);
 
     /// <summary>Campo de texto, estado, erro e faixa de sugestões: refeitos no lugar a cada quadro (o texto muda ao digitar).</summary>
     private static void FillKeyboardTop(AppController app, KeyboardModal modal, StackPanel stack)
@@ -977,6 +1095,8 @@ public static partial class ModalView
             BorderThickness = Theme.FocusRing,
             CornerRadius = Theme.RowRadius,
             Padding = new Thickness(Theme.SpaceM, Theme.Space(12), Theme.SpaceM, Theme.Space(12)),
+            // Caminhos (Ir para caminho) passam de uma linha: duas ficam reservadas, digitar não redimensiona o teclado (#227).
+            MinHeight = Theme.Space(24) + (Math.Ceiling(Theme.FontItem * 1.4) * (kb.Kind == TextFieldKind.Path ? 2 : 1)) + (2 * Theme.FocusRing.Top),
             Child = fieldText,
         };
         var caretSpoken = kb.Length == 0 ? "campo vazio" : kb.HasSelection ? $"{kb.SelectionLength} de {kb.Length} caracteres selecionados" : caret == 0 ? "cursor no início" : caret >= kb.Length ? "cursor no fim" : $"cursor na posição {caret} de {kb.Length}";
@@ -990,16 +1110,20 @@ public static partial class ModalView
             (kb.Shift == ShiftState.Locked ? " · MAIÚSCULAS" : kb.Shift == ShiftState.Once ? " · próxima maiúscula" : string.Empty) +
             (modal.IsBusy ? " · aplicando…" : string.Empty);
         stack.Children.Add(new TextBlock { Text = status, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted });
+        // Erro de validação: símbolo e texto (nunca só a cor), e o campo continua aberto para corrigir. A linha do erro fica
+        // reservada mesmo sem erro: a mensagem aparecer e sumir nunca muda a altura do teclado (#227).
+        var errorLine = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS, MinHeight = StatusLineHeight };
         if (kb.ErrorMessage is { } error)
         {
-            // Erro de validação: símbolo e texto (nunca só a cor), e o campo continua aberto para corrigir.
-            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
-            line.Children.Add(Glyph(ActionIcon.Error, Theme.FontBody, Theme.Danger));
-            line.Children.Add(new TextBlock { Text = error, FontSize = Theme.FontBody, Foreground = Theme.Danger, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
-            stack.Children.Add(line);
+            errorLine.Children.Add(Glyph(ActionIcon.Error, Theme.FontBody, Theme.Danger));
+            errorLine.Children.Add(new TextBlock { Text = error, FontSize = Theme.FontBody, Foreground = Theme.Danger, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });
         }
+        stack.Children.Add(errorLine);
 
         var gap = Theme.Scaled(6);
+        // Com sugestões ligadas, a faixa tem lugar reservado mesmo vazia: ela aparecer ao digitar nunca muda a altura (#227).
+        if (kb.SuggestionSource is not null && kb.Suggestions.Count == 0)
+            stack.Children.Add(new Border { Height = SuggestionChipHeight, Margin = new Thickness(0, Theme.SpaceS, 0, 0) });
         if (kb.Suggestions is { Count: > 0 } suggestions)
         {
             // Faixa de sugestões locais (#45): acima das teclas; cima a partir da primeira linha foca, Sul usa.
@@ -1016,6 +1140,7 @@ public static partial class ModalView
                     BorderThickness = Theme.Hairline,
                     CornerRadius = new CornerRadius(Theme.Scaled(10)),
                     Padding = new Thickness(Theme.SpaceM, Theme.SpaceS, Theme.SpaceM, Theme.SpaceS),
+                    MinHeight = SuggestionChipHeight,
                     Child = new TextBlock
                     {
                         Text = suggestions[i],
@@ -1116,10 +1241,11 @@ public static partial class ModalView
                     : wizard.StepIndex < required ? " · obrigatório" : string.Empty);
                 break;
         }
-        stack.Children.Add(new TextBlock { Text = headline, FontSize = Theme.FontTitle, Foreground = Theme.Accent, TextWrapping = TextWrapping.Wrap });
-        stack.Children.Add(new TextBlock { Text = detail, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
-        if (wizard.Feedback is { } feedback)
-            stack.Children.Add(new TextBlock { Text = feedback, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap });
+        // Passos e avisos ocupam lugares reservados (#227): trocar de passo, aparecer um aviso ou chegar à revisão não redimensiona o assistente.
+        var bodyLine = Math.Ceiling(Theme.FontBody * 1.4);
+        stack.Children.Add(new TextBlock { Text = headline, FontSize = Theme.FontTitle, Foreground = Theme.Accent, TextWrapping = TextWrapping.Wrap, MinHeight = Math.Ceiling(Theme.FontTitle * 1.4) });
+        stack.Children.Add(new TextBlock { Text = detail, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap, MinHeight = 3 * bodyLine });
+        stack.Children.Add(new TextBlock { Text = wizard.Feedback ?? string.Empty, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, MinHeight = bodyLine });
 
         var grid = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceXs };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -1153,20 +1279,24 @@ public static partial class ModalView
                 var icon = i switch { 0 => ActionIcon.Accept, 1 => ActionIcon.Retry, _ => ActionIcon.Erase };
                 options.Children.Add(Row(MappingWizardModal.ReviewOptions[i], ActionIcons.Glyph(icon), i == modal.ReviewFocus, true, destructive: i == 2, () => app.PointerChooseModalOption(index)));
             }
-            stack.Children.Add(options);
+            stack.Children.Add(new Border { MinHeight = WizardBottomHeight, Child = options });
         }
         else
         {
             stack.Children.Add(new TextBlock
             {
+                MinHeight = WizardBottomHeight,
                 Text = "Teclado: Esc cancela sem salvar · ← refaz o passo anterior · Enter pula um passo opcional. Sem nenhuma entrada por 20 s, a configuração é cancelada.",
                 FontSize = Theme.FontCaption,
                 Foreground = Theme.TextMuted,
                 TextWrapping = TextWrapping.Wrap,
             });
         }
-        return Panel(app, Header($"Configurar {wizard.DeviceName}", modal.Icon, modal.Device.Name != wizard.DeviceName ? modal.Device.Name : null), stack, 760);
+        return Panel(app, Header($"Configurar {wizard.DeviceName}", modal.Icon, modal.Device.Name != wizard.DeviceName ? modal.Device.Name : null), stack, modal.Size);
     }
+
+    /// <summary>Área de baixo do assistente: as três opções da revisão ou a dica do teclado, com o mesmo espaço (#227).</summary>
+    private static double WizardBottomHeight => 3 * (Theme.Scaled(52) + 2);
 
     /// <summary>Teste de controles: dispositivos, a última pressão em destaque e as anteriores (mais recente no topo).</summary>
     private static Border BuildControllerTest(AppController app, ControllerTestModal modal)
@@ -1182,9 +1312,13 @@ public static partial class ModalView
         });
 
         var devices = app.ControllerTestDevices(modal);
+        var captionLine = Math.Ceiling(Theme.FontCaption * 1.4);
         stack.Children.Add(SectionHeading($"Controles ({devices.Count})", first: false));
+        // Lugares reservados (#227): conectar um controle, a lista de pressões crescer ou um aviso aparecer não redimensiona a tela.
+        var deviceList = new StackPanel { MinHeight = 2 * (captionLine + Theme.SpaceS) };
+        stack.Children.Add(deviceList);
         if (devices.Count == 0)
-            stack.Children.Add(new TextBlock { Text = "Nenhum controle detectado. Conecte um controle (USB, Bluetooth ou receptor).", FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+            deviceList.Children.Add(new TextBlock { Text = "Nenhum controle detectado. Conecte um controle (USB, Bluetooth ou receptor).", FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         foreach (var device in devices)
         {
             var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Theme.SpaceS };
@@ -1198,7 +1332,7 @@ public static partial class ModalView
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            stack.Children.Add(line);
+            deviceList.Children.Add(line);
         }
 
         var last = modal.Lines.Count > 0 ? modal.Lines[^1] : null;
@@ -1216,11 +1350,12 @@ public static partial class ModalView
                 TextWrapping = TextWrapping.Wrap,
             },
         });
+        var history = new StackPanel { MinHeight = 8 * captionLine };
         foreach (var line in modal.Lines.AsEnumerable().Reverse().Skip(1).Take(8))
-            stack.Children.Add(new TextBlock { Text = $"#{line.Device} {AppController.DescribeInput(line, english: false)} → {line.Action?.ToString() ?? "nenhuma ação"}", FontSize = Theme.FontCaption, Foreground = Theme.TextMuted });
-        if (modal.Notice is { } notice)
-            stack.Children.Add(new TextBlock { Text = notice, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap });
+            history.Children.Add(new TextBlock { Text = $"#{line.Device} {AppController.DescribeInput(line, english: false)} → {line.Action?.ToString() ?? "nenhuma ação"}", FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, MaxLines = 1, TextTrimming = TextTrimming.CharacterEllipsis });
+        stack.Children.Add(history);
+        stack.Children.Add(new TextBlock { Text = modal.Notice ?? string.Empty, FontSize = Theme.FontBody, Foreground = Theme.Text, TextWrapping = TextWrapping.Wrap, MinHeight = Math.Ceiling(Theme.FontBody * 1.4) });
         stack.Children.Add(Row($"Copiar relatório ({modal.Lines.Count} pressões)", ActionIcons.Glyph(ActionIcon.Copy), false, true, false, app.CopyControllerReport));
-        return Panel(app, Header(modal), stack, 760);
+        return Panel(app, Header(modal), stack, modal.Size);
     }
 }
