@@ -64,7 +64,11 @@ hardware, visual or timing checks that CI can't prove.
   message is in the modal's own footer and the toast hides. Captures (pinned layout) mirror `StatusMessage` with no timer.
 - **Operation progress**: while `OperationQueue.Progress` is non-null (any active operation; mean of each one's
   `Fraction`, by bytes or items, unknown = 0) a 4 px accent bar runs along the bottom edge of the header (no height
-  change); the header's operation text shows the percentage.
+  change); the header's operation text shows the percentage. Progress reaches the UI through `CoalescingProgress`
+  (≤ ~10 updates/s, latest wins; late reports after the end are ignored) and `ProgressEstimator` (fraction never goes
+  backwards, ETA only with ≥ 3 s of work, ≥ 5% done and a known total, always labelled "estimativa"; no total =
+  indeterminate: current activity, no % or ETA). Operation details (Menu → Operações → row) list source, destination,
+  current item, %, items, data, speed and ETA, refreshed live while open (#257).
 
 ### Controller model of the shell
 
@@ -287,6 +291,7 @@ Settings_live_in_Configuracoes_…` checks every moved entry is there; `Driver.C
 | Clipboard copy/cut/paste across folders and tabs | `ClipboardJourneyTests` (2) |
 | Compress (zip/tar.gz/7z, name typed, existing never overwritten, links not followed; "Formato" cycles ZIP → TAR.GZ → 7z, #67) | `ShellAndCompressJourneyTests::Compress_…` (2), `ArchiveCreatorTests` (5), `SevenZipInteropTests` (Windows: 7-Zip tests and extracts the result) |
 | Operations center: progress, cancel, results, errors, retry, history persisted without passwords; Menu → Operações grouped **Em andamento** (state icon, %, items; refreshed in place while open) / **Histórico** | `PauseJourneyTests`, `HistoryJourneyTests`, `FileOperationJourneyTests`; header status text and progress bar (Manual "Avisos e andamento") |
+| Responsive UI and consistent progress (#257): progress flood is coalesced (no freeze after a copy), % / items / bytes / speed / ETA rules, indeterminate = activity only, cancel, Cut shows no transfer until Paste, compress/extract totals, live details | `ProgressJourneyTests` (9), `ProgressEstimatorTests` (6), `FileOperationIntegrationTests::Cross_volume_move_of_a_large_file_…`; Manual "Andamento e resposta (#257)" |
 | Clean success of copy/move/delete = toast ("N itens copiados · Menu → Desfazer"), no dialog; warnings/failures/cancel keep the result dialog | `FileOperationJourneyTests::Copy_to_a_folder_…`, `UndoJourneyTests`, `PauseJourneyTests`, `DualPaneJourneyTests`, `ClipboardJourneyTests` (`Driver.WaitStatus`); Screens `3-folder-compact`, `3b-folder-grid-compact` (toast) |
 | Undo/redo with checks | `UndoJourneyTests` (4) |
 | Leftover cleanup after a crash | `LeftoverCleanupTests` (2); Manual "Limpeza após queda" |

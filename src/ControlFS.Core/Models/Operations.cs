@@ -81,12 +81,29 @@ public sealed record ItemResult(string Name, ItemOutcome Outcome, OperationError
         (Outcome == ItemOutcome.Skipped && Error == OperationErrorKind.Cancelled);
 }
 
+/// <summary>
+/// Andamento de uma operação. Os motores informam item atual, itens e bytes; tipo, origem e destino são preenchidos pela
+/// fila. Sem total conhecido (<see cref="BytesTotal"/> e <see cref="ItemsTotal"/> nulos ou zero) ou com
+/// <see cref="Indeterminate"/>, não há porcentagem nem estimativa: só a atividade atual.
+/// </summary>
 public sealed record OperationProgress(
     string? CurrentItem,
     int ItemsProcessed,
     int? ItemsTotal,
     long BytesProcessed,
-    long? BytesTotal);
+    long? BytesTotal)
+{
+    public OperationKind? Kind { get; init; }
+    public string? Source { get; init; }
+    public string? Destination { get; init; }
+
+    /// <summary>O trabalho não pode ser medido (mesmo que haja contadores parciais): mostrar só a atividade.</summary>
+    public bool Indeterminate { get; init; }
+
+    /// <summary>Fração bruta (0–1): pelos bytes ou, sem o total de bytes, pelos itens; null quando não é mensurável.</summary>
+    public double? Fraction => Indeterminate ? null : BytesTotal is > 0 ? Math.Clamp((double)BytesProcessed / BytesTotal.Value, 0, 1)
+        : ItemsTotal is > 0 ? Math.Clamp((double)ItemsProcessed / ItemsTotal.Value, 0, 1) : null;
+}
 
 public sealed record OperationResult(
     OperationState FinalState,

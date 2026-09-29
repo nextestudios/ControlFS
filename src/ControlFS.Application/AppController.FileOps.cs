@@ -83,7 +83,7 @@ public sealed partial class AppController
         };
         var item = Operations.Enqueue(title, kind, async (op, ct) =>
         {
-            var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
+            var progress = Operations.ProgressFor(op);
             var interaction = new UiConflictInteraction(this, op);
             if (parts.Count == 1)
             {

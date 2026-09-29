@@ -71,4 +71,38 @@ public sealed class FileOperationIntegrationTests : IDisposable
         Assert.True(File.Exists(Path.Join(dest, "livre.txt")));
         Assert.False(File.Exists(Path.Join(dest, "preso.txt")));
     }
+
+    private sealed class Recorder : IProgress<OperationProgress>
+    {
+        public List<OperationProgress> Seen { get; } = [];
+        public void Report(OperationProgress value) => Seen.Add(value);
+    }
+
+    [Fact]
+    public async Task Cross_volume_move_of_a_large_file_and_many_small_files_reports_growing_bytes_up_to_the_total()
+    {
+        var here = Path.GetPathRoot(AppContext.BaseDirectory)!;
+        var other = Path.GetPathRoot(Path.GetTempPath())!;
+        if (string.Equals(here, other, StringComparison.OrdinalIgnoreCase)) Assert.Skip("Precisa de dois volumes.");
+        var src = Root(Path.Join(here, "controlfs-it"));
+        var dest = Root(Path.GetTempPath());
+        var big = Path.Join(src, "grande.bin");
+        await File.WriteAllBytesAsync(big, new byte[96 << 20]);
+        Directory.CreateDirectory(Path.Join(src, "muitos"));
+        for (var i = 0; i < 300; i++) File.WriteAllText(Path.Join(src, "muitos", $"f{i}.txt"), "x");
+        var progress = new Recorder();
+
+        var result = await _service.RunAsync(new FileOperationRequest { Kind = FileOperationKind.Move, Sources = [big, Path.Join(src, "muitos")], DestinationFolder = dest },
+            new NoConflicts(), progress, CancellationToken.None);
+
+        Assert.Equal(OperationState.Completed, result.FinalState);
+        var measured = progress.Seen.Where(p => !p.Indeterminate).ToList();
+        Assert.NotEmpty(measured);
+        Assert.All(measured, p => Assert.Equal(301, p.ItemsTotal));
+        Assert.Equal(measured.Select(p => p.BytesProcessed).Order().ToList(), measured.Select(p => p.BytesProcessed).ToList());
+        Assert.Equal((96L << 20) + 300, measured[^1].BytesProcessed);
+        Assert.Equal(301, measured[^1].ItemsProcessed);
+        // Blocos de 80 KB de um arquivo de 96 MB seriam mais de mil relatos: o motor limita o ruído.
+        Assert.True(progress.Seen.Count < 800, $"{progress.Seen.Count} relatos");
+    }
 }

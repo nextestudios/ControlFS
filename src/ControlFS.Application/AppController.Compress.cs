@@ -113,7 +113,7 @@ public sealed partial class AppController
         };
         var item = Operations.Enqueue($"Compactar {fileName}", OperationKind.Compress, async (op, ct) =>
         {
-            var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
+            var progress = Operations.ProgressFor(op);
             return await _archives.CompressAsync(request, progress, ct);
         });
         item.RetryAction = () => EnqueueCompression(plan, UniqueNames.Next(fileName, n => File.Exists(Path.Join(plan.Folder, n)) || Directory.Exists(Path.Join(plan.Folder, n))));

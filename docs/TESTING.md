@@ -592,6 +592,15 @@ As capturas (`0-title-bar-dark`, `0b-title-bar-light`) mostram só o XAML, com b
 - [ ] Esc em tela cheia continua sendo Voltar (não sai da tela cheia).
 - [ ] Windows 10 (21H2/22H2): barra no tema ou, se o Windows não permitir, a barra do sistema com tudo funcionando.
 
+## Andamento e resposta durante operações (#257) — não validado em hardware
+
+- [ ] Copiar uma pasta grande (vários GB e milhares de arquivos) na mesma unidade e para um pendrive USB lento: durante e logo depois da cópia o app continua respondendo (navegar, abrir menus, trocar de aba, mover o foco com o controle).
+- [ ] Mover entre duas unidades (cópia + exclusão) e Recortar → Colar: recortar só marca os itens (nenhuma operação na lista); o andamento aparece ao colar.
+- [ ] Menu → Operações → a operação: porcentagem, "X de Y itens", "A de B MB", velocidade e, depois de uns 3 s e 5%, "cerca de N min restantes (estimativa)" que se atualizam com o painel aberto; a barra fina sob o título acompanha.
+- [ ] Pausar e continuar: a estimativa não explode com o tempo parado. Cancelar: a operação termina "cancelada" e o andamento some.
+- [ ] Extrair um `.zip` grande, um `.tar.gz` sólido e vários compactados de uma vez; compactar uma pasta grande; excluir centenas de itens: todos mostram andamento; o `.tar.gz` (sem tamanhos declarados) mostra itens sem porcentagem falsa.
+- [ ] Enquanto a pasta ainda é analisada (árvore enorme), aparece "Analisando os itens…" sem porcentagem nem estimativa.
+
 ## Avisos e andamento (auditoria de UX, P2-1/P2-2/P2-3) — não validado em hardware
 
 - [ ] 1280×720 e 1920×1080: alternar Lista/Grade (R3) e Densidade mostra o aviso no canto inferior direito, em letra do corpo; o rodapé não muda de altura e a lista não encolhe.

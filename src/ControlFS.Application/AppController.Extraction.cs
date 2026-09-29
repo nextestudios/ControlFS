@@ -134,7 +134,7 @@ public sealed partial class AppController
         };
         var item = Operations.Enqueue($"Extrair {Path.GetFileName(plan.ArchivePath)}", OperationKind.Extract, async (op, ct) =>
         {
-            var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
+            var progress = Operations.ProgressFor(op);
             var interaction = new UiConflictInteraction(this, op);
             return await _archives.ExtractAsync(request, interaction, progress, ct);
         });

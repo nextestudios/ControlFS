@@ -49,7 +49,7 @@ public sealed partial class AppController
         var request = new ArchiveTestRequest { ArchivePath = archivePath, Password = password, Limits = Limits };
         var item = Operations.Enqueue($"Testar {Path.GetFileName(archivePath)}", OperationKind.TestArchive, async (op, ct) =>
         {
-            var progress = new Progress<OperationProgress>(p => Operations.ReportProgress(op, p));
+            var progress = Operations.ProgressFor(op);
             return await _archives.TestAsync(request, progress, ct);
         });
         item.RetryAction = () => BeginArchiveTest(archivePath);
