@@ -69,6 +69,8 @@ public sealed class RarCreationInteropTests : IDisposable
 
         var info = await service.InspectAsync(archive, null, ExtractionLimits.Default, CancellationToken.None);
         Assert.NotEmpty(info.Entries);
+        var listing = string.Join(" | ", info.Entries.Select(e => $"{e.RawKey} dir={e.IsDirectory} size={e.Size} enc={e.IsEncrypted} crc={e.Crc32}"));
+        Assert.True(info.Entries.All(e => !e.IsEncrypted), "entradas marcadas como criptografadas: " + listing);
 
         var extracted = await service.ExtractAsync(new ExtractionRequest { ArchivePath = archive, DestinationDirectory = Directory.CreateDirectory(Path.Join(_root, "saida")).FullName }, new NoConflicts(), null, CancellationToken.None);
         Assert.True(extracted.FinalState == OperationState.Completed, $"{extracted.FinalState} {extracted.Error} {extracted.Message}");
