@@ -333,6 +333,12 @@ public sealed class DialogModal(string title, IReadOnlyList<(string Label, strin
     /// </summary>
     public IReadOnlyDictionary<string, IReadOnlyList<string>>? LineReserve { get; internal set; }
 
+    /// <summary>
+    /// Linhas de informação reservadas (#227): a tela completa com linhas invisíveis até este número. Detalhes de uma operação
+    /// em andamento ganham linhas (Dados, Velocidade, Restante) à medida que o andamento se conhece; o painel não cresce por isso.
+    /// </summary>
+    public int ReservedRows { get; internal set; }
+
     private ModalSize? _size;
 
     /// <summary>

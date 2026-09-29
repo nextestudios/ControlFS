@@ -178,7 +178,14 @@ public sealed partial class AppController
             Icon = op.IsActive ? ActionIcon.Operations : ResultIcon(op.State),
             Progress = op.IsActive ? op.Fraction : null,
         };
-        if (op.IsActive) _operationDetails = (dialog, op);
+        if (op.IsActive)
+        {
+            _operationDetails = (dialog, op);
+            // O andamento acrescenta linhas (Dados, Velocidade, Restante) e troca o arquivo atual: o espaço já está reservado, o painel não muda (#227).
+            const string twoLines = "x\nx";
+            dialog.ReservedRows = 9;
+            dialog.LineReserve = new Dictionary<string, IReadOnlyList<string>> { ["Origem"] = [twoLines], ["Destino"] = [twoLines], ["Atual"] = [twoLines] };
+        }
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(close);
         if (op.CanPause)

@@ -759,7 +759,7 @@ public static partial class ModalView
     // ---------- Diálogos ----------
 
     /// <summary>Linhas "rótulo: valor" num quadro discreto (informações do diálogo, do Sobre e do assistente).</summary>
-    private static Border InfoLines(IReadOnlyList<(string Label, string Value)> lines, double fontSize, IReadOnlyDictionary<string, IReadOnlyList<string>>? reserve = null)
+    private static Border InfoLines(IReadOnlyList<(string Label, string Value)> lines, double fontSize, IReadOnlyDictionary<string, IReadOnlyList<string>>? reserve = null, int reservedRows = 0)
     {
         var grid = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceS };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -788,6 +788,16 @@ public static partial class ModalView
             Grid.SetColumn(cell, 1);
             grid.Children.Add(label);
             grid.Children.Add(cell);
+        }
+        // Linhas ainda por vir (#227): ocupam o lugar delas, invisíveis, até aparecerem.
+        for (var i = lines.Count; i < reservedRows; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var placeholder = new TextBlock { Text = " ", FontSize = fontSize, Opacity = 0, IsHitTestVisible = false };
+            AutomationProperties.SetAccessibilityView(placeholder, AccessibilityView.Raw);
+            Grid.SetRow(placeholder, i);
+            Grid.SetColumnSpan(placeholder, 2);
+            grid.Children.Add(placeholder);
         }
         return new Border
         {
@@ -861,7 +871,7 @@ public static partial class ModalView
     {
         var stack = new StackPanel { Spacing = Theme.Space(12) };
         if (dialog.QrModules is { } qr) stack.Children.Add(QrImage(qr));
-        if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody, dialog.LineReserve));
+        if (dialog.Lines.Count > 0) stack.Children.Add(InfoLines(dialog.Lines, Theme.FontBody, dialog.LineReserve, dialog.ReservedRows));
         if (dialog.Progress is { } progress) stack.Children.Add(ProgressBar(progress));
         if (dialog.Message is { } message)
             stack.Children.Add(new TextBlock { Text = message, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
