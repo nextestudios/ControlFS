@@ -797,3 +797,10 @@ imediato, conclusão salva, quem reinstala vê uma vez, Start pula, Menu reabre)
 ## Ícone do atalho (#187) — não validado em hardware
 - [ ] Reinstalar sobre uma instalação antiga: o atalho da Área de Trabalho e do menu Iniciar mostram o ícone limpo (pasta azul com o controle, sem fundo preto nem neon).
 - [ ] Se ainda aparecer o ícone antigo (cache do Windows), limpar o cache de ícones: no Prompt de Comando, `taskkill /f /im explorer.exe`, depois `del /a /q "%localappdata%\Microsoft\Windows\Explorer\iconcache*"` e `start explorer.exe`.
+
+## Criar RAR com o WinRAR instalado (#258) — não validado em hardware
+Só a CI (WinRAR 7.23 pelo winget, arquivo criado pelo Rar.exe real e extraído pelo leitor do ControlFS) foi observada.
+- [ ] Sem o WinRAR instalado: Compactar mostra o RAR desabilitado com "Instale o WinRAR para criar RAR."; nada é baixado.
+- [ ] Com o WinRAR instalado (outra versão que a da CI, ex.: 6.x e 7.x mais novo): marcar itens → Compactar → RAR → o `.rar` abre no WinRAR e no ControlFS com o mesmo conteúdo; nome existente vira "(2)".
+- [ ] Criar um RAR grande e cancelar no meio pelo controle: o `.rar` parcial some, o Rar.exe não fica no Gerenciador de Tarefas.
+- [ ] Arquivo em uso entre os itens: resultado "concluído com avisos" (o WinRAR devolve o código 1) e a mensagem pede para conferir.

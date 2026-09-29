@@ -12,14 +12,16 @@ public sealed class ArchiveService : IArchiveService
 {
     private readonly IReadOnlyList<IArchiveEngine> _engines;
     private readonly ITemporaryJournal? _journal;
+    private readonly Func<RarTool?> _rarLocator;
 
     /// <param name="journal">Registro dos temporários (staging, compactado parcial) para limpeza após uma queda.</param>
-    public ArchiveService(ITemporaryJournal? journal = null) : this([new BclTarEngine(), new SharpCompressEngine()], journal)
+    public ArchiveService(ITemporaryJournal? journal = null, Func<RarTool?>? rarLocator = null) : this([new BclTarEngine(), new SharpCompressEngine()], journal, rarLocator)
     {
     }
 
-    public ArchiveService(IReadOnlyList<IArchiveEngine> engines, ITemporaryJournal? journal = null)
+    public ArchiveService(IReadOnlyList<IArchiveEngine> engines, ITemporaryJournal? journal = null, Func<RarTool?>? rarLocator = null)
     {
+        _rarLocator = rarLocator ?? RarLocator.Find;
         _engines = engines;
         _journal = journal;
     }
@@ -72,5 +74,9 @@ public sealed class ArchiveService : IArchiveService
             : $"Formato {format} reconhecido, mas ainda não suportado nesta versão.");
 
     public Task<OperationResult> CompressAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken) =>
-        ArchiveCreator.CreateAsync(request, progress, cancellationToken, _journal);
+        ArchiveCreator.CreateAsync(request, progress, cancellationToken, _journal, request.Format == CompressionFormat.Rar ? _rarLocator() : null);
+
+    /// <summary>RAR só existe se o usuário tiver o WinRAR instalado (ver docs/decisions/0011); os demais formatos sempre.</summary>
+    public CreationAvailability GetCreationAvailability(CompressionFormat format) =>
+        format == CompressionFormat.Rar && _rarLocator() is null ? new CreationAvailability(false, RarLocator.MissingReason) : CreationAvailability.Available;
 }

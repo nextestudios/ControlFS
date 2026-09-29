@@ -49,10 +49,22 @@ jobs:
       - name: Build
         run: dotnet build ControlFS.slnx -c Release --no-restore --nologo
 
+      # WinRAR is never bundled with ControlFS (docs/decisions/0011); the runner installs it only so the RAR creation
+      # interop test can run against the real Rar.exe. If the install fails, that test is skipped instead of failing CI.
+      - name: Install WinRAR (RAR creation interop test)
+        id: winrar
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          winget install --id RARLab.WinRAR -e --silent --accept-package-agreements --accept-source-agreements
+          if ($LASTEXITCODE -ne 0) { throw "winget exit code $LASTEXITCODE" }
+
       - name: Unit tests and journeys
         run: dotnet test tests/ControlFS.UnitTests -c Release --no-build --nologo --filter "Category!=Slow"
 
       - name: Windows integration tests
+        env:
+          CONTROLFS_REQUIRE_WINRAR: ${{ steps.winrar.outcome == 'success' && '1' || '0' }}
         run: dotnet test tests/ControlFS.WindowsIntegrationTests -c Release --no-build --nologo --filter "Category!=Slow"
 
       - name: Vulnerable packages

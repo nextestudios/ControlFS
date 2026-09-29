@@ -53,6 +53,14 @@ public enum CompressionFormat
     TarGZip,
     /// <summary>7z sólido com LZMA (ver docs/decisions/0010).</summary>
     SevenZip,
+    /// <summary>RAR5 criado pelo Rar.exe do WinRAR que o usuário já tem instalado (ver docs/decisions/0011).</summary>
+    Rar,
+}
+
+/// <summary>Se um formato de criação pode ser usado agora; <see cref="Reason"/> explica em pt-BR quando não pode.</summary>
+public sealed record CreationAvailability(bool IsAvailable, string? Reason = null)
+{
+    public static CreationAvailability Available { get; } = new(true);
 }
 
 public enum CompressionStrength
@@ -75,6 +83,7 @@ public sealed class CompressionRequest
     {
         CompressionFormat.TarGZip => ".tar.gz",
         CompressionFormat.SevenZip => ".7z",
+        CompressionFormat.Rar => ".rar",
         _ => ".zip",
     };
 }
@@ -102,6 +111,9 @@ public interface IArchiveService
 
     /// <summary>Cria um compactado. Escreve num temporário na pasta de destino e só o torna visível ao concluir.</summary>
     Task<OperationResult> CompressAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken cancellationToken);
+
+    /// <summary>ZIP, TAR.GZ e 7z sempre estão disponíveis; RAR depende do WinRAR instalado pelo usuário.</summary>
+    CreationAvailability GetCreationAvailability(CompressionFormat format) => CreationAvailability.Available;
 }
 
 public sealed class ArchiveAccessException(OperationErrorKind kind, string message, Exception? inner = null) : Exception(message, inner)

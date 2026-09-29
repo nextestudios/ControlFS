@@ -115,12 +115,14 @@ public sealed class SharpCompressEngine : IArchiveEngine
         return (a & WindowsReparsePoint) != 0; // atributos Windows (sem bits de tipo Unix)
     }
 
-    /// <summary>Algumas propriedades não existem em certos formatos (ex.: Attrib em TAR/GZ lança NotImplementedException).</summary>
+    /// <summary>Algumas propriedades não existem em certos formatos ou entradas (ex.: Attrib em TAR/GZ lança NotImplementedException).</summary>
     private static T? Optional<T>(Func<T> read) where T : struct
     {
         try { return read(); }
         catch (NotImplementedException) { return null; }
         catch (NotSupportedException) { return null; }
+        // Pastas em RAR5 (ex.: criadas pelo WinRAR) não têm CRC: o SharpCompress lança ArgumentNullException em vez de devolver null.
+        catch (ArgumentNullException) { return null; }
     }
 
     private static ArchiveEntry Map(int index, IEntry e, ArchiveFormat format, string archivePath)

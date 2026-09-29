@@ -12,6 +12,7 @@
     <Project Path="src/ControlFS.Infrastructure.Windows/ControlFS.Infrastructure.Windows.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ControlFS.FakeRar/ControlFS.FakeRar.csproj" />
     <Project Path="tests/ControlFS.UnitTests/ControlFS.UnitTests.csproj" />
     <Project Path="tests/ControlFS.WindowsIntegrationTests/ControlFS.WindowsIntegrationTests.csproj" />
   </Folder>
