@@ -39,6 +39,7 @@ input{flex:1;min-width:0;font:inherit;font-size:17px;color:var(--text);backgroun
 input:focus{outline:2px solid var(--accent);outline-offset:1px}
 input:disabled{opacity:.5}
 .text button{min-width:64px}
+#retry{width:100%;margin-top:10px;background:var(--accent);border-color:var(--accent);color:#03101A;font-weight:700}
 .bye{width:100%;margin-top:4px;color:var(--danger);border-color:var(--danger)}
 [hidden]{display:none!important}
 </style>
@@ -47,9 +48,10 @@ input:disabled{opacity:.5}
 <header><h1>ControlFS</h1><span id="status" class="pill">Conectando…</span></header>
 
 <section id="pairing" class="panel">
-  <div id="pairingText" class="muted">Conectando ao PC…</div>
+  <div id="pairingText" class="muted">Carregando… Se esta mensagem não mudar em alguns segundos, o navegador não conseguiu executar a página: gere um QR Code novo no ControlFS (Menu → Conectar celular) e escaneie de novo.</div>
   <div id="code" class="code" hidden></div>
   <div id="codeHint" class="muted" hidden>Confira se o PC mostra o mesmo código e escolha <b>Permitir</b> lá.</div>
+  <button id="retry" type="button" hidden>Tentar de novo</button>
 </section>
 
 <main id="controls" hidden>
@@ -93,9 +95,13 @@ input:disabled{opacity:.5}
 <script>/*@NOBLE@*/
 (() => {
   'use strict';
+  const $ = id => document.getElementById(id);
+  // Nada de ficar mudo: erro de script ou API que o navegador não tem vira mensagem na tela (só o texto do erro, sem chave).
+  const crash = m => { $('status').textContent = 'Erro'; $('status').className = 'pill bad'; $('pairingText').textContent = 'A página do celular não pôde iniciar neste navegador (' + m + '). Atualize o navegador ou tente outro, e gere um QR Code novo no ControlFS.'; };
+  window.addEventListener('error', e => { if (!$('pairing').hidden) crash(String(e.message || 'erro').slice(0, 80)); });
+  if (!self.nobleControlFS || typeof WebSocket === 'undefined' || !self.crypto || !crypto.getRandomValues || typeof TextEncoder === 'undefined') { crash('recurso ausente'); return; }
   const N = self.nobleControlFS;
   const enc = new TextEncoder(), dec = new TextDecoder();
-  const $ = id => document.getElementById(id);
   const AAD = enc.encode('ControlFS/1');
   const b64u = {
     dec(s) { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); },
@@ -133,63 +139,122 @@ input:disabled{opacity:.5}
     return JSON.parse(dec.decode(pt));
   }
 
-  const ws = new WebSocket('ws://' + location.host + location.pathname + '/ws');
-  ws.binaryType = 'arraybuffer';
+  let ws = null;
 
   // Ritmo de envio abaixo do limite do PC (30/s): rajadas (apagar muito texto) esperam na fila em vez de se perder.
   const queue = []; let tokens = 40, last = performance.now(), timer = 0;
   function pump() {
     timer = 0;
     const now = performance.now(); tokens = Math.min(40, tokens + (now - last) * 0.025); last = now;
-    while (queue.length && tokens >= 1 && ws.readyState === 1) { ws.send(seal(queue.shift())); tokens--; }
+    while (queue.length && tokens >= 1 && ws && ws.readyState === 1) { ws.send(seal(queue.shift())); tokens--; }
     if (queue.length) timer = setTimeout(pump, 45);
   }
   function send(obj) { if (ended || !ready) return; if (queue.length < 400) queue.push(obj); if (!timer) pump(); }
   const act = a => { if (!locked || a === 'back') send({ t: 'a', a }); };
 
-  let code = '';
-  ws.onopen = () => {
-    const n = crypto.getRandomValues(new Uint8Array(16));
-    ws.send(seal({ t: 'hello', n: b64u.enc(n) }));
-    const c = hk(n, 'ControlFS phone v1 code', 4);
-    code = String(new DataView(c.buffer, c.byteOffset).getUint32(0) % 1000000).padStart(6, '0');
-    code = code.slice(0, 3) + ' ' + code.slice(3);
-    setStatus('Aguardando o PC', 'warn');
-  };
-  ws.onmessage = e => {
-    let msg;
-    try { msg = open(e.data); } catch (_) { finish('Mensagem inválida do PC. A conexão foi encerrada.'); return; }
-    if (msg.t === 'state' && msg.s === 'confirm') {
-      $('pairingText').textContent = 'Código de verificação:';
-      $('code').textContent = code; $('code').hidden = false; $('codeHint').hidden = false; $('bye').hidden = false;
-    } else if (msg.t === 'state' && msg.s === 'ready') {
-      ready = true; $('pairing').hidden = true; $('controls').hidden = false; $('bye').hidden = false;
-      setStatus('Conectado', 'ok');
-    } else if (msg.t === 'ui') {
-      locked = !!msg.lock; keyboard = !!msg.kb; applyUi();
-    } else if (msg.t === 'end') {
-      finish(reasons[msg.r] || 'Desconectado.');
-    }
-  };
-  ws.onclose = () => finish(ready ? 'A conexão com o PC caiu.' : 'Não foi possível conectar. O QR Code pode ter expirado ou já ter sido usado; gere outro no ControlFS.');
-  ws.onerror = () => {};
+  // Estados: connecting → handshaking → confirm (esperando Permitir no PC) → ready. Cada etapa tem prazo: a página sempre
+  // termina em conectado ou numa mensagem clara. Falha antes de o PC ter aceitado permite "Tentar de novo" com a mesma
+  // chave (o PC ainda escuta enquanto o QR Code vale); depois disso, ou com o QR vencido, só um QR Code novo resolve.
+  const OPEN_MS = 12000, HELLO_MS = 10000, CONFIRM_MS = 120000, HINT_MS = 30000, QR_MS = 120000;
+  const loadedAt = Date.now();
+  let code = '', phase = 'connecting', openTimer = 0, helloTimer = 0, confirmTimer = 0, confirmAt = 0, attempts = 0;
+  const clearTimers = () => { clearTimeout(openTimer); clearTimeout(helloTimer); clearInterval(confirmTimer); openTimer = helloTimer = confirmTimer = 0; };
 
   const reasons = {
     Disconnected: 'O PC desconectou este celular.', Rejected: 'O PC recusou este celular.', Expired: 'O QR Code expirou.',
     ConfirmationTimedOut: 'Ninguém permitiu no PC a tempo.', AppClosing: 'O ControlFS foi fechado.', PhoneLeft: 'Desconectado.',
     AuthenticationFailed: 'Mensagem inválida. A conexão foi encerrada.', TooManyAttempts: 'Tentativas demais. Gere outro QR Code.',
   };
+  const RESCAN = ' Para conectar de novo, use Menu → Conectar celular no ControlFS e escaneie o novo QR Code.';
 
+  function showPairing(text, tone, pill) { $('controls').hidden = true; $('pairing').hidden = false; $('pairingText').textContent = text; setStatus(pill, tone); }
+
+  // Fim definitivo: a chave morre (o PC já encerrou a sessão ou o QR Code não vale mais).
   function finish(text) {
     if (ended) return;
-    ended = true; ready = false; queue.length = 0;
+    ended = true; ready = false; queue.length = 0; clearTimers();
     key.fill(0); kOut.fill(0); kIn.fill(0);
-    try { ws.close(); } catch (_) {}
-    $('controls').hidden = true; $('bye').hidden = true; $('pairing').hidden = false;
-    $('code').hidden = true; $('codeHint').hidden = true;
-    $('pairingText').textContent = text + ' Para conectar de novo, use Menu → Conectar celular no ControlFS e escaneie o novo QR Code.';
-    setStatus('Desconectado', 'bad');
+    if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; try { ws.close(); } catch (_) {} }
+    $('bye').hidden = true; $('code').hidden = true; $('codeHint').hidden = true; $('retry').hidden = true;
+    showPairing(text + RESCAN, 'bad', 'Desconectado');
   }
+
+  // Falha antes do PC aceitar. A sonda pergunta ao PC se o QR Code ainda vale: separa "PC fora do alcance" de "QR vencido".
+  async function fail(what) {
+    if (ended || phase === 'failed') return;
+    phase = 'failed'; clearTimers(); queue.length = 0;
+    if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; try { ws.close(); } catch (_) {} }
+    $('code').hidden = true; $('codeHint').hidden = true; $('bye').hidden = true;
+    showPairing('Verificando o PC…', 'warn', 'Sem conexão');
+    let alive = false;
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 4000);
+      const r = await fetch(location.pathname + '/ping', { cache: 'no-store', signal: ctl.signal });
+      clearTimeout(t);
+      if (r.status === 410) { finish('O QR Code expirou ou já foi usado.'); return; }
+      alive = r.status === 204;
+    } catch (_) { /* PC inalcançável */ }
+    if (ended) return;
+    if (!alive && attempts >= 3) { finish('Não foi possível falar com o PC depois de várias tentativas.'); return; }
+    if (!alive && Date.now() - loadedAt > QR_MS) { finish('Não foi possível falar com o PC e o QR Code (vale 2 minutos) provavelmente já expirou.'); return; }
+    const text = alive
+      ? (what === 'open' ? 'O PC respondeu, mas o canal seguro não abriu a tempo (Wi-Fi instável?).' : 'O PC respondeu, mas a verificação segura não terminou.') + ' Toque em Tentar de novo.'
+      : 'Não consegui falar com o PC. Confira se o celular está no mesmo Wi-Fi do PC (não use a rede de convidados) e se o Firewall do Windows permite o ControlFS em redes privadas. Se demorou mais de 2 minutos desde o QR Code, gere um novo. Depois toque em Tentar de novo.';
+    showPairing(text, 'bad', alive ? 'Falhou' : 'PC inalcançável');
+    $('retry').hidden = false;
+  }
+
+  function connect() {
+    attempts++;
+    sendCounter = 0; recvCounter = 0; ready = false; phase = 'connecting'; queue.length = 0; clearTimers();
+    $('retry').hidden = true; $('code').hidden = true; $('codeHint').hidden = true;
+    showPairing('Conectando ao PC…' + (attempts > 1 ? ' (tentativa ' + attempts + ')' : ''), '', 'Conectando…');
+    const sock = ws = new WebSocket('ws://' + location.host + location.pathname + '/ws');
+    ws.binaryType = 'arraybuffer';
+    openTimer = setTimeout(() => { if (sock === ws && phase === 'connecting') fail('open'); }, OPEN_MS);
+    ws.onopen = () => {
+      if (sock !== ws) return;
+      clearTimeout(openTimer); phase = 'handshaking';
+      const n = crypto.getRandomValues(new Uint8Array(16));
+      ws.send(seal({ t: 'hello', n: b64u.enc(n) }));
+      const c = hk(n, 'ControlFS phone v1 code', 4);
+      code = String(new DataView(c.buffer, c.byteOffset).getUint32(0) % 1000000).padStart(6, '0');
+      code = code.slice(0, 3) + ' ' + code.slice(3);
+      setStatus('Verificando…', 'warn'); $('pairingText').textContent = 'Verificando a conexão segura com o PC…';
+      helloTimer = setTimeout(() => { if (sock === ws && phase === 'handshaking') fail('hello'); }, HELLO_MS);
+    };
+    ws.onmessage = e => {
+      if (sock !== ws || ended) return;
+      let msg;
+      try { msg = open(e.data); } catch (_) { finish('Mensagem inválida do PC. A conexão foi encerrada.'); return; }
+      if (msg.t === 'state' && msg.s === 'confirm') {
+        if (phase === 'ready') return; // a permissão pode chegar antes deste aviso
+        clearTimeout(helloTimer); phase = 'confirm'; confirmAt = Date.now();
+        $('code').textContent = code; $('code').hidden = false; $('codeHint').hidden = false; $('bye').hidden = false;
+        setStatus('Aguardando permissão', 'warn');
+        const tick = () => {
+          const left = Math.max(0, Math.ceil((CONFIRM_MS - (Date.now() - confirmAt)) / 1000)), slow = Date.now() - confirmAt > HINT_MS;
+          $('pairingText').textContent = 'Aguardando permissão no PC. Código de verificação:' + (slow ? ' (demorando: olhe a tela do PC e escolha Permitir; restam ' + left + ' s)' : '');
+        };
+        tick(); confirmTimer = setInterval(tick, 1000);
+      } else if (msg.t === 'state' && msg.s === 'ready') {
+        clearTimers(); phase = 'ready';
+        ready = true; $('pairing').hidden = true; $('controls').hidden = false; $('bye').hidden = false;
+        setStatus('Conectado', 'ok');
+      } else if (msg.t === 'ui') {
+        locked = !!msg.lock; keyboard = !!msg.kb; applyUi();
+      } else if (msg.t === 'end') {
+        finish(reasons[msg.r] || 'Desconectado.');
+      }
+    };
+    ws.onclose = () => {
+      if (sock !== ws || ended) return;
+      if (phase === 'connecting' || phase === 'handshaking') fail(phase === 'connecting' ? 'open' : 'hello');
+      else finish(ready ? 'A conexão com o PC caiu.' : 'A conexão com o PC caiu antes de ser permitida.');
+    };
+    ws.onerror = () => {};
+  }
+  $('retry').addEventListener('click', connect);
 
   function applyUi() {
     $('lock').hidden = !locked;
@@ -246,7 +311,8 @@ input:disabled{opacity:.5}
   });
   $('form').addEventListener('submit', e => { e.preventDefault(); send({ t: 'key', k: 'enter' }); field.value = ''; typed = []; });
   $('erase').addEventListener('click', () => { send({ t: 'key', k: 'backspace' }); if (typed.length) { typed.pop(); field.value = typed.join(''); } });
-  $('bye').addEventListener('click', () => { if (ws.readyState === 1) ws.send(seal({ t: 'bye' })); finish('Desconectado.'); });
+  $('bye').addEventListener('click', () => { if (ws && ws.readyState === 1) ws.send(seal({ t: 'bye' })); finish('Desconectado.'); });
+  connect();
 })();
 </script>
 </body>

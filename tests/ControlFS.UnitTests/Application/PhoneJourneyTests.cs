@@ -119,6 +119,26 @@ public class PhoneJourneyTests : IDisposable
     });
 
     [Fact]
+    public void The_pairing_dialog_says_how_far_a_phone_got_and_why_it_failed() => UiContext.Run(async () =>
+    {
+        var app = new AppController(new TestFileSystem(_tmp.MakeDir("files")), new ArchiveService());
+        var link = new FakeLink();
+        app.AttachPhoneLink(link);
+        app.Start();
+        var d = new Driver(app);
+
+        app.BeginPhonePairing();
+        var pairing = await d.WaitDialog("Conectar celular");
+        var lines = pairing.Lines.Count;
+        link.Raise(new PhoneAttempt(link.Session, PhoneAttemptStage.PageOpened, "page"));
+        await UiContext.WaitUntil(() => pairing.Lines.Any(l => l.Label == "Estado" && l.Value.Contains("abriu a página", StringComparison.Ordinal)), "página aberta");
+        link.Raise(new PhoneAttempt(link.Session, PhoneAttemptStage.HandshakeFailed, "hello-timeout"));
+        await UiContext.WaitUntil(() => pairing.Lines.Any(l => l.Label == "Estado" && l.Value.Contains("hello-timeout", StringComparison.Ordinal)), "motivo da falha");
+        Assert.Equal(lines + 1, pairing.Lines.Count); // uma linha "Estado", trocada a cada aviso
+        Assert.Equal(PhoneLinkState.Waiting, app.PhoneState); // a sessão segue esperando: o celular pode tentar de novo
+    });
+
+    [Fact]
     public void Losing_the_phone_closes_its_dialogs_and_stale_sessions_are_ignored() => UiContext.Run(async () =>
     {
         var app = new AppController(new TestFileSystem(_tmp.MakeDir("files")), new ArchiveService());

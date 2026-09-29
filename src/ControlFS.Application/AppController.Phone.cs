@@ -29,6 +29,7 @@ public sealed partial class AppController
     private IPhoneLink? _phoneLink;
     private PhonePairing? _phonePairing;
     private DialogModal? _phoneDialog;
+    private IReadOnlyList<(string Label, string Value)> _phoneLines = [];
 
     public PhoneLinkState PhoneState { get; private set; }
 
@@ -83,8 +84,9 @@ public sealed partial class AppController
         {
             Icon = ActionIcon.Phone,
             QrModules = QrCode.Encode(pairing.Url),
-            Message = $"Celular na mesma rede do PC. Vale {pairing.Lifetime.TotalMinutes:0} min, para uma conexão. Se a página não abrir, permita o ControlFS em redes privadas no Firewall do Windows.",
+            Message = $"Celular na mesma rede do PC (não use a rede de convidados). Vale {pairing.Lifetime.TotalMinutes:0} min, para uma conexão. Se a página não abrir, permita o ControlFS em redes privadas no Firewall do Windows.",
         };
+        _phoneLines = dialog.Lines;
         var cancel = new DialogOption("Cancelar", DialogOptionKind.Safe, () => StopPhone(PhoneEndReason.Disconnected), ActionIcon.Close);
         dialog.Options.Add(cancel);
         if (pairing.AddressCount > 1)
@@ -125,6 +127,9 @@ public sealed partial class AppController
             case PhoneAwaitingConfirmation waiting:
                 AskToAllowPhone(pairing.Session, waiting);
                 break;
+            case PhoneAttempt attempt:
+                ShowPhoneAttempt(attempt);
+                break;
             case PhoneConnected connected:
                 PhoneState = PhoneLinkState.Connected;
                 PhoneAddress = connected.PhoneAddress;
@@ -140,6 +145,22 @@ public sealed partial class AppController
                 break;
         }
         RaiseChanged();
+    }
+
+    /// <summary>
+    /// Mostra no diálogo do QR Code até onde o celular chegou e por que falhou (#259), para o PC e o celular não ficarem
+    /// em "conectando" sem explicação. A sessão continua esperando: o celular pode tentar de novo.
+    /// </summary>
+    private void ShowPhoneAttempt(PhoneAttempt attempt)
+    {
+        if (PhoneState != PhoneLinkState.Waiting || _phoneDialog is not { } dialog) return;
+        var text = attempt.Stage switch
+        {
+            PhoneAttemptStage.PageOpened => "Um celular abriu a página; conectando…",
+            PhoneAttemptStage.HandshakeFailed => $"Um celular chegou, mas a verificação segura falhou ({attempt.Code}). Ele pode tentar de novo.",
+            _ => $"Um celular tentou conectar e foi recusado ({attempt.Code}). Se persistir, gere um QR Code novo.",
+        };
+        dialog.Lines = [.. _phoneLines, ("Estado", text)];
     }
 
     /// <summary>

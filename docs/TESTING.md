@@ -755,6 +755,13 @@ Automático: `PhoneChannelTests` (HTTP, quadros cifrados com vetores da bibliote
 `PhoneJourneyTests` (QR Code, permissão, ações, texto, bloqueio em confirmação sensível) e `PhoneLinkIntegrationTests`
 (servidor real em 127.0.0.1 com ClientWebSocket; porta fechada depois de Desconectar). A página também foi aberta num
 Chromium sem interface contra o servidor real durante o desenvolvimento (pareamento, botões, texto, desconectar).
+Em #259 o servidor real também foi guiado no Mac por Playwright **WebKit** (motor do Safari) e Chromium (pareamento, espera
+da permissão, falha de abertura + "Tentar de novo", sessão encerrada); `PhoneServerProtocolTests` fala como o Safari
+(cabeçalhos reais, `permessage-deflate`) e confere o hash da CSP contra o script servido. Isso NÃO é um iPhone real.
+- [ ] iPhone (Safari atual) e Android (Chrome atual): a página passa de "Conectando" para o código de verificação em
+      poucos segundos; sem Permitir no PC aparece "Aguardando permissão no PC"; PC no Wi-Fi de convidados / celular em
+      dados móveis / Firewall bloqueando mostram "PC inalcançável" com Tentar de novo; esperar 2 min e abrir o QR Code
+      velho mostra "expirou… gere outro"; o diálogo do PC mostra "Um celular abriu a página" e, numa falha, o código do motivo.
 - [ ] Android (Chrome atual) e iPhone (Safari atual) na mesma Wi-Fi do PC: Menu → Conectar celular; a câmera lê o QR
       Code a ~1 m da tela (TV a ~3 m: aproximar o celular); a página abre sem aviso de certificado nem recurso externo.
 - [ ] Primeira vez: o Firewall do Windows pergunta; permitir em "Redes privadas" e a página abre. Negar: a página não

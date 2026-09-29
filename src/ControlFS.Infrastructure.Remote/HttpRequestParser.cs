@@ -72,19 +72,24 @@ internal static class HttpRequestParser
     /// <summary>
     /// Lê o cabeçalho de um pedido. Null: inválido, grande demais, conexão fechada ou prazo esgotado (o chamador fecha).
     /// </summary>
-    public static async Task<HttpRequestHead?> ReadAsync(Stream stream, CancellationToken cancellation)
+    public static async Task<HttpRequestHead?> ReadAsync(Stream stream, CancellationToken cancellation, Action<HttpParseStatus>? rejected = null)
     {
         var buffer = new byte[MaxHeadBytes];
         var filled = 0;
         while (filled < buffer.Length)
         {
             var read = await stream.ReadAsync(buffer.AsMemory(filled), cancellation).ConfigureAwait(false);
-            if (read == 0) return null;
+            if (read == 0) return null; // conexão aberta e fechada sem pedido (navegadores abrem conexões extras por antecipação)
             filled += read;
             var status = TryParse(buffer.AsSpan(0, filled), out var head);
             if (status == HttpParseStatus.Ok) return head;
-            if (status != HttpParseStatus.Incomplete) return null;
+            if (status != HttpParseStatus.Incomplete)
+            {
+                rejected?.Invoke(status);
+                return null;
+            }
         }
+        rejected?.Invoke(HttpParseStatus.TooLarge);
         return null;
     }
 

@@ -40,6 +40,19 @@ public class PhoneChannelTests
     }
 
     [Fact]
+    public void Companion_page_hash_is_computed_over_the_script_as_the_browser_reads_it()
+    {
+        // Recurso embutido com CRLF (checkout do Git no Windows com autocrlf): o navegador lê o script com LF, então o hash da
+        // CSP tem de ser o do texto normalizado; do contrário o script é bloqueado e o celular fica em "Conectando" (#259).
+        var (html, hash) = CompanionPage.Compose("<html>\r\n<script>/*@NOBLE@*/\r\nlet a = 1;\r\n</script>\r\n</html>", "// lib\r\nlet b = 2;");
+        var text = Encoding.UTF8.GetString(html);
+        Assert.False(text.Contains('\r', StringComparison.Ordinal));
+        const string script = "// lib\nlet b = 2;\nlet a = 1;\n";
+        Assert.Contains("<script>" + script + "</script>", text, StringComparison.Ordinal);
+        Assert.Equal("sha256-" + Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(script))), hash);
+    }
+
+    [Fact]
     public void WebSocket_accept_follows_rfc6455_and_rejects_malformed_keys()
     {
         Assert.Equal("s3pPLMBiTxaQ9kYGzzhZRbK+xOo=", HttpRequestParser.WebSocketAccept("dGhlIHNhbXBsZSBub25jZQ=="));
