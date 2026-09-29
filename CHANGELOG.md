@@ -3,8 +3,13 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Correções
+- **O app não trava mais depois de copiar arquivos:** o motor relatava o andamento a cada bloco de 80 KB e cada relato redesenhava a tela na thread de interface; numa cópia grande a fila da interface enchia e o app parava de responder durante e logo depois da cópia. Agora o motor limita os relatos e a interface recebe no máximo cerca de 10 atualizações por segundo, sempre a mais recente (#257).
+
+
 ### Melhorias
 - **Mais da equipe no Menu principal** (#260): o Menu ganhou a entrada **Mais da equipe**, que abre a lista dos aplicativos oficiais da equipe (nome, logo, o que faz, plataforma e o botão que abre o site no navegador). O catálogo cresce em linhas de duas colunas quando a equipe publicar mais aplicativos, e um catálogo vazio mostra só um aviso e **Fechar**. Nada é baixado, instalado nem aberto sozinho.
+- **Andamento igual em toda operação mensurável (#257):** cópia, movimentação (inclusive entre unidades), Colar depois de Copiar ou Recortar, compactação, extração (inclusive em lote e dentro de arquivos grandes), exclusão em lote e teste de integridade mostram a porcentagem, "X de Y itens", "A de B MB", a velocidade e, quando dá para calcular com segurança (pelo menos 3 s de trabalho e 5% concluído), "cerca de N min restantes (estimativa)". A porcentagem nunca recua, e o tempo parado numa pausa não conta. Sem total conhecido (por exemplo, enquanto a pasta ainda é analisada, ou em compactados sólidos sem tamanhos declarados) aparece só a atividade atual, sem porcentagem nem estimativa. Recortar continua apenas marcando os itens: o andamento começa ao colar. Os detalhes de uma operação aberta em Menu → Operações acompanham o andamento ao vivo.
 
 ## [0.11.1-alpha.1]
 ### Desempenho

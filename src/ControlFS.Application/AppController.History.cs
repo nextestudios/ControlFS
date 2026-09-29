@@ -4,6 +4,7 @@ using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
 using ControlFS.Core.Models;
+using ControlFS.Core.Text;
 
 namespace ControlFS.Application;
 
@@ -111,13 +112,8 @@ public sealed partial class AppController
         return items;
     }
 
-    /// <summary>"45% · 3/10 itens · 12 MB": o andamento de uma operação ativa (sem total, só o que já foi feito).</summary>
-    private static string? ProgressDetail(OperationItem op)
-    {
-        if (op.Progress is not { } p) return null;
-        var percent = op.Fraction is { } fraction ? $"{Math.Floor(fraction * 100).ToString(CultureInfo.InvariantCulture)}% · " : string.Empty;
-        return $"{percent}{p.ItemsProcessed}/{p.ItemsTotal?.ToString(CultureInfo.InvariantCulture) ?? "?"} itens · {FormatBytes(p.BytesProcessed)}";
-    }
+    /// <summary>"45% · 3 de 10 itens · 12 MB de 80 MB · 25 MB/s · cerca de 2 min restantes (estimativa)"; sem total, só o que já foi feito.</summary>
+    private static string? ProgressDetail(OperationItem op) => op.Progress is { } p ? ProgressText.Summary(p, op.Snapshot) : null;
 
     /// <summary>Estado de uma operação ativa pelo ícone (nunca só pela cor): pausada, esperando uma decisão ou em andamento.</summary>
     private static ActionIcon ActiveIcon(OperationState state) => state switch
@@ -126,6 +122,42 @@ public sealed partial class AppController
         OperationState.WaitingForUser => ActionIcon.Warning,
         _ => ActionIcon.Operations,
     };
+
+    private (DialogModal Dialog, OperationItem Op)? _operationDetails;
+
+    /// <summary>Linhas dos detalhes de uma operação ativa: estado, origem, destino, atividade atual, itens, dados, velocidade e estimativa.</summary>
+    private static List<(string, string)> ActiveDetailLines(OperationItem op)
+    {
+        var lines = new List<(string, string)> { ("Estado", StateLabel(op.State)) };
+        if (op.Source is { } source) lines.Add(("Origem", source));
+        if (op.Destination is { } destination) lines.Add(("Destino", destination));
+        if (op.Progress is not { } p)
+        {
+            lines.Add(("Andamento", "preparando…"));
+            return lines;
+        }
+        if (op.Fraction is { } fraction) lines.Add(("Andamento", ProgressText.Percent(fraction)));
+        else lines.Add(("Andamento", "sem total conhecido; sem porcentagem nem estimativa"));
+        if (p.CurrentItem is { } current) lines.Add(("Atual", current));
+        lines.Add(("Itens", ProgressText.Items(p)));
+        if (p.BytesProcessed > 0 || p.BytesTotal > 0) lines.Add(("Dados", ProgressText.Bytes(p)));
+        if (op.Fraction is not null && op.Snapshot?.BytesPerSecond is { } speed) lines.Add(("Velocidade", ProgressText.Speed(speed)));
+        if (op.Snapshot?.Remaining is { } remaining) lines.Add(("Restante", ProgressText.Remaining(remaining)));
+        return lines;
+    }
+
+    /// <summary>Detalhes de uma operação aberta: as linhas e a barra acompanham o andamento (a janela refaz o painel a cada quadro).</summary>
+    private void RefreshOperationDetails()
+    {
+        if (_operationDetails is not { } shown) return;
+        if (!ReferenceEquals(TopModal, shown.Dialog) || !shown.Op.IsActive)
+        {
+            if (!Modals.Contains(shown.Dialog)) _operationDetails = null;
+            return;
+        }
+        shown.Dialog.Lines = ActiveDetailLines(shown.Op);
+        shown.Dialog.Progress = shown.Op.Fraction;
+    }
 
     /// <summary>Menu → Operações aberto: as linhas acompanham o andamento (mantido no lugar; o foco fica na mesma linha).</summary>
     private void RefreshOperationsMenu()
@@ -138,19 +170,15 @@ public sealed partial class AppController
     private void ShowOperationDetails(OperationItem op)
     {
         var lines = new List<(string, string)> { ("Estado", StateLabel(op.State)) };
-        if (op.IsActive && op.Progress is { } p)
-        {
-            lines.Add(("Itens", $"{p.ItemsProcessed} de {p.ItemsTotal?.ToString() ?? "?"}"));
-            lines.Add(("Dados", FormatBytes(p.BytesProcessed)));
-            if (p.CurrentItem is { } current) lines.Add(("Atual", current));
-        }
+        if (op.IsActive) lines = ActiveDetailLines(op);
         if (History.Find(op.HistoryEntryId) is { } entry) lines.AddRange(HistoryLines(entry));
         else if (op.Result?.Message is { } message) lines.Add(("Resultado", message));
         var dialog = new DialogModal(op.Title, lines)
         {
             Icon = op.IsActive ? ActionIcon.Operations : ResultIcon(op.State),
-            Progress = op.IsActive && op.Progress is { ItemsTotal: > 0 and var total } progress ? Math.Clamp((double)progress.ItemsProcessed / total, 0, 1) : null,
+            Progress = op.IsActive ? op.Fraction : null,
         };
+        if (op.IsActive) _operationDetails = (dialog, op);
         var close = new DialogOption("Fechar", DialogOptionKind.Safe, () => CloseModal(dialog), icon: ActionIcon.Close);
         dialog.Options.Add(close);
         if (op.CanPause)

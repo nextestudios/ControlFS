@@ -24,13 +24,14 @@ public sealed class OperationItem
 
     public bool IsActive => !OperationStateMachine.IsTerminal(State);
 
-    /// <summary>Andamento (0–1) pelos bytes ou, sem o total de bytes, pelos itens; null enquanto o total não é conhecido.</summary>
-    public double? Fraction => Progress switch
-    {
-        { BytesTotal: > 0 and var bytes } p => Math.Clamp((double)p.BytesProcessed / bytes, 0, 1),
-        { ItemsTotal: > 0 and var items } p => Math.Clamp((double)p.ItemsProcessed / items, 0, 1),
-        _ => null,
-    };
+    /// <summary>Estimador desta operação (criado quando ela sai da fila).</summary>
+    internal ProgressEstimator? Estimator { get; set; }
+
+    /// <summary>Andamento suavizado do último relato: fração que não recua, velocidade e estimativa de tempo restante.</summary>
+    public ProgressSnapshot? Snapshot { get; internal set; }
+
+    /// <summary>Andamento (0–1), nunca decrescente; null enquanto o total não é conhecido (indeterminado).</summary>
+    public double? Fraction => Snapshot is { } snapshot ? snapshot.Fraction : Progress?.Fraction;
 
     /// <summary>Quando saiu da fila e começou (null: cancelada antes de iniciar).</summary>
     public DateTimeOffset? StartedAt { get; internal set; }
@@ -94,6 +95,13 @@ public sealed class OperationQueue
     private readonly List<OperationItem> _items = [];
     private int _nextId = 1;
     private bool _running;
+    private static readonly System.Diagnostics.Stopwatch Watch = System.Diagnostics.Stopwatch.StartNew();
+
+    /// <summary>Relógio do andamento (substituível em testes).</summary>
+    internal Func<TimeSpan> Clock { get; set; } = () => Watch.Elapsed;
+
+    /// <summary>No máximo esta frequência de atualizações do andamento chega à interface (a mais recente vence).</summary>
+    internal static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(100);
 
     public IReadOnlyList<OperationItem> Items => _items;
     public OperationItem? Current => _items.FirstOrDefault(i => i.State is OperationState.Planning or OperationState.Running or OperationState.WaitingForUser or OperationState.Paused or OperationState.CancelRequested);
@@ -164,6 +172,7 @@ public sealed class OperationQueue
     {
         if (!item.CanPause || !item.TryTransition(OperationState.Paused)) return false;
         item.PauseGate!.Pause();
+        item.Estimator?.Pause(Clock());
         Changed?.Invoke();
         return true;
     }
@@ -173,6 +182,7 @@ public sealed class OperationQueue
     {
         if (!item.CanResume || !item.TryTransition(OperationState.Running)) return false;
         item.PauseGate!.Resume();
+        item.Estimator?.Resume(Clock());
         Changed?.Invoke();
         return true;
     }
@@ -186,9 +196,20 @@ public sealed class OperationQueue
 
     internal void ReportProgress(OperationItem item, OperationProgress progress)
     {
+        // Um relato atrasado que chega depois do fim não reabre o andamento de uma operação encerrada.
+        if (!item.IsActive) return;
+        progress = progress with { Kind = progress.Kind ?? item.Kind, Source = progress.Source ?? item.Source, Destination = progress.Destination ?? item.Destination };
         item.Progress = progress;
+        item.Snapshot = (item.Estimator ??= new ProgressEstimator(Clock())).Update(Clock(), progress);
         Changed?.Invoke();
     }
+
+    /// <summary>
+    /// Entrega do andamento vindo de outra thread: no máximo <see cref="ProgressInterval"/> por vez e sempre o mais
+    /// recente. Deve ser criado na thread de UI, para entregar de volta nela.
+    /// </summary>
+    internal IProgress<OperationProgress> ProgressFor(OperationItem item) =>
+        new CoalescingProgress<OperationProgress>(p => ReportProgress(item, p), ProgressInterval);
 
     private async Task PumpAsync()
     {
@@ -199,6 +220,7 @@ public sealed class OperationQueue
             while (_items.FirstOrDefault(i => i.State == OperationState.Queued) is { } next)
             {
                 next.StartedAt = DateTimeOffset.Now;
+                next.Estimator = new ProgressEstimator(Clock());
                 next.TryTransition(OperationState.Planning);
                 next.TryTransition(OperationState.Running);
                 Changed?.Invoke();

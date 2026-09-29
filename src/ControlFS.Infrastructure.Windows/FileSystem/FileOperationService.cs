@@ -75,6 +75,8 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
                     if (Directory.Exists(source) && IsSameOrInside(destination, source))
                         return Fail(OperationErrorKind.PathRejected, $"Não é possível {(move ? "mover" : "copiar")} a pasta \"{Path.GetFileName(source)}\" para dentro dela mesma.");
                 }
+                // Medir uma árvore grande leva tempo: até lá o total é desconhecido (atividade, sem porcentagem).
+                progress?.Report(new OperationProgress("Analisando os itens…", 0, null, 0, null) { Indeterminate = true });
                 (run.Total, run.BytesTotal) = Measure(request.Sources);
                 var sources = request.Sources.Select(raw => Path.GetFullPath(Path.TrimEndingDirectorySeparator(raw))).ToList();
                 for (var i = 0; i < sources.Count; i++)
@@ -767,6 +769,7 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         public string? RootIdentity { get; set; }
         public PauseGate? Pause { get; init; }
         private long _bytes;
+        private long _lastReport;
 
         /// <summary>Ponto seguro de pausa (sempre verdadeiro; o valor só permite usar numa condição de laço).</summary>
         public async Task<bool> WaitIfPausedAsync()
@@ -786,6 +789,9 @@ public sealed partial class FileOperationService(ITemporaryJournal? journal = nu
         {
             _bytes += bytes;
             if (fileDone) FilesDone++;
+            // Um relato por bloco de 80 KB é ruído: o intermediário sai no máximo a cada 50 ms (o fim de cada item e o final sempre saem).
+            if (!fileDone && current is not null && System.Diagnostics.Stopwatch.GetElapsedTime(_lastReport).TotalMilliseconds < 50) return;
+            _lastReport = System.Diagnostics.Stopwatch.GetTimestamp();
             progress?.Report(new OperationProgress(current, FilesDone, Total, _bytes, BytesTotal > 0 ? BytesTotal : null));
         }
     }

@@ -58,6 +58,7 @@ public sealed partial class AppController
         Operations.Changed += () =>
         {
             RefreshOperationsMenu();
+            RefreshOperationDetails();
             RaiseChanged();
         };
         PromptProvider = new ControllerPromptProvider(() => ActiveController is null ? null : PromptFamily, () => Settings.Convention, () => TopModal is KeyboardModal);

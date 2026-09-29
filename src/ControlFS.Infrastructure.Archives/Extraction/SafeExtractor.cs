@@ -84,9 +84,10 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
                 return Fail(OperationErrorKind.PasswordRequired, "O arquivo está protegido por senha.");
             var names = files.Values.ToDictionary(e => e.Index, e => ArchivePathPolicy.Sanitize(e.RawKey, request.Limits.MaxDepth, request.Limits.MaxRelativePathLength) is { IsAccepted: true } ok
                 ? ok.RelativePath : Printable(e.RawKey));
-            var declared = files.Values.Sum(e => e.Size ?? 0);
+            var declared = DeclaredTotal(files.Values);
             var results = new List<ItemResult>();
             var state = new RunState();
+            state.Tick = TickReporter(state, progress, files.Count, declared);
             var fatal = OperationErrorKind.None;
             string? fatalMessage = null;
             var cancelled = false;
@@ -116,6 +117,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
                     if (!hasNext) break;
                     var (entry, open) = entries.Current;
                     if (!names.TryGetValue(entry.Index, out var name)) continue;
+                    state.Current = name;
                     progress?.Report(new OperationProgress(name, state.FilesDone, files.Count, state.TotalBytes, declared));
                     try
                     {
@@ -192,9 +194,10 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
                 return Fail(OperationErrorKind.PasswordRequired, "O arquivo está protegido por senha.");
 
             // Espaço disponível (quando mensurável) antes de começar.
-            var declared = plan.Where(p => !p.Entry.IsDirectory).Sum(p => p.Entry.Size ?? 0);
-            if (TryGetFreeSpace(destinationParent) is long free && declared > free)
-                return Fail(OperationErrorKind.InsufficientSpace, $"Espaço insuficiente: {Format(declared)} necessários, {Format(free)} livres.");
+            var declaredBytes = plan.Where(p => !p.Entry.IsDirectory).Sum(p => p.Entry.Size ?? 0);
+            if (TryGetFreeSpace(destinationParent) is long free && declaredBytes > free)
+                return Fail(OperationErrorKind.InsufficientSpace, $"Espaço insuficiente: {Format(declaredBytes)} necessários, {Format(free)} livres.");
+            var declared = DeclaredTotal(plan.Where(p => !p.Entry.IsDirectory).Select(p => p.Entry));
 
             string root;
             var createdRoot = false;
@@ -225,6 +228,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
             string? fatalMessage = null;
             var cancelled = false;
             var fileTotal = plan.Count(p => !p.Entry.IsDirectory);
+            state.Tick = TickReporter(state, progress, fileTotal, declared);
             var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
             try
             {
@@ -266,6 +270,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
                     if (!files.TryGetValue(entry.Index, out var item)) continue;
                     try
                     {
+                        state.Current = item.RelativePath;
                         progress?.Report(new OperationProgress(item.RelativePath, state.FilesDone, fileTotal, state.TotalBytes, declared));
                         var outcome = await ExtractFileAsync(open, item, guard, staging, zone, limits, interaction, state, buffer, ct).ConfigureAwait(false);
                         results.Add(outcome);
@@ -363,6 +368,7 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
             ct.ThrowIfCancellationRequested();
             written += read;
             state.TotalBytes += read;
+            state.Tick?.Invoke();
             if (written > limits.MaxEntryBytes)
                 throw new FileOperationException(OperationErrorKind.LimitExceeded, "Entrada excede o tamanho máximo configurado.");
             if (state.TotalBytes > limits.MaxTotalBytes)
@@ -638,11 +644,37 @@ public sealed class SafeExtractor(IArchiveEngine engine, ITemporaryJournal? jour
         _ => $"{bytes} B",
     };
 
+    /// <summary>Total de bytes só quando todas as entradas declaram o tamanho (compactados sólidos podem não declarar: sem total, o andamento segue pelos itens).</summary>
+    private static long? DeclaredTotal(IEnumerable<ArchiveEntry> entries)
+    {
+        long sum = 0;
+        foreach (var entry in entries)
+        {
+            if (entry.Size is not long size) return null;
+            sum += size;
+        }
+        return sum > 0 ? sum : null;
+    }
+
+    private static Action TickReporter(RunState state, IProgress<OperationProgress>? progress, int fileTotal, long? bytesTotal)
+    {
+        var last = System.Diagnostics.Stopwatch.GetTimestamp();
+        return () =>
+        {
+            if (progress is null || System.Diagnostics.Stopwatch.GetElapsedTime(last).TotalMilliseconds < 100) return;
+            last = System.Diagnostics.Stopwatch.GetTimestamp();
+            progress.Report(new OperationProgress(state.Current, state.FilesDone, fileTotal, state.TotalBytes, bytesTotal));
+        };
+    }
+
     internal sealed record PlannedEntry(ArchiveEntry Entry, IReadOnlyList<string> Components, string RelativePath);
 
     private sealed class RunState
     {
         public long TotalBytes;
+        public string? Current;
+        /// <summary>Progresso dentro de uma entrada grande (no máximo dez vezes por segundo).</summary>
+        public Action? Tick;
         public int FilesDone;
         public ConflictDecision? ApplyToAll;
         public bool CancelledByUser;
