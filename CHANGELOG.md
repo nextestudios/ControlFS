@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Melhorias
+- **Mais da equipe no Menu principal** (#260): o Menu ganhou a entrada **Mais da equipe**, que abre a lista dos aplicativos oficiais da equipe (nome, logo, o que faz, plataforma e o botão que abre o site no navegador). O catálogo cresce em linhas de duas colunas quando a equipe publicar mais aplicativos, e um catálogo vazio mostra só um aviso e **Fechar**. Nada é baixado, instalado nem aberto sozinho.
 
 ## [0.11.1-alpha.1]
 ### Desempenho

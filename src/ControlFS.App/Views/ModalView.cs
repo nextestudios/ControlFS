@@ -790,16 +790,27 @@ public static partial class ModalView
 
     private static Border BuildPromo(AppController app, PromoModal promo)
     {
-        var cards = new Grid { ColumnSpacing = Theme.SpaceM };
-        for (var i = 0; i < promo.Cards.Count; i++)
-        {
-            cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            var card = PromoCardView(app, promo, i);
-            Grid.SetColumn(card, i);
-            cards.Children.Add(card);
-        }
         var stack = new StackPanel { Spacing = Theme.SpaceM };
-        stack.Children.Add(cards);
+        if (promo.Cards.Count == 0)
+        {
+            // Catálogo vazio: nada quebrado na tela, só o aviso e Fechar.
+            stack.Children.Add(new TextBlock { Text = "Nenhum aplicativo da equipe por enquanto. Volte mais tarde.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        }
+        else
+        {
+            // Linhas de duas colunas: um novo aplicativo no catálogo entra na próxima posição, sem mexer na tela.
+            var cards = new Grid { ColumnSpacing = Theme.SpaceM, RowSpacing = Theme.SpaceM };
+            for (var c = 0; c < PromoModal.Columns; c++) cards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (var r = 0; r < (promo.Cards.Count + PromoModal.Columns - 1) / PromoModal.Columns; r++) cards.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (var i = 0; i < promo.Cards.Count; i++)
+            {
+                var card = PromoCardView(app, promo, i);
+                Grid.SetRow(card, i / PromoModal.Columns);
+                Grid.SetColumn(card, i % PromoModal.Columns);
+                cards.Children.Add(card);
+            }
+            stack.Children.Add(cards);
+        }
         stack.Children.Add(Row("Fechar", ActionIcons.Glyph(ActionIcon.Close), promo.CloseFocused, true, false, () => app.PointerChoosePromo(promo.Cards.Count)));
         return Panel(app, Header(promo), stack, 880);
     }
@@ -817,6 +828,7 @@ public static partial class ModalView
             content.Children.Add(image);
         }
         content.Children.Add(new TextBlock { Text = info.Name, FontSize = Theme.FontTitle, FontWeight = FontWeights.SemiBold, Foreground = Theme.Text });
+        if (info.Platform.Length > 0) content.Children.Add(new TextBlock { Text = info.Platform, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted });
         content.Children.Add(new TextBlock { Text = info.Tagline, FontSize = Theme.FontBody, Foreground = Theme.Accent, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(new TextBlock { Text = info.Description, FontSize = Theme.FontBody, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(new Border { Margin = new Thickness(0, Theme.SpaceXs, 0, 0), Child = Row(info.ActionLabel, ActionIcons.Glyph(ActionIcon.Open), focused, true, false, () => app.PointerChoosePromo(index)) });

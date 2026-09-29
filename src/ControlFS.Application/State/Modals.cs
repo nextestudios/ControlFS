@@ -619,7 +619,7 @@ public sealed class TextPreviewModal : Modal
 }
 
 /// <summary>Um aplicativo da equipe na tela "Mais da equipe".</summary>
-public sealed record PromoCard(string Name, string Tagline, string Description, string ActionLabel, string Url, string LogoFile);
+public sealed record PromoCard(string Name, string Tagline, string Description, string ActionLabel, string Url, string LogoFile, string Platform = "");
 
 /// <summary>
 /// "Mais da equipe": dois aplicativos, cada um com logo, o que faz e um botão que abre o site no navegador. Esquerda/direita
@@ -630,7 +630,10 @@ public sealed class PromoModal(IReadOnlyList<PromoCard> cards) : Modal("Mais da 
     public override ActionIcon Icon { get; internal set; } = ActionIcon.Game;
     public IReadOnlyList<PromoCard> Cards { get; } = cards;
 
-    /// <summary>0..Cards.Count-1: o cartão em foco; Cards.Count: o botão Fechar.</summary>
+    /// <summary>Cartões por linha (a lista cresce em linhas de duas colunas).</summary>
+    public const int Columns = 2;
+
+    /// <summary>0..Cards.Count-1: o cartão em foco; Cards.Count: o botão Fechar (sozinho, com o catálogo vazio).</summary>
     public int FocusIndex { get; internal set; }
 
     public bool CloseFocused => FocusIndex >= Cards.Count;

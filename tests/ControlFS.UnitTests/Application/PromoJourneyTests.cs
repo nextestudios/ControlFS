@@ -109,4 +109,50 @@ public class PromoJourneyTests : IDisposable
         Assert.Null(app.TopModal);
         Assert.Null(Launch(seenWelcome, shell).TopModal);
     });
+
+    [Fact]
+    public void Main_menu_opens_the_catalog_which_grows_in_rows_and_handles_being_empty() => UiContext.Run(async () =>
+    {
+        var shell = new RecordingShell();
+        var app = Launch(_data.MakeDir("menu"), shell, offerPromo: false, offerOnboarding: false);
+        var d = new Driver(app);
+
+        // Menu principal → Mais da equipe (entrada própria, não só em Ajuda), sempre a pedido.
+        d.Press(InputAction.OpenAppMenu);
+        await d.ChooseMenu("Mais da equipe");
+        var promo = Assert.IsType<PromoModal>(app.TopModal);
+        Assert.All(promo.Cards, c => Assert.Equal("Windows 10 e 11", c.Platform));
+        d.Press(InputAction.Back);
+
+        // Catálogo com três apps: linhas de duas colunas, Baixo/Cima andam entre elas e chegam a Fechar.
+        PromoCard Make(string n) => new(n, "frase", "descrição", "Abrir " + n, "https://exemplo.com/" + n, "promo-x.png", "Windows");
+        app.TeamCatalog = [Make("a"), Make("b"), Make("c")];
+        app.ShowPromo();
+        promo = (PromoModal)app.TopModal!;
+        d.Press(InputAction.NavigateRight);
+        Assert.Equal(1, promo.FocusIndex);
+        d.Press(InputAction.NavigateDown); // b não tem nada abaixo: vai a Fechar
+        Assert.True(promo.CloseFocused);
+        d.Press(InputAction.NavigateUp);
+        Assert.Equal(2, promo.FocusIndex); // volta ao último cartão (c, segunda linha)
+        d.Press(InputAction.NavigateUp);
+        Assert.Equal(0, promo.FocusIndex); // c está sob a
+        d.Press(InputAction.NavigateDown);
+        Assert.Equal(2, promo.FocusIndex);
+        d.Press(InputAction.Confirm);
+        Assert.Equal("https://exemplo.com/c", shell.Links[^1]);
+        d.Press(InputAction.Back);
+
+        // Catálogo vazio: a tela abre, só oferece Fechar e não quebra.
+        app.TeamCatalog = [];
+        app.ShowPromo();
+        promo = (PromoModal)app.TopModal!;
+        Assert.True(promo.CloseFocused);
+        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateDown);
+        d.Press(InputAction.Confirm);
+        Assert.Null(app.TopModal);
+        Assert.Empty(shell.Links.Where(l => l.Contains("nextboost", StringComparison.Ordinal)));
+    });
 }
+
