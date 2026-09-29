@@ -20,6 +20,8 @@
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Windows\ControlFS.Infrastructure.Windows.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Updates\ControlFS.Infrastructure.Updates.csproj" />
     <ProjectReference Include="..\..\src\ControlFS.Infrastructure.Remote\ControlFS.Infrastructure.Remote.csproj" />
+    <!-- Só para construir o Rar.exe falso ao lado dos testes (não referenciamos o assembly). -->
+    <ProjectReference Include="..\ControlFS.FakeRar\ControlFS.FakeRar.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Fixtures\**\*.zip;..\Fixtures\**\*.rar;..\Fixtures\**\*.7z;..\Fixtures\**\*.0??;..\Fixtures\**\*.z0?" LinkBase="Fixtures" CopyToOutputDirectory="PreserveNewest" />

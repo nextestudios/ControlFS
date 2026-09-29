@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>ControlFS.Infrastructure.Archives</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks> <!-- exigido pelo gerador de LibraryImport (WinVerifyTrust) -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ControlFS.Core\ControlFS.Core.csproj" />

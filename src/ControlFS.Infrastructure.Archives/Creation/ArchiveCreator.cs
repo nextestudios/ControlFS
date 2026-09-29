@@ -18,10 +18,11 @@ public static class ArchiveCreator
     private const int BufferSize = 81920;
 
     public static Task<OperationResult> CreateAsync(CompressionRequest request, IProgress<OperationProgress>? progress, CancellationToken ct,
-        ITemporaryJournal? journal = null) =>
-        Task.Run(() => Create(request, progress, journal ?? NoTemporaryJournal.Instance, ct), CancellationToken.None);
+        ITemporaryJournal? journal = null, RarTool? rarTool = null, TimeSpan? rarStallTimeout = null) =>
+        Task.Run(() => Create(request, progress, journal ?? NoTemporaryJournal.Instance, rarTool, rarStallTimeout ?? RarWriter.DefaultStallTimeout, ct), CancellationToken.None);
 
-    private static OperationResult Create(CompressionRequest request, IProgress<OperationProgress>? progress, ITemporaryJournal journal, CancellationToken ct)
+    private static OperationResult Create(CompressionRequest request, IProgress<OperationProgress>? progress, ITemporaryJournal journal, RarTool? rarTool,
+        TimeSpan rarStallTimeout, CancellationToken ct)
     {
         var destination = Path.GetFullPath(request.DestinationPath);
         var folder = Path.GetDirectoryName(destination);
@@ -33,6 +34,12 @@ public static class ArchiveCreator
         if (File.Exists(destination) || Directory.Exists(destination))
             return Fail(OperationErrorKind.AlreadyExists, $"Já existe \"{fileName}\" nesta pasta.");
         if (request.SourcePaths.Count == 0) return Fail(OperationErrorKind.Unknown, "Nada para compactar.");
+        if (request.Format == CompressionFormat.Rar)
+        {
+            if (rarTool is null) return Fail(OperationErrorKind.UnsupportedFormat, RarLocator.MissingReason);
+            var bases = request.SourcePaths.Select(s => Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(s)))).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (bases.Count != 1 || bases[0] is null) return Fail(OperationErrorKind.PathRejected, "Para criar RAR, todos os itens precisam estar na mesma pasta.");
+        }
 
         // Plano: arquivos e pastas relativos à pasta de origem comum; links nunca são seguidos.
         var results = new List<ItemResult>();
@@ -59,6 +66,21 @@ public static class ArchiveCreator
         var registration = journal.Register(temp, TemporaryKind.PartialFile);
         long done = 0;
         var filesDone = 0;
+        if (request.Format == CompressionFormat.Rar)
+        {
+            // O Rar.exe grava o próprio arquivo: o temporário precisa NÃO existir (ele criaria/atualizaria o RAR).
+            var baseDir = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(request.SourcePaths[0])))!;
+            OperationResult rar;
+            try { rar = RarWriter.Create(rarTool!, plan, results, baseDir, temp, destination, request.Strength, rarStallTimeout, ct); }
+            finally { if (!File.Exists(temp)) registration.Dispose(); }
+            if (rar.FinalState is OperationState.Completed or OperationState.CompletedWithWarnings)
+            {
+                progress?.Report(new OperationProgress(null, totalFiles, totalFiles, totalBytes, totalBytes));
+                if (results.Any(r => r.Outcome is ItemOutcome.Failed or ItemOutcome.Skipped) && rar.FinalState == OperationState.Completed)
+                    return rar with { FinalState = OperationState.CompletedWithWarnings, Message = "Compactado criado; alguns itens ficaram de fora (veja a lista)." };
+            }
+            return rar;
+        }
         try
         {
             using (var output = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize))
