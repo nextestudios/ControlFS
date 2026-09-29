@@ -152,7 +152,7 @@ public class PromoJourneyTests : IDisposable
         d.Press(InputAction.NavigateDown);
         d.Press(InputAction.Confirm);
         Assert.Null(app.TopModal);
-        Assert.Empty(shell.Links.Where(l => l.Contains("nextboost", StringComparison.Ordinal)));
+        Assert.DoesNotContain(shell.Links, l => l.Contains("nextboost", StringComparison.Ordinal));
     });
 }
 
