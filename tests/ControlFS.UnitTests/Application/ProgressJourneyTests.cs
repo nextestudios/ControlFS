@@ -54,7 +54,10 @@ public class ProgressJourneyTests : IDisposable
         });
         await UiContext.WaitUntil(() => delivered.Count > 0 && delivered[^1] == last, "último valor entregue");
         Assert.True(last > 1000, "o motor relatou muito mais do que a UI recebeu");
-        Assert.InRange(delivered.Count, 4, 12); // ~10 por segundo durante 0,6 s + o último
+        // Limitado (~10 por segundo durante 0,6 s + o último) e sempre com o primeiro e o último. O mínimo é 2, não 4: com a
+        // máquina ocupada (a release roda também os testes pesados em paralelo) os temporizadores atrasam e chegam menos avisos;
+        // o que importa aqui é não passar do limite e entregar o último valor.
+        Assert.InRange(delivered.Count, 2, 12);
         Assert.Equal(delivered.Order().ToList(), delivered); // nunca fora de ordem
     });
 
