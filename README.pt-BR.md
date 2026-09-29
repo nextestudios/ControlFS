@@ -99,7 +99,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 
 **Compactados**
 - **Navegar e extrair** ZIP (inclusive ZIP64 e AES), 7z, RAR4/RAR5, TAR, TAR.GZ e GZ sem descompactar antes; **volumes divididos** (`.7z.001`, `.part1.rar`, `.z01`) abrem a partir de qualquer parte; compactados com senha; vários de uma vez, cada um na sua pasta; **teste de integridade**
-- **Criar** ZIP, TAR.GZ e 7z a partir dos itens marcados (RAR não pode ser criado: formato proprietário) ([matriz](docs/archive-support.md))
+- **Criar** ZIP, TAR.GZ e 7z a partir dos itens marcados, e **RAR** quando o WinRAR está instalado no seu PC (o ControlFS usa o seu próprio WinRAR; o RAR é proprietário, então ele nunca embute nem reimplementa esse formato) ([matriz](docs/archive-support.md))
 
 **Visualização**
 - **Imagens** (JPG, PNG, GIF, BMP, WebP) com zoom, deslocamento e anterior/próxima; **texto** (logs, notas, configurações, código) com **edição leve**; **PDF** sem o Edge

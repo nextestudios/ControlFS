@@ -99,7 +99,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 
 **Archives**
 - **Browse and extract** ZIP (including ZIP64 and AES), 7z, RAR4/RAR5, TAR, TAR.GZ and GZ without unpacking first; **split volumes** (`.7z.001`, `.part1.rar`, `.z01`) open from any part; encrypted archives with password; several archives at once, each into its own folder; **integrity test**
-- **Create** ZIP, TAR.GZ and 7z from marked items (RAR can't be created: proprietary) ([matrix](docs/archive-support.md))
+- **Create** ZIP, TAR.GZ and 7z from marked items, and **RAR** when WinRAR is installed on your PC (ControlFS runs your own WinRAR; RAR is proprietary, so it never bundles or reimplements it) ([matrix](docs/archive-support.md))
 
 **Previews**
 - **Images** (JPG, PNG, GIF, BMP, WebP) with zoom, pan and next/previous; **text** (logs, notes, configs, code) with **light editing**; **PDF** without Edge

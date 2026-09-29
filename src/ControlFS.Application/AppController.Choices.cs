@@ -5,7 +5,7 @@ using ControlFS.Core.Models;
 namespace ControlFS.Application;
 
 /// <summary>Uma alternativa de um valor com várias opções (#261): o valor, o texto e, opcionalmente, uma linha que explica.</summary>
-public sealed record Choice<T>(T Value, string Label, string? Description = null);
+public sealed record Choice<T>(T Value, string Label, string? Description = null, string? DisabledReason = null);
 
 /// <summary>
 /// Seletor de opções (#261): um padrão só para todo valor que tem várias alternativas escondidas (formato e compressão de
@@ -60,7 +60,7 @@ public sealed partial class AppController
     {
         var index = Math.Max(0, choices.ToList().FindIndex(c => EqualityComparer<T>.Default.Equals(c.Value, current)));
         var items = choices.Select((choice, i) => new MenuItem(choice.Label, () => ApplyChoice(choice.Value, onPick),
-            Detail: choice.Description, Icon: i == index ? ActionIcon.RadioOn : ActionIcon.RadioOff, Value: i == index ? "atual" : null)).ToList();
+            choice.DisabledReason, choice.Description, i == index ? ActionIcon.RadioOn : ActionIcon.RadioOff, Value: i == index ? "atual" : null)).ToList();
         PushModal(new MenuModal(label, items) { Icon = icon, Subtitle = context, PickerCurrent = index, FocusIndex = index });
     }
 

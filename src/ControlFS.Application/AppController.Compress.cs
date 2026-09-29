@@ -65,7 +65,7 @@ public sealed partial class AppController
             Refill();
         }), icon: ActionIcon.Rename);
         // Formato e compressão têm várias alternativas escondidas: abrem o seletor (#261) em vez de alternar às cegas.
-        var format = ChoiceOption("Formato", () => plan.Format, CompressFormats, picked =>
+        var format = ChoiceOption("Formato", () => plan.Format, AvailableCompressFormats(), picked =>
         {
             plan = plan with { Format = picked };
             Refill();
@@ -167,7 +167,15 @@ public sealed partial class AppController
         new(CompressionFormat.Zip, "ZIP", "abre em qualquer Windows"),
         new(CompressionFormat.TarGZip, "TAR.GZ", "comum em Linux/macOS"),
         new(CompressionFormat.SevenZip, "7z", "menor; abre no 7-Zip e no Explorador do Windows 11 atual (mais lento para criar)"),
+        new(CompressionFormat.Rar, "RAR", "abre no WinRAR; criado pelo WinRAR que você já tem instalado (o ControlFS não inclui nem baixa nada do RAR)"),
     ];
+
+    /// <summary>
+    /// Os formatos como o seletor os mostra agora: o RAR só fica disponível se o serviço achar o WinRAR do usuário; sem ele
+    /// aparece desativado com o motivo (docs/decisions/0011). Os demais formatos sempre estão disponíveis.
+    /// </summary>
+    private IReadOnlyList<Choice<CompressionFormat>> AvailableCompressFormats() =>
+        [.. CompressFormats.Select(c => _archives.GetCreationAvailability(c.Value) is { IsAvailable: false } none ? c with { DisabledReason = none.Reason ?? "Indisponível neste PC." } : c)];
 
     internal static IReadOnlyList<Choice<CompressionStrength>> StrengthChoices { get; } =
     [

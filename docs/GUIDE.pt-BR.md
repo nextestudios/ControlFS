@@ -219,7 +219,7 @@ Entradas bloqueadas (nomes inseguros como `../`, links, nomes reservados do Wind
 
 ## Compactando
 
-Marque itens com Oeste (ou foque um) → Norte → **Compactar…**. Escolha o nome (teclado virtual), o **Formato** — ativá-lo abre um seletor com ZIP, TAR.GZ e 7z (menor e mais lento para criar; abre no 7-Zip e no Explorador do Windows 11 atual), cada um com uma linha sobre ele e o atual marcado — e a **Compressão** (nível, também um seletor), e depois **Compactar**. Escolher no seletor volta à mesma janela; Voltar deixa o valor como estava. O arquivo é gravado num temporário e só aparece quando termina; um arquivo existente nunca é sobrescrito (o nome ganha "(2)"). Links e junctions dentro das pastas são ignorados e listados no resultado. RAR não pode ser criado (formato proprietário).
+Marque itens com Oeste (ou foque um) → Norte → **Compactar…**. Escolha o nome (teclado virtual), o **Formato** — ativá-lo abre um seletor com ZIP, TAR.GZ, 7z (menor e mais lento para criar; abre no 7-Zip e no Explorador do Windows 11 atual) e RAR (criado pelo WinRAR que você já tem instalado; sem o WinRAR aparece apagado e diz o motivo — o ControlFS nunca inclui nem baixa nada do RAR; todos os itens precisam estar na mesma pasta), cada um com uma linha sobre ele e o atual marcado — e a **Compressão** (nível, também um seletor), e depois **Compactar**. Escolher no seletor volta à mesma janela; Voltar deixa o valor como estava. O arquivo é gravado num temporário e só aparece quando termina; um arquivo existente nunca é sobrescrito (o nome ganha "(2)"). Links e junctions dentro das pastas são ignorados e listados no resultado. RAR não pode ser criado (formato proprietário).
 
 ## Central de operações
 
