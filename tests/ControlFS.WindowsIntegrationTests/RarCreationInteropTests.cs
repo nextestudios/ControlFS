@@ -70,7 +70,7 @@ public sealed class RarCreationInteropTests : IDisposable
         var info = await service.InspectAsync(archive, null, ExtractionLimits.Default, CancellationToken.None);
         Assert.NotEmpty(info.Entries);
 
-        var extracted = await service.ExtractAsync(new ExtractionRequest { ArchivePath = archive, DestinationDirectory = Path.Join(_root, "saida") }, new NoConflicts(), null, CancellationToken.None);
+        var extracted = await service.ExtractAsync(new ExtractionRequest { ArchivePath = archive, DestinationDirectory = Directory.CreateDirectory(Path.Join(_root, "saida")).FullName }, new NoConflicts(), null, CancellationToken.None);
         Assert.True(extracted.FinalState == OperationState.Completed, $"{extracted.FinalState} {extracted.Error} {extracted.Message}");
         var root = extracted.Destination!;
         Assert.Equal(random, File.ReadAllBytes(Path.Join(root, "Relatórios", "aleatório.bin")));
