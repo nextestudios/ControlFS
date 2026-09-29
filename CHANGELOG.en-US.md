@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Improvements
+- **More from the team in the main Menu** (#260): the Menu has a **Mais da equipe** entry that opens the list of the team's official apps (name, logo, what it does, platform and the button that opens the site in the browser). The catalog grows in two-column rows as the team publishes more apps, and an empty catalog shows just a notice and **Fechar**. Nothing is downloaded, installed or launched on its own.
 
 ## [0.11.1-alpha.1]
 ### Performance

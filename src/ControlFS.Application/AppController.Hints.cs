@@ -99,8 +99,8 @@ public sealed partial class AppController
                 return hints;
             case PromoModal promo:
                 hints.Add(new(InputAction.Confirm, promo.CloseFocused ? "Fechar" : "Abrir no navegador"));
-                if (!promo.CloseFocused)
-                    hints.Add(promo.FocusIndex < promo.Cards.Count - 1 ? new(InputAction.NavigateRight, "Próximo") : new(InputAction.NavigateLeft, "Anterior"));
+                if (!promo.CloseFocused && promo.Cards.Count > 1)
+                    hints.Add(promo.FocusIndex % PromoModal.Columns == 0 && promo.FocusIndex + 1 < promo.Cards.Count ? new(InputAction.NavigateRight, "Próximo") : new(InputAction.NavigateLeft, "Anterior"));
                 hints.Add(new(InputAction.Back, "Fechar"));
                 return hints;
             case OnboardingModal onboarding:

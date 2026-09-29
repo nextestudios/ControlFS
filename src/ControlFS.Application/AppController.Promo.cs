@@ -12,18 +12,25 @@ namespace ControlFS.Application;
 /// </summary>
 public sealed partial class AppController
 {
+    /// <summary>
+    /// Catálogo dos aplicativos da equipe. Para publicar outro, acrescente um <see cref="PromoCard"/> aqui (nome, frase, o que
+    /// faz, texto do botão, endereço https oficial, logo em assets/promo/ e plataforma): a tela cresce em linhas de duas colunas.
+    /// </summary>
     public static readonly IReadOnlyList<PromoCard> TeamApps =
     [
         new("NextBoost PRO", "Otimizador de Windows 10 e 11 para jogos",
             "Limpa o que pesa, reduz a latência e ajusta o Windows para uma experiência mais estável nos jogos, em 1 clique e reversível.",
-            "Conhecer o NextBoost PRO", "https://nextboost.pro/", "promo-nextboost.png"),
+            "Conhecer o NextBoost PRO", "https://nextboost.pro/", "promo-nextboost.png", "Windows 10 e 11"),
         new("Console Mode", "Seu PC vira um console de videogame",
             "Foca a TV, desliga as outras telas, troca o áudio e abre o Steam Big Picture, o Playnite ou o Xbox. Ao sair do jogo, tudo volta. Código aberto.",
-            "Baixar o Console Mode", "https://github.com/lippdev/consolemode", "promo-consolemode.png"),
+            "Baixar o Console Mode", "https://github.com/lippdev/consolemode", "promo-consolemode.png", "Windows 10 e 11"),
     ];
 
     /// <summary>Ligado pela janela real (como <see cref="OfferOnboarding"/>): testes, capturas e --no-onboarding nunca a veem.</summary>
     public bool OfferPromo { get; set; }
+
+    /// <summary>O catálogo mostrado (testes podem trocar por uma lista vazia ou maior).</summary>
+    public IReadOnlyList<PromoCard> TeamCatalog { get; set; } = TeamApps;
 
     private bool _promoDue;
 
@@ -39,7 +46,7 @@ public sealed partial class AppController
         _promoDue = false;
         // Vista já ao abrir: fechar o app com ela na tela, ou uma queda, não a traz de volta.
         UpdateSettings(s => s with { PromoSeen = true }, notify: false);
-        PushModal(new PromoModal(TeamApps) { Subtitle = "Outros aplicativos da equipe. Esta tela aparece só uma vez; para rever: Menu → Ajuda e tutorial." });
+        PushModal(new PromoModal(TeamCatalog) { Subtitle = "Outros aplicativos da equipe. Esta tela aparece só uma vez; para rever: Menu → Ajuda e tutorial." });
     }
 
     /// <summary>Abre a tela a pedido (Menu → Ajuda e tutorial → Mais da equipe), mesmo depois de vista.</summary>
@@ -47,25 +54,29 @@ public sealed partial class AppController
     {
         if (_modals.Any(m => m is PromoModal)) return;
         _promoDue = false;
-        PushModal(new PromoModal(TeamApps) { Subtitle = "Outros aplicativos da equipe." });
+        PushModal(new PromoModal(TeamCatalog) { Subtitle = "Outros aplicativos da equipe." });
     }
 
     private void HandlePromo(PromoModal modal, InputAction action)
     {
         var count = modal.Cards.Count;
+        var i = modal.FocusIndex;
         switch (action)
         {
-            case InputAction.NavigateLeft when !modal.CloseFocused:
-                modal.FocusIndex = Math.Max(0, modal.FocusIndex - 1);
+            case InputAction.NavigateLeft when !modal.CloseFocused && i % PromoModal.Columns > 0:
+                modal.FocusIndex = i - 1;
                 break;
-            case InputAction.NavigateRight when !modal.CloseFocused:
-                modal.FocusIndex = Math.Min(count - 1, modal.FocusIndex + 1);
+            case InputAction.NavigateRight when !modal.CloseFocused && i % PromoModal.Columns < PromoModal.Columns - 1 && i + 1 < count:
+                modal.FocusIndex = i + 1;
                 break;
-            case InputAction.NavigateDown:
-                modal.FocusIndex = count;
+            case InputAction.NavigateDown when !modal.CloseFocused:
+                modal.FocusIndex = i + PromoModal.Columns < count ? i + PromoModal.Columns : count; // próxima linha ou Fechar
                 break;
-            case InputAction.NavigateUp when modal.CloseFocused:
-                modal.FocusIndex = 0;
+            case InputAction.NavigateUp when modal.CloseFocused && count > 0:
+                modal.FocusIndex = count - 1;
+                break;
+            case InputAction.NavigateUp when !modal.CloseFocused && i >= PromoModal.Columns:
+                modal.FocusIndex = i - PromoModal.Columns;
                 break;
             case InputAction.Confirm when modal.CloseFocused:
             case InputAction.Back:
@@ -73,7 +84,7 @@ public sealed partial class AppController
                 CloseModal(modal);
                 break;
             case InputAction.Confirm:
-                OpenPromoLink(modal.Cards[modal.FocusIndex]);
+                OpenPromoLink(modal.Cards[i]);
                 break;
         }
     }
