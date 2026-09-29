@@ -103,13 +103,14 @@ internal static class RarWriter
 
     /// <summary>
     /// a = adicionar; -ma5 = RAR5; -mN = nível (1 rápida, 3 normal, 5 máxima); -r- = sem recursão própria (a lista já tem tudo);
-    /// -y = responder sim; -idq = só erros; -cfg- = ignorar Rar.ini e a variável RAR do usuário; -p- = nunca pedir senha;
-    /// -scul = lista em UTF-16. Sem senha, sem registro de recuperação, sem volumes, sem sólido.
+    /// -y = responder sim; -idq = só erros; -cfg- = ignorar Rar.ini e a variável RAR do usuário (onde poderia vir uma senha);
+    /// -scul = lista em UTF-16. Sem senha (NUNCA -p-: no WinRAR 7.23 isso criptografa com a senha "-", comprovado na CI),
+    /// sem registro de recuperação, sem volumes, sem sólido.
     /// </summary>
     public static IReadOnlyList<string> Arguments(string archive, string listFile, CompressionStrength strength) =>
     [
         "a", "-ma5", strength switch { CompressionStrength.Fast => "-m1", CompressionStrength.Maximum => "-m5", _ => "-m3" },
-        "-r-", "-y", "-idq", "-cfg-", "-p-", "-scul", archive, "@" + listFile,
+        "-r-", "-y", "-idq", "-cfg-", "-scul", archive, "@" + listFile,
     ];
 
     public static (OperationErrorKind Kind, string Message) Describe(int exitCode, string output)

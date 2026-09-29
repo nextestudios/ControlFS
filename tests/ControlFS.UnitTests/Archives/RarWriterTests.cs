@@ -65,8 +65,9 @@ public class RarWriterTests : IDisposable
         Assert.Contains("CWD=" + origem, report);
         Assert.Contains("ARG=-ma5", report);
         Assert.Contains("ARG=-m5", report);
-        foreach (var fixedSwitch in new[] { "-r-", "-y", "-idq", "-cfg-", "-p-", "-scul" }) Assert.Contains("ARG=" + fixedSwitch, report);
-        Assert.DoesNotContain("ARG=-hp", report);
+        foreach (var fixedSwitch in new[] { "-r-", "-y", "-idq", "-cfg-", "-scul" }) Assert.Contains("ARG=" + fixedSwitch, report);
+        // Nenhuma opção de senha: "-p-" já criptografou com a senha "-" no WinRAR 7.23.
+        Assert.DoesNotContain(report.Split('\n'), l => l.StartsWith("ARG=-p", StringComparison.Ordinal) || l.StartsWith("ARG=-hp", StringComparison.Ordinal));
         Assert.DoesNotContain(report.Split('\n'), l => l.StartsWith("ARG=" + request.DestinationPath, StringComparison.Ordinal)); // grava no temporário, não no nome final
         Assert.Contains("LISTEXISTS=True", report);
         // Só arquivos e pastas vazias vão para a lista; pasta com conteúdo não (o Rar.exe não desce sozinho); nome com '-' vira caminho.
