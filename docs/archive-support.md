@@ -46,7 +46,7 @@ têm CRC por entrada para conferir. Não é antivírus.
 | ZIP (Deflate, nomes UTF-8) | **validado** (ida e volta, byte a byte) | Rápida/normal/máxima. |
 | TAR.GZ (PAX) | **validado** (ida e volta) | — |
 | 7z (LZMA, sólido) | **validado** (ida e volta pelo próprio extrator; o 7-Zip do runner Windows testa e extrai byte a byte, nos três níveis; pastas e arquivos vazios preservados) | Sem senha, sem LZMA2 e sem filtros; mais lento que o 7-Zip nativo. Ver `docs/decisions/0010-criacao-de-7z.md`. |
-| RAR | **nunca** | Formato proprietário: só o WinRAR pode criar. |
+| RAR5 (pelo `Rar.exe` do WinRAR instalado pelo usuário) | **validado com o WinRAR 7.23 instalado no runner do GitHub** (o teste `RarCreationInteropTests` cria com o Rar.exe real e extrai com o leitor do ControlFS, byte a byte, nos níveis rápida e máxima; pasta vazia, arquivo vazio, nomes acentuados e nome que começa com `-` preservados). Argumentos, lista, códigos de saída, cancelamento, travamento e limpeza: testados com um `Rar.exe` falso. | Só aparece com o WinRAR instalado (o ControlFS não o traz nem o baixa; não reimplementamos a gravação de RAR: ver `docs/decisions/0011-criacao-de-rar.md`). Sem senha, sem registro de recuperação, sem volumes, todos os itens na mesma pasta, progresso indeterminado. Só a versão 7.23 foi observada; outras versões: teste manual em `docs/TESTING.md`. O leitor do ControlFS passou a listar pastas RAR5 sem CRC (achado com o arquivo do WinRAR). |
 
 Links e junctions na origem não são seguidos (listados como ignorados); o compactado é gravado num temporário e só
 recebe o nome final ao concluir; um arquivo existente nunca é sobrescrito; cancelar não deixa nada.

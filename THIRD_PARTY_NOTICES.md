@@ -66,6 +66,15 @@ Inno Setup 6 (gerador do instalador ControlFS-Setup-x64.exe)
   Licença: Inno Setup License — Copyright (C) 1997-2026 Jordan Russell, Martijn Laan.
   O executável do instalador contém o código de instalação do Inno Setup, distribuído sob essa licença.
 
+WinRAR / Rar.exe (RARLAB) — NÃO distribuído, NÃO baixado, NÃO instalado pelo ControlFS
+------------------------------------------------------------------------------
+
+O formato de compressão RAR é proprietário da RARLAB (win.rar GmbH) e a licença do UnRAR proíbe usar o seu código para
+recriar o compressor. Por isso o ControlFS não traz, não baixa, não instala nem reimplementa nada de RAR para GRAVAR.
+Quando o usuário já tem o WinRAR (licença dele), o ControlFS apenas executa o `Rar.exe` instalado, achado no registro
+ou em Arquivos de Programas, com assinatura Authenticode da win.rar GmbH verificada, como um terminal faria (ver
+docs/decisions/0011). Ler RAR continua sendo feito pelo SharpCompress (MIT), sem código do UnRAR.
+
 Componentes usados apenas no desenvolvimento (não distribuídos)
 ------------------------------------------------------------------------------
 
