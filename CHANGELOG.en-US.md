@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Fixes
+- **Recognizable icon for .rar files** (#274): with no associated program, Windows showed a blank page. ControlFS now uses the icon Windows registered for .rar (WinRAR's, for example) and, when there is none, its own archive icon (a box with a zipper, drawn in the app, no third-party artwork). It applies to List and Grid at any scale, and the icon refreshes by itself if you install or change the .rar program.
 
 ## [0.12.0-alpha.1]
 ### What's new

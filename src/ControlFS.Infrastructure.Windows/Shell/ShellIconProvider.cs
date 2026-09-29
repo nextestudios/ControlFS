@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using ControlFS.Core.Contracts;
+using ControlFS.Core.Icons;
+using Microsoft.Win32;
 
 namespace ControlFS.Infrastructure.Windows.Shell;
 
@@ -44,6 +46,46 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
     }
 
     public void Dispose() => _queue.CompleteAdding();
+
+    // ---------- Associação de .rar (#274) ----------
+
+    private static readonly string[] ArchiveExtensions = [".rar"];
+    private long _revision;
+    private long _revisionChecked = long.MinValue;
+    private int _revisionHash;
+
+    /// <summary>
+    /// Muda quando o programa associado a .rar (ou o ícone dele) muda no registro. Lido no máximo a cada 2 s, sem tocar no disco.
+    /// </summary>
+    public long Revision
+    {
+        get
+        {
+            if (!OperatingSystem.IsWindows()) return 0;
+            var now = Environment.TickCount64;
+            if (now - _revisionChecked < 2000) return _revision;
+            _revisionChecked = now;
+            var hash = AssociationFingerprint(".rar");
+            if (hash != _revisionHash) { _revisionHash = hash; _revision++; }
+            return _revision;
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static int AssociationFingerprint(string extension)
+    {
+        try
+        {
+            var progId = Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\" + extension + @"\UserChoice", "ProgId", null) as string
+                ?? Registry.ClassesRoot.OpenSubKey(extension)?.GetValue(null) as string;
+            var icon = progId is null ? null : Registry.ClassesRoot.OpenSubKey(progId + @"\DefaultIcon")?.GetValue(null) as string;
+            return HashCode.Combine(progId, icon);
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return 0;
+        }
+    }
 
     private void Run()
     {
@@ -156,11 +198,24 @@ public sealed partial class ShellIconProvider : IIconProvider, IDisposable
         }
         else if (SHGetFileInfoW(name, attributes, &info, (uint)sizeof(ShFileInfo), flags) == 0) return null;
 
+        // Compactado sem programa associado: o Shell devolve a página em branco genérica; aqui entra o ícone de reserva.
+        if (request.Kind == IconSourceKind.Extension && Array.IndexOf(ArchiveExtensions, request.Value) >= 0 && IsGenericFileIcon(info.IIcon))
+            return ArchiveGlyph.Render(sizePx);
+
         var list = sizePx <= 16 ? ShilSmall : sizePx <= 32 ? ShilLarge : sizePx <= 48 ? ShilExtraLarge : ShilJumbo;
         var image = FromImageList(list, info.IIcon);
         // Tipos sem arte de 256 px vêm pequenos no canto da imagem "jumbo": nesse caso, usa a de 48 px.
         if (list == ShilJumbo && image is not null && ContentExtent(image) <= 48) image = FromImageList(ShilExtraLarge, info.IIcon) ?? image;
         return image;
+    }
+
+    /// <summary>O ícone é o de arquivo sem tipo (o mesmo de uma extensão que ninguém registrou)?</summary>
+    [SupportedOSPlatform("windows")]
+    private static unsafe bool IsGenericFileIcon(int iconIndex)
+    {
+        ShFileInfo generic = default;
+        return SHGetFileInfoW("arquivo.controlfs-sem-tipo", FileAttributeNormal, &generic, (uint)sizeof(ShFileInfo), ShgfiSysIconIndex | ShgfiUseFileAttributes) != 0
+            && generic.IIcon == iconIndex;
     }
 
     /// <summary>

@@ -24,6 +24,7 @@ public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoa
     public const double TileIconSize = 64;
 
     private readonly LruCache<string, ImageSource?> _cache = new(capacity);
+    private long _revision = provider.Revision;
     private readonly Dictionary<string, Flight> _inflight = [];
     private readonly ConditionalWeakTable<Image, CancellationTokenSource> _pending = [];
 
@@ -60,6 +61,13 @@ public sealed class IconLoader(IIconProvider provider, double iconSize = IconLoa
         {
             Show(image, fallback, null, null);
             return;
+        }
+        if (provider.Revision is var revision && revision != _revision)
+        {
+            // A associação de um tipo mudou (ex.: instalou o WinRAR): os ícones em cache podem estar velhos.
+            _revision = revision;
+            _cache.Clear();
+            _inflight.Clear();
         }
         var key = request.Key + "@" + SizePx;
         image.Tag = key;
