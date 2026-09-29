@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Operações, janelas estáveis, RAR e celular (0.12.0-alpha.1)
+
+- Cópia sem travar e andamento com porcentagem e estimativa em todas as operações (#257); todas as janelas com tamanho fixo
+  (#227) e seletores de opções (#261); criar RAR pelo WinRAR instalado (#258); "Mais da equipe" no Menu (#260); pareamento do
+  celular corrigido: o hash do script da página divergia por causa das quebras de linha (#259, aguarda teste em iPhone real).
+- CI no `main` (2026-09-29): 584 testes unitários e 43 de integração no Windows.
+
 ## Otimização de memória e READMEs (0.11.1-alpha.1)
 
 - Ordenação de nomes de 35 para 15 ms em 5.000 itens (#247), GC não concorrente e TieredPGO desligado (#248), devolução da
