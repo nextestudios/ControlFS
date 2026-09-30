@@ -297,6 +297,16 @@ The **installed** version updates itself:
 Menu → Configurações → **Updates**: check now, automatic check on/off, install on quit on/off, pre-releases (automatic / yes / no).
 The **portable** version only tells you a new version exists; download it from the release page.
 
+## Automation
+
+ControlFS can be opened, brought to the front, or closed from external tools, scripts, game launchers/frontends (such as **Console Mode**), and Stream Deck buttons using the `controlfs://` protocol scheme or command-line arguments:
+
+- `controlfs://start` (or `ControlFS.exe --start`): opens the app, or brings the existing window to the foreground if already running.
+- `controlfs://show` (or `ControlFS.exe --show`): restores and brings the window to the front.
+- `controlfs://stop` (or `ControlFS.exe --stop`, `--close`): cleanly closes the running instance, canceling any active operations and saving settings. If no instance is open, it exits immediately.
+
+The `controlfs://` scheme is registered in Windows automatically by the installer and on startup in portable mode. Only one instance of ControlFS runs per user session; launching a second instance signals the active window and exits immediately.
+
 ## Screen readers
 
 With Narrator (or another UI Automation screen reader) on, the app announces where the focus is and the focused item as you move with the controller or keyboard: the home screen, folder, menu, dialog or on-screen keyboard when you enter it, then just the item as you move (name, type, size and position such as "3 of 20"). States are spoken in words: marked, cut, blocked (with the reason), password-protected, unavailable (with the reason). Notices (the pop-up in the bottom-right corner) and the line above the list are read without moving the focus. Nothing depends on sound, vibration or color alone.

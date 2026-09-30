@@ -11,6 +11,7 @@ using ControlFS.Core.Models;
 using ControlFS.Infrastructure.Archives;
 using ControlFS.Infrastructure.Updates;
 using ControlFS.Infrastructure.Windows.FileSystem;
+using ControlFS.Infrastructure.Windows.Automation;
 using ControlFS.Infrastructure.Windows.Shell;
 using ControlFS.Infrastructure.Windows.Settings;
 using ControlFS.Core.Text;
@@ -31,12 +32,14 @@ namespace ControlFS.App.Views;
 /// Janela única: cabeçalho (local + estado), lista virtualizada, rodapé de comandos contextuais
 /// e camada modal. Toda interação vira InputAction no AppController.
 /// </summary>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost, o serviço de atualização, o canal do celular, os ícones e o monitor de unidades são descartados no evento Closed da janela.")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA1001", Justification = "InputHost, o serviço de atualização, o canal do celular, os ícones, o monitor de unidades e o ouvinte de instância única são descartados no evento Closed da janela.")]
 public sealed class MainWindow : Window
 {
     private readonly AppController _app;
     private readonly InputHost _input;
     private readonly GitHubReleaseUpdateService? _updates;
+    /// <summary>Ouvinte de instância única e automação (sinais Show e Close). Null nas capturas.</summary>
+    private readonly SingleInstanceListener? _singleInstanceListener;
 
     /// <summary>Celular como controle (#223). Só escuta na rede durante uma sessão que o usuário abriu; null nas capturas.</summary>
     private readonly Infrastructure.Remote.PhoneLinkServer? _phone;
@@ -158,7 +161,13 @@ public sealed class MainWindow : Window
         }
         var inputStarted = startup.ElapsedMilliseconds;
         _input = new InputHost(_app, DispatcherQueue);
-        if (dataDirectory is null) _background = new BackgroundMode(_app, DispatcherQueue, _drives);
+        if (dataDirectory is null)
+        {
+            _background = new BackgroundMode(_app, DispatcherQueue, _drives);
+            _singleInstanceListener = new SingleInstanceListener(
+                () => DispatcherQueue.TryEnqueue(BringToForeground),
+                () => DispatcherQueue.TryEnqueue(RequestAutomationExit));
+        }
         AppLog.Info($"MainWindow: serviços em {inputStarted} ms; entrada (SDL) em {startup.ElapsedMilliseconds - inputStarted} ms");
         _icons = new IconLoader(_iconProvider);
         // Caches por tamanho: ícones grandes custam mais por entrada (144 px no dobro da escala ≈ 330 KB), então guardam menos.
@@ -252,6 +261,7 @@ public sealed class MainWindow : Window
         AppWindow.Changed += (_, _) => UpdateForeground();
         Closed += (_, _) =>
         {
+            _singleInstanceListener?.Dispose();
             _app.ReleaseMediaForShutdown();
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
@@ -1208,6 +1218,36 @@ public sealed class MainWindow : Window
     internal void OnTitleBarInsetChanged() =>
         _header.Padding = new Thickness(Theme.SpaceL + Theme.SpaceXs, Theme.SpaceM, Theme.SpaceL + _titleBar.ReservedWidth, Theme.SpaceM);
 
+    /// <summary>
+    /// Restaura a janela se estiver minimizada e traz para o primeiro plano (ativação por sinal ou automação externa).
+    /// </summary>
+    public void BringToForeground()
+    {
+        try
+        {
+            if (AppWindow.Presenter is OverlappedPresenter overlapped && overlapped.State == OverlappedPresenterState.Minimized)
+            {
+                overlapped.Restore();
+            }
+            Activate();
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            WindowActivation.BringToForeground(hwnd);
+            _root.Focus(FocusState.Programmatic);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Info($"MainWindow.BringToForeground: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Encerramento limpo solicitado por automação (controlfs://stop, --stop, etc.).
+    /// </summary>
+    public void RequestAutomationExit()
+    {
+        _app.RequestAutomationExit();
+    }
+
     private static int IndexOf(IReadOnlyList<FileEntry> items, FileEntry entry)
     {
         for (var i = 0; i < items.Count; i++)
@@ -1215,3 +1255,4 @@ public sealed class MainWindow : Window
         return -1;
     }
 }
+

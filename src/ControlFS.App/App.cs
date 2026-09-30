@@ -1,5 +1,6 @@
 using ControlFS.App.Diagnostics;
 using ControlFS.App.Views;
+using ControlFS.Infrastructure.Windows.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
@@ -35,6 +36,9 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
                 _ = ScreenRenderer.RunAsync(renderTo, Environment.GetCommandLineArgs());
                 return;
             }
+
+            ProtocolRegistration.EnsureRegistered(AppLog.Info);
+
             AppLog.Info("OnLaunched: criando janela");
             _window = new MainWindow();
             AppLog.Info("OnLaunched: ativando janela");

@@ -79,6 +79,13 @@ Source: "ControlFS.installed"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\controlfs.ico"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; IconFilename: "{app}\controlfs.ico"; Tasks: desktopicon
 
+[Registry]
+; Links controlfs://start|stop|show para automação (ProtocolRegistration registra as mesmas chaves ao iniciar).
+Root: HKCU; Subkey: "Software\Classes\controlfs"; ValueType: string; ValueData: "URL:ControlFS"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\controlfs"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\controlfs\DefaultIcon"; ValueType: string; ValueData: """{app}\{#AppExe}"",0"
+Root: HKCU; Subkey: "Software\Classes\controlfs\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExe}"" ""%1"""
+
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
 ; Atualização "instalar e reiniciar" (o app passa /RELAUNCH=1): reabre o app depois da instalação silenciosa.

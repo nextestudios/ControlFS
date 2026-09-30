@@ -32,6 +32,14 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] Cursor do teclado virtual visível a 3 m e em 4K; renomear "ControlFS" para "Control-FS" com LT, RB e Sul; LT/RT num nome longo; o Narrador lê a posição do cursor.
 - [ ] Seleção no teclado virtual (#44): ao renomear `example-file.zip`, `example-file` aparece destacado e sublinhado, visível a 3 m e em 4K; digitar `novo` resulta em `novo.zip`; `Sel. tudo` na página `…` e Ctrl+A selecionam tudo; o Narrador lê "N de M caracteres selecionados".
 
+## Links `controlfs://` e automação
+
+- [ ] `start controlfs://start` no `cmd` com o app fechado: abre e exibe a janela. Resultado: ______
+- [ ] `controlfs://start` com o app aberto: restaura e traz a janela para frente sem abrir uma segunda instância (apenas um `ControlFS.exe` no Gerenciador de Tarefas). Resultado: ______
+- [ ] `controlfs://stop` ou `ControlFS.exe --stop` com o app aberto: encerra o app de forma limpa. Resultado: ______
+- [ ] `controlfs://show`: traz a janela para frente. Resultado: ______
+- [ ] Versão **portátil** movida de pasta: ao abrir, o registro passa a apontar para o novo caminho (log `Protocolo: controlfs:// registrado`). Resultado: ______
+
 ## Narrador (#40)
 
 Com o Narrador ligado (Ctrl+Win+Enter), usando só o controle:
