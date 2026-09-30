@@ -96,11 +96,26 @@ public sealed record AppSettings
     /// </summary>
     public bool GyroKeyboard { get; init; }
 
+    /// <summary>Volume padrão dos sons do controle (#286): ligados de fábrica, em volume médio.</summary>
+    public const int DefaultControllerSoundVolume = 50;
+
     /// <summary>
-    /// Sons do controle (#276): volume de 0 a 100. 0 = desligado (padrão: o ControlFS não faz barulho sem você pedir). Os sons
-    /// só tocam nas ações vindas do controle, nunca do teclado.
+    /// Sons do controle (#276, #286): volume de 0 a 100 escolhido pelo usuário; 0 = desligados. Null = nunca escolheu: vale o
+    /// padrão (ligado, <see cref="DefaultControllerSoundVolume"/>). Os sons só tocam nas ações vindas do controle.
+    /// </summary>
+    public int? ControllerSoundLevel { get; init; }
+
+    /// <summary>
+    /// Só para ler preferências da 0.13 (campo antigo, padrão 0): um valor acima de 0 foi escolha do usuário e vale; 0 foi o
+    /// padrão de então (indistinguível de "desligei"), então vale o padrão novo. Quem desliga agora grava
+    /// <see cref="ControllerSoundLevel"/> = 0 e nunca mais é ligado de novo.
     /// </summary>
     public int ControllerSoundVolume { get; init; }
+
+    /// <summary>O volume que vale agora (0 = desligados).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public int EffectiveControllerSoundVolume =>
+        Math.Clamp(ControllerSoundLevel ?? (ControllerSoundVolume > 0 ? ControllerSoundVolume : DefaultControllerSoundVolume), 0, 100);
 
     /// <summary>Status do Git (#75): ramo e marcas de modificado/novo em pastas de repositórios. Desligado por padrão.</summary>
     public bool ShowGitStatus { get; init; }

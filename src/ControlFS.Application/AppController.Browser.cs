@@ -676,7 +676,7 @@ public sealed partial class AppController
             ChoiceRow("Fluidez", Settings.SyncInputToDisplay, SmoothnessChoices, on => UpdateSettings(s => s with { SyncInputToDisplay = on }), ActionIcon.Settings, section: controls, placement: tile,
                 shortLabel: "Fluidez", context: settingsContext,
                 detail: "Máxima lê o controle ~125 vezes por segundo (o bastante para telas de 120 Hz). Economia gasta menos bateria em portáteis."),
-            ChoiceRow("Sons do controle", Settings.ControllerSoundVolume, SoundChoices, volume => UpdateSettings(s => s with { ControllerSoundVolume = volume }), ActionIcon.Audio, section: controls,
+            ChoiceRow("Sons do controle", NearestSoundChoice(Settings.EffectiveControllerSoundVolume), SoundChoices, volume => UpdateSettings(s => s with { ControllerSoundLevel = volume }), ActionIcon.Audio, section: controls,
                 placement: tile, shortLabel: "Sons", context: settingsContext,
                 detail: "Toques curtos ao mover o foco, confirmar, voltar e marcar, só com o controle (nunca com o teclado). Respeita a saída de áudio do Windows."),
             new($"Leve em segundo plano: {OnOff(Settings.LightInBackground)}",

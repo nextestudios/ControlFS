@@ -133,6 +133,9 @@ public sealed partial class AppController
         new(100, "máximo", "O volume mais alto dos toques (ainda curtos e suaves)."),
     ];
 
+    /// <summary>A alternativa da lista mais próxima do volume salvo (o seletor marca uma delas).</summary>
+    private static int NearestSoundChoice(int volume) => SoundChoices.Select(c => c.Value).MinBy(v => Math.Abs(v - volume));
+
     private void SetView(Core.Contracts.ViewMode view)
     {
         if (Settings.View == view) return;

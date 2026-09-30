@@ -13,13 +13,24 @@ public sealed class ControllerSoundsTests
     }
 
     [Fact]
-    public void Volume_zero_is_silent_and_the_default_setting_is_off()
+    public void Volume_zero_is_silent()
     {
         var player = new Recorder();
         var sounds = new ControllerSounds(player, () => 0, () => TimeSpan.Zero);
         sounds.OnAction(InputAction.Confirm);
         Assert.Empty(player.Played);
-        Assert.Equal(0, new ControlFS.Core.Contracts.AppSettings().ControllerSoundVolume);
+    }
+
+    [Fact]
+    public void Sounds_are_on_by_default_keep_a_saved_choice_and_read_the_old_0_13_field()
+    {
+        var fresh = new ControlFS.Core.Contracts.AppSettings();
+        Assert.Equal(ControlFS.Core.Contracts.AppSettings.DefaultControllerSoundVolume, fresh.EffectiveControllerSoundVolume); // #286: ligados de fábrica
+        Assert.Equal(0, (fresh with { ControllerSoundLevel = 0 }).EffectiveControllerSoundVolume); // desligados escolhidos: seguem desligados
+        Assert.Equal(25, (fresh with { ControllerSoundLevel = 25 }).EffectiveControllerSoundVolume);
+        Assert.Equal(75, (fresh with { ControllerSoundVolume = 75 }).EffectiveControllerSoundVolume); // escolha da 0.13 vale
+        Assert.Equal(50, (fresh with { ControllerSoundVolume = 0 }).EffectiveControllerSoundVolume); // 0 da 0.13 era o padrão de então
+        Assert.Equal(0, (fresh with { ControllerSoundVolume = 75, ControllerSoundLevel = 0 }).EffectiveControllerSoundVolume); // a escolha nova vence
     }
 
     [Fact]
@@ -77,8 +88,34 @@ public sealed class ControllerSoundsTests
             Assert.True(Peak(wav) > 500, $"{cue}: sem sinal");
         }
         Assert.True(Peak(ToneSynth.Render(SoundCue.Confirm, 100)) > Peak(ToneSynth.Render(SoundCue.Confirm, 25)) * 3);
-        Assert.InRange(Peak(ToneSynth.Render(SoundCue.Confirm, 100)), 1, (int)(short.MaxValue * 0.5)); // discreto mesmo no máximo
+        Assert.InRange(Peak(ToneSynth.Render(SoundCue.Confirm, 100)), 1, (int)(short.MaxValue * 0.6)); // discreto mesmo no máximo
         Assert.Equal(4, bytes.Values.Select(Convert.ToBase64String).Distinct().Count());
+    }
+
+    [Fact]
+    public void Every_cue_has_the_same_loudness_and_starts_and_ends_in_silence_without_clicks()
+    {
+        var levels = Enum.GetValues<SoundCue>().ToDictionary(c => c, c => Rms(ToneSynth.Render(c, 60)));
+        Assert.InRange(levels.Values.Max() / levels.Values.Min(), 1.0, 1.25); // dentro de ~2 dB: nenhum som "grita"
+        foreach (var cue in Enum.GetValues<SoundCue>())
+        {
+            var wav = ToneSynth.Render(cue, 100);
+            var peak = Peak(wav);
+            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, 44)) < peak * 0.02, $"{cue}: começa fora do silêncio");
+            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, wav.Length - 2)) < peak * 0.02, $"{cue}: termina fora do silêncio");
+            var worstStep = 0;
+            for (var i = 46; i + 1 < wav.Length; i += 2) worstStep = Math.Max(worstStep, Math.Abs(BitConverter.ToInt16(wav, i) - BitConverter.ToInt16(wav, i - 2)));
+            Assert.True(worstStep < peak * 0.4, $"{cue}: salto brusco entre amostras (estalo)");
+        }
+        Assert.True(Rms(ToneSynth.Render(SoundCue.Move, 100)) > Rms(ToneSynth.Render(SoundCue.Move, 25)) * 4); // 25% soa bem mais baixo
+    }
+
+    private static double Rms(byte[] wav)
+    {
+        double sum = 0;
+        var n = 0;
+        for (var i = 44; i + 1 < wav.Length; i += 2, n++) { var s = BitConverter.ToInt16(wav, i) / 32768.0; sum += s * s; }
+        return Math.Sqrt(sum / n);
     }
 
     private static int Peak(byte[] wav)

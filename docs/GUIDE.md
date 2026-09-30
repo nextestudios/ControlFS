@@ -308,7 +308,7 @@ The `controlfs://` scheme is registered in Windows by the installer (and re-regi
 
 ## Controller sounds
 
-Menu → Configurações → **Sons do controle** plays short, soft cues for what you do with the controller: a tick when focus moves, a rising note for confirm/open, a falling one for back and a small blip when you mark an item. Choose **desligados** (off, the default), **baixo**, **médio**, **alto** or **máximo**. They play only for controller actions (never the keyboard), don't repeat faster than about 12 times a second when you hold the D-pad, use the default Windows audio output and never change a button or how navigation works. The sounds are generated inside the app (no audio files).
+Menu → Configurações → **Sons do controle** plays short, soft cues for what you do with the controller: a tick when focus moves, a rising note for confirm/open, a falling one for back and a small blip when you mark an item. They are **on by default at medium volume**; choose **desligados** (off), **baixo**, **médio**, **alto** or **máximo** (your choice is kept across restarts and updates). They play only for controller actions (never the keyboard), don't repeat faster than about 12 times a second when you hold the D-pad, use the default Windows audio output and never change a button or how navigation works. The sounds are generated inside the app (no audio files).
 
 ## Screen readers
 
