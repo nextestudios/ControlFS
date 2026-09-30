@@ -161,6 +161,9 @@ public static partial class ModalView
 
     private static double PanelMargin => Theme.SpaceM;
 
+    /// <summary>Largura mínima do painel (px lógicos) para as Configurações ficarem em duas colunas (#285).</summary>
+    private const double MenuTwoColumnMinWidth = 900;
+
     /// <summary>
     /// Largura fixa de cada classe de tamanho (#227, px lógicos antes da escala). Nunca depende do conteúdo em foco; a janela
     /// (720p, portátil, 4K) sempre limita (<see cref="PanelWidthFor"/>).
@@ -171,6 +174,7 @@ public static partial class ModalView
         ModalSize.Medium => 540,
         ModalSize.Standard => 640,
         ModalSize.Wide => 960,
+        ModalSize.Landscape => 1080,
         _ => double.PositiveInfinity,
     };
 
@@ -607,6 +611,13 @@ public static partial class ModalView
     private static Border BuildMenu(AppController app, MenuModal menu, out Action update)
     {
         var stack = new StackPanel();
+        // Configurações em paisagem (#285): com largura para isso, os grupos ficam em duas colunas lado a lado (a de baixo
+        // continua a de cima em ordem de leitura). Numa janela estreita, uma coluna só, como sempre.
+        var twoColumns = menu.HasSectionGrids && PanelWidthFor(menu.Size) >= Theme.Scaled(MenuTwoColumnMinWidth);
+        var second = twoColumns ? new StackPanel() : null;
+        var split = twoColumns ? menu.ColumnSplit : int.MaxValue;
+        var target = stack;
+        var owners = new StackPanel[menu.Items.Count];
         var hasGrid = menu.Grids.Count > 0;
         // Títulos de grupo: em menus só de lista e nas Configurações; com a grade de ações rápidas no topo, só o fio (como o
         // menu de contexto do Windows 11).
@@ -616,18 +627,20 @@ public static partial class ModalView
         string? section = null;
         for (var i = 0; i < menu.Items.Count;)
         {
+            if (i >= split && second is not null && !ReferenceEquals(target, second)) target = second;
             var item = menu.Items[i];
             var grid = menu.GridOf(i);
             // Grupo novo: título (ou só o fio). Menu comum: logo abaixo da grade do topo sempre há o fio separando as duas partes.
             var heading = menu.HasSectionGrids || !hasGrid
                 ? (i == 0 ? item.Section is not null : item.Section != section)
                 : i != 0 && (i == menu.QuickCount || item.Section != section);
-            if (heading) stack.Children.Add(SectionHeading(titles || (item.Section is not null && item.Section == menu.TitledSection) ? item.Section : null, first: i == 0));
+            if (heading) target.Children.Add(SectionHeading(titles || (item.Section is not null && item.Section == menu.TitledSection) ? item.Section : null, first: target.Children.Count == 0));
             section = item.Section;
             if (grid is null)
             {
-                positions[i] = stack.Children.Count;
-                stack.Children.Add(MenuRow(app, menu, i));
+                positions[i] = target.Children.Count;
+                owners[i] = target;
+                target.Children.Add(MenuRow(app, menu, i));
                 i++;
                 continue;
             }
@@ -635,9 +648,20 @@ public static partial class ModalView
             for (var c = 0; c < grid.Columns; c++) tiles.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             for (var r = 0; r < grid.Rows; r++) tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             for (var t = grid.Start; t < grid.End; t++) tiles.Children.Add(MenuTile(app, menu, t));
-            stack.Children.Add(tiles);
+            target.Children.Add(tiles);
             grids[grid] = tiles;
             i = grid.End;
+        }
+        UIElement body = stack;
+        if (second is not null)
+        {
+            var columns = new Grid { ColumnSpacing = Theme.SpaceL };
+            columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            columns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Grid.SetColumn(second, 1);
+            columns.Children.Add(stack);
+            columns.Children.Add(second);
+            body = columns;
         }
         if (menu.Items.Count == 0)
             stack.Children.Add(new TextBlock { Text = "Nenhuma opção.", FontSize = Theme.FontBody, Foreground = Theme.TextMuted });
@@ -661,13 +685,13 @@ public static partial class ModalView
         description.Show(menu.Description);
 
         Border? footer = null;
-        var card = Panel(app, Header(menu, compact: true), stack, menu.Size, footerSink: f => footer = f, compact: true, below: below);
+        var card = Panel(app, Header(menu, compact: true), body, menu.Size, footerSink: f => footer = f, compact: true, below: below);
         var shown = menu.FocusIndex;
         void Replace(int index)
         {
             if (index < 0 || index >= positions.Length) return;
             if (menu.GridOf(index) is { } grid) grids[grid].Children[index - grid.Start] = MenuTile(app, menu, index);
-            else stack.Children[positions[index]] = MenuRow(app, menu, index);
+            else owners[index].Children[positions[index]] = MenuRow(app, menu, index);
         }
         update = () =>
         {

@@ -472,6 +472,12 @@ public sealed partial class AppController
                 break;
             case InputAction.PageUp: menu.FocusIndex = 0; break;
             case InputAction.PageDown: menu.FocusIndex = count - 1; break;
+            case InputAction.NextRegion or InputAction.PreviousRegion when menu.SectionStarts is { Count: > 1 } starts:
+                // Configurações (#285): R1/L1 pulam para o primeiro ajuste do grupo seguinte/anterior (dão a volta).
+                var current = starts.ToList().FindLastIndex(s => s <= menu.FocusIndex);
+                var step = action == InputAction.NextRegion ? 1 : -1;
+                menu.FocusIndex = starts[((current + step) % starts.Count + starts.Count) % starts.Count];
+                break;
             case InputAction.Confirm:
             case InputAction.NavigateRight when !menu.IsQuick(menu.FocusIndex):
                 ChooseMenuItem(menu);
