@@ -37,7 +37,8 @@ public sealed class App : Microsoft.UI.Xaml.Application, IXamlMetadataProvider
                 return;
             }
 
-            ProtocolRegistration.EnsureRegistered(AppLog.Info);
+            // Só o instalado registra controlfs:// (o instalador já o faz; aqui cobre o caminho mudado). O portátil não deixa rastros no registro.
+            if (AppPaths.IsInstalled) ProtocolRegistration.EnsureRegistered(AppLog.Info);
 
             AppLog.Info("OnLaunched: criando janela");
             _window = new MainWindow();

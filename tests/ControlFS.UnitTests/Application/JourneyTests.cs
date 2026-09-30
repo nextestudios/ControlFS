@@ -203,6 +203,34 @@ public class JourneyTests : IDisposable
     });
 
     [Fact]
+    public void Automation_stop_exits_at_once_when_idle_but_asks_first_when_an_operation_is_running() => UiContext.Run(async () =>
+    {
+        var (d, _) = Boot();
+        var app = d.App;
+        var exited = false;
+        app.ExitRequested += () => exited = true;
+
+        Assert.True(app.RequestAutomationExit());
+        Assert.True(exited);
+
+        exited = false;
+        var op = app.Operations.Enqueue("Copiar teste", OperationKind.Copy, async (_, ct) =>
+        {
+            await Task.Delay(Timeout.Infinite, ct);
+            return new OperationResult(OperationState.Completed, []);
+        });
+        Assert.False(app.RequestAutomationExit()); // um link não cancela o trabalho do usuário sozinho
+        Assert.False(exited);
+        Assert.True(op.IsActive);
+        var dialog = await d.WaitDialog("Sair do ControlFS?");
+        Assert.Equal("Cancelar", dialog.Options[dialog.FocusIndex].Label);
+        Assert.False(app.RequestAutomationExit()); // repetir não empilha outro diálogo
+        d.ChooseOption(dialog, "Sair");
+        Assert.True(exited);
+        await UiContext.WaitUntil(() => !op.IsActive, "operação cancelada ao confirmar");
+    });
+
+    [Fact]
     public void Back_semantics_selection_then_history_then_home_then_confirmed_exit() => UiContext.Run(async () =>
     {
         _tmp.MakeDir("A");

@@ -696,13 +696,19 @@ public sealed partial class AppController
     }
 
     /// <summary>
-    /// Encerramento solicitado por automação externa (protocolo controlfs://stop ou argumento --stop).
-    /// Cancela operações ativas e fecha a aplicação de maneira limpa.
+    /// Encerramento solicitado por automação externa (protocolo controlfs://stop ou argumento --stop). Sem operações em
+    /// andamento, fecha na hora. Com operações, um link ou script nunca cancela o trabalho do usuário sozinho: abre a
+    /// confirmação de saída de sempre (começa em "Cancelar") e devolve <c>false</c> para o chamador trazer a janela à frente.
     /// </summary>
-    public void RequestAutomationExit()
+    public bool RequestAutomationExit()
     {
-        foreach (var op in Operations.Items.Where(o => o.IsActive).ToList()) Operations.Cancel(op);
-        RequestExit();
+        if (Operations.ActiveCount == 0)
+        {
+            RequestExit();
+            return true;
+        }
+        if (TopModal is not DialogModal { Title: "Sair do ControlFS?" }) ShowExitDialog();
+        return false;
     }
 
     // ---------- Infra interna ----------

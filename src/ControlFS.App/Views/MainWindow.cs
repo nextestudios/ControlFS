@@ -1245,7 +1245,7 @@ public sealed class MainWindow : Window
     /// </summary>
     public void RequestAutomationExit()
     {
-        _app.RequestAutomationExit();
+        if (!_app.RequestAutomationExit()) BringToForeground(); // há operações: a confirmação precisa ser vista
     }
 
     private static int IndexOf(IReadOnlyList<FileEntry> items, FileEntry entry)
