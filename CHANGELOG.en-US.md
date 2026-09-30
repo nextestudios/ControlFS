@@ -3,15 +3,20 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.13.0-alpha.1]
 ### What's new
 - **Theme choice in the welcome**: a new step, "Escuro ou claro?" (dark or light), with **Escuro** (dark), **Claro** (light) and **Automático (segue o Windows)** (follows Windows). The screen changes at once so you can see it, focus starts on the current choice, and you can change it later in Menu → Configurações → Tema. The welcome goes from five to six steps (the theme setting moved out of "O básico").
-### What's new
 - **Controller sounds** (#276): Menu → Configurações → **Sons do controle** (off, low, medium, high, max). Short, soft cues synthesized inside the app, distinct for moving focus, confirming/opening, going back and marking. They play only for controller actions (never the keyboard), don't machine-gun when you hold the D-pad, use the Windows audio output and don't change any button or navigation. Off by default; without a sound device nothing happens.
-### What's new
 - **Automation and `controlfs://` protocol**: support for `controlfs://start`, `controlfs://stop`, and `controlfs://show` links, as well as command-line arguments (`--start`, `--stop`, `--show`, `--close`), enabling seamless external integration with game launchers and frontends (such as Console Mode), Stream Deck buttons, and automation scripts. Invoking `controlfs://start` when the app is already open restores and brings the window to the foreground without launching duplicate instances; `controlfs://stop` cleanly exits the app; with copies or other operations running it doesn't cancel them by itself and shows the exit confirmation. The protocol is registered by the installer; the portable version writes nothing to the registry (the command-line flags work there). After an update, the app relaunched by the installer waits for the old instance to leave.
-
 ### Fixes
 - **Recognizable icon for .rar files** (#274): with no associated program, Windows showed a blank page. ControlFS now uses the icon Windows registered for .rar (WinRAR's, for example) and, when there is none, its own archive icon (a box with a zipper, drawn in the app, no third-party artwork). It applies to List and Grid at any scale, and the icon refreshes by itself if you install or change the .rar program.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…); controller sounds and the `controlfs://` automation were not heard/tried on real hardware or with Console Mode.
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Phone pairing was fixed in Safari's engine (WebKit) but not yet tested on a real iPhone or Android (#259).
+- Controller sounds are off by default: turn them on in Menu → Configurações → Sons do controle.
 
 ## [0.12.0-alpha.1]
 ### What's new

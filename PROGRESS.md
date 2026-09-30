@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Tema nas boas-vindas, sons do controle, automação e ícone de RAR (0.13.0-alpha.1)
+
+- Passo "Escuro ou claro?" nas boas-vindas, agora com seis passos; sons do controle configuráveis (#276, desligados por
+  padrão); links `controlfs://` e opções `--start/--stop/--show` com instância única (#277, ajustes de revisão em #278);
+  ícone reconhecível para .rar (#274); gerador de manifestos do WinGet (#273, envio ao catálogo pendente).
+- Sem hardware real: sons, automação com o Console Mode, ícone com e sem WinRAR e o pareamento do celular aguardam teste manual.
+
 ## Operações, janelas estáveis, RAR e celular (0.12.0-alpha.1)
 
 - Cópia sem travar e andamento com porcentagem e estimativa em todas as operações (#257); todas as janelas com tamanho fixo
