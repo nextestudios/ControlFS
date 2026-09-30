@@ -3,15 +3,20 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.13.0-alpha.1]
 ### Novidades
 - **Escolha do tema nas boas-vindas**: um passo novo, "Escuro ou claro?", com **Escuro**, **Claro** e **Automático (segue o Windows)**. A tela muda na hora para você ver, o foco já começa na escolha atual e dá para trocar depois em Menu → Configurações → Tema. As boas-vindas passam de cinco para seis passos (o ajuste de tema saiu do passo "O básico").
-### Novidades
 - **Sons do controle** (#276): Menu → Configurações → **Sons do controle** (desligados, baixo, médio, alto, máximo). Toques curtos e suaves, desenhados no próprio app, distintos para mover o foco, confirmar/abrir, voltar e marcar. Tocam só nas ações do controle (nunca do teclado), não repetem feito metralhadora ao segurar o direcional, usam a saída de áudio do Windows e não mudam nenhum botão nem a navegação. Vem desligado; sem placa de som, nada acontece.
-### Novidades
 - **Automação e protocolo `controlfs://`**: suporte aos links `controlfs://start`, `controlfs://stop` e `controlfs://show`, bem como argumentos de linha de comando (`--start`, `--stop`, `--show`, `--close`), facilitando a integração externa com launchers e frontends (como o Console Mode), botões de Stream Deck e scripts. Acionar `controlfs://start` quando o app já está aberto restaura e traz a janela para o primeiro plano sem abrir instâncias duplicadas; `controlfs://stop` encerra o app de forma limpa; havendo cópias ou outras operações em andamento, ele não as cancela sozinho e mostra a confirmação de saída. O protocolo é registrado pelo instalador; a versão portátil não escreve nada no registro (as opções de linha de comando funcionam nela). Depois de uma atualização, o app reaberto pelo instalador espera a instância antiga sair.
-
 ### Correções
 - **Arquivos .rar com ícone reconhecível** (#274): sem programa associado, o Windows mostrava uma página em branco. Agora o ControlFS usa o ícone que o Windows registrou para .rar (o do WinRAR, por exemplo) e, quando não há nenhum, um ícone de arquivo compactado próprio (uma caixa com zíper, desenhado no app, sem arte de terceiros). Vale na lista e na grade, em qualquer escala, e o ícone se atualiza sozinho se você instalar ou trocar o programa de .rar.
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…); os sons do controle e a automação `controlfs://` não foram ouvidos nem testados em hardware real nem com o Console Mode.
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
+- O pareamento do celular foi corrigido no motor do Safari (WebKit), mas ainda não foi testado num iPhone nem num Android de verdade (#259).
+- Os sons do controle vêm desligados: ligue em Menu → Configurações → Sons do controle.
 
 ## [0.12.0-alpha.1]
 ### Novidades
