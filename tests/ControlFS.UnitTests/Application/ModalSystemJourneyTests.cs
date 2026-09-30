@@ -390,9 +390,9 @@ public class ModalSystemJourneyTests : IDisposable
         var d = Boot();
         d.Press(InputAction.Confirm);
         await d.Idle();
-        d.Press(InputAction.OpenAppMenu); // nada copiado: "Colar", o primeiro bloco, está indisponível
+        d.Press(InputAction.OpenAppMenu); // nada copiado: "Colar" está indisponível (Configurações é o primeiro bloco, #288)
         var menu = Assert.IsType<MenuModal>(d.App.TopModal);
-        Assert.False(menu.Items[0].IsEnabled);
+        Assert.False(menu.Items.Single(i => i.Label.StartsWith("Colar", StringComparison.Ordinal)).IsEnabled);
         Assert.True(menu.Items[menu.FocusIndex].IsEnabled);
         Assert.False(menu.Items[menu.FocusIndex].IsDestructive);
     });
