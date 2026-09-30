@@ -124,6 +124,15 @@ public sealed partial class AppController
         new(false, "economia", "Lê o controle menos vezes: gasta menos bateria em portáteis."),
     ];
 
+    private static IReadOnlyList<Choice<int>> SoundChoices { get; } =
+    [
+        new(0, "desligados", "Sem sons: o controle só se vê, não se ouve."),
+        new(25, "baixo", "Toques discretos ao mover, confirmar, voltar e marcar."),
+        new(50, "médio", "Toques discretos ao mover, confirmar, voltar e marcar."),
+        new(75, "alto", "Toques discretos ao mover, confirmar, voltar e marcar."),
+        new(100, "máximo", "O volume mais alto dos toques (ainda curtos e suaves)."),
+    ];
+
     private void SetView(Core.Contracts.ViewMode view)
     {
         if (Settings.View == view) return;

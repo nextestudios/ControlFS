@@ -96,6 +96,12 @@ public sealed record AppSettings
     /// </summary>
     public bool GyroKeyboard { get; init; }
 
+    /// <summary>
+    /// Sons do controle (#276): volume de 0 a 100. 0 = desligado (padrão: o ControlFS não faz barulho sem você pedir). Os sons
+    /// só tocam nas ações vindas do controle, nunca do teclado.
+    /// </summary>
+    public int ControllerSoundVolume { get; init; }
+
     /// <summary>Status do Git (#75): ramo e marcas de modificado/novo em pastas de repositórios. Desligado por padrão.</summary>
     public bool ShowGitStatus { get; init; }
 

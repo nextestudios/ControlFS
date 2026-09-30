@@ -37,6 +37,7 @@ public sealed class MainWindow : Window
 {
     private readonly AppController _app;
     private readonly InputHost _input;
+    private readonly WindowsSoundPlayer? _soundPlayer;
     private readonly GitHubReleaseUpdateService? _updates;
     /// <summary>Ouvinte de instância única e automação (sinais Show e Close). Null nas capturas.</summary>
     private readonly SingleInstanceListener? _singleInstanceListener;
@@ -160,7 +161,10 @@ public sealed class MainWindow : Window
             _app.AttachPhoneLink(_phone);
         }
         var inputStarted = startup.ElapsedMilliseconds;
-        _input = new InputHost(_app, DispatcherQueue);
+        if (dataDirectory is null) _soundPlayer = new WindowsSoundPlayer();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        _input = new InputHost(_app, DispatcherQueue, _soundPlayer is null ? null
+            : new Core.Audio.ControllerSounds(_soundPlayer, () => _app.Settings.ControllerSoundVolume, () => clock.Elapsed));
         if (dataDirectory is null)
         {
             _background = new BackgroundMode(_app, DispatcherQueue, _drives);
@@ -265,6 +269,7 @@ public sealed class MainWindow : Window
             _app.ReleaseMediaForShutdown();
             _app.PrepareShutdown(); // instala em silêncio uma atualização verificada, se o usuário deixou ligado
             _input.Dispose();
+            _soundPlayer?.Dispose();
             _phone?.Dispose(); // para de escutar e avisa o celular
             _updates?.Dispose();
             _iconProvider.Dispose();
