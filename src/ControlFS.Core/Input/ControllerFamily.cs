@@ -40,6 +40,15 @@ public static class ControllerFamilies
         };
     }
 
+    /// <summary>
+    /// O dispositivo é um controle Xbox (fabricante Microsoft, ou "Xbox"/"XInput" no nome)? Só para não incomodar: um Xbox que
+    /// aparece também como joystick cru (segunda instância do mesmo controle, receptor, driver genérico) nunca deve pedir
+    /// "configure seu controle". Não decide legendas (isso segue <see cref="Detect"/>, que nunca usa o nome).
+    /// </summary>
+    public static bool IsXboxLike(ushort vendorId, string? name) =>
+        vendorId == MicrosoftVendor
+        || (name is not null && (name.Contains("xbox", StringComparison.OrdinalIgnoreCase) || name.Contains("xinput", StringComparison.OrdinalIgnoreCase)));
+
     /// <summary>Família usada nas legendas: a escolha manual vence; no automático, a do controle ativo.</summary>
     public static ControllerFamily Resolve(ButtonLabelStyle style, ControllerFamily? active) => style switch
     {

@@ -144,7 +144,6 @@ public sealed class MainWindow : Window
         {
             PdfRenderer = new Infrastructure.Media.Pdf.WindowsPdfRenderer(),
             Terminal = new TerminalLauncher(),
-            Git = new Infrastructure.Git.GitStatusReader(),
             MediaPlayer = new Infrastructure.Media.Playback.WindowsMediaPlayerFactory(),
             DiskImages = new Infrastructure.Windows.DiskImages.VirtualDiskService(),
             PlaybackPositions = new JsonPlaybackPositionStore(data),

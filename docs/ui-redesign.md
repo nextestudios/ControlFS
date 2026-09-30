@@ -221,7 +221,7 @@ added line.
 | Where | Pickers | Stays one press |
 |---|---|---|
 | Compactar | Formato, Compressão | Nome (keyboard), Compactar |
-| Configurações | Exibição, Densidade da lista, Tema, Cor de destaque, Ordenar por, Confirmar com, Legendas, Fluidez | Ordem, Painel de detalhes, Itens ocultos, Status do Git, Tela cheia, Busca em subpastas, Recentes, Restaurar abas, Sugestões do teclado, Segundo plano, Mira por giroscópio (on/off or symmetric two-way toggles); Controle ativo, Teste de controles, Controles sem perfil, Atualizações (they open their own screen) |
+| Configurações | Exibição, Densidade da lista, Tema, Cor de destaque, Ordenar por, Confirmar com, Legendas, Fluidez | Ordem, Painel de detalhes, Itens ocultos, Tela cheia, Busca em subpastas, Recentes, Restaurar abas, Sugestões do teclado, Segundo plano, Mira por giroscópio (on/off or symmetric two-way toggles); Controle ativo, Teste de controles, Controles sem perfil, Atualizações (they open their own screen) |
 | Filtros da busca | Tamanho, Modificado | Tipos (checkboxes) |
 | Renomear em lote | Modo, Converter para | Dígitos (1–6, a stepper), text fields |
 
@@ -324,7 +324,6 @@ form the group "Nesta pasta (<nome>)", whose heading shows even under the grid (
 | Search: filters, Outras ações (Mostrar na pasta, Nova busca, Subpastas, Pastas puladas, Cancelar busca, Propriedades) | Y Filtros | `SearchFilterJourneyTests`, `SearchJourneyTests` |
 | Properties with folder size on demand (cancel keeps partial, junctions not followed) | Y → Propriedades; List (C2) and grid (#177): details panel shows the real data of the focused item | `FolderSizeJourneyTests`, `FolderSizeIntegrationTests` |
 | Disk usage analysis (#72): Y Ações on a folder/drive (or current folder) → Analisar uso do disco; ranked folders then files, drill down/up, open a file's folder, cancel with Back | `DiskUsageJourneyTests`, `FolderSizeIntegrationTests::Disk_usage_totals_match_…` |
-| Git status (#75): Configurações → Status do Git (off by default); badge line "GIT · ramo …", row state "Git: modificado/novo…", read after the list | `GitStatusJourneyTests` |
 | Open terminal here (#76): Y Ações → "Nesta pasta (<nome>)" → Abrir terminal aqui…; notice starts on Cancelar; optional Windows on-screen keyboard | `TerminalJourneyTests` (2) |
 | Two panes (#56): left = active tab, right = own `PaneState`; active pane outlined in cyan with "ATIVO" title, the other dimmed with its path; L3/Tab or click switches without touching marks; tabs stay on the left; single pane on handhelds/narrow windows (setting kept); details panel hidden | Menu → "Dois painéis"; L3/Tab | `DualPaneJourneyTests` (2); Screens `2h-dual-pane`, `2i-dual-pane-right`; Manual "Dois painéis (#56)" |
 | Copiar/Mover para o outro painel (quick tiles), Extrair para o outro painel (archives), with source/destination summary; unavailable with a reason when both panes show the same folder (#56) | Y Ações (two panes) | `DualPaneJourneyTests` |

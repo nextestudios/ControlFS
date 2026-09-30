@@ -650,9 +650,6 @@ public sealed partial class AppController
                 if (inBrowser) Refresh(pane);
             }, Detail: "Arquivos e pastas marcados como ocultos no Windows. A escolha fica salva e vale para todas as pastas.",
                 Icon: ActionIcon.Hidden, Section: view, KeepOpen: true, Placement: tile, ShortLabel: "Ocultos", Value: hidden),
-            new($"Status do Git: {OnOff(Settings.ShowGitStatus)}", ToggleGitStatus, Git is null ? "Indisponível nesta compilação." : null,
-                Detail: "Em pastas de repositórios Git: o ramo no topo e \"Git: modificado/novo\" nos itens. Somente leitura; não precisa do Git instalado.",
-                Icon: ActionIcon.Info, Section: view, KeepOpen: true),
             new($"Tela cheia: {OnOff(Settings.FullScreen)}", ToggleFullScreen,
                 Detail: "Ocupa a tela inteira, sem a barra do Windows; fica salva para a próxima vez. Também F11 ou o botão ao lado de minimizar.",
                 Icon: Settings.FullScreen ? ActionIcon.ExitFullScreen : ActionIcon.FullScreen, Section: view, KeepOpen: true),

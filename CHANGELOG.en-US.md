@@ -3,6 +3,10 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Fixes
+- **Xbox controllers no longer ask to be configured** (#284): when an Xbox controller also showed up as a "joystick without a profile" (a second instance, a receiver or a generic driver), the app said "Controle sem perfil… hold any button" and opened the mapping wizard even though the controller already worked. Xbox controllers (Microsoft vendor, or "Xbox"/"XInput" in the name) now never trigger the notice or the wizard; real generic joysticks can still be configured.
+### Changes
+- **Git status left Configurações** (#284): the option, the "Status do Git: ligado/desligado" notice, the branch in the header and the "Git: modificado" marks are gone from the interface.
 ### What's new
 - **Checks and updates by itself on open**: ControlFS now looks for a new version **every time it opens** (before, at most once a day) and, in the installed build, if a verified version exists (signed manifest, SHA-256 and size) and you haven't started using the app and nothing is running, it **downloads, installs and reopens already updated**, without asking. If you already started using it, the usual notice stays (Install and restart / Later). Turn it off in Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. The portable build only notifies. It never runs in CI or with `--no-auto-update`.
 

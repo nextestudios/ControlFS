@@ -70,6 +70,22 @@ public class ControllerMappingJourneyTests : IDisposable
     }
 
     [Fact]
+    public void An_xbox_controller_seen_as_a_raw_joystick_never_asks_to_be_configured() => UiContext.Run(() =>
+    {
+        var xbox = new InputDeviceInfo("sdl:9", "Controller (XBOX 360 For Windows)", "030000005e0400008e02000000007200", 0x045E, 0x028E,
+            IsGamepad: false, IsVirtual: false, TypeName: "joystick sem perfil", Path: null);
+        var app = NewApp(new JsonControllerProfileStore(_tmp.MakeDir("data")));
+        Assert.True(app.OnRawInput(xbox, RawInputEvent.Button(0, true))); // consumido, em silêncio
+        Wait(app, 5); // bem mais que o tempo de "segurar para configurar"
+        Assert.Null(app.MappingWizard);
+        Assert.DoesNotContain("sem perfil", app.StatusMessage ?? string.Empty, StringComparison.Ordinal);
+
+        Assert.True(ControlFS.Core.Input.ControllerFamilies.IsXboxLike(0x045E, "qualquer"));
+        Assert.True(ControlFS.Core.Input.ControllerFamilies.IsXboxLike(0x2563, "Xbox Wireless Receiver"));
+        Assert.False(ControlFS.Core.Input.ControllerFamilies.IsXboxLike(0x0079, "Generic USB Joystick")); // o genérico segue pedindo
+    });
+
+    [Fact]
     public void Generic_joystick_is_mapped_by_itself_saved_and_used_after_restart() => UiContext.Run(() =>
     {
         var store = new JsonControllerProfileStore(_tmp.MakeDir("data"));

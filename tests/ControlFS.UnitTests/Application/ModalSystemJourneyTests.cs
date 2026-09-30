@@ -292,12 +292,10 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.NavigateDown);
         Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown); // última linha da grade: a lista do mesmo grupo
-        Assert.StartsWith("Status do Git:", Focused(), StringComparison.Ordinal);
+        Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal); // #230: linha da lista do grupo
         d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
         Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown);
-        d.Press(InputAction.NavigateDown);
-        Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal); // #230: outra linha da lista do grupo
         d.Press(InputAction.NavigateDown); // da lista para a grade do grupo seguinte: primeiro bloco
         Assert.StartsWith("Busca em subpastas:", Focused(), StringComparison.Ordinal);
         app.TakeAnnouncement();
@@ -305,8 +303,6 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.Matches(@"^Recentes: (ligado|desligado), .*bloco 2 de 4$", app.TakeAnnouncement());
         d.Press(InputAction.NavigateUp); // primeira linha: o item de lista acima
         Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal);
-        d.Press(InputAction.NavigateUp);
-        Assert.StartsWith("Status do Git:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateUp); // grade de cima, última linha, coluna 1
         Assert.StartsWith("Ordenar por:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateRight);
