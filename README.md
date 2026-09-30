@@ -82,7 +82,6 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Tabs** (restored on launch, reopen closed tab, duplicate) and **two panes** side by side (L3 switches; copy/move/extract to the other pane)
 - **Network locations** (mapped drives and network shortcuts), drive types at a glance (local, USB, optical, network), refreshed when a USB stick is plugged in or removed
 - **Search** by name in the current folder (or the main folders from Home), with or without subfolders and with filters: results stream in, can be cancelled; no indexing, links never followed
-- **Git status badges** on repository folders (optional, off by default)
 
 **Views**
 - **List or grid** (R3 or Ctrl+G), with 2D controller navigation, and a **details panel** with the item's info and preview

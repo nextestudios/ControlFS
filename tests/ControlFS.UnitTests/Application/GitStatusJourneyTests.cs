@@ -47,8 +47,7 @@ public class GitStatusJourneyTests : IDisposable
         await d.Idle();
         Assert.Null(app.GitSummary); // desligado por padrão: nada é lido
 
-        d.Press(InputAction.OpenAppMenu);
-        await d.ChooseMenu("Status do Git");
+        app.ToggleGitStatus(); // sem entrada nas Configurações (removida): o leitor segue coberto pelo motor
         await UiContext.WaitUntil(() => app.GitSummary is not null, "status do Git");
         Assert.StartsWith("GIT · ramo ", app.GitSummary, StringComparison.Ordinal);
         string? State(string name) => app.GitState(app.Browser.List.Items.Single(i => i.Name == name));

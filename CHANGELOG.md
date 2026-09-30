@@ -3,6 +3,10 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Correções
+- **Controle Xbox não pede mais para ser configurado** (#284): quando um controle Xbox aparecia também como "joystick sem perfil" (segunda instância, receptor ou driver genérico), o app avisava "Controle sem perfil… segure qualquer botão" e abria o assistente de configuração, mesmo com o controle já funcionando. Agora controles Xbox (fabricante Microsoft, ou "Xbox"/"XInput" no nome) nunca disparam o aviso nem o assistente; joysticks genéricos de verdade continuam podendo ser configurados.
+### Mudanças
+- **Status do Git saiu das Configurações** (#284): a opção, o aviso "Status do Git: ligado/desligado", o ramo no cabeçalho e as marcas "Git: modificado" deixaram de existir na interface.
 ### Novidades
 - **Verifica e se atualiza sozinho ao abrir**: o ControlFS agora procura versão nova **a cada vez que abre** (antes, no máximo uma vez por dia) e, na versão instalada, se há uma versão verificada (manifesto assinado, SHA-256 e tamanho) e você ainda não começou a usar o app e nada está em andamento, **baixa, instala e reabre já atualizado**, sem perguntar. Se você já começou a usar, fica o aviso de sempre (Instalar e reiniciar / Depois). Desligue em Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. A versão portátil só avisa. Nunca roda em CI nem com `--no-auto-update`.
 

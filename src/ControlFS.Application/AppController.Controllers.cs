@@ -86,6 +86,9 @@ public sealed partial class AppController
             return true;
         }
         if (ProfileFor(device) is not null) return false;
+        // Controle Xbox que aparece como joystick cru (segunda instância, receptor, driver genérico): nunca pede configuração.
+        // O controle de verdade já comanda o app como gamepad; o assistente é só para quem não é reconhecido.
+        if (ControllerFamilies.IsXboxLike(device.VendorId, device.Name)) return true;
 
         // Sem perfil: segurar um botão do próprio joystick abre o assistente (ele ainda não navega).
         if (input.Kind == RawInputKind.Button && input.Value >= 0.5)

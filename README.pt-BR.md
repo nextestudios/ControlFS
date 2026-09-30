@@ -82,7 +82,6 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Abas** (restauradas ao abrir, reabrir aba fechada, duplicar) e **dois painéis** lado a lado (L3 troca; copiar/mover/extrair para o outro painel)
 - **Locais de rede** (unidades mapeadas e atalhos de rede), tipos de unidade à primeira vista (local, USB, óptica, rede), atualizados ao conectar ou remover um pendrive
 - **Busca** por nome na pasta atual (ou nas pastas principais, a partir do Início), com ou sem subpastas e com filtros: os resultados aparecem enquanto são encontrados e dá para cancelar; sem índice, links nunca seguidos
-- **Selos de status do Git** nas pastas de repositório (opcional, desligado por padrão)
 
 **Exibição**
 - **Lista ou grade** (R3 ou Ctrl+G), com navegação 2D pelo controle, e **painel de detalhes** com as informações e a prévia do item
