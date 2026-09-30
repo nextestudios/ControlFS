@@ -49,7 +49,7 @@ public class PromoJourneyTests : IDisposable
 
         // Primeiro as boas-vindas; a tela da equipe não aparece por cima delas.
         Assert.IsType<OnboardingModal>(app.TopModal);
-        for (var i = 0; i < 4; i++) d.Press(InputAction.NextRegion);
+        for (var i = 0; i < 5; i++) d.Press(InputAction.NextRegion);
         Assert.Equal(OnboardingStep.Tutorial, ((OnboardingModal)app.TopModal!).Step);
         d.Press(InputAction.Confirm); // "Começar tutorial": a tela da equipe espera o tutorial terminar
         Assert.Null(app.TopModal);

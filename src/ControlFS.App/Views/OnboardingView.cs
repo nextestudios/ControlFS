@@ -149,6 +149,7 @@ public static partial class ModalView
         var icon = modal.Step switch
         {
             OnboardingStep.Controls => ActionIcon.Controller,
+            OnboardingStep.Theme => ActionIcon.Theme,
             OnboardingStep.Basics => ActionIcon.Settings,
             OnboardingStep.Privacy => ActionIcon.Password,
             OnboardingStep.Tutorial => ActionIcon.Tutorial,

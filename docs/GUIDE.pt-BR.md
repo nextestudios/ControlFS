@@ -82,7 +82,7 @@ Confirmações importantes (excluir, substituir, desfazer) são respondidas no P
 
 ## Primeira vez: boas-vindas e tutorial guiado
 
-Na primeira vez que o ControlFS abre, as **boas-vindas** em tela cheia mostram cinco passos: boas-vindas; como o controle funciona (os botões de verdade do controle em uso — Abrir, Voltar, Ações, Menu, Buscar, Marcar, L1/R1 da barra superior, L2/R2 das abas, R3 da exibição; aperte qualquer botão do seu controle e as legendas mudam para ele); o básico, que vale na hora (confirmar com o botão inferior ou direito, legendas, tema, lista/grade, Fluidez); privacidade (tudo fica neste PC; procurar atualizações é opcional; o celular como controle fica desligado até você abrir); e **Quer fazer o tutorial guiado?** — **Começar tutorial** ou **Agora não**.
+Na primeira vez que o ControlFS abre, as **boas-vindas** em tela cheia mostram seis passos: boas-vindas; como o controle funciona (os botões de verdade do controle em uso — Abrir, Voltar, Ações, Menu, Buscar, Marcar, L1/R1 da barra superior, L2/R2 das abas, R3 da exibição; aperte qualquer botão do seu controle e as legendas mudam para ele); **escuro ou claro?** (Escuro, Claro ou Automático, que segue o Windows; a tela muda na hora para você ver); o básico, que vale na hora (confirmar com o botão inferior ou direito, legendas, lista/grade, Fluidez); privacidade (tudo fica neste PC; procurar atualizações é opcional; o celular como controle fica desligado até você abrir); e **Quer fazer o tutorial guiado?** — **Começar tutorial** ou **Agora não**.
 
 | Controle | Boas-vindas |
 |---|---|
