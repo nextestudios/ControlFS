@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Changes
+- **Settings as one wide column of icon-only tiles** (#293, replaces the two-column design of 0.14): every setting is now an icon-only tile, with no text beside it, in groups inside a single wide column (no parallel columns). The focused tile fills in and its **name, value and what it does** show in the panel's fixed reading area (and in a hover tooltip); Narrator still reads name and value. L1/R1 jump between groups and Configurações stays the first tile of the Menu. No setting was removed or changed behavior.
 
 ## [0.14.0-alpha.1]
 ### What's new
