@@ -219,6 +219,8 @@ public sealed class MainWindow : Window
         AppLog.Info("MainWindow: serviços criados; montando layout");
         Content = _root;
         _root.Content = _layout = BuildLayout();
+        // Hover (#295): só vale enquanto o mouse se mexeu há pouco; o controle rolando a lista sob um ponteiro parado não acende nada.
+        _root.AddHandler(UIElement.PointerMovedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, e) => Controls.Hover.NoteMove(e)), handledEventsToo: true);
         AppLog.Info($"MainWindow: layout montado ({startup.ElapsedMilliseconds} ms)");
         _root.PreviewKeyDown += (_, e) =>
         {

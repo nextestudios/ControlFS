@@ -7,4 +7,8 @@
   <ItemGroup>
     <InternalsVisibleTo Include="ControlFS.UnitTests" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Sons do controle (#287): quatro WAV curtos (Kenney, CC0), embutidos para tocar da memória. -->
+    <EmbeddedResource Include="..\..\assets\sounds\*.wav" LogicalName="sounds/%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

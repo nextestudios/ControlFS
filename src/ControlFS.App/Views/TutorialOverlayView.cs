@@ -117,6 +117,7 @@ internal sealed class TutorialOverlayView
         var exits = new WrapPanel { HorizontalSpacing = Theme.SpaceM, VerticalSpacing = Theme.SpaceXs };
         var chip = ModalView.PromptChip(options, Math.Round(Theme.FontBody * 1.5), Theme.FontBody);
         chip.Tapped += (_, _) => _app.Handle(InputAction.ToggleSelection);
+        Controls.Hover.AttachDim(chip);
         exits.Children.Add(chip);
         if (card.Number > 1) exits.Children.Add(LinkButton("Voltar passo", _app.PreviousTutorialStep));
         exits.Children.Add(LinkButton("Pular tutorial", _app.SkipTutorial));
@@ -162,6 +163,7 @@ internal sealed class TutorialOverlayView
         };
         AutomationProperties.SetName(button, text);
         button.Tapped += (_, _) => onTap();
+        Controls.Hover.AttachDim(button);
         return button;
     }
 

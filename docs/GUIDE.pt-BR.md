@@ -308,7 +308,7 @@ O esquema `controlfs://` é registrado no Windows pelo instalador (e de novo ao 
 
 ## Sons do controle
 
-Menu → Configurações → **Sons do controle** toca sons curtos e suaves para o que você faz com o controle: um tique ao mover o foco, uma nota que sobe ao confirmar/abrir, uma que desce ao voltar e um toque pequeno ao marcar um item. Vêm **ligados em volume médio**; escolha **desligados**, **baixo**, **médio**, **alto** ou **máximo** (a escolha fica salva ao reabrir e ao atualizar). Tocam só nas ações do controle (nunca do teclado), não repetem mais que umas 12 vezes por segundo ao segurar o direcional, usam a saída de áudio padrão do Windows e nunca mudam um botão nem a navegação. Os sons são gerados dentro do app (sem arquivos de áudio).
+Menu → Configurações → **Sons do controle** toca sons curtos e suaves para o que você faz com o controle: um tique ao mover o foco, uma nota que sobe ao confirmar/abrir, uma que desce ao voltar e um toque pequeno ao marcar um item. Vêm **ligados em volume médio**; escolha **desligados**, **baixo**, **médio**, **alto** ou **máximo** (a escolha fica salva ao reabrir e ao atualizar). Tocam só nas ações do controle (nunca do teclado), não repetem mais que umas 12 vezes por segundo ao segurar o direcional, usam a saída de áudio padrão do Windows e nunca mudam um botão nem a navegação. Os quatro sons são toques curtos CC0 do pacote "Interface Sounds" de Kenney, embutidos no app (licença em THIRD_PARTY_NOTICES.md).
 
 ## Leitores de tela
 

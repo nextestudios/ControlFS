@@ -89,6 +89,9 @@ public static class Theme
         Set(ModalEdge, palette.ModalEdge);
         Set(ModalDivider, palette.ModalDivider);
         Set(ModalInset, palette.ModalInset);
+        HoverWash.Color = Hover(palette, palette.Text, 0x1A);
+        HoverInset.Color = Blend(palette.ModalInset, palette.Text, 0.12);
+        HoverCard.Color = Blend(palette.SurfaceRaised, palette.Text, 0.09);
         Set(KeyFill, palette.KeyFill);
         Set(KeyFunctionFill, palette.KeyFunctionFill);
         Set(FocusText, palette.FocusText);
@@ -170,6 +173,7 @@ public static class Theme
         border.BorderThickness = FocusRing;
         border.BorderBrush = focused ? Accent : Transparent;
         border.Background = focused ? AccentSoft : Transparent;
+        ControlFS.App.Controls.Hover.Track(border, focused, card: false);
         if (border.Parent is Microsoft.UI.Xaml.Controls.Border { Tag: GlowTag } glow) glow.BorderBrush = focused ? FocusGlow : Transparent;
     }
 
@@ -188,6 +192,7 @@ public static class Theme
         card.BorderThickness = FocusRing;
         card.BorderBrush = focused ? Accent : Border;
         card.Background = focused ? AccentSoft : SurfaceRaised;
+        ControlFS.App.Controls.Hover.Track(card, focused, card: true);
         if (card.Parent is Microsoft.UI.Xaml.Controls.Border { Tag: GlowTag } glow)
         {
             glow.BorderBrush = focused ? FocusGlow : Transparent;
@@ -254,6 +259,23 @@ public static class Theme
     /// <summary>Linhas divisórias e o fundo discreto das informações dentro do painel.</summary>
     public static readonly SolidColorBrush ModalDivider = new(ToColor(Palette.ModalDivider));
     public static readonly SolidColorBrush ModalInset = new(ToColor(Palette.ModalInset));
+
+    /// <summary>
+    /// "Mouse em cima" (#295): neutro e suave, derivado do texto do tema (clareia no escuro, escurece no claro), nunca na cor de
+    /// destaque (essa é do foco). <see cref="HoverWash"/> vai sobre fundo transparente (linhas), <see cref="HoverInset"/> no lugar do
+    /// fundo de blocos dos modais e <see cref="HoverCard"/> no de cartões.
+    /// </summary>
+    public static readonly SolidColorBrush HoverWash = new(Hover(Palette, Palette.Text, 0x1A));
+    public static readonly SolidColorBrush HoverInset = new(Blend(Palette.ModalInset, Palette.Text, 0.12));
+    public static readonly SolidColorBrush HoverCard = new(Blend(Palette.SurfaceRaised, Palette.Text, 0.09));
+
+    private static Color Hover(ThemePalette _, uint text, byte alpha) => ToColor((text & 0x00FFFFFF) | ((uint)alpha << 24));
+
+    private static Color Blend(uint from, uint to, double t)
+    {
+        byte Mix(int shift) => (byte)Math.Round((((from >> shift) & 0xFF) * (1 - t)) + (((to >> shift) & 0xFF) * t));
+        return ToColor(0xFF000000u | ((uint)Mix(16) << 16) | ((uint)Mix(8) << 8) | Mix(0));
+    }
 
     /// <summary>Teclas do teclado virtual: de caractere (mais marcadas) e de função, sempre distintas do painel.</summary>
     public static readonly SolidColorBrush KeyFill = new(ToColor(Palette.KeyFill));
