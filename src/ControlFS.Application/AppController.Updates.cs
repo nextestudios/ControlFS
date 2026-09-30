@@ -20,7 +20,14 @@ public enum UpdateState
 
 public sealed partial class AppController
 {
-    private static readonly TimeSpan AutomaticCheckInterval = TimeSpan.FromHours(24);
+    /// <summary>
+    /// Falso em CI e quando o app é aberto por um script de teste (o app de verdade liga na janela): a atualização
+    /// automática fecharia o app no meio do smoke. Os testes deixam ligado.
+    /// </summary>
+    public bool AllowAutoInstall { get; init; } = true;
+
+    /// <summary>Alguma ação do usuário já chegou desde a abertura: a atualização automática não reinicia mais o app por cima dele.</summary>
+    private bool _userActedSinceStart;
     private readonly IUpdateService? _updates;
     private bool _installerLaunched;
 
@@ -69,7 +76,6 @@ public sealed partial class AppController
             return;
         }
         if (_updates is null || !Settings.AutoCheckUpdates) return;
-        if (Settings.LastUpdateCheck is { } last && Now() - last < AutomaticCheckInterval) return;
         Track(CheckForUpdatesAsync(manual: false));
     }
 
@@ -117,6 +123,14 @@ public sealed partial class AppController
         {
             ReadyUpdate = await _updates!.DownloadAsync(manifest, null, CancellationToken.None);
             UpdateState = UpdateState.Ready;
+            if (!manual && CanInstallAutomatically() && Settings.LastAutoInstallAttempt != manifest.Version.ToString())
+            {
+                UpdateSettings(s => s with { LastAutoInstallAttempt = manifest.Version.ToString() });
+                // Logo depois de abrir, sem nada em andamento e sem o usuário ter começado a usar: instala e reabre já na versão nova.
+                StatusMessage = $"Atualizando para {manifest.Version}…";
+                InstallUpdateNow();
+                if (_installerLaunched) return;
+            }
             // Não interrompe o usuário no meio de um diálogo ou de uma operação de disco.
             if (manual || (TopModal is null && Operations.ActiveCount == 0)) ShowUpdateReady();
             else StatusMessage = $"Atualização {manifest.Version} pronta. Abra o menu para instalar.";
@@ -134,6 +148,14 @@ public sealed partial class AppController
             if (manual) ShowError("Falha ao baixar a atualização", [], ex, "Baixar atualização");
         }
     }
+
+    /// <summary>
+    /// A atualização automática da abertura só vale para o app instalado, com a opção ligada, nas primeiras ações depois de abrir:
+    /// nenhuma operação, nenhuma janela aberta e nenhuma tecla ou botão ainda. Se o usuário já começou a usar, fica o aviso de sempre.
+    /// </summary>
+    private bool CanInstallAutomatically() =>
+        AllowAutoInstall && Settings.AutoInstallUpdates && _updates is { IsInstalled: true } && !_installerLaunched
+        && !_userActedSinceStart && Operations.ActiveCount == 0 && TopModal is null;
 
     private void ShowUpdateReady()
     {
@@ -211,7 +233,11 @@ public sealed partial class AppController
             Detail: $"Versão atual {_updates.CurrentVersion}" + (Settings.LastUpdateCheck is { } last ? $" · última verificação {last.LocalDateTime:g}" : string.Empty), Icon: ActionIcon.Refresh));
         items.Add(new MenuItem($"Verificar automaticamente: {(Settings.AutoCheckUpdates ? "sim" : "não")}",
             () => UpdateSettings(s => s with { AutoCheckUpdates = !s.AutoCheckUpdates }),
-            Detail: "Uma consulta por dia às releases do GitHub; nenhum dado pessoal é enviado.", Icon: ActionIcon.Operations));
+            Detail: "Uma consulta às releases do GitHub a cada vez que o app abre; nenhum dado pessoal é enviado.", Icon: ActionIcon.Operations));
+        items.Add(new MenuItem($"Atualizar sozinho ao abrir: {(Settings.AutoInstallUpdates ? "sim" : "não")}",
+            () => UpdateSettings(s => s with { AutoInstallUpdates = !s.AutoInstallUpdates }),
+            _updates.IsInstalled ? null : "Somente na versão instalada; a portátil é atualizada manualmente.",
+            Detail: "Ao abrir, se há versão nova (verificada), o ControlFS instala e reabre sozinho, desde que você ainda não tenha começado a usar e nada esteja em andamento.", Icon: ActionIcon.Update));
         items.Add(new MenuItem($"Instalar ao sair: {(Settings.InstallUpdatesOnExit ? "sim" : "não")}",
             () => UpdateSettings(s => s with { InstallUpdatesOnExit = !s.InstallUpdatesOnExit }),
             _updates.IsInstalled ? null : "Somente na versão instalada; a portátil é atualizada manualmente.", Icon: ActionIcon.Exit));

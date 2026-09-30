@@ -861,3 +861,8 @@ Só a CI (WinRAR 7.23 pelo winget, arquivo criado pelo Rar.exe real e extraído 
 - [ ] Menu → Configurações → Sons do controle → baixo/médio/alto: mover o foco, confirmar, voltar e marcar tocam sons diferentes e discretos; o volume muda entre as opções; "desligados" silencia tudo.
 - [ ] Segurar o direcional numa lista longa: o tique não vira chiado nem atrasa o foco. O teclado (setas, Enter, Esc) não toca nada.
 - [ ] Com fones/alto-falantes diferentes ou sem saída de áudio: segue a saída padrão do Windows; sem dispositivo, o app funciona igual.
+
+## Atualização automática ao abrir — não validado em hardware
+- [ ] Instalado numa versão antiga, com internet: abrir o app sem tocar em nada. Ele baixa a versão nova, fecha e reabre sozinho já atualizada (Menu → Sobre mostra a nova).
+- [ ] Abrir e mexer no controle antes de terminar o download: aparece "Atualização pronta" (Instalar e reiniciar / Depois), sem reiniciar sozinho.
+- [ ] Menu → Configurações → Atualizações → "Atualizar sozinho ao abrir: não": só o aviso. Com uma cópia em andamento nunca reinicia.

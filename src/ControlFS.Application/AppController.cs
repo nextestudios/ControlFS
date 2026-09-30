@@ -196,6 +196,7 @@ public sealed partial class AppController
 
     public void Handle(InputAction action)
     {
+        _userActedSinceStart = true;
         if (action.IsScroll())
         {
             // Rolagem contínua: chega muitas vezes por segundo; só redesenha quando algo mudou e mantém o aviso do rodapé.
