@@ -3,14 +3,22 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
-### Correções
-- **Controle Xbox não pede mais para ser configurado** (#284): quando um controle Xbox aparecia também como "joystick sem perfil" (segunda instância, receptor ou driver genérico), o app avisava "Controle sem perfil… segure qualquer botão" e abria o assistente de configuração, mesmo com o controle já funcionando. Agora controles Xbox (fabricante Microsoft, ou "Xbox"/"XInput" no nome) nunca disparam o aviso nem o assistente; joysticks genéricos de verdade continuam podendo ser configurados.
+
+## [0.14.0-alpha.1]
+### Novidades
+- **Verifica e se atualiza sozinho ao abrir**: o ControlFS agora procura versão nova **a cada vez que abre** (antes, no máximo uma vez por dia) e, na versão instalada, se há uma versão verificada (manifesto assinado, SHA-256 e tamanho) e você ainda não começou a usar o app e nada está em andamento, **baixa, instala e reabre já atualizado**, sem perguntar. Se você já começou a usar, fica o aviso de sempre (Instalar e reiniciar / Depois). Desligue em Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. A versão portátil só avisa. Nunca roda em CI nem com `--no-auto-update`.
 ### Mudanças
 - **Configurações em paisagem e mais fáceis de achar** (#285, #288, #227): as Configurações agora ocupam a largura da tela: os grupos ficam lado a lado em duas colunas (Exibição e Busca à esquerda; Controles e ControlFS à direita, em ordem de leitura: Baixo no fim da primeira coluna continua no topo da segunda), com descrição embaixo, sem rolar em 720p. Em janela estreita voltam a uma coluna. **L1/R1** pulam de um grupo para outro. No Menu, **Configurações** agora é o **primeiro bloco** (já em foco: Menu + Confirmar abre), com a engrenagem e o que tem dentro. Nenhum ajuste foi removido ou mudou de comportamento.
 - **Sons do controle ligados por padrão e mais bonitos** (#286, #287): numa instalação nova (ou sem escolha salva) os sons já vêm ligados em volume médio; quem escolheu "desligados" continua sem som, e a escolha fica salva ao reabrir e ao atualizar. Os quatro sons foram refeitos: timbre de vidro (fundamental com harmônicos suaves), ataque arredondado, queda suave, todos com o mesmo volume e sem estalos; o volume "baixo" agora é realmente baixo. Continuam sintetizados no app (sem arquivos de terceiros; a origem e a licença estão em THIRD_PARTY_NOTICES.md).
 - **Status do Git saiu das Configurações** (#284): a opção, o aviso "Status do Git: ligado/desligado", o ramo no cabeçalho e as marcas "Git: modificado" deixaram de existir na interface.
-### Novidades
-- **Verifica e se atualiza sozinho ao abrir**: o ControlFS agora procura versão nova **a cada vez que abre** (antes, no máximo uma vez por dia) e, na versão instalada, se há uma versão verificada (manifesto assinado, SHA-256 e tamanho) e você ainda não começou a usar o app e nada está em andamento, **baixa, instala e reabre já atualizado**, sem perguntar. Se você já começou a usar, fica o aviso de sempre (Instalar e reiniciar / Depois). Desligue em Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. A versão portátil só avisa. Nunca roda em CI nem com `--no-auto-update`.
+### Correções
+- **Controle Xbox não pede mais para ser configurado** (#284): quando um controle Xbox aparecia também como "joystick sem perfil" (segunda instância, receptor ou driver genérico), o app avisava "Controle sem perfil… segure qualquer botão" e abria o assistente de configuração, mesmo com o controle já funcionando. Agora controles Xbox (fabricante Microsoft, ou "Xbox"/"XInput" no nome) nunca disparam o aviso nem o assistente; joysticks genéricos de verdade continuam podendo ser configurados.
+
+### Limitações conhecidas
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…); a correção do Xbox não foi confirmada com o controle de quem reportou, e os sons, a automação `controlfs://` e a atualização automática ao abrir não foram testados em hardware real.
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
+- O pareamento do celular foi corrigido no motor do Safari (WebKit), mas ainda não foi testado num iPhone nem num Android de verdade (#259).
+- A atualização automática ao abrir só chega a quem já estiver nesta versão ou em uma mais nova; quem está na 0.13.0-alpha.1 ou anterior atualiza uma vez pelo aviso de sempre.
 
 ## [0.13.0-alpha.1]
 ### Novidades

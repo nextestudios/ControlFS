@@ -30,6 +30,13 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Atualização ao abrir, Configurações em paisagem, sons e Xbox (0.14.0-alpha.1)
+
+- Verificação a cada abertura e atualização automática ao abrir na versão instalada (#283); Configurações em duas colunas e
+  como primeiro bloco do Menu (#285, #288); sons do controle ligados por padrão e refeitos (#286, #287); controle Xbox sem o
+  pedido de configuração e Status do Git fora da interface (#284).
+- Sem hardware real: a correção do Xbox, os sons, a automação e a atualização automática aguardam teste manual.
+
 ## Tema nas boas-vindas, sons do controle, automação e ícone de RAR (0.13.0-alpha.1)
 
 - Passo "Escuro ou claro?" nas boas-vindas, agora com seis passos; sons do controle configuráveis (#276, desligados por

@@ -3,14 +3,22 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
-### Fixes
-- **Xbox controllers no longer ask to be configured** (#284): when an Xbox controller also showed up as a "joystick without a profile" (a second instance, a receiver or a generic driver), the app said "Controle sem perfil… hold any button" and opened the mapping wizard even though the controller already worked. Xbox controllers (Microsoft vendor, or "Xbox"/"XInput" in the name) now never trigger the notice or the wizard; real generic joysticks can still be configured.
+
+## [0.14.0-alpha.1]
+### What's new
+- **Checks and updates by itself on open**: ControlFS now looks for a new version **every time it opens** (before, at most once a day) and, in the installed build, if a verified version exists (signed manifest, SHA-256 and size) and you haven't started using the app and nothing is running, it **downloads, installs and reopens already updated**, without asking. If you already started using it, the usual notice stays (Install and restart / Later). Turn it off in Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. The portable build only notifies. It never runs in CI or with `--no-auto-update`.
 ### Changes
 - **Landscape Settings, easier to find** (#285, #288, #227): Configurações now uses the screen's width: groups sit side by side in two columns (Exibição and Busca on the left; Controles and ControlFS on the right, in reading order: Down at the end of the first column continues at the top of the second), with the description below and no scrolling at 720p. In a narrow window it goes back to one column. **L1/R1** jump between groups. In the Menu, **Configurações** is now the **first tile** (already focused: Menu + Confirm opens it), with the gear and what's inside. No setting was removed or changed behavior.
 - **Controller sounds on by default and nicer** (#286, #287): a fresh install (or no saved choice) now has the sounds on at medium volume; anyone who picked "desligados" (off) stays silent, and the choice is kept across restarts and updates. The four cues were redone: glassy timbre (a fundamental with soft harmonics), rounded attack, gentle decay, all at the same loudness and without clicks; "baixo" (low) is now really low. They are still synthesized in the app (no third-party files; origin and license in THIRD_PARTY_NOTICES.md).
 - **Git status left Configurações** (#284): the option, the "Status do Git: ligado/desligado" notice, the branch in the header and the "Git: modificado" marks are gone from the interface.
-### What's new
-- **Checks and updates by itself on open**: ControlFS now looks for a new version **every time it opens** (before, at most once a day) and, in the installed build, if a verified version exists (signed manifest, SHA-256 and size) and you haven't started using the app and nothing is running, it **downloads, installs and reopens already updated**, without asking. If you already started using it, the usual notice stays (Install and restart / Later). Turn it off in Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. The portable build only notifies. It never runs in CI or with `--no-auto-update`.
+### Fixes
+- **Xbox controllers no longer ask to be configured** (#284): when an Xbox controller also showed up as a "joystick without a profile" (a second instance, a receiver or a generic driver), the app said "Controle sem perfil… hold any button" and opened the mapping wizard even though the controller already worked. Xbox controllers (Microsoft vendor, or "Xbox"/"XInput" in the name) now never trigger the notice or the wizard; real generic joysticks can still be configured.
+
+### Known limitations
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…); the Xbox fix wasn't confirmed with the reporter's controller, and the sounds, the `controlfs://` automation and the automatic update on open were not tried on real hardware.
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Phone pairing was fixed in Safari's engine (WebKit) but not yet tested on a real iPhone or Android (#259).
+- The automatic update on open only reaches whoever is already on this version or newer; 0.13.0-alpha.1 and older update once through the usual notice.
 
 ## [0.13.0-alpha.1]
 ### What's new
