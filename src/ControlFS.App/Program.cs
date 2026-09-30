@@ -1,3 +1,5 @@
+using ControlFS.App.Diagnostics;
+using ControlFS.Infrastructure.Windows.Automation;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
@@ -15,16 +17,26 @@ public static class Program
         {
             if (e.ExceptionObject is Exception ex) AppLog.Crash(ex, "AppDomain.UnhandledException");
         };
+
+        var args = Environment.GetCommandLineArgs();
+        if (SingleInstanceCoordinator.HandleLaunch(args, out var instanceMutex, bypass: ScreenRenderer.OutputDirectory(args) is not null, log: AppLog.Info))
+        {
+            return;
+        }
+
         try
         {
-            WinRT.ComWrappersSupport.InitializeComWrappers();
-            Microsoft.UI.Xaml.Application.Start(_callbackParams =>
+            using (instanceMutex)
             {
-                // Continuações assíncronas e o AppController rodam na thread de UI.
-                SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
-                _ = new App();
-            });
-            AppLog.Info("Encerrado normalmente");
+                WinRT.ComWrappersSupport.InitializeComWrappers();
+                Microsoft.UI.Xaml.Application.Start(_callbackParams =>
+                {
+                    // Continuações assíncronas e o AppController rodam na thread de UI.
+                    SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
+                    _ = new App();
+                });
+                AppLog.Info("Encerrado normalmente");
+            }
         }
         catch (Exception ex)
         {

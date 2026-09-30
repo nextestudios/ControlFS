@@ -3,6 +3,9 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### What's new
+- **Automation and `controlfs://` protocol**: support for `controlfs://start`, `controlfs://stop`, and `controlfs://show` links, as well as command-line arguments (`--start`, `--stop`, `--show`, `--close`), enabling seamless external integration with game launchers and frontends (such as Console Mode), Stream Deck buttons, and automation scripts. Invoking `controlfs://start` when the app is already open restores and brings the window to the foreground without launching duplicate instances; `controlfs://stop` cleanly exits the app. The protocol is registered automatically by the installer and on portable runs.
+
 ### Fixes
 - **Recognizable icon for .rar files** (#274): with no associated program, Windows showed a blank page. ControlFS now uses the icon Windows registered for .rar (WinRAR's, for example) and, when there is none, its own archive icon (a box with a zipper, drawn in the app, no third-party artwork). It applies to List and Grid at any scale, and the icon refreshes by itself if you install or change the .rar program.
 

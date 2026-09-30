@@ -121,6 +121,7 @@ Buttons follow **physical position**, so a Nintendo layout doesn't flip confirm 
 - **Welcome and guided tutorial** on first launch: the real buttons of your controller and an interactive, skippable walkthrough that never touches files (Menu → Ajuda e tutorial)
 - **More from the team:** a one-time screen with the team's other apps, NextBoost PRO and Console Mode; it can be opened again from Menu → Ajuda e tutorial
 - **Light in the background:** minimized or behind a game, ControlFS drops to low priority and Windows efficiency mode, and gives its memory back
+- **Automation:** `controlfs://start`, `controlfs://stop`, `controlfs://show` links and `--start` / `--stop` flags for game launchers (such as Console Mode), Stream Deck buttons, and scripts; single-instance management prevents duplicates and switches cleanly
 
 ## Roadmap
 

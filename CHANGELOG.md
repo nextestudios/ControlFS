@@ -3,6 +3,9 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Novidades
+- **Automação e protocolo `controlfs://`**: suporte aos links `controlfs://start`, `controlfs://stop` e `controlfs://show`, bem como argumentos de linha de comando (`--start`, `--stop`, `--show`, `--close`), facilitando a integração externa com launchers e frontends (como o Console Mode), botões de Stream Deck e scripts. Acionar `controlfs://start` quando o app já está aberto restaura e traz a janela para o primeiro plano sem abrir instâncias duplicadas; `controlfs://stop` encerra o app de forma limpa. O protocolo é registrado automaticamente pelo instalador e também na execução portátil.
+
 ### Correções
 - **Arquivos .rar com ícone reconhecível** (#274): sem programa associado, o Windows mostrava uma página em branco. Agora o ControlFS usa o ícone que o Windows registrou para .rar (o do WinRAR, por exemplo) e, quando não há nenhum, um ícone de arquivo compactado próprio (uma caixa com zíper, desenhado no app, sem arte de terceiros). Vale na lista e na grade, em qualquer escala, e o ícone se atualiza sozinho se você instalar ou trocar o programa de .rar.
 

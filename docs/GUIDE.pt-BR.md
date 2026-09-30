@@ -297,6 +297,16 @@ A versão **instalada** se atualiza sozinha:
 Menu → Configurações → **Atualizações**: verificar agora, verificação automática sim/não, instalar ao sair sim/não, pré-lançamentos (automático / sim / não).
 A versão **portátil** só avisa que existe versão nova; baixe-a na página da release.
 
+## Automação
+
+O ControlFS pode ser aberto, trazido para a frente ou encerrado por ferramentas externas, scripts, frontends de jogos (como o **Console Mode**) e botões do Stream Deck através do protocolo `controlfs://` ou por argumentos de linha de comando:
+
+- `controlfs://start` (ou `ControlFS.exe --start`): abre o aplicativo ou restaura e traz a janela existente para o primeiro plano se já estiver em execução.
+- `controlfs://show` (ou `ControlFS.exe --show`): restaura e traz a janela para a frente.
+- `controlfs://stop` (ou `ControlFS.exe --stop`, `--close`): encerra a instância aberta de forma limpa, cancelando operações em andamento e salvando preferências. Se nada estiver aberto, encerra imediatamente.
+
+O esquema `controlfs://` é registrado no Windows automaticamente pelo instalador e ao iniciar na versão portátil. Apenas uma instância do ControlFS roda por sessão de usuário; abrir uma segunda chamada sinaliza a janela ativa e encerra o novo processo imediatamente.
+
 ## Leitores de tela
 
 Com o Narrador (ou outro leitor de tela com UI Automation) ligado, o app anuncia onde está o foco e o item focado enquanto você anda com o controle ou o teclado: a tela inicial, a pasta, o menu, o diálogo ou o teclado virtual ao entrar, depois só o item a cada movimento (nome, tipo, tamanho e posição, como "3 de 20"). Estados são ditos por extenso: marcado, recortado, bloqueado (com o motivo), com senha, indisponível (com o motivo). Os avisos (no canto inferior direito) e a linha acima da lista são lidos sem mover o foco. Nada depende só de som, vibração ou cor.

@@ -695,6 +695,16 @@ public sealed partial class AppController
         PushModal(dialog);
     }
 
+    /// <summary>
+    /// Encerramento solicitado por automação externa (protocolo controlfs://stop ou argumento --stop).
+    /// Cancela operações ativas e fecha a aplicação de maneira limpa.
+    /// </summary>
+    public void RequestAutomationExit()
+    {
+        foreach (var op in Operations.Items.Where(o => o.IsActive).ToList()) Operations.Cancel(op);
+        RequestExit();
+    }
+
     // ---------- Infra interna ----------
 
     internal void Track(Task task)

@@ -121,6 +121,7 @@ Os botões seguem a **posição física**, então um controle Nintendo não inve
 - **Boas-vindas e tutorial guiado** na primeira vez: os botões de verdade do seu controle e um passo a passo interativo, que dá para pular e nunca mexe em arquivos (Menu → Ajuda e tutorial)
 - **Mais da equipe:** uma tela, uma única vez, com os outros apps da equipe, NextBoost PRO e Console Mode; dá para abrir de novo em Menu → Ajuda e tutorial
 - **Leve em segundo plano:** minimizado ou atrás de um jogo, o ControlFS baixa a prioridade, entra no modo de eficiência do Windows e devolve memória
+- **Automação:** links `controlfs://start`, `controlfs://stop`, `controlfs://show` e opções de linha de comando `--start` / `--stop` para launchers (como o Console Mode), botões do Stream Deck e scripts; instância única evita duplicatas e traz o app para frente
 
 ## Roadmap
 
