@@ -4,6 +4,8 @@ English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Befor
 
 ## [Unreleased]
 ### What's new
+- **Controller sounds** (#276): Menu → Configurações → **Sons do controle** (off, low, medium, high, max). Short, soft cues synthesized inside the app, distinct for moving focus, confirming/opening, going back and marking. They play only for controller actions (never the keyboard), don't machine-gun when you hold the D-pad, use the Windows audio output and don't change any button or navigation. Off by default; without a sound device nothing happens.
+### What's new
 - **Automation and `controlfs://` protocol**: support for `controlfs://start`, `controlfs://stop`, and `controlfs://show` links, as well as command-line arguments (`--start`, `--stop`, `--show`, `--close`), enabling seamless external integration with game launchers and frontends (such as Console Mode), Stream Deck buttons, and automation scripts. Invoking `controlfs://start` when the app is already open restores and brings the window to the foreground without launching duplicate instances; `controlfs://stop` cleanly exits the app; with copies or other operations running it doesn't cancel them by itself and shows the exit confirmation. The protocol is registered by the installer; the portable version writes nothing to the registry (the command-line flags work there). After an update, the app relaunched by the installer waits for the old instance to leave.
 
 ### Fixes

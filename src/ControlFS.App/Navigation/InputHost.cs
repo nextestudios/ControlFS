@@ -39,11 +39,16 @@ public sealed class InputHost : IInputSink, IRawControllerSource, IControllerDia
     private readonly Dictionary<string, AnalogScroller> _scrollers = [];
     private readonly Dictionary<string, GyroPointer> _gyros = [];
 
-    public InputHost(AppController app, DispatcherQueue queue)
+    public InputHost(AppController app, DispatcherQueue queue, Core.Audio.ControllerSounds? sounds = null)
     {
         _app = app;
         _queue = queue;
-        Router = new InputRouter(new ActionMap(app.Settings.Convention), InputSettings.Default, app.Handle);
+        // Só as ações do controle passam pelo som (o teclado chama app.Handle direto). O som é o primeiro passo e nunca bloqueia.
+        Router = new InputRouter(new ActionMap(app.Settings.Convention), InputSettings.Default, sounds is null ? app.Handle : action =>
+        {
+            sounds.OnAction(action);
+            app.Handle(action);
+        });
         Router.RepeatPolicy = app.IsRepeatableInContext;
         Router.ActiveDeviceChanged += _ =>
         {

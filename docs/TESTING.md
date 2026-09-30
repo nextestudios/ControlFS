@@ -856,3 +856,8 @@ Só a CI (WinRAR 7.23 pelo winget, arquivo criado pelo Rar.exe real e extraído 
 - [ ] Com o WinRAR instalado (outra versão que a da CI, ex.: 6.x e 7.x mais novo): marcar itens → Compactar → RAR → o `.rar` abre no WinRAR e no ControlFS com o mesmo conteúdo; nome existente vira "(2)".
 - [ ] Criar um RAR grande e cancelar no meio pelo controle: o `.rar` parcial some, o Rar.exe não fica no Gerenciador de Tarefas.
 - [ ] Arquivo em uso entre os itens: resultado "concluído com avisos" (o WinRAR devolve o código 1) e a mensagem pede para conferir.
+
+## Sons do controle (#276) — não validado em hardware
+- [ ] Menu → Configurações → Sons do controle → baixo/médio/alto: mover o foco, confirmar, voltar e marcar tocam sons diferentes e discretos; o volume muda entre as opções; "desligados" silencia tudo.
+- [ ] Segurar o direcional numa lista longa: o tique não vira chiado nem atrasa o foco. O teclado (setas, Enter, Esc) não toca nada.
+- [ ] Com fones/alto-falantes diferentes ou sem saída de áudio: segue a saída padrão do Windows; sem dispositivo, o app funciona igual.
