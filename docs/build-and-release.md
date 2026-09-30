@@ -112,3 +112,13 @@ Na próxima release, confira no log "Release será assinada (provedor: …)" e a
 atualize `docs/CODE_SIGNING.md` (que ainda diz "ainda não têm assinatura"). O desinstalador do Inno Setup
 (`unins000.exe`) não é assinado nesta etapa.
 
+
+## WinGet (#273)
+
+O pacote do WinGet é `nextestudios.ControlFS` (instalador Inno por usuário, x64, sem administrador). O manifesto **sempre** vem de uma release já publicada: nunca se envia um pacote antes de o instalador oficial existir na URL da release.
+
+- **Gerar e validar:** Actions → **WinGet manifest** → Run workflow com a tag (ex.: `v0.12.0-alpha.1`). O workflow baixa o `ControlFS-Setup-x64.exe` da release, calcula o SHA-256, gera os três manifestos (`version`, `installer`, `defaultLocale`) com `build/New-WingetManifest.ps1`, roda `winget validate` e guarda o resultado no artefato `winget-manifests`. Não envia nada para fora. Localmente (Windows): `.\build\New-WingetManifest.ps1 -Tag v0.12.0-alpha.1`.
+- **Enviar (passo manual, por quem é dono do pacote):** copiar a pasta `manifests\n\nextestudios\ControlFS\<versão>` do artefato para um fork de `microsoft/winget-pkgs` e abrir o PR (ou `wingetcreate submit`), respondendo à revisão. Só depois de aceito o pacote aparece no catálogo.
+- **A cada release estável nova:** repetir os dois passos acima com a nova tag. O `AppId` do instalador nunca muda, então `winget upgrade` atualiza a mesma instalação sem mexer nas preferências (ficam em `%LOCALAPPDATA%\ControlFS`).
+- **Depois de aceito:** documentar `winget install nextestudios.ControlFS` e `winget upgrade nextestudios.ControlFS` no README. Instalação direta, portátil e atualização dentro do app continuam como estão.
+- **Sem assinatura (#84):** o instalador ainda não é assinado; o WinGet aceita, mas o SmartScreen pode avisar. A aprovação e a primeira verificação ficam melhores depois da assinatura.
