@@ -74,7 +74,7 @@ public class UpdateFlowTests : IDisposable
     [Fact]
     public void Automatic_check_downloads_and_offers_install_and_restart() => UiContext.Run(async () =>
     {
-        var (app, updates, store) = Boot();
+        var (app, updates, store) = Boot(new AppSettings { AutoInstallUpdates = false });
         var exited = false;
         app.ExitRequested += () => exited = true;
         app.Start();
@@ -97,7 +97,7 @@ public class UpdateFlowTests : IDisposable
     [Fact]
     public void Postponed_update_installs_silently_on_exit_without_relaunch() => UiContext.Run(async () =>
     {
-        var (app, updates, _) = Boot();
+        var (app, updates, _) = Boot(new AppSettings { AutoInstallUpdates = false });
         app.Start();
         await app.WhenIdleAsync();
         app.Handle(InputAction.Back); // "Depois"
@@ -109,7 +109,7 @@ public class UpdateFlowTests : IDisposable
     [Fact]
     public void Install_on_exit_can_be_turned_off() => UiContext.Run(async () =>
     {
-        var (app, updates, _) = Boot(new AppSettings { InstallUpdatesOnExit = false });
+        var (app, updates, _) = Boot(new AppSettings { InstallUpdatesOnExit = false, AutoInstallUpdates = false });
         app.Start();
         await app.WhenIdleAsync();
         app.Handle(InputAction.Back);
@@ -118,17 +118,80 @@ public class UpdateFlowTests : IDisposable
     });
 
     [Fact]
-    public void Automatic_check_respects_the_setting_and_the_daily_interval() => UiContext.Run(async () =>
+    public void Automatic_check_respects_the_setting_and_runs_on_every_open() => UiContext.Run(async () =>
     {
         var (off, offUpdates, _) = Boot(new AppSettings { AutoCheckUpdates = false });
         off.Start();
         await off.WhenIdleAsync();
         Assert.Equal(0, offUpdates.Checks);
 
-        var (recent, recentUpdates, _) = Boot(new AppSettings { LastUpdateCheck = DateTimeOffset.UtcNow.AddHours(-2) });
+        var (recent, recentUpdates, _) = Boot(new AppSettings { LastUpdateCheck = DateTimeOffset.UtcNow.AddMinutes(-5), AutoInstallUpdates = false });
         recent.Start();
         await recent.WhenIdleAsync();
-        Assert.Equal(0, recentUpdates.Checks);
+        Assert.Equal(1, recentUpdates.Checks); // a cada abertura, mesmo que tenha verificado há pouco
+    });
+
+    [Fact]
+    public void On_open_a_verified_update_installs_and_relaunches_by_itself_when_nothing_was_started() => UiContext.Run(async () =>
+    {
+        var (app, updates, _) = Boot();
+        var exited = false;
+        app.ExitRequested += () => exited = true;
+        app.Start();
+        await app.WhenIdleAsync();
+
+        Assert.True(updates.LaunchedWithRelaunch); // instalador aberto com "reabrir depois"
+        Assert.True(exited);
+        Assert.Null(app.TopModal); // sem pergunta
+    });
+
+    [Fact]
+    public void A_version_the_automatic_install_already_tried_is_only_offered_never_retried_by_itself() => UiContext.Run(async () =>
+    {
+        var (app, updates, store) = Boot(new AppSettings { LastAutoInstallAttempt = "0.1.0-alpha.2" }); // a mesma que o Fake oferece
+        app.Start();
+        await app.WhenIdleAsync();
+        Assert.Null(updates.LaunchedWithRelaunch); // sem laço de reinícios
+        Assert.IsType<DialogModal>(app.TopModal);
+
+        var (first, firstUpdates, firstStore) = Boot();
+        first.Start();
+        await first.WhenIdleAsync();
+        Assert.True(firstUpdates.LaunchedWithRelaunch);
+        Assert.Equal("0.1.0-alpha.2", firstStore.Current.LastAutoInstallAttempt);
+    });
+
+    [Fact]
+    public void The_automatic_install_never_steps_over_the_user_the_portable_build_or_the_switch_or_ci() => UiContext.Run(async () =>
+    {
+        // Já começou a usar antes de o download terminar: fica o aviso de sempre (Instalar e reiniciar / Depois).
+        var (busy, busyUpdates, _) = Boot(deferToFirstFrame: true);
+        busy.Start();
+        busy.Handle(InputAction.NavigateDown);
+        busy.OnFirstFrame();
+        await busy.WhenIdleAsync();
+        Assert.Null(busyUpdates.LaunchedWithRelaunch);
+        Assert.IsType<DialogModal>(busy.TopModal);
+
+        // Desligado nas configurações.
+        var (off, offUpdates, _) = Boot(new AppSettings { AutoInstallUpdates = false });
+        off.Start();
+        await off.WhenIdleAsync();
+        Assert.Null(offUpdates.LaunchedWithRelaunch);
+
+        // Portátil: só avisa.
+        var (portable, portableUpdates, _) = Boot(installed: false);
+        portable.Start();
+        await portable.WhenIdleAsync();
+        Assert.Null(portableUpdates.LaunchedWithRelaunch);
+
+        // CI / script de teste (o app de verdade desliga): o app não fecha sozinho.
+        var updates = new FakeUpdates();
+        var guarded = new AppController(new TestFileSystem(_tmp.Path), new ArchiveService(), new MemorySettings(new AppSettings()), updates) { AllowAutoInstall = false };
+        guarded.Start();
+        await guarded.WhenIdleAsync();
+        Assert.Null(updates.LaunchedWithRelaunch);
+        Assert.IsType<DialogModal>(guarded.TopModal);
     });
 
     [Fact]

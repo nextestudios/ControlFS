@@ -290,11 +290,11 @@ North → **Abrir terminal aqui…** (open terminal here) opens **Windows Termin
 
 The **installed** version updates itself:
 
-1. Once a day at most, it asks GitHub for the latest release of `nextestudios/ControlFS` (stable only, or also pre-releases if you are on one).
+1. Each time the app opens, it asks GitHub for the latest release of `nextestudios/ControlFS` (stable only, or also pre-releases if you are on one).
 2. It downloads the installer in the background and only accepts it if the **release manifest is signed with the project key** and the file's **SHA-256 and size** match. Same or older versions are refused.
-3. It offers **Install and restart**. Postpone it and it installs silently when you quit. Nothing happens while a copy or extraction is running.
+3. Right after opening, if you haven't started using the app yet and nothing is running, it **installs and reopens by itself on the new version** (**Atualizar sozinho ao abrir**, on by default). If you already started using it or turned the option off, it offers **Install and restart**; postpone it and it installs silently when you quit. Nothing happens while a copy or extraction is running. It never runs in CI or with `--no-auto-update` (or the `CONTROLFS_NO_AUTO_UPDATE` variable set).
 
-Menu → Configurações → **Updates**: check now, automatic check on/off, install on quit on/off, pre-releases (automatic / yes / no).
+Menu → Configurações → **Updates**: check now, automatic check on/off, update by itself on open on/off, install on quit on/off, pre-releases (automatic / yes / no).
 The **portable** version only tells you a new version exists; download it from the release page.
 
 ## Automation

@@ -207,7 +207,7 @@ public sealed partial class AppController
                         {
                             UpdateSettings(s => s with { AutoCheckUpdates = !s.AutoCheckUpdates });
                             Reload();
-                        }, ActionIcon.Update, Settings.AutoCheckUpdates ? "sim" : "não", "No máximo uma vez por dia, só nas versões publicadas do ControlFS no GitHub."),
+                        }, ActionIcon.Update, Settings.AutoCheckUpdates ? "sim" : "não", "A cada abertura, só nas versões publicadas do ControlFS no GitHub; a versão instalada se atualiza sozinha ao abrir (dá para desligar em Atualizações)."),
                         next,
                     ];
                 break;

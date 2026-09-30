@@ -150,6 +150,10 @@ public sealed class MainWindow : Window
             PlaybackPositions = new JsonPlaybackPositionStore(data),
             // Boas-vindas (#231) só na primeira execução do app de verdade: nunca nas capturas nem com --no-onboarding.
             DeferUpdateCheckToFirstFrame = dataDirectory is null,
+            // Nunca em CI nem quando um script de teste abre o app: a atualização automática fecharia o app no meio do smoke.
+            AllowAutoInstall = dataDirectory is null && Environment.GetEnvironmentVariable("CI") is null
+                && Environment.GetEnvironmentVariable("CONTROLFS_NO_AUTO_UPDATE") is null
+                && !Environment.GetCommandLineArgs().Contains("--no-auto-update", StringComparer.OrdinalIgnoreCase),
             Trace = dataDirectory is null ? AppLog.Info : null,
             OfferOnboarding = dataDirectory is null && !Environment.GetCommandLineArgs().Contains("--no-onboarding", StringComparer.OrdinalIgnoreCase),
             // "Mais da equipe": uma vez, depois das boas-vindas; mesma regra (nunca nas capturas nem com --no-onboarding).

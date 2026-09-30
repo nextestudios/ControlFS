@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### What's new
+- **Checks and updates by itself on open**: ControlFS now looks for a new version **every time it opens** (before, at most once a day) and, in the installed build, if a verified version exists (signed manifest, SHA-256 and size) and you haven't started using the app and nothing is running, it **downloads, installs and reopens already updated**, without asking. If you already started using it, the usual notice stays (Install and restart / Later). Turn it off in Menu → Configurações → Atualizações → **Atualizar sozinho ao abrir**. The portable build only notifies. It never runs in CI or with `--no-auto-update`.
 
 ## [0.13.0-alpha.1]
 ### What's new

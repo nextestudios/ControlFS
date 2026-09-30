@@ -290,11 +290,11 @@ Norte → **Abrir terminal aqui…** abre o **Windows Terminal** na pasta atual,
 
 A versão **instalada** se atualiza sozinha:
 
-1. No máximo uma vez por dia, pergunta ao GitHub qual é a última release de `nextestudios/ControlFS` (só estáveis, ou também pré-lançamentos se você estiver num).
+1. A cada vez que o app abre, pergunta ao GitHub qual é a última release de `nextestudios/ControlFS` (só estáveis, ou também pré-lançamentos se você estiver num).
 2. Baixa o instalador em segundo plano e só o aceita se o **manifesto da release estiver assinado com a chave do projeto** e o **SHA-256 e o tamanho** do arquivo conferirem. Versões iguais ou anteriores são recusadas.
-3. Oferece **Instalar e reiniciar**. Se você adiar, instala em silêncio ao sair. Nada acontece enquanto uma cópia ou extração estiver em andamento.
+3. Logo depois de abrir, se você ainda não começou a usar o app e nada está em andamento, **instala e reabre sozinho já na versão nova** (**Atualizar sozinho ao abrir**, ligado por padrão). Se você já começou a usar ou desligou a opção, oferece **Instalar e reiniciar**; se adiar, instala em silêncio ao sair. Nada acontece enquanto uma cópia ou extração estiver em andamento.
 
-Menu → Configurações → **Atualizações**: verificar agora, verificação automática sim/não, instalar ao sair sim/não, pré-lançamentos (automático / sim / não).
+Menu → Configurações → **Atualizações**: verificar agora, verificação automática sim/não, atualizar sozinho ao abrir sim/não, instalar ao sair sim/não, pré-lançamentos (automático / sim / não).
 A versão **portátil** só avisa que existe versão nova; baixe-a na página da release.
 
 ## Automação

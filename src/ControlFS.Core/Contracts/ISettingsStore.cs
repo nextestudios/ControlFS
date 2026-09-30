@@ -111,8 +111,20 @@ public sealed record AppSettings
     /// <summary>Nomes e buscas concluídos no teclado virtual, o mais recente primeiro (lista limitada; nunca senhas).</summary>
     public IReadOnlyList<string> TypedTexts { get; init; } = [];
 
-    /// <summary>Verifica novas versões ao abrir (no máximo uma vez por dia). Desligável no menu.</summary>
+    /// <summary>Verifica novas versões a cada abertura do app. Desligável no menu.</summary>
     public bool AutoCheckUpdates { get; init; } = true;
+
+    /// <summary>
+    /// Atualização automática ao abrir (versão instalada): se a verificação da abertura achar uma versão nova e verificada, e
+    /// o usuário ainda não começou a usar o app, instala e reabre sozinho. Desligado, só oferece "Instalar e reiniciar".
+    /// </summary>
+    public bool AutoInstallUpdates { get; init; } = true;
+
+    /// <summary>
+    /// Última versão que a atualização automática tentou instalar. Se a mesma versão aparecer de novo na abertura seguinte
+    /// (a instalação não pegou), não tenta de novo sozinha: cai no aviso de sempre. Evita um laço de reinícios.
+    /// </summary>
+    public string? LastAutoInstallAttempt { get; init; }
 
     /// <summary>Instala em silêncio, ao sair, uma atualização já baixada e verificada.</summary>
     public bool InstallUpdatesOnExit { get; init; } = true;

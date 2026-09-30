@@ -6,8 +6,8 @@ the user or the person installing or operating it.
 - **No telemetry, no analytics, no accounts.** Files, folder names, search terms, passwords and settings never leave the PC.
 - **Local data only:** settings (including the names and searches you typed, kept for keyboard suggestions until you turn them off, and the folders of your open tabs, kept to restore them until you turn that off; never passwords), history, where each video stopped (only a SHA-256 digest of the file's path, size and date plus the seconds — never the name; Configurações → Apagar onde os vídeos pararam erases them), controller profiles and logs live in `%LOCALAPPDATA%\ControlFS` (installed) or
   in `ControlFS_Data` next to `ControlFS-Portable-x64.exe` (portable). Passwords are never saved or logged.
-- **Update check (optional):** the app asks GitHub's servers (the GitHub API and release downloads) whether a newer release exists, at most
-  once a day, and downloads it only from the project's GitHub releases. The request carries only a `ControlFS/<version>`
+- **Update check (optional):** the app asks GitHub's servers (the GitHub API and release downloads) whether a newer release exists, each time
+  the app opens, and downloads it only from the project's GitHub releases. The request carries only a `ControlFS/<version>`
   User-Agent; GitHub sees the IP address like for any web request ([GitHub privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)).
   Turn it off in Menu → Atualizações → "Verificar automaticamente"; a manual "Verificar agora" still works on request.
 - **Network locations:** ControlFS lists the mapped drives and network locations Windows already knows (read locally) and
@@ -34,7 +34,7 @@ especificamente pelo usuário ou por quem o instala ou opera.
 - **Só dados locais:** preferências (inclusive nomes e buscas digitados, guardados para as sugestões do teclado até você desligá-las, e as pastas das abas abertas, guardadas para restaurá-las até você desligar; nunca senhas), histórico, onde cada vídeo parou (só um resumo SHA-256 do caminho, tamanho e data do arquivo e os segundos — nunca o nome; Configurações → Apagar onde os vídeos pararam apaga), perfis de controle e logs ficam em `%LOCALAPPDATA%\ControlFS` (instalado)
   ou em `ControlFS_Data` ao lado do `ControlFS-Portable-x64.exe` (portátil). Senhas nunca são salvas nem registradas.
 - **Verificação de atualizações (opcional):** o app pergunta aos servidores do GitHub (API e downloads das releases) se há versão nova,
-  no máximo uma vez por dia, e só baixa das releases do projeto no GitHub. O pedido leva apenas o User-Agent
+  a cada abertura do app, e só baixa das releases do projeto no GitHub. O pedido leva apenas o User-Agent
   `ControlFS/<versão>`; o GitHub vê o endereço IP como em qualquer acesso à web. Desligue em Menu → Atualizações → "Verificar automaticamente"; "Verificar agora" continua funcionando quando pedido.
 - **Locais de rede:** o ControlFS lista as unidades mapeadas e os locais de rede que o Windows já conhece (lidos
   localmente) e só contata um servidor quando você abre aquele local. Não guarda credenciais de rede.
