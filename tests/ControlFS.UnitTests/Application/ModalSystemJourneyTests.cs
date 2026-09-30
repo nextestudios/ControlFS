@@ -327,6 +327,40 @@ public class ModalSystemJourneyTests : IDisposable
     });
 
     [Fact]
+    public void Settings_is_the_first_tile_of_the_menu_and_its_groups_split_into_two_balanced_columns_with_bumper_jumps() => UiContext.Run(async () =>
+    {
+        var d = Boot();
+        d.Press(InputAction.Confirm);
+        await d.Idle();
+        d.Press(InputAction.OpenAppMenu);
+        var menu = await d.WaitMenu();
+        Assert.StartsWith("Configurações", menu.Items[0].Label, StringComparison.Ordinal); // #288: primeiro bloco do Menu
+        Assert.Equal(0, menu.FocusIndex); // e já em foco: Menu + Confirmar abre
+        d.Press(InputAction.Confirm);
+        var settings = await d.WaitMenu();
+
+        // #285: o corte em duas colunas cai entre grupos e deixa as duas metades parecidas.
+        var split = settings.ColumnSplit;
+        Assert.Contains(split, settings.SectionStarts);
+        Assert.InRange(split, 1, settings.Items.Count - 1);
+        Assert.NotEqual(settings.Items[split - 1].Section, settings.Items[split].Section);
+
+        // R1/L1 pulam de grupo em grupo (e dão a volta).
+        var starts = settings.SectionStarts;
+        Assert.True(starts.Count >= 3);
+        Assert.Equal(0, settings.FocusIndex);
+        d.Press(InputAction.NextRegion);
+        Assert.Equal(starts[1], settings.FocusIndex);
+        d.Press(InputAction.NextRegion);
+        Assert.Equal(starts[2], settings.FocusIndex);
+        d.Press(InputAction.PreviousRegion);
+        Assert.Equal(starts[1], settings.FocusIndex);
+        d.Press(InputAction.PreviousRegion);
+        d.Press(InputAction.PreviousRegion);
+        Assert.Equal(starts[^1], settings.FocusIndex); // volta ao último grupo
+    });
+
+    [Fact]
     public void Menu_size_class_and_reserved_descriptions_do_not_depend_on_the_focused_option() => UiContext.Run(async () =>
     {
         var d = Boot();
@@ -335,12 +369,12 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Configurações");
         var settings = (MenuModal)d.App.TopModal!;
-        Assert.Equal(ModalSize.Medium, settings.Size);
+        Assert.Equal(ModalSize.Landscape, settings.Size); // #285: Configurações em paisagem
         var reserved = settings.AllDescriptions.ToList();
         for (var i = 0; i < settings.Items.Count; i++)
         {
             settings.FocusIndex = i;
-            Assert.Equal(ModalSize.Medium, settings.Size);
+            Assert.Equal(ModalSize.Landscape, settings.Size);
             // Toda descrição que a tela pode mostrar tem o lugar reservado: focar a mais longa não redimensiona o painel (#227).
             if (settings.Description.Length > 0) Assert.Contains(settings.Description, reserved);
         }
@@ -356,9 +390,9 @@ public class ModalSystemJourneyTests : IDisposable
         var d = Boot();
         d.Press(InputAction.Confirm);
         await d.Idle();
-        d.Press(InputAction.OpenAppMenu); // nada copiado: "Colar", o primeiro bloco, está indisponível
+        d.Press(InputAction.OpenAppMenu); // nada copiado: "Colar" está indisponível (Configurações é o primeiro bloco, #288)
         var menu = Assert.IsType<MenuModal>(d.App.TopModal);
-        Assert.False(menu.Items[0].IsEnabled);
+        Assert.False(menu.Items.Single(i => i.Label.StartsWith("Colar", StringComparison.Ordinal)).IsEnabled);
         Assert.True(menu.Items[menu.FocusIndex].IsEnabled);
         Assert.False(menu.Items[menu.FocusIndex].IsDestructive);
     });

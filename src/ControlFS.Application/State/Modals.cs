@@ -22,6 +22,12 @@ public enum ModalSize
     /// <summary>Teclado virtual, "Mais da equipe", assistente e teste de controles.</summary>
     Wide,
 
+    /// <summary>
+    /// Configurações (#285): paisagem. Os grupos ficam em duas colunas lado a lado quando a janela comporta (1280×720 e
+    /// maiores); numa janela estreita voltam a uma coluna só, como o tamanho Médio.
+    /// </summary>
+    Landscape,
+
     /// <summary>A janela menos as margens (visualizações, boas-vindas).</summary>
     Fill,
 }
@@ -140,6 +146,55 @@ public sealed class MenuModal : Modal
     public IReadOnlyList<MenuItem> Items { get; private set; } = [];
     public int FocusIndex { get; internal set; }
 
+    /// <summary>
+    /// Onde começa cada grupo de Configurações (índice do primeiro item), na ordem de <see cref="Items"/>: R1/L1 pulam de um
+    /// grupo para outro (#285). Vazio fora de menus com grupos.
+    /// </summary>
+    public IReadOnlyList<int> SectionStarts
+    {
+        get
+        {
+            if (!_sectionGrids) return [];
+            var starts = new List<int>();
+            for (var i = 0; i < Items.Count; i++)
+                if (i == 0 || Items[i].Section != Items[i - 1].Section) starts.Add(i);
+            return starts;
+        }
+    }
+
+    /// <summary>
+    /// Índice do primeiro item da coluna da direita quando os grupos ficam lado a lado (#285): o ponto de corte entre grupos que
+    /// deixa as duas colunas com alturas parecidas (tiles pesam mais que linhas). A ordem de navegação segue a de leitura em colunas:
+    /// Baixo no fim da primeira coluna vai ao topo da segunda.
+    /// </summary>
+    public int ColumnSplit
+    {
+        get
+        {
+            var starts = SectionStarts;
+            if (starts.Count < 2) return Items.Count;
+            double Weight(int from, int to)
+            {
+                double w = 1.2; // título do grupo
+                for (var i = from; i < to;)
+                {
+                    if (GridOf(i) is { } grid) { w += grid.Rows * 2.0; i = grid.End; }
+                    else { w += 1; i++; }
+                }
+                return w;
+            }
+            var total = Weight(0, Items.Count);
+            var best = starts[1];
+            var bestGap = double.MaxValue;
+            foreach (var cut in starts.Skip(1))
+            {
+                var gap = Math.Abs(Weight(0, cut) - (total - Weight(0, cut)));
+                if (gap < bestGap) (best, bestGap) = (cut, gap);
+            }
+            return best;
+        }
+    }
+
     /// <summary>As grades do menu, na ordem de <see cref="Items"/> (menu comum: no máximo uma, no topo).</summary>
     public IReadOnlyList<MenuGrid> Grids { get; private set; } = [];
 
@@ -200,7 +255,7 @@ public sealed class MenuModal : Modal
     public IEnumerable<string> AllDescriptions => Enumerable.Range(0, Items.Count).Select(DescriptionOf).Where(t => t.Length > 0).Distinct();
 
     /// <summary>Menu com grade ou seletor de opções: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
-    public override ModalSize Size => Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
+    public override ModalSize Size => _sectionGrids ? ModalSize.Landscape : Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
 
     /// <summary>
     /// Seletor de opções (#261): cada item é uma alternativa de um valor; <see cref="PickerCurrent"/> é a atual (marcada com

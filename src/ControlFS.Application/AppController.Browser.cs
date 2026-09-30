@@ -575,6 +575,7 @@ public sealed partial class AppController
         const MenuPlacement quick = MenuPlacement.Quick;
         List<MenuItem> items =
         [
+            new("Configurações…", ShowSettings, Detail: "Tema, exibição, sons, controles, privacidade e atualizações. Sempre o primeiro bloco do Menu.", Icon: ActionIcon.Settings, Placement: quick),
             new(PasteLabel, () => Paste(pane), inBrowser ? PasteUnavailable(pane) : "Abra uma pasta do disco para colar.", Icon: ActionIcon.Paste, Placement: quick, ShortLabel: "Colar"),
             new("Nova pasta", () => BeginCreateFolder(pane), inBrowser && pane.Location is PhysicalLocation ? null : "Abra uma pasta do disco primeiro.", Icon: ActionIcon.NewFolder, Placement: quick),
             new("Nova aba", NewTabHere, NewTabUnavailable, Detail: "Abre a pasta atual numa aba nova. Com 2+ abas, L2/R2 trocam de aba.", Icon: ActionIcon.NewTab, Placement: quick),
@@ -582,7 +583,6 @@ public sealed partial class AppController
             new("Ir para caminho…", () => BeginGoToPath(pane), Detail: "Digite ou cole o caminho de uma pasta (ex.: D:\\Jogos).", Icon: ActionIcon.GoToPath, Placement: quick, ShortLabel: "Caminho"),
             new($"Operações ({Plural.Of(Operations.ActiveCount, "ativa", "ativas")})", ShowOperations, Operations.Items.Count == 0 && History.Entries.Count == 0 ? "Nenhuma operação registrada." : null,
                 Icon: ActionIcon.Operations, Placement: quick, ShortLabel: "Operações"),
-            new("Configurações…", ShowSettings, Detail: "Exibição, busca, privacidade, controles e atualizações.", Icon: ActionIcon.Settings, Placement: quick),
             new("Ir para o início", GoHome, Screen == Screen.Home ? "Você já está no início." : null, Icon: ActionIcon.Home, Placement: quick, ShortLabel: "Início"),
             FullScreenTile(),
             new("Ir para pasta acima…", () => ShowPathMenu(pane), inBrowser && BuildBreadcrumbs(pane).Count > 1 ? null : "Não há pastas acima desta.",
