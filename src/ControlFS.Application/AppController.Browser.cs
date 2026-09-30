@@ -611,7 +611,7 @@ public sealed partial class AppController
     /// (controle ativo, teste, joysticks, atualizações) fecham Configurações e abrem essa tela, como os outros submenus.
     /// </summary>
     internal void ShowSettings() =>
-        PushModal(new MenuModal("Configurações", SettingsItems(), sectionGrids: true) { Icon = ActionIcon.Settings, Reload = SettingsItems });
+        PushModal(new MenuModal("Configurações", SettingsItems(), sectionGrids: true, iconOnly: true) { Icon = ActionIcon.Settings, Reload = SettingsItems });
 
     private List<MenuItem> SettingsItems()
     {

@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Mudanças
+- **Configurações numa coluna larga, só com ícones** (#293, refaz o desenho em duas colunas da 0.14): todos os ajustes viram blocos só de ícone, sem texto ao lado, em grupos numa única coluna larga (sem colunas paralelas). O bloco em foco se preenche e o **nome, o valor e o que o ajuste faz** aparecem na área de leitura fixa do painel (e numa dica ao passar o mouse); o Narrador continua lendo nome e valor. L1/R1 pulam de grupo e Configurações segue como primeiro bloco do Menu. Nenhum ajuste foi removido ou mudou de comportamento.
 
 ## [0.14.0-alpha.1]
 ### Novidades

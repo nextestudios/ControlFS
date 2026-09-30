@@ -268,49 +268,47 @@ public class ModalSystemJourneyTests : IDisposable
     });
 
     [Fact]
-    public void Settings_grids_per_section_navigate_in_two_dimensions_with_the_lists_between_them() => UiContext.Run(async () =>
+    public void Settings_is_one_column_of_icon_only_grids_per_section_navigated_in_two_dimensions() => UiContext.Run(async () =>
     {
-        // #227: ajustes curtos são blocos na grade do seu grupo (com o valor); os longos e os que abrem telas ficam na lista.
+        // #293: todos os ajustes são blocos só de ícone na grade do seu grupo, numa coluna larga; o foco revela nome e valor.
         var d = Boot();
         var app = d.App;
         d.Press(InputAction.Confirm);
         await d.Idle();
         app.ShowSettings();
         var settings = await d.WaitMenu();
+        Assert.True(settings.IconOnly);
+        Assert.Equal(ModalSize.Wide, settings.Size); // uma coluna larga (sem colunas paralelas)
+        Assert.Equal(4, settings.Grids.Count);
+        Assert.Equal(settings.Items.Count, settings.Grids.Sum(g => g.Count)); // nenhum ajuste fora da grade (nada de linhas de texto)
         var view = settings.Grids[0];
-        Assert.Equal(["Exibição", "Densidade", "Detalhes", "Tema", "Destaque", "Ordenar", "Ordem", "Ocultos"],
-            settings.Items.Skip(view.Start).Take(view.Count).Select(i => i.TileLabel));
-        Assert.Equal((4, 2), (view.Columns, view.Rows));
-        Assert.Equal(3, settings.Grids.Count);
-        Assert.All(settings.Items.Where(i => i.IsQuick), i => Assert.False(string.IsNullOrEmpty(i.Value)));
-        Assert.False(settings.IsQuick(settings.Items.ToList().FindIndex(i => i.Label.StartsWith("Controle ativo", StringComparison.Ordinal))));
+        Assert.Equal(9, view.Count);
+        Assert.Equal((5, 2), (view.Columns, view.Rows));
+        Assert.Equal(4, settings.Grids[3].Columns); // grupo curto (2 ajustes): o bloco não estica
         string Focused() => settings.Items[settings.FocusIndex].Label;
         Assert.Equal(0, settings.FocusIndex);
 
         d.Press(InputAction.NavigateRight);
-        d.Press(InputAction.NavigateRight); // Detalhes (coluna 2)
+        d.Press(InputAction.NavigateRight); // Detalhes (coluna 3)
         d.Press(InputAction.NavigateDown);
-        Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
-        d.Press(InputAction.NavigateDown); // última linha da grade: a lista do mesmo grupo
-        Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal); // #230: linha da lista do grupo
+        Assert.StartsWith("Itens ocultos:", Focused(), StringComparison.Ordinal); // linha de baixo, mesma coluna
+        d.Press(InputAction.NavigateDown); // última linha da grade: a grade do grupo seguinte, mesma coluna
+        Assert.StartsWith("Restaurar abas:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
-        Assert.StartsWith("Ordem:", Focused(), StringComparison.Ordinal);
+        Assert.StartsWith("Itens ocultos:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown);
-        d.Press(InputAction.NavigateDown); // da lista para a grade do grupo seguinte: primeiro bloco
-        Assert.StartsWith("Busca em subpastas:", Focused(), StringComparison.Ordinal);
         app.TakeAnnouncement();
-        d.Press(InputAction.NavigateRight); // Recentes: rótulo por extenso (com o valor) e a posição no bloco
-        Assert.Matches(@"^Recentes: (ligado|desligado), .*bloco 2 de 4$", app.TakeAnnouncement());
-        d.Press(InputAction.NavigateUp); // primeira linha: o item de lista acima
+        d.Press(InputAction.NavigateRight); // Sugestões: rótulo por extenso (com o valor) e a posição no bloco
+        Assert.Matches(@"^Sugestões do teclado: (ligado|desligado), .*bloco 4 de 5$", app.TakeAnnouncement());
+        d.Press(InputAction.NavigateUp); // da primeira linha da grade: a última linha da grade de cima, na coluna de onde saiu
         Assert.StartsWith("Tela cheia:", Focused(), StringComparison.Ordinal);
-        d.Press(InputAction.NavigateUp); // grade de cima, última linha, coluna 1
-        Assert.StartsWith("Ordenar por:", Focused(), StringComparison.Ordinal);
-        d.Press(InputAction.NavigateRight);
-        d.Press(InputAction.NavigateRight);
+        d.Press(InputAction.NavigateLeft);
         var hidden = settings.FocusIndex;
-        Assert.Equal(("Ocultos", "escondidos"), (settings.Items[hidden].TileLabel, settings.Items[hidden].Value));
-        // A linha sob a grade explica o ajuste em vez de repetir o valor que o bloco já mostra (auditoria de UX, #227).
-        Assert.StartsWith("Arquivos e pastas marcados como ocultos", settings.TileCaption, StringComparison.Ordinal);
+        Assert.StartsWith("Itens ocultos:", Focused(), StringComparison.Ordinal);
+        Assert.Equal("escondidos", settings.Items[hidden].Value);
+        // Focado, o bloco só de ícone revela o nome, o valor e o que faz, na leitura fixa do painel (nada de texto sempre visível).
+        Assert.StartsWith("Itens ocultos: escondidos\nArquivos e pastas marcados como ocultos", settings.TileCaption, StringComparison.Ordinal);
+        Assert.Equal(settings.TileCaption, settings.Description);
 
         d.Press(InputAction.Confirm); // alterna e continua no mesmo bloco, com o valor novo
         Assert.Same(settings, app.TopModal);
@@ -323,11 +321,11 @@ public class ModalSystemJourneyTests : IDisposable
         app.PointerChooseModalOption(1); // toque numa alternativa do seletor: "compacta"
         Assert.Same(settings, app.TopModal);
         Assert.Equal(ListDensity.Compact, app.Settings.Density);
-        Assert.Equal(("Densidade", "compacta"), (settings.Items[1].TileLabel, settings.Items[1].Value));
+        Assert.Equal(("Densidade da lista: compacta", "compacta"), (settings.Items[1].Label, settings.Items[1].Value));
     });
 
     [Fact]
-    public void Settings_is_the_first_tile_of_the_menu_and_its_groups_split_into_two_balanced_columns_with_bumper_jumps() => UiContext.Run(async () =>
+    public void Settings_is_the_first_tile_of_the_menu_and_bumpers_jump_between_its_groups() => UiContext.Run(async () =>
     {
         var d = Boot();
         d.Press(InputAction.Confirm);
@@ -338,12 +336,6 @@ public class ModalSystemJourneyTests : IDisposable
         Assert.Equal(0, menu.FocusIndex); // e já em foco: Menu + Confirmar abre
         d.Press(InputAction.Confirm);
         var settings = await d.WaitMenu();
-
-        // #285: o corte em duas colunas cai entre grupos e deixa as duas metades parecidas.
-        var split = settings.ColumnSplit;
-        Assert.Contains(split, settings.SectionStarts);
-        Assert.InRange(split, 1, settings.Items.Count - 1);
-        Assert.NotEqual(settings.Items[split - 1].Section, settings.Items[split].Section);
 
         // R1/L1 pulam de grupo em grupo (e dão a volta).
         var starts = settings.SectionStarts;
@@ -369,12 +361,12 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.OpenAppMenu);
         await d.ChooseMenu("Configurações");
         var settings = (MenuModal)d.App.TopModal!;
-        Assert.Equal(ModalSize.Landscape, settings.Size); // #285: Configurações em paisagem
+        Assert.Equal(ModalSize.Wide, settings.Size); // #293: uma coluna larga
         var reserved = settings.AllDescriptions.ToList();
         for (var i = 0; i < settings.Items.Count; i++)
         {
             settings.FocusIndex = i;
-            Assert.Equal(ModalSize.Landscape, settings.Size);
+            Assert.Equal(ModalSize.Wide, settings.Size);
             // Toda descrição que a tela pode mostrar tem o lugar reservado: focar a mais longa não redimensiona o painel (#227).
             if (settings.Description.Length > 0) Assert.Contains(settings.Description, reserved);
         }

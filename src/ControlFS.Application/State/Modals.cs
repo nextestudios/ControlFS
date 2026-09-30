@@ -22,12 +22,6 @@ public enum ModalSize
     /// <summary>Teclado virtual, "Mais da equipe", assistente e teste de controles.</summary>
     Wide,
 
-    /// <summary>
-    /// Configurações (#285): paisagem. Os grupos ficam em duas colunas lado a lado quando a janela comporta (1280×720 e
-    /// maiores); numa janela estreita voltam a uma coluna só, como o tamanho Médio.
-    /// </summary>
-    Landscape,
-
     /// <summary>A janela menos as margens (visualizações, boas-vindas).</summary>
     Fill,
 }
@@ -86,18 +80,19 @@ public sealed record MenuItem(string Label, Action? Execute, string? DisabledRea
 }
 
 /// <summary>Uma grade de blocos: <see cref="Count"/> itens seguidos de <see cref="MenuModal.Items"/> a partir de <see cref="Start"/>.</summary>
-public sealed record MenuGrid(int Start, int Count)
+public sealed record MenuGrid(int Start, int Count, int MaxCols = MenuGrid.MaxColumns, int MinCols = 1)
 {
     /// <summary>Máximo de blocos por linha.</summary>
     public const int MaxColumns = 4;
 
     /// <summary>
-    /// Blocos por linha: até 4 numa linha só; mais que isso, duas (ou mais) linhas equilibradas de no máximo 4 (os rótulos
-    /// curtos cabem inteiros, legíveis de longe). Nove blocos (menu do app) ficam 3×3 em vez de 4+4+1.
+    /// Blocos por linha: até <see cref="MaxCols"/> numa linha só; mais que isso, duas (ou mais) linhas equilibradas (os rótulos
+    /// curtos cabem inteiros, legíveis de longe). Nove blocos (menu do app) ficam 3×3 em vez de 4+4+1. Nunca menos que
+    /// <see cref="MinCols"/>: grupos de poucos ícones (Configurações, #293) mantêm o tamanho do bloco dos outros grupos.
     /// </summary>
-    public int Columns => Count <= MaxColumns ? Count
-        : Count > 2 * MaxColumns && Count % MaxColumns != 0 && Count % (MaxColumns - 1) == 0 ? MaxColumns - 1
-        : Math.Min(MaxColumns, (Count + 1) / 2);
+    public int Columns => Math.Max(MinCols, Count <= MaxCols ? Count
+        : Count > 2 * MaxCols && Count % MaxCols != 0 && Count % (MaxCols - 1) == 0 ? MaxCols - 1
+        : Math.Min(MaxCols, (Count + 1) / 2));
 
     public int Rows => (Count + Columns - 1) / Columns;
     public int End => Start + Count;
@@ -123,10 +118,17 @@ public sealed class MenuModal : Modal
 
     private readonly bool _sectionGrids;
 
-    public MenuModal(string title, IReadOnlyList<MenuItem> items, bool sectionGrids = false) : base(title)
+    /// <summary>Blocos por linha numa grade só de ícones (Configurações, #293): largos o bastante para o ícone e o toque.</summary>
+    public const int IconColumns = 6;
+
+    /// <summary>Menos blocos que isto numa linha nunca fica mais largo que o bloco de quatro: grupos curtos não esticam.</summary>
+    public const int IconMinColumns = 4;
+
+    public MenuModal(string title, IReadOnlyList<MenuItem> items, bool sectionGrids = false, bool iconOnly = false) : base(title)
     {
         Icon = ActionIcon.Menu;
         _sectionGrids = sectionGrids;
+        IconOnly = sectionGrids && iconOnly;
         Arrange(items);
         FocusIndex = items.Count == 0 ? 0 : InitialFocus(items[0]);
     }
@@ -147,6 +149,12 @@ public sealed class MenuModal : Modal
     public int FocusIndex { get; internal set; }
 
     /// <summary>
+    /// Todos os itens são blocos só de ícone, numa coluna larga (Configurações, #293): sem texto fixo ao lado; o nome, o valor e
+    /// o que o ajuste faz aparecem na área de leitura do painel quando o bloco recebe o foco (e numa dica ao passar o mouse).
+    /// </summary>
+    public bool IconOnly { get; }
+
+    /// <summary>
     /// Onde começa cada grupo de Configurações (índice do primeiro item), na ordem de <see cref="Items"/>: R1/L1 pulam de um
     /// grupo para outro (#285). Vazio fora de menus com grupos.
     /// </summary>
@@ -159,39 +167,6 @@ public sealed class MenuModal : Modal
             for (var i = 0; i < Items.Count; i++)
                 if (i == 0 || Items[i].Section != Items[i - 1].Section) starts.Add(i);
             return starts;
-        }
-    }
-
-    /// <summary>
-    /// Índice do primeiro item da coluna da direita quando os grupos ficam lado a lado (#285): o ponto de corte entre grupos que
-    /// deixa as duas colunas com alturas parecidas (tiles pesam mais que linhas). A ordem de navegação segue a de leitura em colunas:
-    /// Baixo no fim da primeira coluna vai ao topo da segunda.
-    /// </summary>
-    public int ColumnSplit
-    {
-        get
-        {
-            var starts = SectionStarts;
-            if (starts.Count < 2) return Items.Count;
-            double Weight(int from, int to)
-            {
-                double w = 1.2; // título do grupo
-                for (var i = from; i < to;)
-                {
-                    if (GridOf(i) is { } grid) { w += grid.Rows * 2.0; i = grid.End; }
-                    else { w += 1; i++; }
-                }
-                return w;
-            }
-            var total = Weight(0, Items.Count);
-            var best = starts[1];
-            var bestGap = double.MaxValue;
-            foreach (var cut in starts.Skip(1))
-            {
-                var gap = Math.Abs(Weight(0, cut) - (total - Weight(0, cut)));
-                if (gap < bestGap) (best, bestGap) = (cut, gap);
-            }
-            return best;
         }
     }
 
@@ -223,7 +198,15 @@ public sealed class MenuModal : Modal
     /// repetição do que o bloco já mostra (#227). Um ajuste já mostra nome curto e valor: a linha só explica. Uma ação com
     /// rótulo curto ganha o nome completo antes (ex.: "Colar 2 itens (mover)").
     /// </summary>
-    public string TileCaption => IsQuick(FocusIndex) ? Caption(FocusIndex) : string.Empty;
+    public string TileCaption => IconOnly ? IconCaption(FocusIndex) : IsQuick(FocusIndex) ? Caption(FocusIndex) : string.Empty;
+
+    /// <summary>Em grade só de ícones: "Nome: valor" numa linha e o que faz (ou por que não está disponível) na seguinte.</summary>
+    private string IconCaption(int index)
+    {
+        var item = Items[index];
+        var about = !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail;
+        return about is { Length: > 0 } ? item.Label + "\n" + about : item.Label;
+    }
 
     private string Caption(int index)
     {
@@ -240,6 +223,7 @@ public sealed class MenuModal : Modal
     public string DescriptionOf(int index)
     {
         if (index < 0 || index >= Items.Count) return string.Empty;
+        if (IconOnly) return IconCaption(index);
         if (IsQuick(index)) return Caption(index);
         var item = Items[index];
         return !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail ?? string.Empty;
@@ -255,7 +239,7 @@ public sealed class MenuModal : Modal
     public IEnumerable<string> AllDescriptions => Enumerable.Range(0, Items.Count).Select(DescriptionOf).Where(t => t.Length > 0).Distinct();
 
     /// <summary>Menu com grade ou seletor de opções: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
-    public override ModalSize Size => _sectionGrids ? ModalSize.Landscape : Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
+    public override ModalSize Size => IconOnly ? ModalSize.Wide : Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
 
     /// <summary>
     /// Seletor de opções (#261): cada item é uma alternativa de um valor; <see cref="PickerCurrent"/> é a atual (marcada com
@@ -307,14 +291,14 @@ public sealed class MenuModal : Modal
             var grids = new List<MenuGrid>();
             for (var i = 0; i < items.Count;)
             {
-                if (!items[i].IsQuick)
+                if (!IconOnly && !items[i].IsQuick)
                 {
                     i++;
                     continue;
                 }
                 var start = i;
-                while (i < items.Count && items[i].IsQuick && items[i].Section == items[start].Section) i++;
-                grids.Add(new MenuGrid(start, i - start));
+                while (i < items.Count && (IconOnly || items[i].IsQuick) && items[i].Section == items[start].Section) i++;
+                grids.Add(IconOnly ? new MenuGrid(start, i - start, IconColumns, IconMinColumns) : new MenuGrid(start, i - start));
             }
             Grids = grids;
             return;
