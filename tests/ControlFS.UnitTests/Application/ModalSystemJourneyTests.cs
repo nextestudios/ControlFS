@@ -293,7 +293,7 @@ public class ModalSystemJourneyTests : IDisposable
         d.Press(InputAction.NavigateDown);
         Assert.StartsWith("Itens ocultos:", Focused(), StringComparison.Ordinal); // linha de baixo, mesma coluna
         d.Press(InputAction.NavigateDown); // última linha da grade: a grade do grupo seguinte, mesma coluna
-        Assert.StartsWith("Restaurar abas:", Focused(), StringComparison.Ordinal);
+        Assert.StartsWith("Restaurar abas ao abrir:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateUp); // volta à coluna de onde saiu
         Assert.StartsWith("Itens ocultos:", Focused(), StringComparison.Ordinal);
         d.Press(InputAction.NavigateDown);
