@@ -222,7 +222,7 @@ public sealed partial class AppController
                 ];
                 break;
         }
-        modal.FocusIndex = keepFocus ? Math.Clamp(focus, 0, Math.Max(0, modal.Options.Count - 1)) : 0;
+        modal.FocusIndex = keepFocus || modal.Step == OnboardingStep.Theme ? Math.Clamp(focus, 0, Math.Max(0, modal.Options.Count - 1)) : 0;
     }
 
     /// <summary>Ajuda (Menu → Ajuda): tutorial guiado, boas-vindas e Sobre.</summary>
