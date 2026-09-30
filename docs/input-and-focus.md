@@ -233,7 +233,7 @@ com foco em "Extrair para \"nome\"". O rótulo usa a extensão (rápido); a aç�
   analógico) move o foco entre as opções do passo dando a volta; Sul escolhe ou troca o ajuste em foco (o foco fica
   nele); Leste e L1 voltam um passo (no primeiro, nada); R1 avança; Start/Menu pula tudo sem confirmação. Trocar
   "Confirmar com" vale na hora: o próximo Confirmar já é o outro botão. Mouse: clique numa opção (`PointerChooseModalOption`)
-  ou numa legenda (a mesma ação). Narrador: "Boas-vindas, passo N de 5: título. texto" e a opção em foco com a descrição.
+  ou numa legenda (a mesma ação). Narrador: "Boas-vindas, passo N de 6: título. texto" e a opção em foco com a descrição.
 - Só aparecem na primeira execução da janela real (`AppController.OfferOnboarding` e `AppSettings.OnboardingCompleted`
   false, gravado pelo `JsonSettingsStore` ao criar as preferências). Preferências de versões anteriores (sem o campo) contam
   como vistas; testes, `--render-screens` e `--no-onboarding` nunca as mostram sem pedir.

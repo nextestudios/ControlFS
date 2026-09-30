@@ -7,6 +7,7 @@ public enum OnboardingStep
 {
     Welcome,
     Controls,
+    Theme,
     Basics,
     Privacy,
     Tutorial,

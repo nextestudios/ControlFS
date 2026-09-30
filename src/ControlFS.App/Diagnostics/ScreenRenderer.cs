@@ -593,6 +593,8 @@ internal static class ScreenRenderer
         app.Handle(InputAction.NextRegion);
         await CaptureAsync(stage, target, dir, "o2-onboarding-controls", window);
         app.Handle(InputAction.NextRegion);
+        await CaptureAsync(stage, target, dir, "o2b-onboarding-theme", window);
+        app.Handle(InputAction.NextRegion);
         app.Handle(InputAction.NavigateDown); // foco em "Legendas", com a descrição
         await CaptureAsync(stage, target, dir, "o3-onboarding-basics", window);
         app.Handle(InputAction.NextRegion);

@@ -1,3 +1,4 @@
+using ControlFS.Core.Appearance;
 using ControlFS.Application.State;
 using ControlFS.Core.Actions;
 using ControlFS.Core.Contracts;
@@ -118,12 +119,17 @@ public sealed partial class AppController
         modal.ControlLegend = [];
         void Reload() => LoadOnboardingStep(modal, modal.StepIndex, keepFocus: true);
         var next = new OnboardingOption("Continuar", () => NextOnboardingStep(modal), ActionIcon.Resume);
+        OnboardingOption ThemeOption(string label, ThemeMode mode, string detail) => new(label, () =>
+        {
+            SetTheme(mode); // vale na hora: a janela recebe SettingsChanged e se redesenha
+            Reload();
+        }, Settings.Theme == mode ? ActionIcon.RadioOn : ActionIcon.RadioOff, Detail: detail);
         switch (modal.Step)
         {
             case OnboardingStep.Welcome:
                 modal.StepTitle = "Boas-vindas ao ControlFS";
                 modal.StepBody = "Um gerenciador de arquivos feito para o controle: navegue, abra, copie e extraia do sofá, sem mouse nem teclado. "
-                    + "São cinco passos curtos; Menu pula tudo quando quiser.";
+                    + "São seis passos curtos; Menu pula tudo quando quiser.";
                 modal.Options = [new("Começar", () => NextOnboardingStep(modal), ActionIcon.Resume)];
                 break;
             case OnboardingStep.Controls:
@@ -148,6 +154,18 @@ public sealed partial class AppController
                 ];
                 modal.Options = [next];
                 break;
+            case OnboardingStep.Theme:
+                modal.StepTitle = "Escuro ou claro?";
+                modal.StepBody = "A tela muda na hora para você ver. Dá para trocar depois em Menu → Configurações → Tema.";
+                modal.Options =
+                [
+                    ThemeOption("Escuro", ThemeMode.Dark, "Fundo escuro, bom para ambientes com pouca luz e para jogar à noite."),
+                    ThemeOption("Claro", ThemeMode.Light, "Fundo claro, bom com a sala iluminada ou no sol."),
+                    ThemeOption("Automático (segue o Windows)", ThemeMode.System, "Acompanha o modo claro ou escuro que o Windows está usando."),
+                    next,
+                ];
+                if (!keepFocus) focus = Math.Max(0, (int)(Settings.Theme switch { ThemeMode.Dark => 0, ThemeMode.Light => 1, _ => 2 }));
+                break;
             case OnboardingStep.Basics:
                 var south = Settings.Convention == ConfirmBackConvention.SouthConfirms;
                 modal.StepTitle = "O básico, do seu jeito";
@@ -164,11 +182,6 @@ public sealed partial class AppController
                         UpdateSettings(s => s with { LabelStyle = (ButtonLabelStyle)(((int)s.LabelStyle + 1) % 5) });
                         Reload();
                     }, ActionIcon.Labels, LabelStyleName(Settings.LabelStyle), "Automáticas seguem o controle em uso (Xbox, PlayStation, Nintendo)."),
-                    new($"Tema: {ThemeName(Settings.Theme)}", () =>
-                    {
-                        CycleTheme();
-                        Reload();
-                    }, ActionIcon.Theme, ThemeName(Settings.Theme), "Automático segue o modo claro ou escuro do Windows."),
                     new($"Exibição: {ViewName(Settings.View)}", () =>
                     {
                         ToggleView();

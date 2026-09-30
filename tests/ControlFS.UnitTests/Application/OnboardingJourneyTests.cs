@@ -37,7 +37,7 @@ public class OnboardingJourneyTests : IDisposable
         var onboarding = Assert.IsType<OnboardingModal>(app.TopModal);
         Assert.Equal(OnboardingStep.Welcome, onboarding.Step);
         Assert.Contains(app.Hints, h => h is { Action: InputAction.OpenAppMenu, Label: "Pular" });
-        Assert.StartsWith("Boas-vindas, passo 1 de 5", app.DescribeFocus().Context, StringComparison.Ordinal); // Narrador
+        Assert.StartsWith("Boas-vindas, passo 1 de 6", app.DescribeFocus().Context, StringComparison.Ordinal); // Narrador
 
         d.Press(InputAction.Confirm); // Começar
         Assert.Equal(OnboardingStep.Controls, onboarding.Step);
@@ -46,17 +46,29 @@ public class OnboardingJourneyTests : IDisposable
         Assert.Equal(OnboardingStep.Welcome, onboarding.Step);
         d.Press(InputAction.NextRegion);
         d.Press(InputAction.Confirm); // Continuar
-        Assert.Equal(OnboardingStep.Basics, onboarding.Step);
+        Assert.Equal(OnboardingStep.Theme, onboarding.Step);
 
-        // Ajuste com efeito imediato: o tema troca na hora, a janela recebe e o foco continua no ajuste.
-        d.Press(InputAction.NavigateDown);
-        d.Press(InputAction.NavigateDown);
-        Assert.StartsWith("Tema:", onboarding.FocusedOption!.Label, StringComparison.Ordinal);
+        // Escolha de tema: automático de início (foco nele); Claro e Escuro valem na hora, a janela recebe e o passo continua.
+        Assert.Equal("Automático (segue o Windows)", onboarding.FocusedOption!.Label);
+        d.Press(InputAction.NavigateUp);
+        d.Press(InputAction.NavigateUp);
+        Assert.Equal("Escuro", onboarding.FocusedOption!.Label);
         d.Press(InputAction.Confirm);
         Assert.Equal(ThemeMode.Dark, app.Settings.Theme);
         Assert.Equal(ThemeMode.Dark, themes[^1]);
-        Assert.Equal("Tema: escuro", onboarding.FocusedOption!.Label);
+        Assert.Equal(ActionIcon.RadioOn, onboarding.FocusedOption!.Icon);
+        Assert.Equal(ActionIcon.RadioOff, onboarding.Options[1].Icon);
         Assert.Same(onboarding, app.TopModal);
+        d.Press(InputAction.NavigateDown);
+        d.Press(InputAction.Confirm); // Claro
+        Assert.Equal(ThemeMode.Light, app.Settings.Theme);
+        d.Press(InputAction.NavigateUp);
+        d.Press(InputAction.Confirm); // Escuro de novo
+        Assert.Equal(ThemeMode.Dark, app.Settings.Theme);
+
+        d.Press(InputAction.NextRegion);
+        Assert.Equal(OnboardingStep.Basics, onboarding.Step);
+        Assert.DoesNotContain(onboarding.Options, o => o.Label.StartsWith("Tema:", StringComparison.Ordinal)); // o tema tem passo próprio
 
         d.Press(InputAction.NextRegion); // privacidade
         d.Press(InputAction.NextRegion); // convite para o tutorial

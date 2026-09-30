@@ -82,7 +82,7 @@ Important confirmations (delete, replace, undo) are answered on the PC: from the
 
 ## First launch: welcome and guided tutorial
 
-The first time ControlFS opens, a full-screen **welcome** walks you through five steps: welcome; how the controller works (the real buttons of the controller in use — Open, Back, Actions, Menu, Search, Mark, L1/R1 for the top bar, L2/R2 for tabs, R3 for the view; press any button on your controller and the prompts switch to it); the basics, applied at once (confirm with the bottom or right button, button labels, theme, list/grid, Fluidez); privacy (everything stays on this PC; the update check is optional; the phone link is off until you open it); and **Quer fazer o tutorial guiado?** — **Começar tutorial** or **Agora não**.
+The first time ControlFS opens, a full-screen **welcome** walks you through six steps: welcome; how the controller works (the real buttons of the controller in use — Open, Back, Actions, Menu, Search, Mark, L1/R1 for the top bar, L2/R2 for tabs, R3 for the view; press any button on your controller and the prompts switch to it); **dark or light?** (Escuro, Claro or Automático, which follows Windows; the screen changes at once so you can see it); the basics, applied at once (confirm with the bottom or right button, button labels, list/grid, Fluidez); privacy (everything stays on this PC; the update check is optional; the phone link is off until you open it); and **Quer fazer o tutorial guiado?** — **Começar tutorial** or **Agora não**.
 
 | Control | Welcome |
 |---|---|
