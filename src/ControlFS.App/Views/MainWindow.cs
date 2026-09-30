@@ -167,7 +167,7 @@ public sealed class MainWindow : Window
         if (dataDirectory is null) _soundPlayer = new WindowsSoundPlayer();
         var clock = System.Diagnostics.Stopwatch.StartNew();
         _input = new InputHost(_app, DispatcherQueue, _soundPlayer is null ? null
-            : new Core.Audio.ControllerSounds(_soundPlayer, () => _app.Settings.ControllerSoundVolume, () => clock.Elapsed));
+            : new Core.Audio.ControllerSounds(_soundPlayer, () => _app.Settings.EffectiveControllerSoundVolume, () => clock.Elapsed));
         if (dataDirectory is null)
         {
             _background = new BackgroundMode(_app, DispatcherQueue, _drives);

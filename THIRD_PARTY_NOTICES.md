@@ -98,4 +98,12 @@ https://github.com/lippdev/consolemode) são os logos de outros aplicativos da e
 mantenedor só para a tela "Mais da equipe". São marcas e artes dos respectivos projetos: NÃO estão cobertas pela
 AGPL-3.0-only deste código e não podem ser reutilizadas sem permissão dos donos.
 
+Sons do controle
+------------------------------------------------------------------------------
+
+Os toques de mover, confirmar, voltar e marcar (src/ControlFS.Core/Audio/ToneSynth.cs) são sintetizados em código neste
+projeto: ondas senoidais com dois harmônicos e um envelope próprio. Nenhum arquivo de áudio, biblioteca de sons ou
+amostra de terceiros é incluído, então não há licença de áudio externa: os sons valem sob a AGPL-3.0-only do projeto. A
+interface do PS5 é apenas referência de sensação (sons curtos, suaves e limpos); nada da Sony foi copiado ou imitado nota por nota.
+
 O Windows e seus serviços não fazem parte deste código aberto.

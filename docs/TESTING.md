@@ -861,3 +861,8 @@ Só a CI (WinRAR 7.23 pelo winget, arquivo criado pelo Rar.exe real e extraído 
 - [ ] Instalado numa versão antiga, com internet: abrir o app sem tocar em nada. Ele baixa a versão nova, fecha e reabre sozinho já atualizada (Menu → Sobre mostra a nova).
 - [ ] Abrir e mexer no controle antes de terminar o download: aparece "Atualização pronta" (Instalar e reiniciar / Depois), sem reiniciar sozinho.
 - [ ] Menu → Configurações → Atualizações → "Atualizar sozinho ao abrir: não": só o aviso. Com uma cópia em andamento nunca reinicia.
+
+## Sons do controle: qualidade e padrão (#286, #287) — não validado em hardware
+- [ ] Instalação nova (ou apagar `settings.json`): os sons já tocam ao navegar com o controle, sem ligar nada. Em Configurações → Sons do controle aparece "médio".
+- [ ] Escolher "desligados", fechar e reabrir (e atualizar): continua mudo. Escolher "baixo": continua baixo.
+- [ ] Ouvir os quatro sons (mover, confirmar, voltar, marcar) em fones e em alto-falante: limpos, sem estalo, do mesmo volume, distintos entre si; segurar o direcional não vira chiado; "baixo" é realmente baixo.
