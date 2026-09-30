@@ -89,7 +89,7 @@ Root: HKCU; Subkey: "Software\Classes\controlfs\shell\open\command"; ValueType: 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
 ; Atualização "instalar e reiniciar" (o app passa /RELAUNCH=1): reabre o app depois da instalação silenciosa.
-Filename: "{app}\{#AppExe}"; Flags: nowait; Check: ShouldRelaunch
+Filename: "{app}\{#AppExe}"; Parameters: "--relaunch"; Flags: nowait; Check: ShouldRelaunch
 
 [UninstallDelete]
 ; Somente o cache de downloads de atualização do próprio app; preferências do usuário são preservadas.

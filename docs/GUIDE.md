@@ -303,9 +303,9 @@ ControlFS can be opened, brought to the front, or closed from external tools, sc
 
 - `controlfs://start` (or `ControlFS.exe --start`): opens the app, or brings the existing window to the foreground if already running.
 - `controlfs://show` (or `ControlFS.exe --show`): restores and brings the window to the front.
-- `controlfs://stop` (or `ControlFS.exe --stop`, `--close`): cleanly closes the running instance, canceling any active operations and saving settings. If no instance is open, it exits immediately.
+- `controlfs://stop` (or `ControlFS.exe --stop`, `--close`): cleanly closes the running instance and saves settings. If file operations are running, it does **not** cancel them by itself: the window comes to the front with the usual "Sair do ControlFS?" confirmation (starting on Cancel). If no instance is open, it exits immediately.
 
-The `controlfs://` scheme is registered in Windows automatically by the installer and on startup in portable mode. Only one instance of ControlFS runs per user session; launching a second instance signals the active window and exits immediately.
+The `controlfs://` scheme is registered in Windows by the installer (and re-registered on startup if the install folder moved). The portable version writes nothing to the registry, so `controlfs://` links need the installed version; the command-line flags work everywhere. Only one instance of ControlFS runs per user session; launching a second instance signals the active window and exits immediately.
 
 ## Screen readers
 

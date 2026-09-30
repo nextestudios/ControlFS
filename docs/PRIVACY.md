@@ -18,6 +18,7 @@ the user or the person installing or operating it.
   QR code; no cloud service, account or relay is involved and nothing is stored. The phone only sends navigation
   actions and the text you type; the PC only sends back whether a text field is open. It stops listening when you
   disconnect, when the phone disconnects or when ControlFS closes. Windows Firewall may ask for permission the first time.
+- **`controlfs://` links and command-line flags (automation):** the installer registers the `controlfs://` scheme for the current Windows user so launchers and scripts can open, show or close the app. Nothing is sent anywhere; `controlfs://stop` never cancels running file operations by itself (it asks first). The portable version writes nothing to the registry.
 - **"Mais da equipe" (More from the team):** one screen, shown once, with two of the team's apps (NextBoost PRO, Console Mode).
   Their logos ship inside the package and nothing is downloaded. A link (`https://nextboost.pro/`,
   `https://github.com/lippdev/consolemode`) opens in your default browser only when you choose it; those sites then see your
@@ -43,6 +44,7 @@ especificamente pelo usuário ou por quem o instala ou opera.
   na nuvem, conta nem retransmissor, e nada fica guardado. O celular só manda ações de navegação e o texto que você digita;
   o PC só responde se há um campo de texto aberto. Para de escutar ao desconectar, quando o celular desconecta ou ao
   fechar o ControlFS. Na primeira vez o Firewall do Windows pode pedir permissão.
+- **Links `controlfs://` e opções de linha de comando (automação):** o instalador registra o esquema `controlfs://` para o usuário atual do Windows, para que launchers e scripts abram, mostrem ou fechem o app. Nada é enviado a lugar nenhum; `controlfs://stop` nunca cancela sozinho operações de arquivo em andamento (ele pergunta antes). A versão portátil não escreve nada no registro.
 - **"Mais da equipe":** uma tela, mostrada uma vez, com dois aplicativos da equipe (NextBoost PRO e Console Mode). Os logos
   vêm dentro do pacote e nada é baixado. Um link (`https://nextboost.pro/`, `https://github.com/lippdev/consolemode`) só abre
   no navegador padrão quando você escolhe; esses sites então veem a sua visita como em qualquer acesso à web. O ControlFS

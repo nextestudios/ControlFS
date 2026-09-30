@@ -67,6 +67,12 @@ public static class AppProtocol
         };
     }
 
+    /// <summary>Argumento que o instalador passa ao reabrir o app depois de uma atualização: espera a instância antiga sair.</summary>
+    public const string RelaunchFlag = "--relaunch";
+
+    public static bool IsRelaunch(IEnumerable<string>? args) =>
+        args?.Any(a => a.Equals(RelaunchFlag, StringComparison.OrdinalIgnoreCase)) == true;
+
     /// <summary>
     /// Localiza a primeira ação de protocolo ou linha de comando válida dentro dos argumentos passados.
     /// </summary>

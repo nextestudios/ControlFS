@@ -303,9 +303,9 @@ O ControlFS pode ser aberto, trazido para a frente ou encerrado por ferramentas 
 
 - `controlfs://start` (ou `ControlFS.exe --start`): abre o aplicativo ou restaura e traz a janela existente para o primeiro plano se já estiver em execução.
 - `controlfs://show` (ou `ControlFS.exe --show`): restaura e traz a janela para a frente.
-- `controlfs://stop` (ou `ControlFS.exe --stop`, `--close`): encerra a instância aberta de forma limpa, cancelando operações em andamento e salvando preferências. Se nada estiver aberto, encerra imediatamente.
+- `controlfs://stop` (ou `ControlFS.exe --stop`, `--close`): encerra a instância aberta de forma limpa e salva as preferências. Se houver operações de arquivo em andamento, **não** as cancela sozinho: a janela vem para a frente com a confirmação "Sair do ControlFS?" de sempre (começando em Cancelar). Se nada estiver aberto, encerra imediatamente.
 
-O esquema `controlfs://` é registrado no Windows automaticamente pelo instalador e ao iniciar na versão portátil. Apenas uma instância do ControlFS roda por sessão de usuário; abrir uma segunda chamada sinaliza a janela ativa e encerra o novo processo imediatamente.
+O esquema `controlfs://` é registrado no Windows pelo instalador (e de novo ao iniciar, se a pasta de instalação mudou). A versão portátil não escreve nada no registro, então os links `controlfs://` pedem a versão instalada; as opções de linha de comando funcionam em qualquer uma. Apenas uma instância do ControlFS roda por sessão de usuário; abrir uma segunda chamada sinaliza a janela ativa e encerra o novo processo imediatamente.
 
 ## Leitores de tela
 

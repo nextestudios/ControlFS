@@ -14,6 +14,9 @@ public static class SingleInstanceCoordinator
     public const string ShowSignalName = @"Local\ControlFS.Show";
     public const string CloseSignalName = @"Local\ControlFS.Close";
 
+    /// <summary>Quanto tempo uma reabertura pós-atualização espera a instância antiga sair.</summary>
+    public static TimeSpan RelaunchWait { get; set; } = TimeSpan.FromSeconds(20);
+
     /// <summary>
     /// Avalia a linha de comando e determina se o processo deve continuar ou repassar a ação à instância existente.
     /// Retorna <c>true</c> se o processo atual deve ser finalizado imediatamente.
@@ -38,6 +41,14 @@ public static class SingleInstanceCoordinator
         catch (AbandonedMutexException)
         {
             isFirstInstance = true;
+        }
+
+        if (!isFirstInstance && AppProtocol.IsRelaunch(args))
+        {
+            // Reabertura depois de uma atualização: a instância antiga ainda está saindo. Espera ela soltar o mutex em vez de
+            // sinalizá-la (ela fecharia e o app não voltaria).
+            try { isFirstInstance = instanceMutex!.WaitOne(RelaunchWait); }
+            catch (AbandonedMutexException) { isFirstInstance = true; }
         }
 
         if (!isFirstInstance)

@@ -38,7 +38,9 @@ versão, Windows, controle e conexão. Resultados de controles vão para `contro
 - [ ] `controlfs://start` com o app aberto: restaura e traz a janela para frente sem abrir uma segunda instância (apenas um `ControlFS.exe` no Gerenciador de Tarefas). Resultado: ______
 - [ ] `controlfs://stop` ou `ControlFS.exe --stop` com o app aberto: encerra o app de forma limpa. Resultado: ______
 - [ ] `controlfs://show`: traz a janela para frente. Resultado: ______
-- [ ] Versão **portátil** movida de pasta: ao abrir, o registro passa a apontar para o novo caminho (log `Protocolo: controlfs:// registrado`). Resultado: ______
+- [ ] Versão **portátil**: abrir e fechar não cria `HKCU\Software\Classes\controlfs`; `ControlFS-Portable-x64.exe --show` com o app aberto traz a janela. Resultado: ______
+- [ ] `controlfs://stop` com uma cópia grande em andamento: a janela vem para a frente com "Sair do ControlFS?" em Cancelar; a cópia continua. Resultado: ______
+- [ ] Atualização "Instalar e reiniciar": o app volta a abrir sozinho depois da instalação. Resultado: ______
 
 ## Narrador (#40)
 
