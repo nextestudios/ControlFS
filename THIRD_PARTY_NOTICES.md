@@ -101,13 +101,10 @@ AGPL-3.0-only deste código e não podem ser reutilizadas sem permissão dos don
 Sons do controle
 ------------------------------------------------------------------------------
 
-Os quatro toques de mover, marcar, confirmar e voltar (assets/sounds/*.wav, embutidos no aplicativo) vêm de dois pacotes de
-Kenney (https://kenney.nl), ambos Creative Commons Zero (CC0 1.0, domínio público): uso pessoal, educacional e comercial e
-redistribuição livres, sem exigir crédito (o crédito a Kenney é voluntário e está aqui). Do pacote "UI Audio": rollover5 (mover).
-Do pacote "Interface Sounds": glass_002 (marcar), maximize_009 (confirmar) e back_002 (voltar). Foram aparados, suavizados com
-um filtro passa-baixa, com fades e mesma energia por tools/make-sounds.py. As licenças originais estão em
-assets/sounds/LICENSE-Kenney-CC0.txt e LICENSE-Kenney-UI-Audio-CC0.txt. Por serem CC0, não limitam a AGPL-3.0-only do restante
-do projeto. A interface do PS5 é apenas referência de sensação (toques curtos, redondos e suaves, confirmar subindo e voltar
-descendo); nenhum som da Sony foi usado ou imitado.
+Os toques de mover, confirmar e voltar (src/ControlFS.Core/Audio/SoundBank.cs) são os mesmos do Console Mode
+(https://github.com/lippdev/consolemode, src/ConsoleMode/Services/UiSoundSynth.cs), outro aplicativo da equipe, sob a
+GNU Affero General Public License v3.0, a mesma licença deste projeto: senoide com uma oitava baixinha, ataque rápido e queda,
+montados em código (nenhum arquivo de áudio é incluído). O toque de marcar é um quarto som no mesmo estilo, escrito aqui.
+Nenhum som de terceiros, de biblioteca ou da Sony é usado: a interface do PS5 é apenas referência de sensação.
 
 O Windows e seus serviços não fazem parte deste código aberto.

@@ -3,6 +3,8 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Mudanças
+- **Sons do controle: os do Console Mode** (#287): os sons passam a ser os mesmos toques macios de console do Console Mode (outro app da equipe, AGPL-3.0, a mesma licença): uma senoide suave com uma oitava baixinha, ataque rápido e queda, sem arquivo de áudio (montados em código). Mover, confirmar (sobe) e voltar são os do Console Mode; marcar é um quarto toque no mesmo estilo. O volume **médio** é o nível original do Console Mode, **alto** o dobro e **baixo** a metade. Os arquivos CC0 de Kenney da 0.16 saíram.
 
 ## [0.16.0-alpha.1]
 ### Mudanças

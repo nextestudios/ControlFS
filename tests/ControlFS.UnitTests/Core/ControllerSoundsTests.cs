@@ -88,23 +88,23 @@ public sealed class ControllerSoundsTests
             Assert.True(Peak(wav) > 500, $"{cue}: sem sinal");
         }
         Assert.True(Peak(SoundBank.Render(SoundCue.Confirm, 100)) > Peak(SoundBank.Render(SoundCue.Confirm, 25)) * 3);
-        Assert.InRange(Peak(SoundBank.Render(SoundCue.Confirm, 100)), 1, (int)(short.MaxValue * 0.6)); // discreto mesmo no máximo
+        Assert.InRange(Peak(SoundBank.Render(SoundCue.Confirm, 100)), 1, (int)(short.MaxValue * 0.8)); // discreto mesmo no máximo
         Assert.Equal(4, bytes.Values.Select(Convert.ToBase64String).Distinct().Count());
     }
 
     [Fact]
-    public void Every_cue_has_the_same_loudness_and_starts_and_ends_in_silence()
+    public void Every_cue_starts_and_ends_in_silence_stays_soft_and_the_volume_setting_scales_it()
     {
-        var levels = Enum.GetValues<SoundCue>().ToDictionary(c => c, c => Rms(SoundBank.Render(c, 60)));
-        Assert.InRange(levels.Values.Max() / levels.Values.Min(), 1.0, 1.25); // dentro de ~2 dB: nenhum som "grita"
         foreach (var cue in Enum.GetValues<SoundCue>())
         {
             var wav = SoundBank.Render(cue, 100);
             var peak = Peak(wav);
-            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, 44)) < peak * 0.02, $"{cue}: começa fora do silêncio");
-            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, wav.Length - 2)) < peak * 0.02, $"{cue}: termina fora do silêncio");
+            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, 44)) < peak * 0.05, $"{cue}: começa fora do silêncio");
+            Assert.True(Math.Abs((int)BitConverter.ToInt16(wav, wav.Length - 2)) < peak * 0.05, $"{cue}: termina fora do silêncio");
+            Assert.True(Rms(wav) < 0.25, $"{cue}: alto demais");
         }
-        Assert.True(Rms(SoundBank.Render(SoundCue.Move, 100)) > Rms(SoundBank.Render(SoundCue.Move, 25)) * 4); // 25% soa bem mais baixo
+        Assert.InRange(Rms(SoundBank.Render(SoundCue.Move, 100)) / Rms(SoundBank.Render(SoundCue.Move, 50)), 1.95, 2.05); // médio = o nível do Console Mode; máximo = o dobro
+        Assert.True(Rms(SoundBank.Render(SoundCue.Move, 100)) > Rms(SoundBank.Render(SoundCue.Move, 25)) * 3);
     }
 
     private static double Rms(byte[] wav)
