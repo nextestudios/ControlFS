@@ -3,6 +3,9 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Mudanças
+- **Configurações: cada ajuste com ícone e nome embaixo** (#293, ajusta o desenho só de ícones da 0.15): continua uma coluna larga, mas cada bloco agora mostra o **ícone com o nome logo abaixo**, para identificar o ajuste sem depender da descrição. O valor atual aparece na leitura do bloco em foco ("Nome: valor" em destaque e o que ele faz embaixo) e numa dica ao passar o mouse. Todos os ajustes seguem alcançáveis por controle, mouse e teclado; nenhum foi removido.
+- **Sons do controle mais suaves e redondos, na linha dos de console** (#287): os quatro sons foram trocados por outros de dois pacotes de Kenney em CC0 ("UI Audio" e "Interface Sounds"), escolhidos pelo timbre macio e de ataque suave (confirmar sobe de tom), com um filtro que tira o brilho agudo, sem estalo e com a mesma energia. Origem e licença em THIRD_PARTY_NOTICES.md e assets/sounds. Nenhum som da Sony foi usado: a interface do PS5 é só referência de sensação.
 
 ## [0.15.0-alpha.1]
 ### Novidades

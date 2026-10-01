@@ -118,17 +118,17 @@ public sealed class MenuModal : Modal
 
     private readonly bool _sectionGrids;
 
-    /// <summary>Blocos por linha numa grade só de ícones (Configurações, #293): largos o bastante para o ícone e o toque.</summary>
+    /// <summary>Blocos por linha numa grade de ícones com nome (Configurações, #293): largos o bastante para o ícone e o toque.</summary>
     public const int IconColumns = 6;
 
     /// <summary>Menos blocos que isto numa linha nunca fica mais largo que o bloco de quatro: grupos curtos não esticam.</summary>
     public const int IconMinColumns = 4;
 
-    public MenuModal(string title, IReadOnlyList<MenuItem> items, bool sectionGrids = false, bool iconOnly = false) : base(title)
+    public MenuModal(string title, IReadOnlyList<MenuItem> items, bool sectionGrids = false, bool iconGrid = false) : base(title)
     {
         Icon = ActionIcon.Menu;
         _sectionGrids = sectionGrids;
-        IconOnly = sectionGrids && iconOnly;
+        IconGrid = sectionGrids && iconGrid;
         Arrange(items);
         FocusIndex = items.Count == 0 ? 0 : InitialFocus(items[0]);
     }
@@ -149,10 +149,10 @@ public sealed class MenuModal : Modal
     public int FocusIndex { get; internal set; }
 
     /// <summary>
-    /// Todos os itens são blocos só de ícone, numa coluna larga (Configurações, #293): sem texto fixo ao lado; o nome, o valor e
+    /// Todos os itens são blocos com o ícone e o nome curto logo abaixo, numa coluna larga (Configurações, #293); o valor atual, o nome por extenso e
     /// o que o ajuste faz aparecem na área de leitura do painel quando o bloco recebe o foco (e numa dica ao passar o mouse).
     /// </summary>
-    public bool IconOnly { get; }
+    public bool IconGrid { get; }
 
     /// <summary>
     /// Onde começa cada grupo de Configurações (índice do primeiro item), na ordem de <see cref="Items"/>: R1/L1 pulam de um
@@ -198,9 +198,9 @@ public sealed class MenuModal : Modal
     /// repetição do que o bloco já mostra (#227). Um ajuste já mostra nome curto e valor: a linha só explica. Uma ação com
     /// rótulo curto ganha o nome completo antes (ex.: "Colar 2 itens (mover)").
     /// </summary>
-    public string TileCaption => IconOnly ? IconCaption(FocusIndex) : IsQuick(FocusIndex) ? Caption(FocusIndex) : string.Empty;
+    public string TileCaption => IconGrid ? IconCaption(FocusIndex) : IsQuick(FocusIndex) ? Caption(FocusIndex) : string.Empty;
 
-    /// <summary>Em grade só de ícones: "Nome: valor" numa linha e o que faz (ou por que não está disponível) na seguinte.</summary>
+    /// <summary>Na grade de ícones com nome: "Nome: valor" numa linha e o que faz (ou por que não está disponível) na seguinte.</summary>
     private string IconCaption(int index)
     {
         var item = Items[index];
@@ -223,7 +223,7 @@ public sealed class MenuModal : Modal
     public string DescriptionOf(int index)
     {
         if (index < 0 || index >= Items.Count) return string.Empty;
-        if (IconOnly) return IconCaption(index);
+        if (IconGrid) return IconCaption(index);
         if (IsQuick(index)) return Caption(index);
         var item = Items[index];
         return !item.IsEnabled ? "Indisponível: " + item.DisabledReason : item.Detail ?? string.Empty;
@@ -239,7 +239,7 @@ public sealed class MenuModal : Modal
     public IEnumerable<string> AllDescriptions => Enumerable.Range(0, Items.Count).Select(DescriptionOf).Where(t => t.Length > 0).Distinct();
 
     /// <summary>Menu com grade ou seletor de opções: <see cref="ModalSize.Medium"/>; só lista: <see cref="ModalSize.Compact"/>. Nunca pelo item em foco (#227).</summary>
-    public override ModalSize Size => IconOnly ? ModalSize.Wide : Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
+    public override ModalSize Size => IconGrid ? ModalSize.Wide : Grids.Count > 0 || IsPicker ? ModalSize.Medium : ModalSize.Compact;
 
     /// <summary>
     /// Seletor de opções (#261): cada item é uma alternativa de um valor; <see cref="PickerCurrent"/> é a atual (marcada com
@@ -291,14 +291,14 @@ public sealed class MenuModal : Modal
             var grids = new List<MenuGrid>();
             for (var i = 0; i < items.Count;)
             {
-                if (!IconOnly && !items[i].IsQuick)
+                if (!IconGrid && !items[i].IsQuick)
                 {
                     i++;
                     continue;
                 }
                 var start = i;
-                while (i < items.Count && (IconOnly || items[i].IsQuick) && items[i].Section == items[start].Section) i++;
-                grids.Add(IconOnly ? new MenuGrid(start, i - start, IconColumns, IconMinColumns) : new MenuGrid(start, i - start));
+                while (i < items.Count && (IconGrid || items[i].IsQuick) && items[i].Section == items[start].Section) i++;
+                grids.Add(IconGrid ? new MenuGrid(start, i - start, IconColumns, IconMinColumns) : new MenuGrid(start, i - start));
             }
             Grids = grids;
             return;

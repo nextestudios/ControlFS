@@ -645,7 +645,7 @@ public static partial class ModalView
 
         // Descrição fixa da opção em foco (#227): a altura já é a da descrição mais longa; uma linha, no mínimo, se houver alguma.
         var lineHeight = Math.Ceiling(Theme.FontCaption * 1.4);
-        var description = new TextSlot(menu.AllDescriptions, text => menu.IconOnly ? IconReadout(text) : (FrameworkElement)new TextBlock { Text = text, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
+        var description = new TextSlot(menu.AllDescriptions, text => menu.IconGrid ? IconReadout(text) : (FrameworkElement)new TextBlock { Text = text, FontSize = Theme.FontCaption, Foreground = Theme.TextMuted, TextWrapping = TextWrapping.Wrap });
         UIElement? below = null;
         if (!menu.IsPicker && menu.AllDescriptions.Any())
         {
@@ -686,7 +686,7 @@ public static partial class ModalView
     }
 
     /// <summary>
-    /// Leitura do ajuste em foco numa grade só de ícones (#293): "Nome: valor" em destaque e, embaixo, o que ele faz. Fica sempre no
+    /// Leitura do ajuste em foco numa grade de ícones com nome (#293): "Nome: valor" em destaque e, embaixo, o que ele faz. Fica sempre no
     /// mesmo lugar e tem a altura do texto mais longo, então mover o foco nunca redimensiona o painel.
     /// </summary>
     private static StackPanel IconReadout(string text)
@@ -716,8 +716,7 @@ public static partial class ModalView
         var iconInk = focused && enabled ? Theme.FocusText : !enabled ? (focused ? Theme.TextMuted : Theme.TextDisabled) : destructive ? Theme.Danger : Theme.Accent;
 
         var content = new StackPanel { Spacing = Theme.Space(6), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        content.Children.Add(Glyph(ActionIcons.Glyph(item.Icon), Theme.Font(menu.IconOnly ? 30 : 24), iconInk));
-        if (menu.IconOnly) return IconTile(app, menu, index, content, fill, focused, enabled, destructive, grid);
+        content.Children.Add(Glyph(ActionIcons.Glyph(item.Icon), Theme.Font(menu.IconGrid ? 28 : 24), iconInk));
         var text = new TextBlock
         {
             Text = item.TileLabel,
@@ -736,7 +735,7 @@ public static partial class ModalView
             AutomationProperties.SetName(text, item.Label);
         }
         content.Children.Add(WeightStable(text, focused));
-        if (item.Value is { Length: > 0 } value)
+        if (item.Value is { Length: > 0 } value && !menu.IconGrid) // na grade de Configurações o valor fica na leitura do foco
         {
             content.Spacing = Theme.Space(4);
             content.Children.Add(new TextBlock
@@ -759,7 +758,7 @@ public static partial class ModalView
             Background = fill,
             CornerRadius = Theme.RowRadius,
             Padding = new Thickness(Theme.Space(4), Theme.Space(10), Theme.Space(4), Theme.Space(8)),
-            MinHeight = Theme.Scaled(78),
+            MinHeight = Theme.Scaled(menu.IconGrid ? 88 : 78),
             // Bloco indisponível focado: o preenchimento cinza é discreto, então o contorno ciano mostra onde está o foco.
             BorderBrush = focused && !enabled ? Theme.Accent : null,
             BorderThickness = focused && !enabled ? Theme.FocusRing : default,
@@ -773,41 +772,7 @@ public static partial class ModalView
             KeepInView(tile);
         }
         AutomationProperties.SetName(tile, item.Label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty));
-        tile.Tapped += (_, _) => app.PointerChooseModalOption(index);
-        Hover.Attach(tile, active: !focused && enabled, Theme.HoverInset);
-        return tile;
-    }
-
-    /// <summary>
-    /// Bloco só de ícone (#293): nenhum texto fixo. O foco é o preenchimento cheio (ciano; vermelho se perigoso; cinza se
-    /// indisponível) mais o leve aumento, e o nome, o valor e a descrição aparecem na leitura fixa do painel. O Narrador ouve o
-    /// rótulo por extenso (nome e valor) e quem usa o mouse vê o mesmo numa dica.
-    /// </summary>
-    private static Border IconTile(AppController app, MenuModal menu, int index, UIElement content, Brush fill, bool focused, bool enabled, bool destructive, MenuGrid grid)
-    {
-        var item = menu.Items[index];
-        var tile = new Border
-        {
-            Child = content,
-            Background = fill,
-            CornerRadius = Theme.RowRadius,
-            Padding = new Thickness(Theme.Space(4)),
-            MinHeight = Theme.Scaled(72),
-            BorderBrush = focused && !enabled ? Theme.Accent : null,
-            BorderThickness = focused && !enabled ? Theme.FocusRing : default,
-        };
-        Grid.SetRow(tile, grid.Row(index));
-        Grid.SetColumn(tile, grid.Column(index));
-        if (focused)
-        {
-            tile.RenderTransformOrigin = new Point(0.5, 0.5);
-            tile.RenderTransform = new ScaleTransform { ScaleX = 1.05, ScaleY = 1.05 };
-            AutomationProperties.SetAutomationId(tile, FocusedOptionId);
-            KeepInView(tile);
-        }
-        var name = item.Label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty);
-        AutomationProperties.SetName(tile, name);
-        ToolTipService.SetToolTip(tile, item.Label);
+        if (menu.IconGrid) ToolTipService.SetToolTip(tile, item.Label); // nome e valor também para o mouse
         tile.Tapped += (_, _) => app.PointerChooseModalOption(index);
         Hover.Attach(tile, active: !focused && enabled, Theme.HoverInset);
         return tile;
