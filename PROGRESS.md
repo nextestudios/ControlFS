@@ -30,6 +30,12 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Configurações só de ícones, sons CC0 e hover (0.15.0-alpha.1)
+
+- Configurações numa coluna larga de blocos só de ícone, com nome e valor na leitura do foco (#293); quatro sons CC0 de Kenney no
+  lugar dos sintetizados (#287); retorno ao passar o mouse em todo item clicável (#295).
+- Sem hardware real: sons, hover e os blocos só de ícone aguardam teste manual.
+
 ## Atualização ao abrir, Configurações em paisagem, sons e Xbox (0.14.0-alpha.1)
 
 - Verificação a cada abertura e atualização automática ao abrir na versão instalada (#283); Configurações em duas colunas e
