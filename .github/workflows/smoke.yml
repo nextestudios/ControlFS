@@ -34,7 +34,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Download the published files
         shell: pwsh
         env:
@@ -53,7 +53,7 @@ jobs:
         if: always()
         shell: pwsh
         run: .\build\Test-Installed.ps1 -Setup (Join-Path $env:RUNNER_TEMP "rel\ControlFS-Setup-x64.exe") -OutDir smoke-released-installed
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: smoke-released
@@ -69,8 +69,8 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       DOTNET_NOLOGO: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
           # Cache de pacotes NuGet com chave nos lock files (a release não usa cache).
@@ -158,12 +158,12 @@ jobs:
         run: |
           .\build\Analyze-Dumps.ps1 -DumpDir . -OutFile crash-dumps-analysis.txt
           Get-ChildItem . -Filter *.dmp -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: smoke-screens
           path: smoke-screens
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && inputs.mode != 'screens'
         with:
           name: smoke-evidence
@@ -171,12 +171,12 @@ jobs:
             smoke-portable
             smoke-installed
             smoke-uia
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && inputs.mode != 'screens'
         with:
           name: performance
           path: smoke-performance
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always() && inputs.mode != 'screens'
         with:
           name: performance-comparison

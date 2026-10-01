@@ -28,7 +28,7 @@ jobs:
       DOTNET_NOLOGO: "1"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -41,7 +41,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Tags must point to a commit on main (Gitflow: release/* or hotfix/* merged into main)." }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
@@ -120,7 +120,7 @@ jobs:
       # O cliente do Artifact Signing (dlib do signtool) precisa do runtime do .NET 8.
       - name: Setup .NET 8 runtime (Artifact Signing client)
         if: steps.signing.outputs.mode == 'artifact'
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -183,7 +183,7 @@ jobs:
         run: .\build\New-ReleaseManifest.ps1 -Version "${{ steps.version.outputs.version }}" -Repository "${{ github.repository }}"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ControlFS-${{ steps.version.outputs.version }}
           path: |
@@ -196,7 +196,7 @@ jobs:
 
       - name: Publish GitHub release
         if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ControlFS ${{ steps.version.outputs.version }}
           prerelease: false

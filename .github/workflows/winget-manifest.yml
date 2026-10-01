@@ -15,11 +15,11 @@ jobs:
   manifest:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Generate and validate manifests
         shell: pwsh
         run: .\build\New-WingetManifest.ps1 -Tag "${{ inputs.tag }}" -OutDir artifacts\winget
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: winget-manifests
           path: artifacts/winget
