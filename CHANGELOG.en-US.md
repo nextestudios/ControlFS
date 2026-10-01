@@ -3,8 +3,17 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.17.0-alpha.1]
 ### Changes
 - **Controller sounds: the Console Mode ones** (#287): the sounds are now the same soft console blips as Console Mode (another team app, AGPL-3.0, the same licence): a soft sine with a quiet octave, fast attack and decay, no audio files (built in code). Move, confirm (rising) and back are Console Mode's; mark is a fourth blip in the same style. **Médio** (medium) is Console Mode's original level, **alto** (high) twice that and **baixo** (low) half. The Kenney CC0 files from 0.16 are gone.
+
+### Known limitations
+- The controller sounds are Console Mode's, but I haven't heard them in ControlFS: final taste and volume are for whoever hears them. They also haven't been tried with a real controller and headphones.
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…); the 0.14 Xbox fix wasn't confirmed with the reporter's controller.
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Phone pairing was fixed in Safari's engine (WebKit) but not yet tested on a real iPhone or Android (#259).
+- Whoever is on 0.14.0-alpha.1 or newer gets this version by itself when the app opens (automatic update).
 
 ## [0.16.0-alpha.1]
 ### Changes

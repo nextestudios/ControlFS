@@ -30,6 +30,11 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Sons do Console Mode (0.17.0-alpha.1)
+
+- Os sons do controle passam a ser os toques do Console Mode, montados em código, sem arquivos de áudio (#287).
+- Sem hardware real: os sons aguardam teste manual de quem ouve.
+
 ## Configurações com ícone e nome, sons mais suaves (0.16.0-alpha.1)
 
 - Cada ajuste de Configurações com o ícone e o nome logo abaixo, valor na leitura do foco (#293); sons do controle trocados por
