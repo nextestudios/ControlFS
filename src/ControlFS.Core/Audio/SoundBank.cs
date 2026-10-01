@@ -1,57 +1,72 @@
-using System.Reflection;
-
 namespace ControlFS.Core.Audio;
 
 /// <summary>
-/// Os sons do controle (#276, #287): quatro toques curtos do pacote "Interface Sounds" de Kenney (licença CC0, domínio público,
-/// redistribuição livre; origem e licença em assets/sounds e THIRD_PARTY_NOTICES.md), já aparados, sem estalo e com a mesma energia
-/// (tools/make-sounds.py). Ficam embutidos no assembly; aqui só se aplica o volume do usuário, sempre para baixo a partir do nível
-/// mestre (curva perceptiva: 25% soa bem mais baixo que 100%). A interface do PS5 é só referência de sensação: nada da Sony foi usado.
+/// Os sons do controle (#276, #287): os mesmos toques do Console Mode (https://github.com/lippdev/consolemode, AGPL-3.0, da mesma
+/// equipe; <c>UiSoundSynth</c>), montados em código, então o app não leva nenhum arquivo de áudio: toques curtos e macios (uma
+/// senoide com uma oitava baixinha, ataque rápido e queda) em volume baixo, na linha de um menu de console. Mover, confirmar (sobe)
+/// e voltar (desce) são os do Console Mode; marcar é um quarto toque no mesmo estilo. A interface do PS5 é só referência de
+/// sensação. Saem como WAV PCM de 16 bits, mono, 44,1 kHz, prontos para tocar da memória.
 /// </summary>
 public static class SoundBank
 {
     public const int SampleRate = 44100;
-    private const int HeaderBytes = 44;
 
-    private static readonly Dictionary<SoundCue, byte[]> Masters = [];
+    /// <summary>Uma nota: vai de <c>From</c> a <c>To</c> Hz durante <c>Ms</c>.</summary>
+    private readonly record struct Note(double From, double To, int Ms, double Gain);
 
-    private static string FileFor(SoundCue cue) => cue switch
+    private static Note[] Notes(SoundCue cue) => cue switch
     {
-        SoundCue.Move => "move",
-        SoundCue.Select => "select",
-        SoundCue.Confirm => "confirm",
-        _ => "back",
+        SoundCue.Move => [new(1150, 1000, 45, 0.30)],
+        SoundCue.Select => [new(880, 940, 55, 0.30)],
+        SoundCue.Confirm => [new(740, 740, 55, 0.32), new(1110, 1110, 95, 0.34)],
+        _ => [new(820, 820, 50, 0.30), new(560, 540, 85, 0.30)],
     };
 
-    /// <summary>O WAV do som (PCM 16 bits, mono, 44,1 kHz) no volume de 1 a 100.</summary>
+    /// <summary>
+    /// O WAV do som no volume de 1 a 100. 50 ("médio") é o nível original do Console Mode; 100 é o dobro (nunca satura) e 25 a
+    /// metade, em curva linear.
+    /// </summary>
     public static byte[] Render(SoundCue cue, int volume)
     {
-        var master = Master(cue);
-        var wav = (byte[])master.Clone();
-        var gain = Math.Pow(Math.Clamp(volume, 1, 100) / 100.0, 1.5);
-        for (var i = HeaderBytes; i + 1 < wav.Length; i += 2)
+        var scale = Math.Clamp(volume, 1, 100) / 50.0;
+        var samples = new List<float>();
+        double phase = 0;
+        foreach (var note in Notes(cue))
         {
-            var sample = (short)Math.Round(BitConverter.ToInt16(master, i) * gain);
-            wav[i] = (byte)(sample & 0xFF);
-            wav[i + 1] = (byte)((sample >> 8) & 0xFF);
+            var count = SampleRate * note.Ms / 1000;
+            var attack = SampleRate * 3 / 1000;
+            var release = SampleRate * 6 / 1000;
+            for (var i = 0; i < count; i++)
+            {
+                var t = (double)i / count;
+                var frequency = note.From + ((note.To - note.From) * t);
+                phase += 2 * Math.PI * frequency / SampleRate;
+                var tone = Math.Sin(phase) + (0.25 * Math.Sin(2 * phase));
+                var envelope = Math.Exp(-3.2 * t)
+                               * Math.Min(1.0, (double)i / attack)
+                               * Math.Min(1.0, (double)(count - i) / release);
+                samples.Add((float)(tone / 1.25 * note.Gain * envelope * scale));
+            }
         }
-        return wav;
-    }
 
-    private static byte[] Master(SoundCue cue)
-    {
-        lock (Masters)
-        {
-            if (Masters.TryGetValue(cue, out var cached)) return cached;
-            var name = $"sounds/{FileFor(cue)}.wav";
-            using var stream = typeof(SoundBank).Assembly.GetManifestResourceStream(name)
-                ?? throw new InvalidOperationException($"Som embutido ausente: {name}");
-            using var memory = new MemoryStream();
-            stream.CopyTo(memory);
-            var bytes = memory.ToArray();
-            if (bytes.Length <= HeaderBytes || bytes[36] != 'd' || bytes[37] != 'a' || bytes[38] != 't' || bytes[39] != 'a')
-                throw new InvalidOperationException($"Som embutido inválido (esperado WAV PCM de 44 bytes de cabeçalho): {name}");
-            return Masters[cue] = bytes;
-        }
+        var dataLength = samples.Count * 2;
+        using var stream = new MemoryStream(44 + dataLength);
+        using var writer = new BinaryWriter(stream);
+        writer.Write("RIFF"u8);
+        writer.Write(36 + dataLength);
+        writer.Write("WAVEfmt "u8);
+        writer.Write(16);                 // cabeçalho PCM
+        writer.Write((short)1);           // PCM
+        writer.Write((short)1);           // mono
+        writer.Write(SampleRate);
+        writer.Write(SampleRate * 2);     // bytes por segundo
+        writer.Write((short)2);           // alinhamento do bloco
+        writer.Write((short)16);          // bits por amostra
+        writer.Write("data"u8);
+        writer.Write(dataLength);
+        foreach (var sample in samples)
+            writer.Write((short)Math.Round(Math.Clamp(sample, -1f, 1f) * short.MaxValue));
+        writer.Flush();
+        return stream.ToArray();
     }
 }

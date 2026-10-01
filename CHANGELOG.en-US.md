@@ -3,6 +3,8 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### Changes
+- **Controller sounds: the Console Mode ones** (#287): the sounds are now the same soft console blips as Console Mode (another team app, AGPL-3.0, the same licence): a soft sine with a quiet octave, fast attack and decay, no audio files (built in code). Move, confirm (rising) and back are Console Mode's; mark is a fourth blip in the same style. **Médio** (medium) is Console Mode's original level, **alto** (high) twice that and **baixo** (low) half. The Kenney CC0 files from 0.16 are gone.
 
 ## [0.16.0-alpha.1]
 ### Changes
