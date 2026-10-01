@@ -3,8 +3,17 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+
+## [0.17.0-alpha.1]
 ### Mudanças
 - **Sons do controle: os do Console Mode** (#287): os sons passam a ser os mesmos toques macios de console do Console Mode (outro app da equipe, AGPL-3.0, a mesma licença): uma senoide suave com uma oitava baixinha, ataque rápido e queda, sem arquivo de áudio (montados em código). Mover, confirmar (sobe) e voltar são os do Console Mode; marcar é um quarto toque no mesmo estilo. O volume **médio** é o nível original do Console Mode, **alto** o dobro e **baixo** a metade. Os arquivos CC0 de Kenney da 0.16 saíram.
+
+### Limitações conhecidas
+- Os sons do controle são os do Console Mode, mas eu não os ouvi no ControlFS: o gosto final e o volume são de quem ouve. Também não foram testados com controle e fones reais.
+- Ainda não validado com controles físicos (issue #78: Menu → Teste de controles…); a correção do Xbox da 0.14 não foi confirmada com o controle de quem reportou.
+- Executáveis ainda sem assinatura de código (#84, pedido à SignPath Foundation em análise): o SmartScreen pode avisar na primeira execução.
+- O pareamento do celular foi corrigido no motor do Safari (WebKit), mas ainda não foi testado num iPhone nem num Android de verdade (#259).
+- Quem está na 0.14.0-alpha.1 ou mais nova recebe esta versão sozinho ao abrir o app (atualização automática).
 
 ## [0.16.0-alpha.1]
 ### Mudanças
