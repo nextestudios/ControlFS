@@ -268,7 +268,7 @@ public class ModalSystemJourneyTests : IDisposable
     });
 
     [Fact]
-    public void Settings_is_one_column_of_icon_only_grids_per_section_navigated_in_two_dimensions() => UiContext.Run(async () =>
+    public void Settings_is_one_column_of_labeled_icon_grids_per_section_navigated_in_two_dimensions() => UiContext.Run(async () =>
     {
         // #293: todos os ajustes são blocos só de ícone na grade do seu grupo, numa coluna larga; o foco revela nome e valor.
         var d = Boot();
@@ -277,10 +277,16 @@ public class ModalSystemJourneyTests : IDisposable
         await d.Idle();
         app.ShowSettings();
         var settings = await d.WaitMenu();
-        Assert.True(settings.IconOnly);
+        Assert.True(settings.IconGrid);
         Assert.Equal(ModalSize.Wide, settings.Size); // uma coluna larga (sem colunas paralelas)
         Assert.Equal(4, settings.Grids.Count);
         Assert.Equal(settings.Items.Count, settings.Grids.Sum(g => g.Count)); // nenhum ajuste fora da grade (nada de linhas de texto)
+        // Cada bloco leva o nome curto sob o ícone, sem o valor (o valor fica na leitura do foco): nada de rótulo longo ou com ":".
+        Assert.All(settings.Items, i =>
+        {
+            Assert.InRange(i.TileLabel.Length, 3, 24);
+            Assert.DoesNotContain(':', i.TileLabel);
+        });
         var view = settings.Grids[0];
         Assert.Equal(9, view.Count);
         Assert.Equal((5, 2), (view.Columns, view.Rows));

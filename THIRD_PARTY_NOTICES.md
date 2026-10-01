@@ -101,12 +101,13 @@ AGPL-3.0-only deste código e não podem ser reutilizadas sem permissão dos don
 Sons do controle
 ------------------------------------------------------------------------------
 
-Os quatro toques de mover, confirmar, voltar e marcar (assets/sounds/*.wav, embutidos no aplicativo) vêm do pacote
-"Interface Sounds" de Kenney (https://kenney.nl/assets/interface-sounds), licença Creative Commons Zero (CC0 1.0, domínio
-público): uso pessoal, educacional e comercial e redistribuição livres, sem exigir crédito (o crédito a Kenney é voluntário e
-está aqui). Usados: select_002 (mover), glass_006 (marcar), confirmation_001 (confirmar) e back_004 (voltar), aparados, com fade
-de 2 ms e mesma energia por tools/make-sounds.py. A licença original está em assets/sounds/LICENSE-Kenney-CC0.txt. Por ser
-CC0, não limita a AGPL-3.0-only do restante do projeto. A interface do PS5 é apenas referência de sensação; nenhum som da Sony
-foi usado ou imitado.
+Os quatro toques de mover, marcar, confirmar e voltar (assets/sounds/*.wav, embutidos no aplicativo) vêm de dois pacotes de
+Kenney (https://kenney.nl), ambos Creative Commons Zero (CC0 1.0, domínio público): uso pessoal, educacional e comercial e
+redistribuição livres, sem exigir crédito (o crédito a Kenney é voluntário e está aqui). Do pacote "UI Audio": rollover5 (mover).
+Do pacote "Interface Sounds": glass_002 (marcar), maximize_009 (confirmar) e back_002 (voltar). Foram aparados, suavizados com
+um filtro passa-baixa, com fades e mesma energia por tools/make-sounds.py. As licenças originais estão em
+assets/sounds/LICENSE-Kenney-CC0.txt e LICENSE-Kenney-UI-Audio-CC0.txt. Por serem CC0, não limitam a AGPL-3.0-only do restante
+do projeto. A interface do PS5 é apenas referência de sensação (toques curtos, redondos e suaves, confirmar subindo e voltar
+descendo); nenhum som da Sony foi usado ou imitado.
 
 O Windows e seus serviços não fazem parte deste código aberto.

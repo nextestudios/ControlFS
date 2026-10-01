@@ -611,7 +611,7 @@ public sealed partial class AppController
     /// (controle ativo, teste, joysticks, atualizações) fecham Configurações e abrem essa tela, como os outros submenus.
     /// </summary>
     internal void ShowSettings() =>
-        PushModal(new MenuModal("Configurações", SettingsItems(), sectionGrids: true, iconOnly: true) { Icon = ActionIcon.Settings, Reload = SettingsItems });
+        PushModal(new MenuModal("Configurações", SettingsItems(), sectionGrids: true, iconGrid: true) { Icon = ActionIcon.Settings, Reload = SettingsItems });
 
     private List<MenuItem> SettingsItems()
     {
@@ -652,7 +652,7 @@ public sealed partial class AppController
                 Icon: ActionIcon.Hidden, Section: view, KeepOpen: true, Placement: tile, ShortLabel: "Ocultos", Value: hidden),
             new($"Tela cheia: {OnOff(Settings.FullScreen)}", ToggleFullScreen,
                 Detail: "Ocupa a tela inteira, sem a barra do Windows; fica salva para a próxima vez. Também F11 ou o botão ao lado de minimizar.",
-                Icon: Settings.FullScreen ? ActionIcon.ExitFullScreen : ActionIcon.FullScreen, Section: view, KeepOpen: true),
+                Icon: Settings.FullScreen ? ActionIcon.ExitFullScreen : ActionIcon.FullScreen, Section: view, KeepOpen: true, ShortLabel: "Tela cheia"),
             new($"Busca em subpastas: {subfolders}", () => SearchIncludesSubfolders = !SearchIncludesSubfolders,
                 Detail: "Vale para a próxima busca (Select/View).", Icon: ActionIcon.Subfolders, Section: privacy, KeepOpen: true,
                 Placement: tile, ShortLabel: "Subpastas", Value: subfolders),
@@ -666,7 +666,7 @@ public sealed partial class AppController
                 Detail: "Nomes digitados antes e desta pasta, só neste computador; nunca em senhas. Desligar apaga o histórico.", Icon: ActionIcon.Keyboard, Section: privacy, KeepOpen: true,
                 Placement: tile, ShortLabel: "Sugestões", Value: OnOff(Settings.KeyboardSuggestions)),
             new("Apagar onde os vídeos pararam", ForgetAllPositions, PlaybackPositions is null ? "Posições não são lembradas nesta compilação." : null,
-                Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true),
+                Detail: "O reprodutor lembra onde cada vídeo parou (só neste computador, sem guardar nomes) para oferecer \"Continuar\".", Icon: ActionIcon.Erase, Section: privacy, KeepOpen: true, ShortLabel: "Apagar posições"),
             ChoiceRow("Confirmar com", Settings.Convention, ConventionChoices, c => UpdateSettings(s => s with { Convention = c }), ActionIcon.Accept, section: controls, placement: tile,
                 shortLabel: "Confirmar", context: settingsContext, detail: "Troca comportamento e legendas de confirmar/voltar."),
             ChoiceRow("Legendas", Settings.LabelStyle, LabelStyleChoices, style => UpdateSettings(s => s with { LabelStyle = style }), ActionIcon.Labels, section: controls, placement: tile,
@@ -685,13 +685,13 @@ public sealed partial class AppController
                 Icon: ActionIcon.Settings, Section: controls, KeepOpen: true, Placement: tile, ShortLabel: "Segundo plano", Value: OnOff(Settings.LightInBackground)),
             new($"Mira por giroscópio no teclado: {OnOff(Settings.GyroKeyboard)} (experimental)", ToggleGyroKeyboard,
                 Detail: "Controles com giroscópio (ex.: DualSense): no teclado virtual, gire ou incline o controle para apontar as teclas; R3 recentraliza. O direcional continua funcionando.",
-                Icon: ActionIcon.Keyboard, Section: controls, KeepOpen: true),
+                Icon: ActionIcon.Keyboard, Section: controls, KeepOpen: true, ShortLabel: "Giroscópio"),
             new(ActiveControllerMenuLabel, ShowActiveControllerMenu, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
-                Detail: "Escolha qual controle comanda o ControlFS (ex.: Steam Input ou DS4Windows duplicando o controle).", Icon: ActionIcon.Controller, Section: controls),
+                Detail: "Escolha qual controle comanda o ControlFS (ex.: Steam Input ou DS4Windows duplicando o controle).", Icon: ActionIcon.Controller, Section: controls, ShortLabel: "Controle ativo"),
             new("Teste de controles…", ShowControllerTest, _diagnostics is null ? "Controles indisponíveis nesta compilação." : null,
                 Detail: "Mostra cada botão e a ação que ele produz; copia um relatório para a issue #78.", Icon: ActionIcon.ControllerTest, Section: controls),
-            new("Controles sem perfil…", ShowControllersMenu, Detail: "Configurar joysticks que não são reconhecidos como gamepad.", Icon: ActionIcon.ControllerSetup, Section: controls),
-            new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null, Icon: ActionIcon.Update, Section: app),
+            new("Controles sem perfil…", ShowControllersMenu, Detail: "Configurar joysticks que não são reconhecidos como gamepad.", Icon: ActionIcon.ControllerSetup, Section: controls, ShortLabel: "Sem perfil"),
+            new(UpdateMenuLabel, ShowUpdatesMenu, _updates is null ? "Atualizações indisponíveis nesta compilação." : null, Icon: ActionIcon.Update, Section: app, ShortLabel: "Atualizações"),
             new("Rever boas-vindas", ShowOnboarding, Detail: "Controles, ajustes básicos, privacidade e o convite para o tutorial guiado.", Icon: ActionIcon.Help, Section: app),
         ];
     }

@@ -221,7 +221,7 @@ added line.
 | Where | Pickers | Stays one press |
 |---|---|---|
 | Compactar | Formato, Compressão | Nome (keyboard), Compactar |
-| Configurações (uma coluna larga de blocos só de ícone, #293; L1/R1 pulam de grupo; primeiro bloco do Menu) | Exibição, Densidade da lista, Tema, Cor de destaque, Ordenar por, Confirmar com, Legendas, Fluidez | Ordem, Painel de detalhes, Itens ocultos, Tela cheia, Busca em subpastas, Recentes, Restaurar abas, Sugestões do teclado, Segundo plano, Mira por giroscópio (on/off or symmetric two-way toggles); Controle ativo, Teste de controles, Controles sem perfil, Atualizações (they open their own screen) |
+| Configurações (uma coluna larga de blocos com ícone e nome, #293; L1/R1 pulam de grupo; primeiro bloco do Menu) | Exibição, Densidade da lista, Tema, Cor de destaque, Ordenar por, Confirmar com, Legendas, Fluidez | Ordem, Painel de detalhes, Itens ocultos, Tela cheia, Busca em subpastas, Recentes, Restaurar abas, Sugestões do teclado, Segundo plano, Mira por giroscópio (on/off or symmetric two-way toggles); Controle ativo, Teste de controles, Controles sem perfil, Atualizações (they open their own screen) |
 | Filtros da busca | Tamanho, Modificado | Tipos (checkboxes) |
 | Renomear em lote | Modo, Converter para | Dígitos (1–6, a stepper), text fields |
 
