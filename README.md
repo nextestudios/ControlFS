@@ -26,7 +26,7 @@ The interface is in Portuguese today; these are real captures of the app (dark t
 
 ## Download
 
-Get **[0.15.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.15.0-alpha.1)** (pre-release):
+Get **[0.16.0-alpha.1](https://github.com/nextestudios/ControlFS/releases/tag/v0.16.0-alpha.1)** (pre-release):
 
 - **`ControlFS-Setup-x64.exe`** (recommended): per-user install, no admin, **updates itself automatically** (verified, signed updates).
 - **`ControlFS-Portable-x64.exe`**: a single executable that keeps its data in the `ControlFS_Data` folder next to it; it tells you about new versions, replacing it is manual.

@@ -30,6 +30,12 @@ não foi aberto numa sessão Windows interativa**. Nenhum controle físico foi t
 - **Configuração:** JSON versionado com gravação atômica e recuperação de arquivo corrompido.
 - **Documentação e CI:** todos os documentos exigidos; ADRs 0001–0004; workflow de CI (não executado).
 
+## Configurações com ícone e nome, sons mais suaves (0.16.0-alpha.1)
+
+- Cada ajuste de Configurações com o ícone e o nome logo abaixo, valor na leitura do foco (#293); sons do controle trocados por
+  outros de dois pacotes CC0 de Kenney, mais suaves e redondos (#287).
+- Sem hardware real: os sons e os blocos aguardam teste manual.
+
 ## Configurações só de ícones, sons CC0 e hover (0.15.0-alpha.1)
 
 - Configurações numa coluna larga de blocos só de ícone, com nome e valor na leitura do foco (#293); quatro sons CC0 de Kenney no
