@@ -101,9 +101,12 @@ AGPL-3.0-only deste código e não podem ser reutilizadas sem permissão dos don
 Sons do controle
 ------------------------------------------------------------------------------
 
-Os toques de mover, confirmar, voltar e marcar (src/ControlFS.Core/Audio/ToneSynth.cs) são sintetizados em código neste
-projeto: ondas senoidais com dois harmônicos e um envelope próprio. Nenhum arquivo de áudio, biblioteca de sons ou
-amostra de terceiros é incluído, então não há licença de áudio externa: os sons valem sob a AGPL-3.0-only do projeto. A
-interface do PS5 é apenas referência de sensação (sons curtos, suaves e limpos); nada da Sony foi copiado ou imitado nota por nota.
+Os quatro toques de mover, confirmar, voltar e marcar (assets/sounds/*.wav, embutidos no aplicativo) vêm do pacote
+"Interface Sounds" de Kenney (https://kenney.nl/assets/interface-sounds), licença Creative Commons Zero (CC0 1.0, domínio
+público): uso pessoal, educacional e comercial e redistribuição livres, sem exigir crédito (o crédito a Kenney é voluntário e
+está aqui). Usados: select_002 (mover), glass_006 (marcar), confirmation_001 (confirmar) e back_004 (voltar), aparados, com fade
+de 2 ms e mesma energia por tools/make-sounds.py. A licença original está em assets/sounds/LICENSE-Kenney-CC0.txt. Por ser
+CC0, não limita a AGPL-3.0-only do restante do projeto. A interface do PS5 é apenas referência de sensação; nenhum som da Sony
+foi usado ou imitado.
 
 O Windows e seus serviços não fazem parte deste código aberto.

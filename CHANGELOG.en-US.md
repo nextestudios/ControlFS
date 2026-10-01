@@ -3,7 +3,10 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+### What's new
+- **Hover feedback** (#295): menu and Configurações blocks and rows (including the icon-only tiles), tabs, shortcuts, the path bar, cards, list and grid rows, on-screen keyboard keys and column headers now lighten slightly (darken in the light theme) under the pointer, always in a neutral tone and never in the accent colour so it can't be mistaken for controller/keyboard focus. The focused item gets no hover, and it only shows while the mouse recently moved: scrolling the list with the controller under a stationary pointer lights nothing (the reason the system highlight was removed in #182).
 ### Changes
+- **Controller sounds replaced by a professional CC0 set** (#287): the synthesized cues were replaced by four short, soft sounds from Kenney's "Interface Sounds" pack (CC0, free redistribution; origin and licence documented in THIRD_PARTY_NOTICES.md and assets/sounds): move, mark, confirm and back, trimmed, click-free and at the same energy. The "Sons do controle" setting (off/low/medium/high/max) still applies on top. The PS5 interface was only a feel reference.
 - **Settings as one wide column of icon-only tiles** (#293, replaces the two-column design of 0.14): every setting is now an icon-only tile, with no text beside it, in groups inside a single wide column (no parallel columns). The focused tile fills in and its **name, value and what it does** show in the panel's fixed reading area (and in a hover tooltip); Narrator still reads name and value. L1/R1 jump between groups and Configurações stays the first tile of the Menu. No setting was removed or changed behavior.
 
 ## [0.14.0-alpha.1]

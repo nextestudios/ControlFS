@@ -3,7 +3,10 @@
 Notas em português do Brasil; a versão em inglês (Estados Unidos) fica em `CHANGELOG.en-US.md`. Antes de publicar uma versão, adicione uma seção `## [VERSÃO]` **nos dois arquivos**. O workflow de release usa a seção da tag e falha se faltar alguma.
 
 ## [Unreleased]
+### Novidades
+- **Retorno ao passar o mouse** (#295): blocos e linhas de menu e de Configurações (inclusive os blocos só de ícone), abas, atalhos, caminho, cartões, linhas da lista e da grade, teclas do teclado virtual e cabeçalhos de coluna agora clareiam de leve (escurecem no tema claro) quando o ponteiro está em cima, sempre num tom neutro, nunca na cor de destaque, para não se confundir com o foco do controle/teclado. O item focado não recebe hover, e ele só aparece enquanto o mouse se mexeu há pouco: rolar a lista com o controle sob um ponteiro parado não acende nada (o motivo de o destaque do sistema ter saído na #182).
 ### Mudanças
+- **Sons do controle trocados por um conjunto profissional CC0** (#287): os toques sintetizados foram substituídos por quatro sons curtos e suaves do pacote "Interface Sounds" de Kenney (licença CC0, redistribuição livre; origem e licença documentadas em THIRD_PARTY_NOTICES.md e assets/sounds): mover, marcar, confirmar e voltar, aparados, sem estalo e com a mesma energia. O ajuste "Sons do controle" (desligado/baixo/médio/alto/máximo) continua valendo sobre eles. A interface do PS5 foi só referência de sensação.
 - **Configurações numa coluna larga, só com ícones** (#293, refaz o desenho em duas colunas da 0.14): todos os ajustes viram blocos só de ícone, sem texto ao lado, em grupos numa única coluna larga (sem colunas paralelas). O bloco em foco se preenche e o **nome, o valor e o que o ajuste faz** aparecem na área de leitura fixa do painel (e numa dica ao passar o mouse); o Narrador continua lendo nome e valor. L1/R1 pulam de grupo e Configurações segue como primeiro bloco do Menu. Nenhum ajuste foi removido ou mudou de comportamento.
 
 ## [0.14.0-alpha.1]

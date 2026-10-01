@@ -866,3 +866,8 @@ Só a CI (WinRAR 7.23 pelo winget, arquivo criado pelo Rar.exe real e extraído 
 - [ ] Instalação nova (ou apagar `settings.json`): os sons já tocam ao navegar com o controle, sem ligar nada. Em Configurações → Sons do controle aparece "médio".
 - [ ] Escolher "desligados", fechar e reabrir (e atualizar): continua mudo. Escolher "baixo": continua baixo.
 - [ ] Ouvir os quatro sons (mover, confirmar, voltar, marcar) em fones e em alto-falante: limpos, sem estalo, do mesmo volume, distintos entre si; segurar o direcional não vira chiado; "baixo" é realmente baixo.
+
+## Hover e sons CC0 (#295, #287) — não validado em hardware
+- [ ] Mouse em cima de um bloco de Configurações, de uma linha de menu, de uma aba, de um atalho e de uma linha da lista: o item clareia de leve (escurece no tema claro), sem cor de destaque; ao tirar o mouse volta. O item focado não muda.
+- [ ] Mover o foco com o controle/teclado sobre uma lista com o ponteiro parado: nenhuma linha "acende" por hover (só o foco de sempre).
+- [ ] Os quatro sons novos (mover, marcar, confirmar, voltar) agradam e têm volume parecido; "baixo" é realmente baixo.

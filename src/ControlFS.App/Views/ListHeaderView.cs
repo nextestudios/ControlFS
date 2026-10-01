@@ -135,6 +135,7 @@ internal sealed class ListHeaderView
         cell.Children.Add(label);
         cell.Children.Add(arrow);
         cell.Tapped += (_, _) => _app.PointerSortBy(field);
+        Controls.Hover.AttachDim(cell);
         Grid.SetColumn(cell, column);
         _grid.Children.Add(cell);
         _titles[field] = (label, arrow, cell);

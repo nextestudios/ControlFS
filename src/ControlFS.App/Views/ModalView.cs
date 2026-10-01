@@ -514,6 +514,7 @@ public static partial class ModalView
         }
         AutomationProperties.SetName(row, label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty) + (!destructive && trailing is { Length: > 0 } ? ", " + trailing : string.Empty));
         row.Tapped += (_, _) => onTap();
+        Hover.Attach(row, active: !focused && enabled, Theme.HoverWash);
         return row;
     }
 
@@ -773,6 +774,7 @@ public static partial class ModalView
         }
         AutomationProperties.SetName(tile, item.Label + (enabled ? string.Empty : ", indisponível") + (destructive ? ", ação perigosa" : string.Empty));
         tile.Tapped += (_, _) => app.PointerChooseModalOption(index);
+        Hover.Attach(tile, active: !focused && enabled, Theme.HoverInset);
         return tile;
     }
 
@@ -807,6 +809,7 @@ public static partial class ModalView
         AutomationProperties.SetName(tile, name);
         ToolTipService.SetToolTip(tile, item.Label);
         tile.Tapped += (_, _) => app.PointerChooseModalOption(index);
+        Hover.Attach(tile, active: !focused && enabled, Theme.HoverInset);
         return tile;
     }
 
@@ -1218,6 +1221,7 @@ public static partial class ModalView
                 AutomationProperties.SetName(chip, $"Sugestão: {suggestions[i]}");
                 if (focused) KeepInView(chip);
                 chip.Tapped += (_, _) => app.PointerPressSuggestion(index);
+                Hover.Attach(chip, active: !focused);
                 strip.Children.Add(chip);
             }
             stack.Children.Add(new ScrollViewer
@@ -1271,6 +1275,7 @@ public static partial class ModalView
         }
         AutomationProperties.SetName(cell, key.Name + (isCurrentPage ? ", página atual" : string.Empty) + (enabled ? string.Empty : ", indisponível neste campo"));
         cell.Tapped += (_, _) => app.PointerPressKey(row, keyIndex);
+        Hover.Attach(cell, active: !focused && enabled);
         Grid.SetRow(cell, r);
         Grid.SetColumn(cell, column);
         Grid.SetColumnSpan(cell, key.Span);

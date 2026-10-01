@@ -6,7 +6,7 @@ namespace ControlFS.Infrastructure.Windows.Shell;
 
 /// <summary>
 /// Toca os sons do controle (#276) pelo dispositivo de áudio padrão do Windows (winmm PlaySound, da memória e assíncrono:
-/// volta na hora e um som novo substitui o anterior). Cada som é sintetizado uma vez por volume e fica na memória
+/// volta na hora e um som novo substitui o anterior). Cada som (WAV embutido) é preparado uma vez por volume e fica na memória
 /// nativa enquanto o app roda. Sem dispositivo de som, PlaySound só devolve falso: nada quebra.
 /// </summary>
 public sealed partial class WindowsSoundPlayer : ISoundPlayer, IDisposable
@@ -22,7 +22,7 @@ public sealed partial class WindowsSoundPlayer : ISoundPlayer, IDisposable
         var level = Math.Clamp((volume + 4) / 5 * 5, 5, 100);
         if (!_sounds.TryGetValue((cue, level), out var memory))
         {
-            var wav = ToneSynth.Render(cue, level);
+            var wav = SoundBank.Render(cue, level);
             memory = Marshal.AllocHGlobal(wav.Length);
             Marshal.Copy(wav, 0, memory, wav.Length);
             _sounds[(cue, level)] = memory;
