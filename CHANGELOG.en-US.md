@@ -3,9 +3,18 @@
 English (US) release notes, mirroring CHANGELOG.md (Brazilian Portuguese). Before publishing a version, add a `## [VERSION]` section to **both** files: the release workflow uses the section matching the tag and fails if either is missing.
 
 ## [Unreleased]
+
+## [0.16.0-alpha.1]
 ### Changes
 - **Settings: every setting with an icon and its name below** (#293, adjusts the icon-only design of 0.15): still one wide column, but each tile now shows the **icon with its name directly below**, so you can identify a setting without relying on the description. The current value shows in the focused tile's reading area ("Name: value" highlighted, what it does below) and in a hover tooltip. Every setting stays reachable with controller, mouse and keyboard; none was removed.
 - **Controller sounds softer and rounder, in the console style** (#287): the four sounds were replaced by others from two Kenney packs (CC0: "UI Audio" and "Interface Sounds"), chosen for a soft timbre and gentle attack (confirm rises in pitch), with a filter that takes off the harsh highs, click-free and at the same energy. Origin and licence in THIRD_PARTY_NOTICES.md and assets/sounds. No Sony sound was used: the PS5 interface is only a feel reference.
+
+### Known limitations
+- The four controller sounds were chosen by audio analysis, without listening (and without using any Sony sound): final taste is for whoever hears them. The icon-and-name tiles, hover and sounds haven't been tried with a real mouse, controller and headphones yet.
+- Not yet validated with physical controllers (issue #78: Menu → Teste de controles…); the 0.14 Xbox fix wasn't confirmed with the reporter's controller.
+- Executables are not code-signed yet (#84, SignPath Foundation application under review): SmartScreen may warn on first run.
+- Phone pairing was fixed in Safari's engine (WebKit) but not yet tested on a real iPhone or Android (#259).
+- Whoever is on 0.14.0-alpha.1 or 0.15.0-alpha.1 gets this version by itself when the app opens (automatic update).
 
 ## [0.15.0-alpha.1]
 ### What's new
